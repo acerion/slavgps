@@ -448,7 +448,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 	}
 
 	if (this->wp) {
-		this->geotag_image_from_waypoint(file_full_path, this->wp->coord, this->wp->altitude);
+		this->geotag_image_from_waypoint(file_full_path, this->wp->get_coord(), this->wp->altitude);
 		return;
 	}
 
@@ -480,7 +480,16 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(new_wp_name);
 				if (current_wp) {
 					/* Existing wp found, so set new position, comment and image. */
-					current_wp->coord = new_wp->coord;
+
+					/* TODO_LATER: we may be
+					   tagging massive amount of
+					   Waypoints, so maybe we want
+					   to skip recalculating bbox
+					   and sending signals. */
+					const bool recalculate_bbox = true;
+					const bool only_set_value = false;
+					current_wp->set_coord(new_wp->get_coord(), recalculate_bbox, only_set_value);
+
 					current_wp->altitude = new_wp->altitude;
 					current_wp->set_image_full_path(file_full_path);
 					current_wp->comment = GeotagExif::get_object_comment(file_full_path);
@@ -537,7 +546,16 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(wp_name);
 				if (wp2) {
 					/* Found, so set new position, image and (below) a comment. */
-					wp2->coord = this->coord;
+
+					/* TODO_LATER: we may be
+					   tagging massive amount of
+					   Waypoints, so maybe we want
+					   to skip recalculating bbox
+					   and sending signals. */
+					const bool recalculate_bbox = true;
+					const bool only_set_value = false;
+					wp2->set_coord(this->coord, recalculate_bbox, only_set_value);
+
 					wp2->altitude = this->altitude;
 					wp2->set_image_full_path(file_full_path);
 					wp2->comment = GeotagExif::get_object_comment(file_full_path);
@@ -552,8 +570,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 			if (!updated_existing_waypoint) {
 				/* Create waypoint with found position. */
 
-				Waypoint * wp2 = new Waypoint();
-				wp2->coord = this->coord;
+				Waypoint * wp2 = new Waypoint(this->coord);
 				wp2->altitude = this->altitude;
 				wp2->set_image_full_path(file_full_path);
 				wp2->comment = GeotagExif::get_object_name(file_full_path);

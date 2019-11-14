@@ -1507,7 +1507,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	/* Position part.
 	   Position is put last, as this bit is most likely not to be seen if the display is not big enough,
 	   one can easily use the current pointer position to see this if needed. */
-	const QString coord_string = wp->coord.to_string();
+	const QString coord_string = wp->get_coord().to_string();
 
 	/* Combine parts to make overall message. */
 	QString msg;
@@ -1748,7 +1748,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::get_main_gis_view()->set_center_coord(wp->coord);
+			ThisApp::get_main_gis_view()->set_center_coord(wp->get_coord());
 			this->tree_view->select_and_expose_tree_item(wp);
 			ThisApp::get_main_gis_view()->request_redraw("Redrawing items after setting new center in viewport");
 
@@ -1770,9 +1770,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 	   simply be empty. */
 	const QString default_name = this->waypoints.name_generator.try_new_name();
 
-	Waypoint * wp = new Waypoint();
-	bool updated;
-	wp->coord = default_coord;
+	Waypoint * wp = new Waypoint(default_coord);
 
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
@@ -1780,7 +1778,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 	this->add_waypoint(wp);
 	visible_with_parents = wp->is_visible_with_parents();
 
-	qDebug() << SG_PREFIX_I << "Will show properties dialog for wp with coord" << wp->coord;
+	qDebug() << SG_PREFIX_I << "Will show properties dialog for wp with coord" << wp->get_coord();
 	return wp->show_properties_dialog();
 }
 
@@ -3218,87 +3216,6 @@ void LayerTRW::on_wp_properties_dialog_wp_coordinates_changed_cb(void)
 
 
 
-
-sg_ret LayerTRW::wp_properties_dialog_set(Waypoint * wp)
-{
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "Function argument is NULL";
-		return sg_ret::err;
-	}
-	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
-	if (!wp_tool->is_activated()) {
-		/* Someone is asking to fill dialog data with waypoint
-		   when WP edit tool is not active. This is ok, maybe
-		   generic select tool is active and has been used to
-		   select a waypoint? */
-
-		LayerToolSelect * select_tool = (LayerToolSelect *) ThisApp::get_main_window()->get_toolbox()->get_tool("sg.tool.generic.select");
-		if (!select_tool->is_activated()) {
-			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
-			return sg_ret::err;
-		}
-	}
-
-	wp_tool->point_properties_dialog->dialog_data_set(wp);
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::wp_properties_dialog_reset(void)
-{
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
-	if (!tool->is_activated()) {
-		return sg_ret::ok;
-	}
-	tool->point_properties_dialog->dialog_data_reset();
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
-{
-	if (!track) {
-		qDebug() << SG_PREFIX_E << "Function argument is NULL";
-		return sg_ret::err;
-	}
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
-	if (!tool->is_activated()) {
-		/* Someone is asking to fill dialog data with
-		   trackpoint when TP edit tool is not active. This is
-		   ok, maybe generic select tool is active and has
-		   been used to select a trackpoint? */
-		LayerToolSelect * select_tool = (LayerToolSelect *) ThisApp::get_main_window()->get_toolbox()->get_tool("sg.tool.generic.select");
-		if (!select_tool->is_activated()) {
-			qDebug() << SG_PREFIX_E << "Trying to fill 'tp properties' dialog when neither 'tp edit' tool nor 'generic select' tool are active";
-			return sg_ret::err;
-		}
-	}
-
-	tool->point_properties_dialog->dialog_data_set(track);
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::tp_properties_dialog_reset(void)
-{
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
-	if (!tool->is_activated()) {
-		return sg_ret::ok;
-	}
-	qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data";
-	tool->point_properties_dialog->dialog_data_reset();
-	return sg_ret::ok;
-}
-
-
-
-
 void LayerTRW::tp_show_properties_dialog()
 {
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
@@ -3327,19 +3244,19 @@ void LayerTRW::tp_show_properties_dialog()
 
 	/* Fill properties dialog with current point. */
 	{
-		const Track * track = this->selected_track_get();
+		Track * track = this->selected_track_get();
 		if (nullptr == track) {
 			qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' track set";
-			this->tp_properties_dialog_reset();
+			Track::tp_properties_dialog_reset();
 			return;
 		}
 		const size_t sel_tp_count = track->get_selected_children().get_count();
 		if (1 != sel_tp_count) {
 			qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: selected tp count is not 1:" << sel_tp_count;
-			this->tp_properties_dialog_reset();
+			Track::tp_properties_dialog_reset();
 			return;
 		}
-		this->tp_properties_dialog_set(track);
+		track->tp_properties_dialog_set();
 		return;
 	}
 }
@@ -3857,14 +3774,13 @@ Waypoint * LayerTRW::selected_wp_get()
 
 void LayerTRW::selected_wp_set(Waypoint * wp)
 {
-	if (!wp) {
+	if (nullptr == wp) {
 		qDebug() << SG_PREFIX_E << "NULL waypoint";
 		return;
 	}
 
 	this->m_selected_wp = wp;
-
-	this->wp_properties_dialog_set(this->m_selected_wp);
+	this->m_selected_wp->properties_dialog_set();
 }
 
 
@@ -3872,11 +3788,11 @@ void LayerTRW::selected_wp_set(Waypoint * wp)
 
 bool LayerTRW::selected_wp_reset(void)
 {
-	const bool was_selected = NULL != this->m_selected_wp;
+	const bool was_selected = nullptr != this->m_selected_wp;
 
-	this->m_selected_wp = NULL;
+	this->m_selected_wp = nullptr;
 
-	this->wp_properties_dialog_reset();
+	Waypoint::properties_dialog_reset();
 
 	return was_selected;
 }

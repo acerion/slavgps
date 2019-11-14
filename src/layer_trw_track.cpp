@@ -67,6 +67,7 @@
 #include "acquire.h"
 #include "tree_item_list.h"
 #include "astro.h"
+#include "toolbox.h"
 
 
 
@@ -3649,7 +3650,7 @@ void Track::selected_tp_set(const TrackpointReference & tp_ref)
 	this->selected_children.references.front() = tp_ref;
 
 	LayerTRW * trw = this->get_parent_layer_trw();
-	trw->tp_properties_dialog_set(this);
+	this->tp_properties_dialog_set();
 
 	trw->set_statusbar_msg_info_tp(this->selected_children.references.front(), this);
 }
@@ -3666,8 +3667,7 @@ bool Track::selected_tp_reset(void)
 		this->selected_children.references.front().m_iter_valid = false;
 	}
 	/* Do this regardless of value of 'was_set' - just in case. */
-	LayerTRW * trw = this->get_parent_layer_trw();
-	trw->tp_properties_dialog_reset();
+	Track::tp_properties_dialog_reset();
 
 	return was_set;
 }
@@ -3769,5 +3769,43 @@ sg_ret Track::single_selected_tp_set_coord(const Coord & coord)
 	}
 
 	(*this->selected_children.references.front().m_iter)->coord = coord;
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Track::tp_properties_dialog_set(void)
+{
+	Window * window = ThisApp::get_main_window();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	if (!tool->is_activated()) {
+		/* Someone is asking to fill dialog data with
+		   trackpoint when TP edit tool is not active. This is
+		   ok, maybe generic select tool is active and has
+		   been used to select a trackpoint? */
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool("sg.tool.generic.select");
+		if (!select_tool->is_activated()) {
+			qDebug() << SG_PREFIX_E << "Trying to fill 'tp properties' dialog when neither 'tp edit' tool nor 'generic select' tool are active";
+			return sg_ret::err;
+		}
+	}
+
+	tool->point_properties_dialog->dialog_data_set(this);
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Track::tp_properties_dialog_reset(void)
+{
+	Window * window = ThisApp::get_main_window();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	if (!tool->is_activated()) {
+		return sg_ret::ok;
+	}
+	qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data";
+	tool->point_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
 }

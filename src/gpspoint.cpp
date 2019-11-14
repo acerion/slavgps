@@ -392,13 +392,11 @@ LayerDataReadStatus GPSPoint::read_layer_from_file(QFile & file, LayerTRW * trw,
 
 Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QString & dirpath)
 {
-	Waypoint * wp = new Waypoint();
+	Waypoint * wp = new Waypoint(Coord(this->line_latlon, coordinate_mode));
 	wp->set_visible(this->line_visible);
 	wp->altitude = this->line_altitude;
 	wp->set_name(this->line_name);
 	wp->set_timestamp(this->line_timestamp);
-
-	wp->coord = Coord(this->line_latlon, coordinate_mode);
 
 	if (this->line_comment) {
 		wp->set_comment(QString(this->line_comment));
@@ -756,7 +754,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			continue;
 		}
 
-		const LatLon lat_lon = wp->coord.get_lat_lon();
+		const LatLon lat_lon = wp->get_coord().get_lat_lon();
 		char * tmp_name = slashdup(wp->name);
 		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);

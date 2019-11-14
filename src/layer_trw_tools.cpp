@@ -282,47 +282,17 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 
 
-sg_ret LayerTRW::set_selected_waypoint_position(const Coord & new_coord, bool do_recalculate_bbox)
-{
-	Waypoint * wp = this->selected_wp_get();
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
-		this->wp_properties_dialog_reset();
-		return sg_ret::err;
-	}
-
-	wp->coord = new_coord;
-	if (do_recalculate_bbox) {
-		this->waypoints.recalculate_bbox();
-	}
-
-	/* Update properties dialog with the most recent coordinates
-	   of released waypoint. */
-	/* TODO_OPTIMIZATION: optimize by changing only coordinates in
-	   the dialog. This is the only parameter that will change
-	   when a point is moved in x/y plane. We may consider also
-	   updating an alternative altitude indicator, if the altitude
-	   is retrieved from DEM info. */
-	this->wp_properties_dialog_set(wp);
-
-	this->emit_tree_item_changed("Selected waypoint's position has changed");
-
-	return sg_ret::ok;
-}
-
-
-
 sg_ret LayerTRW::set_selected_trackpoint_position(const Coord & new_coord, bool do_recalculate_bbox)
 {
 	Track * track = this->selected_track_get();
 	if (NULL == track) {
 		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
-		this->tp_properties_dialog_reset();
+		Track::tp_properties_dialog_reset();
 		return sg_ret::err;
 	}
 	if (1 != track->get_selected_children().get_count()) {
 		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, wrong selected tp count:" << track->get_selected_children().get_count();
-		this->tp_properties_dialog_reset();
+		Track::tp_properties_dialog_reset();
 		return sg_ret::err;
 	}
 
@@ -336,7 +306,7 @@ sg_ret LayerTRW::set_selected_trackpoint_position(const Coord & new_coord, bool 
 	   when a point is moved in x/y plane.  We may consider also
 	   updating an alternative altitude indicator, if the altitude
 	   is retrieved from DEM info. */
-	this->tp_properties_dialog_set(track);
+	track->tp_properties_dialog_set();
 
 	if (do_recalculate_bbox) {
 		if (track->is_route()) {
@@ -358,7 +328,13 @@ sg_ret LayerTRW::set_selected_trackpoint_position(const Coord & new_coord, bool 
 sg_ret LayerTRW::set_selected_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox)
 {
 	if (object_type_id == "sg.trw.waypoint") {
-		return this->set_selected_waypoint_position(new_coord, do_recalculate_bbox);
+		Waypoint * wp = this->selected_wp_get();
+		if (!wp) {
+			qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
+			Waypoint::properties_dialog_reset();
+			return sg_ret::err;
+		}
+		return wp->set_coord(new_coord, do_recalculate_bbox);
 	} else if (object_type_id == "sg.trw.track" || object_type_id == "sg.trw.route") {
 		return this->set_selected_trackpoint_position(new_coord, do_recalculate_bbox);
 	} else {
@@ -626,7 +602,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   has priority. */
 
 		ScreenPos wp_pos;
-		this->gisview->coord_to_screen_pos(current_wp->coord, wp_pos);
+		this->gisview->coord_to_screen_pos(current_wp->get_coord(), wp_pos);
 
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
@@ -706,6 +682,13 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 		return ToolStatus::Ignored;
 	}
 
+	Waypoint * wp = trw->selected_wp_get();
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
+		Waypoint::properties_dialog_reset();
+		return ToolStatus::Ignored;
+	}
+
 	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
 	case Qt::LeftButton: {
 		if (!this->can_tool_move_object()) {
@@ -713,10 +696,13 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 			return ToolStatus::Error;
 		}
 
-		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint";
 		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, "sg.trw.waypoint");
-		trw->set_selected_waypoint_position(new_coord, false);
+		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint:" << new_coord;
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
+
+		const bool recalculate_bbox = false; /* During moving of point we shouldn't recalculate Waypoints' bbox. */
+		wp->set_coord(new_coord, recalculate_bbox);
+
 		return ToolStatus::Ack;
 	}
 	default:
@@ -739,11 +725,20 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 		return ToolStatus::Ignored;
 	}
 
+	Waypoint * wp = trw->selected_wp_get();
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
+		Waypoint::properties_dialog_reset();
+		return ToolStatus::Ignored;
+	}
+
 	switch (ev->button()) {
 	case Qt::LeftButton: {
 		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview, "sg.trw.waypoint");
-		trw->set_selected_waypoint_position(new_coord, true);
+		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview, wp->type_id);
+
+		const bool recalculate_bbox = true; /* We have moved point to final position, so Waypoints' bbox can be recalculated. */
+		wp->set_coord(new_coord, recalculate_bbox);
 
 		/* Object is released by tool (so its position no
 		   longer changes when cursor moves), but is still a
@@ -861,7 +856,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 		this->waypoints.search_closest_wp(wp_search);
 
 		if (NULL != wp_search.closest_wp) {
-			point_coord = wp_search.closest_wp->coord;
+			point_coord = wp_search.closest_wp->get_coord();
 			return true;
 		}
 	}

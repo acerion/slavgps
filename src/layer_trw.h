@@ -292,14 +292,6 @@ namespace SlavGPS {
 
 
 
-		sg_ret tp_properties_dialog_set(Track * trk);
-		sg_ret tp_properties_dialog_reset(void);
-
-		sg_ret wp_properties_dialog_set(Waypoint * wp);
-		sg_ret wp_properties_dialog_reset(void);
-
-
-
 		int get_track_thickness();
 
 		static TRWMetadata * metadata_new();
@@ -486,7 +478,6 @@ namespace SlavGPS {
 		void on_wp_properties_dialog_wp_coordinates_changed_cb(void);
 
 		sg_ret set_selected_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
-		sg_ret set_selected_waypoint_position(const Coord & new_coord, bool do_recalculate_bbox);
 		sg_ret set_selected_trackpoint_position(const Coord & new_coord, bool do_recalculate_bbox);
 
 	private:

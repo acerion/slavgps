@@ -189,7 +189,7 @@ bool TpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new
 */
 sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 {
-	if (NULL == trk) {
+	if (nullptr == trk) {
 		qDebug() << SG_PREFIX_E << "NULL argument";
 		return sg_ret::err;
 	}

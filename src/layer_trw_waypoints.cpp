@@ -255,7 +255,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 		}
 
 		ScreenPos wp_pos;
-		search.gisview->coord_to_screen_pos(wp->coord, wp_pos);
+		search.gisview->coord_to_screen_pos(wp->get_coord(), wp_pos);
 
 		bool found = false;
 
@@ -310,7 +310,7 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisVie
 		}
 
 		ScreenPos wp_pos;
-		gisview->coord_to_screen_pos(wp->coord, wp_pos);
+		gisview->coord_to_screen_pos(wp->get_coord(), wp_pos);
 
 		int slackx = wp->drawn_image_rect.width() / 2;
 		int slacky = wp->drawn_image_rect.height() / 2;
@@ -435,7 +435,7 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		const LatLon lat_lon = (*iter)->coord.get_lat_lon();
+		const LatLon lat_lon = (*iter)->get_coord().get_lat_lon();
 		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 	this->bbox.validate();
@@ -659,7 +659,7 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 	if (1 == n_items) {
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
 		const auto iter = this->children_list.begin();
-		gisview->set_center_coord((*iter)->coord);
+		gisview->set_center_coord((*iter)->get_coord());
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */

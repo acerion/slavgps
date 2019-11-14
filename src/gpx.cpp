@@ -234,9 +234,8 @@ static void gpx_start(GPXImporter * importer, char const * el, char const ** att
 
 	case tt_wpt:
 		if (importer->set_lat_lon(attributes)) {
-			importer->wp = new Waypoint();
+			importer->wp = new Waypoint(Coord(importer->lat_lon, importer->trw->get_coord_mode()));
 			importer->wp->set_visible(get_attr(attributes, "hidden").isEmpty());
-			importer->wp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
 		}
 		break;
 
@@ -294,7 +293,9 @@ static void gpx_start(GPXImporter * importer, char const * el, char const ** att
 
 	case tt_waypoint_coord:
 		if (importer->set_lat_lon(attributes)) {
-			importer->wp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
+			const bool recalculate_bbox = false; /* Not during reading of multiple Waypoints. */
+			const bool only_set_value = true; /* Don't send signals during reading of multiple Waypoints. */
+			importer->wp->set_coord(Coord(importer->lat_lon, importer->trw->get_coord_mode()), recalculate_bbox, only_set_value);
 		}
 		break;
 
@@ -836,7 +837,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	}
 
 	FILE * file = context->file;
-	const LatLon lat_lon = wp->coord.get_lat_lon();
+	const LatLon lat_lon = wp->get_coord().get_lat_lon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->is_visible() ? "" : " hidden=\"hidden\"");

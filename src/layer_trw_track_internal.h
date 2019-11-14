@@ -374,6 +374,9 @@ namespace SlavGPS {
 
 		bool show_properties_dialog(void) override;
 
+		sg_ret tp_properties_dialog_set(void);
+		static sg_ret tp_properties_dialog_reset(void);
+
 		LayerTRW * get_parent_layer_trw() const;
 
 

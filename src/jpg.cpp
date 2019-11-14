@@ -145,12 +145,10 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview
 		}
 		trw->add_waypoint_from_file(wp);
 	} else {
-		wp = new Waypoint();
+		wp = new Waypoint(gisview->get_center_coord()); /* Simply set position to the current center. */
 		wp->set_name(file_base_name(file_full_path));
 		trw->add_waypoint_from_file(wp);
 		wp->set_image_full_path(file_full_path);
-		/* Simply set position to the current center. */
-		wp->coord = gisview->get_center_coord();
 		auto_zoom = false;
 	}
 

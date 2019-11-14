@@ -320,8 +320,8 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	   Waypoint. */
 	const Waypoint * wp = parent_layer->selected_wp_get();
 	if (wp) {
-		const Coord * coord = &wp->coord;
-		ExternalTools::add_menu_items(external_submenu, gisview, coord);
+		const Coord coord = wp->get_coord();
+		ExternalTools::add_menu_items(external_submenu, gisview, &coord);
 		return;
 	}
 

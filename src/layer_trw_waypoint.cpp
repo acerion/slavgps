@@ -92,7 +92,7 @@ Waypoint::Waypoint()
 /* Copy constructor. */
 Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 {
-	this->coord = wp.coord;
+	this->m_coord = wp.m_coord;
 	this->visible = wp.visible;
 	this->set_timestamp(wp.timestamp);
 	this->altitude = wp.altitude;
@@ -107,6 +107,14 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_symbol_name(wp.symbol_name);
 
 	this->drawn_image_rect = wp.drawn_image_rect;
+}
+
+
+
+
+Waypoint::Waypoint(const Coord & coord) : Waypoint()
+{
+	this->m_coord = coord;
 }
 
 
@@ -199,6 +207,44 @@ void Waypoint::set_symbol_name(const QString & new_symbol_name)
 
 
 
+sg_ret Waypoint::set_coord(const Coord & new_coord, bool do_recalculate_bbox, bool only_set_value)
+{
+	this->m_coord = new_coord;
+	if (do_recalculate_bbox) {
+		LayerTRW * trw = this->get_parent_layer_trw();
+		trw->waypoints.recalculate_bbox();
+	}
+
+	if (only_set_value) {
+		return sg_ret::ok;
+	} else {
+
+		/* Update properties dialog with the most recent coordinates
+		   of released waypoint. */
+		/* TODO_OPTIMIZATION: optimize by changing only coordinates in
+		   the dialog. This is the only parameter that will change
+		   when a point is moved in x/y plane. We may consider also
+		   updating an alternative altitude indicator, if the altitude
+		   is retrieved from DEM info. */
+		this->properties_dialog_set();
+
+		this->emit_tree_item_changed("Waypoint's coordinate has been set");
+
+		return sg_ret::ok;
+	}
+}
+
+
+
+
+const Coord & Waypoint::get_coord(void) const
+{
+	return this->m_coord;
+}
+
+
+
+
 /**
  * @skip_existing: When true, don't change the elevation if the waypoint already has a value
  *
@@ -212,7 +258,7 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 		return false;
 	}
 
-	const Altitude elev = DEMCache::get_elev_by_coord(this->coord, DemInterpolation::Best);
+	const Altitude elev = DEMCache::get_elev_by_coord(this->m_coord, DemInterpolation::Best);
 	if (!elev.is_valid()) {
 		return true;
 	}
@@ -276,7 +322,7 @@ Waypoint * Waypoint::unmarshall(Pickle & pickle)
 
 void Waypoint::convert(CoordMode dest_mode)
 {
-	this->coord.recalculate_to_mode(dest_mode);
+	this->m_coord.recalculate_to_mode(dest_mode);
 }
 
 
@@ -581,7 +627,7 @@ void Waypoint::open_astro_cb(void)
 		const QString date_buf = this->timestamp.strftime_utc("%Y%m%d");
 		const QString time_buf = this->timestamp.strftime_utc("%H:%M:%S");
 
-		const LatLon lat_lon = this->coord.get_lat_lon();
+		const LatLon lat_lon = this->m_coord.get_lat_lon();
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
 		const QString alt_str = QString("%1").arg((int) round(this->altitude.get_ll_value()));
@@ -596,7 +642,7 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->m_coord);
 }
 
 
@@ -710,7 +756,7 @@ void Waypoint::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 {
 	/* Update directly - not changing the mtime. */
-	GeotagExif::write_exif_gps(this->image_full_path, this->coord, this->altitude, true);
+	GeotagExif::write_exif_gps(this->image_full_path, this->m_coord, this->altitude, true);
 }
 
 
@@ -719,7 +765,7 @@ void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 {
 	/* Update directly. */
-	GeotagExif::write_exif_gps(this->image_full_path, this->coord, this->altitude, false);
+	GeotagExif::write_exif_gps(this->image_full_path, this->m_coord, this->altitude, false);
 }
 
 
@@ -1005,4 +1051,42 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 
 	TreeItemListDialogHelper<Waypoint *> dialog_helper;
 	dialog_helper.show_dialog(title, view_format, tree_items, window);
+}
+
+
+
+
+sg_ret Waypoint::properties_dialog_set(void)
+{
+	Window * window = ThisApp::get_main_window();
+	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	if (!wp_tool->is_activated()) {
+		/* Someone is asking to fill dialog data with waypoint
+		   when WP edit tool is not active. This is ok, maybe
+		   generic select tool is active and has been used to
+		   select a waypoint? */
+
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool("sg.tool.generic.select");
+		if (!select_tool->is_activated()) {
+			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
+			return sg_ret::err;
+		}
+	}
+
+	wp_tool->point_properties_dialog->dialog_data_set(this);
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Waypoint::properties_dialog_reset(void)
+{
+	Window * window = ThisApp::get_main_window();
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	if (!tool->is_activated()) {
+		return sg_ret::ok;
+	}
+	tool->point_properties_dialog->dialog_data_reset();
+	return sg_ret::ok;
 }

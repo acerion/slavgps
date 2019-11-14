@@ -190,7 +190,7 @@ sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
 
 sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 {
-	if (NULL == wp) {
+	if (nullptr == wp) {
 		qDebug() << SG_PREFIX_E << "NULL argument";
 		return sg_ret::err;
 	}
@@ -208,8 +208,8 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 
 
 	this->name_entry->setText(this->current_point->name);
-	this->coord_widget->set_value(this->current_point->coord); /* TODO: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
-	this->timestamp_widget->set_timestamp(this->current_point->get_timestamp(), this->current_point->coord);
+	this->coord_widget->set_value(this->current_point->get_coord()); /* TODO: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
+	this->timestamp_widget->set_timestamp(this->current_point->get_timestamp(), this->current_point->get_coord());
 	this->altitude_widget->set_value_iu(this->current_point->altitude);
 	this->comment_entry->setText(this->current_point->comment);
 	this->description_entry->setText(this->current_point->description);
@@ -313,16 +313,14 @@ void WpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 		return;
 	}
 
-	const Coord old_coord = this->current_point->coord;
-	qDebug() << SG_PREFIX_I << "kamil current point coord 1:" << this->current_point->coord;
+	const Coord old_coord = this->current_point->get_coord();
 	const Coord new_coord = this->coord_widget->get_value();
-	qDebug() << SG_PREFIX_I << "kamil Old coord:" << old_coord << ", new coord:" << new_coord;
 
+	const bool recalculate_bbox = true;
+	const bool only_set_value = true; /* We don't want waypoint to notify us about coordinate what we change ourselves here. */
+	this->current_point->set_coord(new_coord, recalculate_bbox, only_set_value);
 
-	this->current_point->coord = new_coord;
-	qDebug() << SG_PREFIX_I << "kamil current point coord:" << this->current_point->coord;
 	this->timestamp_widget->set_coord(new_coord);
-
 
 	/* Don't redraw unless we really have to. */
 	const Distance distance = Coord::distance_2(old_coord, new_coord); /* May not be exact due to rounding. */

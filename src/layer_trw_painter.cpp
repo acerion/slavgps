@@ -871,8 +871,8 @@ void LayerTRWPainter::draw_track(Track * trk, GisViewport * a_gisview, bool do_h
 void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	const bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
-		|| ((this->vp_coord_mode == CoordMode::LatLon || UTM::is_the_same_zone(wp->coord.utm, this->vp_center.utm)) &&
-		    this->coord_fits_in_viewport(wp->coord));
+		|| ((this->vp_coord_mode == CoordMode::LatLon || UTM::is_the_same_zone(wp->get_coord().utm, this->vp_center.utm)) &&
+		    this->coord_fits_in_viewport(wp->get_coord()));
 
 
 	if (!cond) {
@@ -880,7 +880,7 @@ void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 	}
 
 	ScreenPos wp_screen_pos;
-	this->gisview->coord_to_screen_pos(wp->coord, wp_screen_pos);
+	this->gisview->coord_to_screen_pos(wp->get_coord(), wp_screen_pos);
 
 	if (this->draw_wp_images && !wp->image_full_path.isEmpty()) {
 		if (this->draw_waypoint_image(wp, wp_screen_pos, do_highlight)) {

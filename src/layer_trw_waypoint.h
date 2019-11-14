@@ -60,6 +60,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		Waypoint();
+		Waypoint(const Coord & coord);
 		Waypoint(const Waypoint& other);
 		~Waypoint();
 
@@ -74,6 +75,9 @@ namespace SlavGPS {
 		void set_url(const QString & new_url);
 		void set_image_full_path(const QString & new_image_full_path);
 		void set_symbol_name(const QString & new_symbol_name);
+		sg_ret set_coord(const Coord & new_coord, bool do_recalculate_bbox, bool only_set_value = false);
+
+		const Coord & get_coord(void) const;
 
 		bool apply_dem_data(bool skip_existing_elevations);
 		void apply_dem_data_common(bool skip_existing_elevations);
@@ -118,8 +122,11 @@ namespace SlavGPS {
 
 		void display_debug_info(const QString & reference) const;
 
+		sg_ret properties_dialog_set(void);
+		static sg_ret properties_dialog_reset(void);
 
-		Coord coord;
+
+
 		/* bool visible = true; */ /* Inherited from TreeItem. */
 		Altitude altitude;
 
@@ -165,6 +172,9 @@ namespace SlavGPS {
 
 		void cut_sublayer_cb(void);
 		void copy_sublayer_cb(void);
+
+	private:
+		Coord m_coord;
 	};
 
 
