@@ -229,13 +229,6 @@ namespace SlavGPS {
 		*/
 		bool selected_tp_reset(void);
 
-
-		/**
-		   @return sg_ret::ok if there is one and only one selected tp, and its coordinate has been set
-		   @return sg_ret::err otherwise
-		*/
-		sg_ret single_selected_tp_set_coord(const Coord & coord);
-
 		sg_ret move_selection_to_next_tp(void);
 		sg_ret move_selection_to_previous_tp(void);
 
@@ -376,6 +369,12 @@ namespace SlavGPS {
 
 		sg_ret tp_properties_dialog_set(void);
 		static sg_ret tp_properties_dialog_reset(void);
+
+		/**
+		   @return sg_ret::ok if there is one and only one selected tp, and its coordinate has been set
+		   @return sg_ret::err otherwise
+		*/
+		sg_ret selected_tp_set_coord(const Coord & new_coord, bool do_recalculate_bbox);
 
 		LayerTRW * get_parent_layer_trw() const;
 

@@ -7,6 +7,7 @@
  * Copyright (C) 2009, Hein Ragas <viking@ragas.nl>
  * Copyright (c) 2012-2015, Rob Norris <rw_norris@hotmail.com>
  * Copyright (c) 2012-2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,6 +91,149 @@ extern LayerTool * trw_layer_tools[];
 
 static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
 static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return ToolStatus::Ignored; } /* TODO_2_LATER: implement the function for route finder tool. */
+
+
+
+
+ToolStatus helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+{
+	Waypoint * wp = trw->selected_wp_get();
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
+		Waypoint::properties_dialog_reset();
+		return ToolStatus::Ignored;
+	}
+
+	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
+	case Qt::LeftButton: {
+		if (!tool->can_tool_move_object()) {
+			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
+			return ToolStatus::Error;
+		}
+
+		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
+		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint:" << new_coord;
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
+
+		const bool recalculate_bbox = false; /* During moving of point we shouldn't recalculate Waypoints' bbox. */
+		wp->set_coord(new_coord, recalculate_bbox);
+
+		return ToolStatus::Ack;
+	}
+	default:
+		return ToolStatus::Ignored;
+	}
+}
+
+
+
+
+ToolStatus helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+{
+	if (LayerToolSelect::ObjectState::IsHeld != tool->edited_object_state) {
+		/* We can't release what hasn't been held. */
+		return ToolStatus::Ignored;
+	}
+
+	Waypoint * wp = trw->selected_wp_get();
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
+		Waypoint::properties_dialog_reset();
+		return ToolStatus::Ignored;
+	}
+
+	switch (ev->button()) {
+	case Qt::LeftButton: {
+		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
+
+		const bool recalculate_bbox = true; /* We have moved point to final position, so Waypoints' bbox can be recalculated. */
+		wp->set_coord(new_coord, recalculate_bbox);
+
+		/* Object is released by tool (so its position no
+		   longer changes when cursor moves), but is still a
+		   selected item. */
+		qDebug() << SG_PREFIX_I << "Setting edited object state to IsSelected";
+		tool->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
+		/* Not needed, type id stays the same when transitioning from IsHeld to IsSelected.
+		tool->selected_tree_item_type_id = xxx;
+		*/
+
+		//trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
+		return ToolStatus::Ack;
+		}
+
+	case Qt::RightButton:
+	default:
+		return ToolStatus::Ignored;
+	}
+}
+
+
+
+
+ToolStatus helper_move_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+{
+	Track * track = trw->selected_track_get();
+	if (nullptr == track) {
+		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
+		Track::tp_properties_dialog_reset();
+		return ToolStatus::Ignored;
+	}
+
+	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
+	case Qt::LeftButton: {
+		if (!tool->can_tool_move_object()) {
+			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
+			return ToolStatus::Error;
+		}
+
+		qDebug() << SG_PREFIX_I << "Will now set new position of trackpoint";
+		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, "sg.trw.track");
+		track->selected_tp_set_coord(new_coord, false);
+		return ToolStatus::Ack;
+	}
+	default:
+		return ToolStatus::Ignored;
+	}
+}
+
+
+
+
+ToolStatus helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+{
+	if (ev->button() != Qt::LeftButton) {
+		return ToolStatus::Ignored;
+	}
+	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
+	if (nullptr == track) {
+		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
+		/* Well, there was no track that was edited, so nothing to do here. */
+		return ToolStatus::Ignored;
+	}
+
+	if (LayerToolSelect::ObjectState::IsHeld != tool->edited_object_state) {
+		/* We can't release what hasn't been held. */
+		return ToolStatus::Ignored;
+	}
+
+	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
+	trw->get_nearby_snap_coordinates(new_coord, ev, gisview, "sg.trw.track");
+	track->selected_tp_set_coord(new_coord, true);
+
+	/* Object is released by tool (so its position no
+	   longer changes when cursor moves), but is still a
+	   selected item. */
+	qDebug() << SG_PREFIX_I << "Setting edited object state to IsSelected";
+	tool->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
+	/* Not needed, type id stays the same when transitioning from IsHeld to IsSelected.
+	   this->selected_tree_item_type_id = xxx;
+	*/
+
+	return ToolStatus::Ack;
+}
 
 
 
@@ -209,139 +353,49 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 
 
 
-/*
-  This method is for handling "move" event coming from generic Select tool.
-  The generic Select tool doesn't know how to implement layer-specific movement, so the layer has to implement the behaviour itself.
-*/
-bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool) /// kamil
-{
-	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
-	case Qt::LeftButton: {
-		if (!select_tool->can_tool_move_object()) {
-			qDebug() << SG_PREFIX_E << "Not moving due to edited object state, tool can't move object";
-			return false;
-		}
+/**
+   This method is for handling "move" event coming from generic Select
+   tool.
 
-		qDebug() << SG_PREFIX_I << "Will now set new position of a point";
-		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-		this->get_nearby_snap_coordinates(new_coord, ev, gisview, select_tool->selected_tree_item_type_id);
-		this->set_selected_object_position(select_tool->selected_tree_item_type_id, new_coord, false);
-		return true;
-	}
-	default:
+   The generic Select tool doesn't know how to implement
+   layer-specific movement, so the layer has to implement the
+   behaviour itself.
+*/
+bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
+{
+	/* FIXME: slowdown: comparing strings. */
+	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
+		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
+	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
+		return ToolStatus::Ack == helper_move_tp(this, select_tool, ev, select_tool->gisview);
+	} else {
+		qDebug() << SG_PREFIX_E << "Not moving due to unknown type id" << select_tool->selected_tree_item_type_id;
 		return false;
 	}
-
-	return false;
 }
 
 
 
 
-/*
-  This method is for handling "release" event coming from generic Select tool.
-  The generic Select tool doesn't know how to implement layer-specific release, so the layer has to implement the behaviour itself.
+/**
+   This method is for handling "release" event coming from generic
+   Select tool.
+
+   The generic Select tool doesn't know how to implement
+   layer-specific release, so the layer has to implement the behaviour
+   itself.
 */
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	if (ev->button() != Qt::LeftButton) {
-		/* If we are still holding something, but we didn't release this with left button, then we aren't interested. */
-		return false;
-	}
-
-	if (LayerToolSelect::ObjectState::IsHeld != select_tool->edited_object_state) {
-		/* We can't release what hasn't been held. */
-		return false;
-	}
-
-	/* Prevent accidental (small) shifts when specific movement
-	   has not been requested (as the click release has occurred
-	   within the click object detection area). */
-	if (select_tool->selected_tree_item_type_id == "") {
-		return false;
-	}
-
-	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-	this->get_nearby_snap_coordinates(new_coord, ev, gisview, select_tool->selected_tree_item_type_id);
-	this->set_selected_object_position(select_tool->selected_tree_item_type_id, new_coord, true);
-
-	/* Object is released by tool (so its position no
-	   longer changes when cursor moves), but is still a
-	   selected item. */
-	qDebug() << SG_PREFIX_I << "Setting edited object state to IsSelected";
-	select_tool->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
-	/* Not needed, type id stays the same when transitioning from IsHeld to IsSelected.
-	this->selected_tree_item_type_id = xxx;
-	*/
-
-	//this->emit_tree_item_changed("TRW - handle select tool release");
-
-	return true;
-}
-
-
-
-
-sg_ret LayerTRW::set_selected_trackpoint_position(const Coord & new_coord, bool do_recalculate_bbox)
-{
-	Track * track = this->selected_track_get();
-	if (NULL == track) {
-		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
-		Track::tp_properties_dialog_reset();
-		return sg_ret::err;
-	}
-	if (1 != track->get_selected_children().get_count()) {
-		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, wrong selected tp count:" << track->get_selected_children().get_count();
-		Track::tp_properties_dialog_reset();
-		return sg_ret::err;
-	}
-
-	track->single_selected_tp_set_coord(new_coord);
-
-	/* Update properties dialog with the most
-	   recent coordinates of released
-	   trackpoint. */
-	/* TODO_OPTIMIZATION: optimize by changing only coordinates in
-	   the dialog. This is the only parameter that will change
-	   when a point is moved in x/y plane.  We may consider also
-	   updating an alternative altitude indicator, if the altitude
-	   is retrieved from DEM info. */
-	track->tp_properties_dialog_set();
-
-	if (do_recalculate_bbox) {
-		if (track->is_route()) {
-			this->routes.recalculate_bbox();
-		} else {
-			this->tracks.recalculate_bbox();
-		}
-	}
-
-	this->emit_tree_item_changed("Selected trackpoint's position has changed");
-
-	return sg_ret::ok;
-}
-
-
-
-
-/* Update information about new position of Waypoint/Trackpoint. */
-sg_ret LayerTRW::set_selected_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox)
-{
-	if (object_type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->selected_wp_get();
-		if (!wp) {
-			qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
-			Waypoint::properties_dialog_reset();
-			return sg_ret::err;
-		}
-		return wp->set_coord(new_coord, do_recalculate_bbox);
-	} else if (object_type_id == "sg.trw.track" || object_type_id == "sg.trw.route") {
-		return this->set_selected_trackpoint_position(new_coord, do_recalculate_bbox);
+	/* FIXME: slowdown: comparing strings. */
+	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
+		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
+	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
+		return ToolStatus::Ack == helper_release_tp(this, select_tool, ev, gisview);
 	} else {
-		assert(0);
+		qDebug() << SG_PREFIX_E << "Not releasing due to unknown type id" << select_tool->selected_tree_item_type_id;
+		return false;
 	}
-
-	return sg_ret::ok;
 }
 
 
@@ -677,37 +731,12 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 
 ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	LayerTRW * trw = (LayerTRW *) layer;
-	if (trw->type != LayerType::TRW) {
+	if (layer->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
 		return ToolStatus::Ignored;
 	}
 
-	Waypoint * wp = trw->selected_wp_get();
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
-		Waypoint::properties_dialog_reset();
-		return ToolStatus::Ignored;
-	}
-
-	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
-	case Qt::LeftButton: {
-		if (!this->can_tool_move_object()) {
-			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
-			return ToolStatus::Error;
-		}
-
-		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint:" << new_coord;
-		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
-
-		const bool recalculate_bbox = false; /* During moving of point we shouldn't recalculate Waypoints' bbox. */
-		wp->set_coord(new_coord, recalculate_bbox);
-
-		return ToolStatus::Ack;
-	}
-	default:
-		return ToolStatus::Ignored;
-	}
+	return helper_move_wp((LayerTRW *) layer, this, ev, this->gisview);
 }
 
 
@@ -715,48 +744,12 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 
 ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	LayerTRW * trw = (LayerTRW *) layer;
-
-	if (trw->type != LayerType::TRW) {
-		return ToolStatus::Ignored;
-	}
-	if (LayerToolSelect::ObjectState::IsHeld != this->edited_object_state) {
-		/* We can't release what hasn't been held. */
+	if (layer->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
 		return ToolStatus::Ignored;
 	}
 
-	Waypoint * wp = trw->selected_wp_get();
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
-		Waypoint::properties_dialog_reset();
-		return ToolStatus::Ignored;
-	}
-
-	switch (ev->button()) {
-	case Qt::LeftButton: {
-		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview, wp->type_id);
-
-		const bool recalculate_bbox = true; /* We have moved point to final position, so Waypoints' bbox can be recalculated. */
-		wp->set_coord(new_coord, recalculate_bbox);
-
-		/* Object is released by tool (so its position no
-		   longer changes when cursor moves), but is still a
-		   selected item. */
-		qDebug() << SG_PREFIX_I << "Setting edited object state to IsSelected";
-		this->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
-		/* Not needed, type id stays the same when transitioning from IsHeld to IsSelected.
-		this->selected_tree_item_type_id = xxx;
-		*/
-
-		//trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
-		return ToolStatus::Ack;
-		}
-
-	case Qt::RightButton:
-	default:
-		return ToolStatus::Ignored;
-	}
+	return helper_release_wp((LayerTRW *) layer, this, ev, this->gisview);
 }
 
 
@@ -1410,28 +1403,12 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	LayerTRW * trw = (LayerTRW *) layer;
-	if (trw->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Ignoring, not TRW layer";
+	if (layer->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
 		return ToolStatus::Ignored;
 	}
 
-	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
-	case Qt::LeftButton: {
-		if (!this->can_tool_move_object()) {
-			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
-			return ToolStatus::Error;
-		}
-
-		qDebug() << SG_PREFIX_I << "Will now set new position of trackpoint";
-		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview, "sg.trw.track");
-		trw->set_selected_trackpoint_position(new_coord, false);
-		return ToolStatus::Ack;
-	}
-	default:
-		return ToolStatus::Ignored;
-	}
+	return helper_move_tp((LayerTRW *) layer, this, ev, this->gisview);
 }
 
 
@@ -1439,37 +1416,12 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
-	}
-	LayerTRW * trw = (LayerTRW *) layer;
-	if (trw->type != LayerType::TRW) {
-		return ToolStatus::Ignored;
-	}
-	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
-	if (!track) {
-		/* Well, there was no track that was edited, so nothing to do here. */
-		return ToolStatus::Ignored;
-	}
-	if (LayerToolSelect::ObjectState::IsHeld != this->edited_object_state) {
-		/* We can't release what hasn't been held. */
+	if (layer->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
 		return ToolStatus::Ignored;
 	}
 
-	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-	trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview, "sg.trw.track");
-	trw->set_selected_trackpoint_position(new_coord, true);
-
-	/* Object is released by tool (so its position no
-	   longer changes when cursor moves), but is still a
-	   selected item. */
-	qDebug() << SG_PREFIX_I << "Setting edited object state to IsSelected";
-	this->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
-	/* Not needed, type id stays the same when transitioning from IsHeld to IsSelected.
-	this->selected_tree_item_type_id = xxx;
-	*/
-
-	return ToolStatus::Ack;
+	return helper_release_tp((LayerTRW *) layer, this, ev, this->gisview);
 }
 
 
@@ -1697,9 +1649,9 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport *
 ToolStatus LayerToolTRWShowPicture::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
 		return ToolStatus::Ignored;
 	}
-
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->gisview);

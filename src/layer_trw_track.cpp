@@ -3751,24 +3751,48 @@ TrackSelectedChildren::TrackSelectedChildren()
 
 
 
-sg_ret Track::single_selected_tp_set_coord(const Coord & coord)
+sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate_bbox)
 {
-	const size_t count = this->selected_children.get_count();
-	if (1 != count) {
-		qDebug() << SG_PREFIX_E << "Can't set coordinates of tp: wrong count:" << count;
+	const size_t tp_count = this->selected_children.get_count();
+	if (1 != tp_count) {
+		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, wrong selected tp count:" << tp_count;
+		Track::tp_properties_dialog_reset();
 		return sg_ret::err;
 	}
-
-	if (!this->selected_children.references.front().m_iter_valid) {
+	if (false == this->selected_children.references.front().m_iter_valid) {
 		/* That's a double error: function was called for
 		   invalid tp, and the tp is invalid while
 		   selected_children.get_count() returned 1. */
-		qDebug() << SG_PREFIX_E << "Can't set coordinates of tp: iter invalid:" << count;
-		qDebug() << SG_PREFIX_E << "Count of selected TPs is" << count << "but iter of selected TP is invalid";
+		qDebug() << SG_PREFIX_E << "Can't set coordinates of tp: iter invalid:" << tp_count;
+		qDebug() << SG_PREFIX_E << "Count of selected TPs is" << tp_count << "but iter of selected TP is invalid";
 		return sg_ret::err;
 	}
 
-	(*this->selected_children.references.front().m_iter)->coord = coord;
+
+	(*this->selected_children.references.front().m_iter)->coord = new_coord;
+
+
+	/* Update properties dialog with the most recent coordinates
+	   of tp. */
+	/* TODO_OPTIMIZATION: optimize by changing only coordinates in
+	   the dialog. This is the only parameter that will change
+	   when a point is moved in x/y plane.  We may consider also
+	   updating an alternative altitude indicator, if the altitude
+	   is retrieved from DEM info. */
+	this->tp_properties_dialog_set();
+
+
+	if (do_recalculate_bbox) {
+		LayerTRW * trw = this->get_parent_layer_trw();
+		if (this->is_route()) {
+			trw->routes.recalculate_bbox();
+		} else {
+			trw->tracks.recalculate_bbox();
+		}
+	}
+
+	this->emit_tree_item_changed("Selected trackpoint's position has changed");
+
 	return sg_ret::ok;
 }
 
