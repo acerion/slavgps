@@ -2953,11 +2953,11 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	static uint32_t threshold_in_minutes = 1;
-	if (!a_dialog_time_threshold(tr("Merge Threshold..."),
-				     tr("Merge when time between tracks less than:"),
-				     &threshold_in_minutes,
-				     this->get_window())) {
+	Duration threshold(60, TimeUnit::Seconds);
+	if (false == Dialog::duration(tr("Merge Threshold..."),
+				      tr("Merge when time between tracks is less than:"),
+				      threshold,
+				      this->get_window())) {
 		return;
 	}
 
@@ -2975,7 +2975,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		}
 
 		/* Get a list of adjacent-in-time tracks. */
-		std::list<Track *> nearby_tracks = this->tracks.find_nearby_tracks_by_time(orig_track, (threshold_in_minutes * 60));
+		std::list<Track *> nearby_tracks = this->tracks.find_nearby_tracks_by_time(orig_track, threshold);
 
 		/* Merge them. */
 

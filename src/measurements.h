@@ -694,6 +694,21 @@ namespace SlavGPS {
 
 
 
+	/*
+	  TODO_DEFINITELY_LATER: perhaps Duration_ll data type should
+	  be able to hold negative values. If Duration will be used to
+	  store difference between two Time points, this may be
+	  necessary for Duration_ll to have this property.
+	*/
+	class Duration : public Time {
+	public:
+		Duration() : Time() {}
+		Duration(Time_ll new_value, TimeUnit new_unit) : Time(new_value, new_unit) {}
+	};
+
+
+
+
 	class Measurements {
 	public:
 		static QString get_file_size_string(size_t file_size);

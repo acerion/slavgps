@@ -38,6 +38,7 @@
 #include <QGridLayout>
 #include <QCheckBox>
 #include <QDialog>
+#include <QSpinBox>
 
 
 
@@ -45,6 +46,8 @@
 #include "globals.h"
 #include "ui_util.h"
 #include "vikutils.h"
+#include "measurements.h"
+#include "widget_radio_group.h"
 
 
 
@@ -72,6 +75,8 @@ namespace SlavGPS {
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 
 		static void move_dialog(QDialog * dialog, const ScreenPos & exposed_point, bool move_vertically);
+
+		static bool duration(const QString & title, const QString & label, Duration & duration, QWidget * parent = NULL);
 	};
 
 
@@ -112,6 +117,28 @@ namespace SlavGPS {
 		QVBoxLayout * vbox = NULL;
 		QGridLayout * grid = NULL;
 		QDialogButtonBox * button_box = NULL;
+	};
+
+
+
+
+	class DurationDialog : public QDialog {
+		Q_OBJECT
+	public:
+		DurationDialog() {};
+		DurationDialog(const QString & title, const QString & label, const Duration & duration, QWidget * parent = NULL);
+		~DurationDialog() {};
+
+		sg_ret get_value(Duration & duration);
+
+	private slots:
+		void spin_changed_cb(int unused);
+
+	private:
+		QDialogButtonBox button_box;
+		QSpinBox spinbox;
+		QVBoxLayout * vbox = NULL;
+		RadioGroupWidget * radio_group = NULL;
 	};
 
 

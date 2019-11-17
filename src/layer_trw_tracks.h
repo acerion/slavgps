@@ -148,7 +148,7 @@ namespace SlavGPS {
 		void list_trk_uids(std::list<sg_uid_t> & list);
 
 		std::list<Track *> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
-		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold);
+		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, const Duration & threshold);
 
 		/* Get list of pointers to tracks, sorted by name.  If
 		   @param exclude is not NULL, track specified by

@@ -55,7 +55,6 @@ namespace SlavGPS {
 
 
 	QString a_dialog_new_track(const QString & default_name, bool is_route, QWidget * parent);
-	bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent = NULL);
 	bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const std::vector<VikingScale> & viking_scales, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
 
 
@@ -74,28 +73,6 @@ namespace SlavGPS {
 	private:
 		QComboBox * map_combo = NULL;
 		QComboBox * zoom_combo = NULL;
-	};
-
-
-
-
-	class TimeThresholdDialog : public QDialog {
-		Q_OBJECT
-	public:
-		TimeThresholdDialog() {};
-		TimeThresholdDialog(const QString & title, const QString & label, uint32_t custom_threshold, QWidget * parent = NULL);
-		~TimeThresholdDialog() {};
-
-		void get_value(uint32_t * custom_threshold);
-
-	private slots:
-		void spin_changed_cb(int unused);
-
-	private:
-		QDialogButtonBox button_box;
-		QSpinBox custom_spin;
-		QVBoxLayout * vbox = NULL;
-		RadioGroupWidget * radio_group = NULL;
 	};
 
 

@@ -93,7 +93,7 @@ namespace SlavGPS {
 
 		/* Track/Route-specific properties. */
 		Length,
-		Duration,
+		DurationProp,
 		MinimumSpeed,
 		AverageSpeed,
 		MaximumSpeed,

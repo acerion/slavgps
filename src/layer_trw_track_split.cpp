@@ -30,6 +30,7 @@
 #include "layer_trw_track_internal.h"
 #include "layer_trw.h"
 #include "window.h"
+#include "measurements.h"
 
 
 
@@ -189,26 +190,24 @@ void Track::split_by_timestamp_cb(void)
 		return;
 	}
 
-	uint32_t threshold = 1;
+	Duration threshold(60, Time::get_internal_unit());
 	QWidget * dialog_parent = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 
 	/* Configuration dialog. */
 	{
-		if (!a_dialog_time_threshold(tr("Split Threshold..."), /* TODO: the dialog should accept Time variables and convert them to user units. */
-					     tr("Split when time between trackpoints exceeds:"),
-					     &threshold,
-					     dialog_parent)) {
+		if (false == Dialog::duration(tr("Split Threshold..."),
+					      tr("Split when time between trackpoints exceeds:"),
+					      threshold,
+					      dialog_parent)) {
 			return;
 		}
 
-		if (threshold == 0) {
+		if (threshold.is_zero()) {
 			return;
 		}
 	}
-
-	const Time threshold_seconds = Time(60 * threshold, Time::get_internal_unit());
 
 
 	/* Process of determining ranges of trackpoints for new tracks. */
@@ -236,7 +235,7 @@ void Track::split_by_timestamp_cb(void)
 				return;
 			}
 
-			if (timestamp_delta > threshold_seconds) {
+			if (timestamp_delta > threshold) {
 				prev_timestamp = this_timestamp;
 				split_iters.push_back(TrackPoints::iterator(iter));
 				n++;

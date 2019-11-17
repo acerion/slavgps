@@ -269,7 +269,7 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
  * If the main track is close enough (threshold)
  * to given track, then the given track is added to returned list.
  */
-std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, unsigned int threshold)
+std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, const Duration & threshold)
 {
 	std::list<Track *> result;
 
@@ -308,8 +308,8 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 		const Time diff1 = main_ts_begin - ts_end;
 		const Time diff2 = ts_begin - main_ts_end;
 
-		if (!(std::labs(diff1.get_ll_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
-		      || std::labs(diff2.get_ll_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
+		if (!(std::labs(diff1.get_ll_value()) < threshold.get_ll_value()          /* ts_begin ts_end                 main_ts_begin main_ts_end */
+		      || std::labs(diff2.get_ll_value()) < threshold.get_ll_value())) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
 			continue;
 		}
 

@@ -3254,7 +3254,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 			}
 			break;
 
-		case TreeItemPropertyID::Duration:
+		case TreeItemPropertyID::DurationProp:
 			{
 				const Time trk_duration = this->get_duration();
 				item = new QStandardItem();
@@ -3722,7 +3722,7 @@ void Track::list_dialog(QString const & title, Layer * layer, const QString & ty
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility,    true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,       true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Duration,      true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::DurationProp,  true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);

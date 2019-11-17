@@ -345,6 +345,115 @@ void BasicDialog::set_central_widget_cb(QWidget * widget)
 
 
 
+/**
+   @reviewed-on 2019-11-16
+*/
+bool Dialog::duration(const QString & title, const QString & label, Duration & duration, QWidget * parent)
+{
+	DurationDialog dialog(title, label, duration, parent);
+
+	if (QDialog::Accepted == dialog.exec()) {
+		dialog.get_value(duration);
+		qDebug() << SG_PREFIX_D << "saving user-entered duration" << duration;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+
+
 BasicMessage::~BasicMessage()
 {
+}
+
+
+
+
+DurationDialog::DurationDialog(const QString & title, const QString & label, const Duration & duration, QWidget * a_parent)
+{
+	this->setWindowTitle(title);
+
+
+	this->vbox = new QVBoxLayout();
+
+
+	QLabel main_label(label);
+
+
+	std::vector<SGLabelID> items;
+	items.push_back(SGLabelID(QObject::tr("1 min"), 0));
+	items.push_back(SGLabelID(QObject::tr("1 hour"), 1));
+	items.push_back(SGLabelID(QObject::tr("1 day"), 2));
+	items.push_back(SGLabelID(QObject::tr("Custom (in seconds):"), 3));
+	this->radio_group = new RadioGroupWidget("", &items, NULL); /* This widget will be deleted by its parent Qt layout. */
+
+
+	this->spinbox.setMinimum(1); /* [seconds] */
+	this->spinbox.setMaximum(60 * 60 * 24 * 366); /* [seconds] */
+	this->spinbox.setValue(duration.get_ll_value());
+	this->spinbox.setSingleStep(1);
+
+
+	this->vbox->addWidget(&main_label);
+	this->vbox->addWidget(this->radio_group);
+	this->vbox->addWidget(&this->spinbox);
+	this->vbox->addWidget(&this->button_box);
+
+	QObject::connect(&this->spinbox, SIGNAL (valueChanged(int)), this, SLOT (spin_changed_cb(int)));
+
+	this->button_box.addButton(QDialogButtonBox::Ok);
+	this->button_box.addButton(QDialogButtonBox::Cancel);
+	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox); /* setLayout takes ownership of vbox. */
+}
+
+
+
+
+/**
+   @reviewed on 2019-11-16
+*/
+sg_ret DurationDialog::get_value(Duration & duration)
+{
+	const int selection = this->radio_group->get_id_of_selected();
+
+	/* Values checked in this switch match list of items pushed to
+	   std::vector<SGLabelID> items; above. */
+	switch (selection) {
+	case 0: /* 1 minute. */
+		duration = Duration(60, TimeUnit::Seconds);
+		break;
+	case 1: /* 1 hour. */
+		duration = Duration(60 * 60, TimeUnit::Seconds);
+		break;
+	case 2: /* 1 day. */
+		duration = Duration(60 * 60 * 24, TimeUnit::Seconds);
+		break;
+	case 3: /* Custom value. */
+		duration = Duration((Time_ll) this->spinbox.value(), TimeUnit::Seconds);
+		break;
+	default:
+		duration = Duration();
+		qDebug() << SG_PREFIX_E << "invalid selection value" << selection;
+		return sg_ret::err;
+	}
+
+	qDebug() << SG_PREFIX_I << "Returning duration" << duration;
+	return sg_ret::ok;
+}
+
+
+
+
+void DurationDialog::spin_changed_cb(__attribute__((unused)) int new_value)
+{
+	/* Enable "custom value" checkbox. */
+	this->radio_group->set_id_of_selected(3);
 }
