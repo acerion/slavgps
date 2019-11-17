@@ -193,9 +193,9 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 	}
 
 	const Distance distance = Coord::distance_2(tp1->coord, tp2->coord);
-	const Time time_diff = tp1->timestamp - tp2->timestamp;
+	const Duration duration = Time::get_abs_duration(tp1->timestamp, tp2->timestamp);
 	Speed speed;
-	speed.make_speed(distance, time_diff);
+	speed.make_speed(distance, duration);
 	if (speed < low_speed) {
 		return LayerTRWTrackGraphics::Speed1;
 	} else if (speed > high_speed) {

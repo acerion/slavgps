@@ -1037,7 +1037,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * 
 	draw_time.start();
 
 	if (this->graph_2d->x_domain == GisViewportDomain::TimeDomain) {
-		const Time duration = trk->get_duration(true);
+		const Duration duration = trk->get_duration(true);
 		if (!duration.is_valid()) {
 			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Invalid duration";
 			return sg_ret::err;

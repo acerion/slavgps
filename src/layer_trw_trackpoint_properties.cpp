@@ -269,7 +269,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 			if (prev_point->timestamp == this->current_point->timestamp) {
 				this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
 			} else {
-				const Time duration = Time::get_abs_diff(prev_point->timestamp, this->current_point->timestamp);
+				const Duration duration = Time::get_abs_duration(prev_point->timestamp, this->current_point->timestamp);
 				Speed speed_diff;
 				speed_diff.make_speed(distance_diff, duration);
 				this->diff_speed->setText(speed_diff.convert_to_unit(speed_unit).to_string());

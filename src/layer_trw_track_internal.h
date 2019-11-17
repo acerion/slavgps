@@ -245,8 +245,8 @@ namespace SlavGPS {
 
 		unsigned int merge_segments(void);
 		void reverse(void);
-		Time get_duration(bool include_segments) const;
-		Time get_duration(void) const; /* private. */
+		Duration get_duration(bool include_segments) const;
+		Duration get_duration(void) const; /* private. */
 
 		unsigned long get_dup_point_count(void) const;
 		unsigned long remove_dup_points(void);

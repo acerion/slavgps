@@ -108,6 +108,7 @@ namespace SlavGPS {
 
 
 	class Coord;
+	class Duration;
 
 
 
@@ -254,19 +255,6 @@ namespace SlavGPS {
 		Tll get_ll_value(void) const { return this->m_ll_value; }
 
 
-		static Measurement get_abs_diff(const Measurement & m1, const Measurement & m2)
-		{
-			Measurement result;
-			if (m1.m_unit != m2.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Arguments have different units:" << (int) m1.m_unit << (int) m2.m_unit;
-			} else {
-				result.m_ll_value = std::abs(m1.m_ll_value - m2.m_ll_value);
-				result.m_valid = Measurement::ll_value_is_valid(result.m_ll_value);
-				result.m_unit = m1.m_unit;
-			}
-			return result;
-		}
-
 		/*
 		  Generate string containing only value, without unit
 		  and without magnitude-dependent conversions of
@@ -360,15 +348,15 @@ namespace SlavGPS {
 		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
 		QString strftime_local(const char * format) const;
 		QString strftime_utc(const char * format) const;
-		QString to_duration_string(void) const;
 		QString get_time_string(Qt::DateFormat format) const;
 		QString get_time_string(Qt::DateFormat format, const Coord & coord) const;
 		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
+		static Duration get_abs_duration(const Measurement & later, const Measurement & earlier);
 
 
 		/* Specific to Speed. */
-		sg_ret make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Measurement<TimeUnit, Time_ll> & time);
-		sg_ret make_speed(const Measurement<HeightUnit, Altitude_ll> & distance, const Measurement<TimeUnit, Time_ll> & time);
+		sg_ret make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Duration & duration);
+		sg_ret make_speed(const Measurement<HeightUnit, Altitude_ll> & distance, const Duration & duration);
 
 
 		/* Specific to Angle. */
@@ -704,6 +692,8 @@ namespace SlavGPS {
 	public:
 		Duration() : Time() {}
 		Duration(Time_ll new_value, TimeUnit new_unit) : Time(new_value, new_unit) {}
+
+		QString to_string(void) const;
 	};
 
 

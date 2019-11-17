@@ -220,12 +220,11 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Total Duration. */
-	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(stats.duration.to_duration_string());
+	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(stats.duration.to_string());
 
 
-	/* Average Duration. */
-	const Time average_duration = stats.duration / stats.count;
-	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(average_duration.to_duration_string());
+	const Duration average_duration = Duration(stats.duration.get_ll_value() / stats.count, stats.duration.get_unit()); /* TODO_MAYBE: can we do division more elegantly? */
+	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(average_duration.to_string());
 }
 
 

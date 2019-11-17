@@ -67,6 +67,7 @@ namespace SlavGPS {
 
 		/* These types are more abstract, closer to application domain than to machine language. */
 		Timestamp,
+		Duration, /* Time span. */
 		Latitude,
 		Longitude,
 		AltitudeType
@@ -118,10 +119,12 @@ namespace SlavGPS {
 		SGVariant(const Longitude & lon,      SGVariantType type_id = SGVariantType::Longitude);
 		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::AltitudeType);
 		SGVariant(const Time & timestamp,     SGVariantType type_id = SGVariantType::Timestamp);
+		SGVariant(const Duration & duration,  SGVariantType type_id = SGVariantType::Duration);
 
 		~SGVariant();
 
 		Time get_timestamp(void) const;
+		Duration get_duration(void) const;
 		Latitude get_latitude(void) const;
 		Longitude get_longitude(void) const;
 		Altitude get_altitude(void) const;
@@ -141,7 +144,8 @@ namespace SlavGPS {
 		QColor val_color;
 		QStringList val_string_list;
 	private:
-		Time val_timestamp;  /* SGVariantType::TIMESTAMP */
+		Time val_timestamp;     /* SGVariantType::Timestamp */
+		Duration val_duration;  /* SGVariantType::Duration */
 		Latitude lat;
 		Longitude lon;
 		Altitude altitude;

@@ -144,9 +144,9 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 						/* Work out from previous trackpoint location and time difference. */
 						const Distance distance = Coord::distance_2(tp->coord, tp_prev->coord);
-						const Time time = Time::get_abs_diff(tp->timestamp, tp_prev->timestamp);
+						const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
 						const Speed speed;
-						if (sg_ret::ok == speed_value.make_speed(distance, time)) {
+						if (sg_ret::ok == speed_value.make_speed(distance, duration)) {
 							speed_type = "*"; // Interpolated
 						} else {
 							/* TODO: now what? */
@@ -176,8 +176,8 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 						/* Work out from previous trackpoint altitudes and time difference.
 						   'speed' can be negative if going downhill. */
 						const Altitude altitude = (tp->altitude - tp_prev->altitude);
-						const Time time = Time::get_abs_diff(tp->timestamp, tp_prev->timestamp);
-						if (sg_ret::ok == speed_value.make_speed(altitude, time)) {
+						const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
+						if (sg_ret::ok == speed_value.make_speed(altitude, duration)) {
 							speed_type = "*"; // Interpolated
 						} else {
 							/* TODO: now what? */

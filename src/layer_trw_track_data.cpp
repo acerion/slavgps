@@ -188,7 +188,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 	/* No special handling of segments ATM... */
 
 
-	const Time duration = trk->get_duration();
+	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
@@ -606,7 +606,7 @@ sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::make_track_data_speed_over_tim
 {
 	TrackData result;
 
-	const Time duration = trk->get_duration();
+	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
@@ -697,7 +697,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 	TrackData result;
 
 
-	const Time duration = trk->get_duration();
+	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;

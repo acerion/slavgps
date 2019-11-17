@@ -187,15 +187,16 @@ TimeUnit Time::get_user_unit(void)
 
 
 template<>
-QString Time::to_duration_string(void) const
+QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 {
 	QString result;
-
-	const int seconds = this->m_ll_value % 60;
-	const int minutes = (this->m_ll_value / 60) % 60;
-	const int hours   = (this->m_ll_value / (60 * 60)) % 60;
-
-	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+	if (this->is_valid()) {
+		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
+	} else {
+		result = QObject::tr("No Data");
+	}
+	return result;
 }
 
 
@@ -204,7 +205,7 @@ QString Time::to_duration_string(void) const
 template<>
 QString Time::to_string(void) const
 {
-	return this->to_duration_string();
+	return this->to_timestamp_string();
 }
 
 
@@ -320,28 +321,51 @@ QString Time::strftime_local(const char * format) const
 
 
 template<>
-QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
-{
-	QString result;
-	if (this->is_valid()) {
-		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
-	} else {
-		result = QObject::tr("No Data");
-	}
-	return result;
-}
-
-
-
-
-template<>
 QString Time::get_time_string(Qt::DateFormat format) const
 {
 	QDateTime date_time;
 	date_time.setTime_t(this->m_ll_value);
 	const QString result = date_time.toString(format);
 
+	return result;
+}
+
+
+
+
+
+
+
+
+QString SlavGPS::Duration::to_string(void) const
+{
+	QString result;
+
+	const int seconds = this->m_ll_value % 60;
+	const int minutes = (this->m_ll_value / 60) % 60;
+	const int hours   = (this->m_ll_value / (60 * 60)) % 60;
+
+	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+}
+
+
+
+
+template<>
+Duration Time::get_abs_duration(const Time & later, const Time & earlier)
+{
+	Duration result;
+	if (later.m_unit != earlier.m_unit) {
+		qDebug() << SG_PREFIX_E << "Arguments have different units:" << (int) later.m_unit << (int) earlier.m_unit;
+	} else {
+		if (later.m_ll_value >= earlier.m_ll_value) {
+			result.m_ll_value = later.m_ll_value - earlier.m_ll_value;
+		} else {
+			result.m_ll_value = earlier.m_ll_value - later.m_ll_value;
+		}
+		result.m_valid = Measurement::ll_value_is_valid(result.m_ll_value);
+		result.m_unit = later.m_unit;
+	}
 	return result;
 }
 
@@ -780,18 +804,18 @@ bool Speed::is_zero(void) const
 
 
 template<>
-sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Measurement<TimeUnit, Time_ll> & time)
+sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Duration & duration)
 {
 	if (distance.get_unit() != DistanceUnit::Meters) {
 		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) distance.get_unit();
 		return sg_ret::err;
 	}
-	if (time.get_unit() != TimeUnit::Seconds) {
-		qDebug() << SG_PREFIX_E << "Unhandled time unit" << (int) time.get_unit();
+	if (duration.get_unit() != TimeUnit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) duration.get_unit();
 		return sg_ret::err;
 	}
 
-	this->m_ll_value = distance.get_ll_value() / time.get_ll_value();
+	this->m_ll_value = distance.get_ll_value() / duration.get_ll_value();
 	this->m_unit = SpeedUnit::MetresPerSecond;
 	this->m_valid = Speed::ll_value_is_valid(this->m_ll_value);
 
@@ -802,18 +826,18 @@ sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance
 
 
 template<>
-sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, const Measurement<TimeUnit, Time_ll> & time)
+sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, const Duration & duration)
 {
 	if (altitude.get_unit() != HeightUnit::Metres) {
 		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << (int) altitude.get_unit();
 		return sg_ret::err;
 	}
-	if (time.get_unit() != TimeUnit::Seconds) {
-		qDebug() << SG_PREFIX_E << "Unhandled time unit" << (int) time.get_unit();
+	if (duration.get_unit() != TimeUnit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) duration.get_unit();
 		return sg_ret::err;
 	}
 
-	this->m_ll_value = altitude.get_ll_value() / time.get_ll_value();
+	this->m_ll_value = altitude.get_ll_value() / duration.get_ll_value();
 	this->m_unit = SpeedUnit::MetresPerSecond;
 	this->m_valid = Speed::ll_value_is_valid(this->m_ll_value);
 

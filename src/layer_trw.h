@@ -488,7 +488,7 @@ namespace SlavGPS {
 			Distance length;
 			Time start_time;
 			Time end_time;
-			Time duration;
+			Duration duration;
 		};
 
 		TracksTooltipData get_tracks_tooltip_data(void) const;

@@ -333,11 +333,11 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		row++;
 
 
-		const Time total_duration_s = (ts2 - ts1);
-		const Time segments_duration_s = this->trk->get_duration(false);
-		QString result = tr("%1 total - %2 in segments")
-			.arg(total_duration_s.to_duration_string())
-			.arg(segments_duration_s.to_duration_string());
+		const Duration total_duration_s = Time::get_abs_duration(ts2, ts1);
+		const Duration segments_duration_s = this->trk->get_duration(false);
+		const QString result = tr("%1 total - %2 in segments")
+			.arg(total_duration_s.to_string())
+			.arg(segments_duration_s.to_string());
 		this->w_time_dur = ui_label_new_selectable(result, this);
 		this->grid->addWidget(new QLabel(tr("Duration:")), row, 0);
 		this->grid->addWidget(this->w_time_dur, row, 1);

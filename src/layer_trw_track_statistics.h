@@ -58,7 +58,7 @@ namespace SlavGPS {
 		Speed max_speed;
 		unsigned long trackpoints = 0;
 		unsigned int segments = 0;
-		Time duration;
+		Duration duration;
 		Time start_time;
 		Time end_time;
 		int count = 0;

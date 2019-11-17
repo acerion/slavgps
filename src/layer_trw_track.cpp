@@ -799,12 +799,12 @@ void Track::reverse(void)
  * Returns: The time in seconds.
  * NB this may be negative particularly if the track has been reversed.
  */
-Time Track::get_duration(bool segment_gaps) const
+Duration Track::get_duration(bool segment_gaps) const
 {
-	Time result(0, Time::get_internal_unit());
+	Duration duration(0, Time::get_internal_unit());
 
 	if (this->trackpoints.empty()) {
-		return result;
+		return duration;
 	}
 
 	/* Ensure times are available. */
@@ -814,7 +814,7 @@ Time Track::get_duration(bool segment_gaps) const
 			// Simple duration
 			Trackpoint * tp_last = this->get_tp_last();
 			if (tp_last->timestamp.is_valid()) {
-				result = tp_last->timestamp - this->get_tp_first()->timestamp;
+				duration = Time::get_abs_duration(tp_last->timestamp, this->get_tp_first()->timestamp);
 			}
 		} else {
 			/* Total within segments. */
@@ -823,22 +823,22 @@ Time Track::get_duration(bool segment_gaps) const
 				    && (*std::prev(iter))->timestamp.is_valid()
 				    && !(*iter)->newsegment) {
 
-					result += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+					duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 				}
 			}
 		}
 	}
 
-	return result;
+	return duration;
 }
 
 
 
 
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
-Time Track::get_duration(void) const
+Duration Track::get_duration(void) const
 {
-	Time result(0, Time::get_internal_unit());
+	Duration result(0, Time::get_internal_unit());
 
 	Time ts_begin;
 	Time ts_end;
@@ -847,7 +847,7 @@ Time Track::get_duration(void) const
 		return result;
 	}
 
-	const Time duration = ts_end - ts_begin;
+	const Duration duration = Time::get_abs_duration(ts_end, ts_begin);
 	if (!duration.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Invalid duration";
 		return result;
@@ -874,7 +874,7 @@ Speed Track::get_average_speed(void) const
 	}
 
 	Distance distance(0, Distance::get_internal_unit());
-	Time duration(0, Time::get_internal_unit());
+	Duration duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -883,7 +883,7 @@ Speed Track::get_average_speed(void) const
 		    && !(*iter)->newsegment) {
 
 			distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 		}
 	}
 
@@ -916,7 +916,7 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 	}
 
 	Distance distance(0, Distance::get_internal_unit());
-	Time duration(0, Time::get_internal_unit());
+	Duration duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
@@ -926,7 +926,7 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 			const Time time_diff = (*iter)->timestamp - (*std::prev(iter))->timestamp;
 			if (time_diff.get_ll_value() < track_min_stop_length_seconds) {
 				distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-				duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+				duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			}
 		}
 	}
@@ -957,9 +957,9 @@ sg_ret Track::calculate_max_speed(void)
 		    && !(*iter)->newsegment) {
 
 			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			const Time time = Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			const Duration duration = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			Speed speed;
-			speed.make_speed(distance, time);
+			speed.make_speed(distance, duration);
 
 			if (speed.is_valid() && speed > maxspeed) {
 				maxspeed = speed;
@@ -1134,9 +1134,9 @@ Trackpoint * Track::get_tp_by_max_speed() const
 		    && !(*iter)->newsegment) {
 
 			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			const Time time = Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			const Duration duration = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 
-			if (sg_ret::ok != speed.make_speed(distance, time)) {
+			if (sg_ret::ok != speed.make_speed(distance, duration)) {
 				continue;
 			}
 
@@ -2474,9 +2474,9 @@ QString Track::get_tooltip(void) const
 	if (!this->empty() && this->get_tp_first()->timestamp.is_valid()) {
 		/* %x     The preferred date representation for the current locale without the time. */
 		timestamp_string = this->get_tp_first()->timestamp.strftime_utc("%x: ");
-		const Time duration = this->get_duration(true);
+		const Duration duration = this->get_duration(true);
 		if (duration.is_valid() && duration.is_positive()) {
-			duration_string = QObject::tr("- %1").arg(duration.to_duration_string());
+			duration_string = QObject::tr("- %1").arg(duration.to_string());
 		}
 	}
 
@@ -3256,7 +3256,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 
 		case TreeItemPropertyID::DurationProp:
 			{
-				const Time trk_duration = this->get_duration();
+				const Duration trk_duration = this->get_duration();
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
 				variant = QVariant::fromValue(trk_duration.get_ll_value());

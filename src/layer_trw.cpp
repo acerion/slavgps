@@ -1437,7 +1437,7 @@ QString LayerTRW::get_tooltip(void) const
 
 		if (ttd.duration.is_valid() && !ttd.duration.is_zero()) {
 			result += QObject::tr("\n"
-					      "Tracks total duration: %1").arg(ttd.duration.to_duration_string());
+					      "Tracks total duration: %1").arg(ttd.duration.to_string());
 		}
 		if (ttd.length.is_valid() && !ttd.length.is_zero()) {
 			result += QObject::tr("\n"
@@ -4091,6 +4091,6 @@ LayerTRW::TracksTooltipData::TracksTooltipData()
 {
 	/* Track uses internal distance and time units, so this also uses internal unit. */
 	this->length = Distance(0, Distance::get_internal_unit());
-	this->duration = Time(0, Time::get_internal_unit());
+	this->duration = Duration(0, Time::get_internal_unit());
 
 }

@@ -91,6 +91,9 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::Timestamp:
 		this->val_timestamp.set_timestamp_from_string(str);
 		break;
+	case SGVariantType::Duration:
+		this->val_duration.set_timestamp_from_string(str); /* TODO: we probably want to have "set duration from string" method here. */
+		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
 		break;
@@ -137,6 +140,9 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		break;
 	case SGVariantType::Timestamp:
 		this->val_timestamp.set_timestamp_from_string(str);
+		break;
+	case SGVariantType::Duration:
+		this->val_duration.set_timestamp_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
@@ -292,6 +298,16 @@ SGVariant::SGVariant(const Time & timestamp, SGVariantType type_id_)
 
 
 
+SGVariant::SGVariant(const Duration & duration, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Duration);
+	this->type_id = type_id_;
+	this->val_duration = duration;
+}
+
+
+
+
 SGVariant::~SGVariant()
 {
 }
@@ -349,6 +365,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::Timestamp:
 		debug << value.get_timestamp();
 		break;
+	case SGVariantType::Duration:
+		debug << value.get_duration();
+		break;
 	case SGVariantType::Latitude:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_latitude().to_string();
@@ -404,6 +423,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 		break;
 	case SGVariantType::Timestamp:
 		debug << "Timestamp";
+		break;
+	case SGVariantType::Duration:
+		debug << "Duration";
 		break;
 	case SGVariantType::Latitude:
 		debug << "Latitude";
@@ -463,6 +485,9 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 	case SGVariantType::Timestamp:
 		this->val_timestamp = other.val_timestamp;
 		break;
+	case SGVariantType::Duration:
+		this->val_duration = other.val_duration;
+		break;
 	case SGVariantType::Latitude:
 		this->lat = other.lat;
 		break;
@@ -486,6 +511,14 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 Time SGVariant::get_timestamp(void) const
 {
 	return this->val_timestamp;
+}
+
+
+
+
+Duration SGVariant::get_duration(void) const
+{
+	return this->val_duration;
 }
 
 
@@ -550,6 +583,9 @@ QString SGVariant::to_string() const
 
 	case SGVariantType::Timestamp:
 		return QString("%1").arg(this->get_timestamp().to_timestamp_string());
+
+	case SGVariantType::Duration:
+		return QString("%1").arg(this->get_duration().to_string());
 
 	case SGVariantType::Latitude:
 		return this->lat.to_string();
