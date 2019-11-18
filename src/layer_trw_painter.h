@@ -164,7 +164,7 @@ namespace SlavGPS {
 		bool draw_track_lines;
 
 		bool draw_track_stops;
-		int track_min_stop_length; /* Keeping this as int, not as time_t, because it's used in parameters table with type SGVariantType::Int. */
+		Duration track_min_stop_duration;
 
 		int track_thickness;
 		int track_bg_thickness; /* Thickness of a line drawn in background of main line representing track. */

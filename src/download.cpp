@@ -197,7 +197,7 @@ static std::mutex dem_files_mutex;
 
 /* Spin button scale. */
 /* FIXME: value of age is stored internally as seconds and as such is presented to user. Make the presentation more user-friendly. */
-static ParameterScale<int> scale_age(1, 365, SGVariant((int32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400), SGVariantType::Int), 1, 0); /* download_tile_age; hardcoded default value in days. */
+static ParameterScale<Time_ll> scale_age(1, 365, SGVariant(Duration((VIK_CONFIG_DEFAULT_TILE_AGE / 86400), Time::get_internal_unit())), 1, 0); /* download_tile_age; hardcoded default value in days. */ // KKAMIL
 
 
 
@@ -222,7 +222,7 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age (days):"), WidgetType::SpinBoxInt, &scale_age, NULL, "" },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Duration, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age (days):"), WidgetType::Duration, &scale_age, NULL, "" }, // KKAMIL
 };
 
 

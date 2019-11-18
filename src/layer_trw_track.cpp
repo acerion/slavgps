@@ -907,7 +907,7 @@ Speed Track::get_average_speed(void) const
  *
  * Suggest to use 60 seconds as the stop length (as the default used in the TrackWaypoint draw stops factor).
  */
-Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
+Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) const
 {
 	Speed result; /* Invalid by default. */
 
@@ -923,8 +923,8 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			const Time time_diff = (*iter)->timestamp - (*std::prev(iter))->timestamp;
-			if (time_diff.get_ll_value() < track_min_stop_length_seconds) {
+			const Duration timestamp_diff = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			if (timestamp_diff < track_min_stop_duration) {
 				distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
 				duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			}

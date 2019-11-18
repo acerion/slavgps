@@ -259,7 +259,7 @@ namespace SlavGPS {
 		const Speed & get_max_speed(void) const;
 
 		Speed get_average_speed(void) const;
-		Speed get_average_speed_moving(int track_min_stop_length_seconds) const;
+		Speed get_average_speed_moving(const Duration & track_min_stop_duration) const;
 
 		void change_coord_mode(CoordMode dest_mode);
 

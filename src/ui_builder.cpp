@@ -139,6 +139,9 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 	case WidgetType::DateTime:
 		result = "DateTime";
 		break;
+	case WidgetType::Duration:
+		result = "Duration";
+		break;
 	case WidgetType::Latitude:
 		result = "Latitude";
 		break;
@@ -528,6 +531,22 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		widget = new SGDateTimeButton(param_value.get_timestamp(), this);
 		break;
 
+	case WidgetType::Duration:
+		assert (param_spec.type_id == SGVariantType::Duration);
+		if (param_spec.type_id == SGVariantType::Duration && param_spec.widget_data) {
+			const Duration init_val = param_value.get_duration();
+			ParameterScale<Time_ll> * scale = (ParameterScale<Time_ll> *) param_spec.widget_data;
+			QSpinBox * widget_ = new QSpinBox();
+			widget_->setMinimum(scale->min);
+			widget_->setMaximum(scale->max);
+			widget_->setSingleStep(scale->step);
+			widget_->setValue(init_val.get_ll_value());
+			//scale->digits
+
+			widget = widget_;
+		}
+		break;
+
 	case WidgetType::Latitude:
 		assert (param_spec.type_id == SGVariantType::Latitude);
 		if (param_spec.type_id == SGVariantType::Latitude) {
@@ -713,6 +732,14 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::DateTime:
 		rv = SGVariant(((SGDateTimeButton *) widget)->get_value());
+		break;
+
+	case WidgetType::Duration:
+		{
+			QSpinBox * spinbox = (QSpinBox *) widget;
+			const Duration duration((int32_t) spinbox->value(), Time::get_internal_unit());
+			rv = SGVariant(duration);
+		}
 		break;
 
 	case WidgetType::Latitude:

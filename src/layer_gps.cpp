@@ -186,7 +186,7 @@ static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_posit
 static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
 
 /* If user enters 0 then retry is disabled. */
-static ParameterScale<int> gpsd_retry_interval_scale(0, 10000, SGVariant((int32_t) 10, SGVariantType::Int), 10, 0);
+static ParameterScale<Time_ll> gpsd_retry_interval_scale(0,10000, SGVariant(Duration(10, Time::get_internal_unit())), 10, 0); // KKAMIL
 
 /* If user enters 0 then default port number will be used. */
 static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT, SGVariantType::Int), 1, 0);
@@ -240,7 +240,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CheckButton,   NULL,                     sg_variant_true,             QObject::tr("Display information in the statusbar on GPS updates") },
 	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::Entry,         NULL,                     gpsd_host_default,           "" },
 	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::Int,          PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::SpinBoxInt,    &gpsd_port_scale,         NULL,                        "" },
-	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::Int,          PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::SpinBoxInt,    &gpsd_retry_interval_scale, NULL,                      "" },
+	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::Duration,     PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::Duration,      &gpsd_retry_interval_scale, NULL,                      "" }, // KKAMIL
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 	{ NUM_PARAMS,                       "",                          SGVariantType::Empty,        PARAMETER_GROUP_GENERIC,       "",                                               WidgetType::None,          NULL,                     NULL,                        "" }, /* Guard. */

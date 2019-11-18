@@ -84,6 +84,7 @@ namespace SlavGPS {
 		ComboBox,       /* SGVariantType::String or SGVariantType::Enumeration */
 		FileList,
 		DateTime,
+		Duration,       /* SGVariantType::Duration. */
 		Enumeration,
 
 		Latitude,

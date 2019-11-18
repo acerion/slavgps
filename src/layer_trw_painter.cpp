@@ -566,7 +566,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed) {
 		/* The percentage factor away from the average speed
 		   determines transistions between the levels. */
-		Speed average_speed = trk->get_average_speed_moving(this->track_min_stop_length);
+		Speed average_speed = trk->get_average_speed_moving(this->track_min_stop_duration);
 		if (average_speed.is_valid()) {
 			const Speed low_speed = average_speed - (average_speed * (this->track_draw_speed_factor / 100.0));
 			const Speed high_speed = average_speed + (average_speed * (this->track_draw_speed_factor / 100.0));
@@ -630,13 +630,15 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (do_draw_track_stops
 			    && do_draw_trackpoints
 			    && !do_highlight
-			    && std::next(iter) != trk->trackpoints.end()
-			    && (*std::next(iter))->timestamp.m_ll_value - (*iter)->timestamp.m_ll_value > this->track_min_stop_length) {
+			    && std::next(iter) != trk->trackpoints.end()) {
 
-				const int stop_radius = (6 * tp_size) / 2;
-				this->gisview->fill_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen].color(),
-							    curr_pos,
-							    stop_radius, stop_radius);
+				const Duration timestamp_diff = Time::get_abs_duration((*std::next(iter))->timestamp, (*iter)->timestamp);
+				if (timestamp_diff > this->track_min_stop_duration) {
+					const int stop_radius = (6 * tp_size) / 2;
+					this->gisview->fill_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen].color(),
+								    curr_pos,
+								    stop_radius, stop_radius);
+				}
 			}
 
 			if (use_prev_pos && curr_pos == prev_pos) {

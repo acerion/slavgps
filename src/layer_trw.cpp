@@ -176,17 +176,17 @@ static SGVariant wp_symbol_default(void) { return SGVariant(wp_symbol_enum.defau
 #define MAX_ARROW_SIZE 20
 
                                                         /*            min,              max,                     hardcoded default,    step,   digits */
-static ParameterScale<int> scale_track_thickness         (              1,               10,                SGVariant((int32_t) 1, SGVariantType::Int),       1,        0); /* PARAM_TRACK_THICKNESS */
-static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                      SGVariant(30.0),                            1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
-static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64, SGVariantType::Int),       4,        0); /* PARAM_WP_IMAGE_SIZE */
-static ParameterScale<int> scale_wp_image_alpha          (              0,              255,              SGVariant((int32_t) 255, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
-static ParameterScale<int> scale_wp_image_cache_capacity (              5,              500,              SGVariant((int32_t) 300, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
-static ParameterScale<int> scale_track_bg_thickness      (              0,                8,                SGVariant((int32_t) 0, SGVariantType::Int),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
-static ParameterScale<int> scale_wp_marker_size          (              1,               64,                SGVariant((int32_t) 4, SGVariantType::Int),       1,        0); /* PARAM_WP_MARKER_SIZE */
-static ParameterScale<int> scale_track_min_stop_length   (MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60, SGVariantType::Int),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */ /* TODO: this should use type Time or at least Time_ll. */
-static ParameterScale<int> scale_track_elevation_factor  (              1,              100,               SGVariant((int32_t) 30, SGVariantType::Int),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
-static ParameterScale<int> scale_trackpoint_size         ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
-static ParameterScale<int> scale_track_direction_size    ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
+static ParameterScale<int> scale_track_thickness              (              1,               10,                SGVariant((int32_t) 1, SGVariantType::Int),       1,        0); /* PARAM_TRACK_THICKNESS */
+static ParameterScale<int> scale_track_draw_speed_factor      (              0,              100,                      SGVariant(30.0),                            1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
+static ParameterScale<int> scale_wp_image_size                (             16,              128,               SGVariant((int32_t) 64, SGVariantType::Int),       4,        0); /* PARAM_WP_IMAGE_SIZE */
+static ParameterScale<int> scale_wp_image_alpha               (              0,              255,              SGVariant((int32_t) 255, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
+static ParameterScale<int> scale_wp_image_cache_capacity      (              5,              500,              SGVariant((int32_t) 300, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
+static ParameterScale<int> scale_track_bg_thickness           (              0,                8,                SGVariant((int32_t) 0, SGVariantType::Int),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
+static ParameterScale<int> scale_wp_marker_size               (              1,               64,                SGVariant((int32_t) 4, SGVariantType::Int),       1,        0); /* PARAM_WP_MARKER_SIZE */
+static ParameterScale<Time_ll> scale_track_min_stop_duration  ( MIN_STOP_LENGTH, MAX_STOP_LENGTH,        SGVariant(Duration(60, Time::get_internal_unit())),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */ // KKAMIL
+static ParameterScale<int> scale_track_elevation_factor       (              1,              100,               SGVariant((int32_t) 30, SGVariantType::Int),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
+static ParameterScale<int> scale_trackpoint_size              ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
+static ParameterScale<int> scale_track_direction_size         ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
 
 
@@ -315,7 +315,7 @@ static ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_DRAW_TRACK_ELEVATION,    "drawelevation",     SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Elevation"),             WidgetType::CheckButton,  NULL,                        sg_variant_false,            "" },
 	{ PARAM_TRACK_ELEVATION_FACTOR,  "elevation_factor",  SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw Elevation Height %:"),         WidgetType::HScale,       &scale_track_elevation_factor, NULL,                      "" },
 	{ PARAM_DRAW_TRACK_STOPS,        "drawstops",         SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Stops:"),                WidgetType::CheckButton,  NULL,                        sg_variant_false,            QObject::tr("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
-	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length (seconds):"),       WidgetType::SpinBoxInt,   &scale_track_min_stop_length,NULL,                        "" },
+	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::Duration,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length (seconds):"),       WidgetType::Duration,     &scale_track_min_stop_duration,NULL,                        "" }, // KKAMIL
 
 	{ PARAM_TRACK_BG_THICKNESS,      "bg_line_thickness", SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Thickness:"),      WidgetType::SpinBoxInt,   &scale_track_bg_thickness,   NULL,                        "" },
 	{ PARAM_TRK_BG_COLOR,            "trackbgcolor",      SGVariantType::Color,        PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Color"),           WidgetType::Color,        NULL,                        trackbgcolor_default,        "" },
@@ -821,8 +821,8 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		}
 		break;
 	case PARAM_TRACK_MIN_STOP_LENGTH:
-		if (data.u.val_int >= scale_track_min_stop_length.min && data.u.val_int <= scale_track_min_stop_length.max) {
-			this->painter->track_min_stop_length = data.u.val_int;
+		if (data.get_duration().get_ll_value() >= scale_track_min_stop_duration.min && data.get_duration().get_ll_value() <= scale_track_min_stop_duration.max) {
+			this->painter->track_min_stop_duration = data.get_duration();
 		}
 		break;
 	case PARAM_TRACK_ELEVATION_FACTOR:
@@ -987,7 +987,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_DRAW_TRACK_ELEVATION:    rv = SGVariant(this->painter->draw_track_elevation);             break;
 	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->painter->track_elevation_factor, trw_layer_param_specs[param_id].type_id); break;
 	case PARAM_DRAW_TRACK_STOPS:        rv = SGVariant(this->painter->draw_track_stops);                 break;
-	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->painter->track_min_stop_length, trw_layer_param_specs[param_id].type_id);  break;
+	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant(this->painter->track_min_stop_duration, trw_layer_param_specs[param_id].type_id);  break;
 	case PARAM_DRAW_TRACK_LINES:        rv = SGVariant(this->painter->draw_track_lines);                 break;
 	case PARAM_DRAW_TRACK_DIRECTIONS:   rv = SGVariant(this->painter->draw_track_directions);            break;
 	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->painter->draw_track_directions_size, trw_layer_param_specs[param_id].type_id); break;
