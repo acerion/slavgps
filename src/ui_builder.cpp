@@ -55,6 +55,7 @@
 #include "widget_slider.h"
 #include "widget_measurement_entry.h"
 #include "widget_lat_lon_entry.h"
+#include "widget_duration.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
 //#include "goto.h"
@@ -536,12 +537,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		if (param_spec.type_id == SGVariantType::Duration && param_spec.widget_data) {
 			const Duration init_val = param_value.get_duration();
 			ParameterScale<Time_ll> * scale = (ParameterScale<Time_ll> *) param_spec.widget_data;
-			QSpinBox * widget_ = new QSpinBox();
-			widget_->setMinimum(scale->min);
-			widget_->setMaximum(scale->max);
-			widget_->setSingleStep(scale->step);
-			widget_->setValue(init_val.get_ll_value());
-			//scale->digits
+			DurationWidget * widget_ = new DurationWidget(*scale);
 
 			widget = widget_;
 		}
@@ -735,11 +731,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::Duration:
-		{
-			QSpinBox * spinbox = (QSpinBox *) widget;
-			const Duration duration((int32_t) spinbox->value(), Time::get_internal_unit());
-			rv = SGVariant(duration);
-		}
+		rv = SGVariant(((DurationWidget *) widget)->get_value());
 		break;
 
 	case WidgetType::Latitude:
