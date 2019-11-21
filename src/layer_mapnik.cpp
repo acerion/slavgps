@@ -129,7 +129,7 @@ static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_defaul
 
 
 static ParameterScale<int> scale_alpha(0,  255, SGVariant(255, SGVariantType::Int), 5, 0);
-static ParameterScale<Time_ll> scale_timeout(0, 1024, SGVariant(Duration(168, Time::get_internal_unit())), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */ // KKAMIL
+static MeasurementScale<Duration, Time_ll, TimeUnit> scale_renderer_timeout(0, 1024, 7 * 24, 12, TimeUnit::Hours, 0);
 static ParameterScale<int> scale_threads(1, 64, SGVariant(1, SGVariantType::Int), 1, 0); /* 64 threads should be enough for anyone... */
 
 
@@ -256,7 +256,7 @@ static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_MAPNIK "plugins_directory",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry,   NULL,           plugins_default,  QObject::tr("You need to restart Viking for a change to this value to be used") },
 	{ 1, PREFERENCES_NAMESPACE_MAPNIK "fonts_directory",                     SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry,   NULL,           fonts_default,    QObject::tr("You need to restart Viking for a change to this value to be used") },
 	{ 2, PREFERENCES_NAMESPACE_MAPNIK "recurse_fonts_directory",             SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton,   NULL,           sg_variant_true,  QObject::tr("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK "rerender_after",                      SGVariantType::Duration,PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::Duration,      &scale_timeout, NULL,             QObject::tr("You need to restart Viking for a change to this value to be used") }, // KKAMIL
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK "rerender_after",                      SGVariantType::Duration,PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::Duration,      &scale_renderer_timeout, NULL,             QObject::tr("You need to restart Viking for a change to this value to be used") }, // KKAMIL
 	/* Changeable any time. */
 	{ 4, PREFERENCES_NAMESPACE_MAPNIK "carto",                               SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileSelector,  NULL,           NULL,             QObject::tr("The program to convert CartoCSS files into Mapnik XML") },
 	{ 5, PREFERENCES_NAMESPACE_MAPNIK "background_max_threads_local_mapnik", SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Threads:"),                  WidgetType::SpinBoxInt,    &scale_threads, NULL,             QObject::tr("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
@@ -289,7 +289,7 @@ void LayerMapnik::init(void)
 	i++;
 	Preferences::register_parameter_instance(prefs[i], SGVariant(true, prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(prefs[i], scale_timeout.initial);
+	Preferences::register_parameter_instance(prefs[i], SGVariant(scale_renderer_timeout.m_initial, prefs[i].type_id));
 	i++;
 	Preferences::register_parameter_instance(prefs[i], SGVariant("carto", prefs[i].type_id));
 	i++;

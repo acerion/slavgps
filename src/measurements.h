@@ -164,6 +164,9 @@ namespace SlavGPS {
 	   accordingly. */
 	enum class TimeUnit {
 		Seconds, /* Default, internal unit. */
+		Minutes,
+		Hours,
+		Days
 	};
 #define SG_MEASUREMENT_INTERNAL_UNIT_TIME TimeUnit::Seconds
 

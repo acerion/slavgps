@@ -183,11 +183,11 @@ static ParameterScale<int> scale_wp_image_alpha               (              0, 
 static ParameterScale<int> scale_wp_image_cache_capacity      (              5,              500,              SGVariant((int32_t) 300, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
 static ParameterScale<int> scale_track_bg_thickness           (              0,                8,                SGVariant((int32_t) 0, SGVariantType::Int),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
 static ParameterScale<int> scale_wp_marker_size               (              1,               64,                SGVariant((int32_t) 4, SGVariantType::Int),       1,        0); /* PARAM_WP_MARKER_SIZE */
-static ParameterScale<Time_ll> scale_track_min_stop_duration  ( MIN_STOP_LENGTH, MAX_STOP_LENGTH,        SGVariant(Duration(60, Time::get_internal_unit())),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */ // KKAMIL
 static ParameterScale<int> scale_track_elevation_factor       (              1,              100,               SGVariant((int32_t) 30, SGVariantType::Int),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
 static ParameterScale<int> scale_trackpoint_size              ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
 static ParameterScale<int> scale_track_direction_size         ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
+static MeasurementScale<Duration, Time_ll, TimeUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, TimeUnit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
 
 
 
@@ -821,7 +821,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		}
 		break;
 	case PARAM_TRACK_MIN_STOP_LENGTH:
-		if (data.get_duration().get_ll_value() >= scale_track_min_stop_duration.min && data.get_duration().get_ll_value() <= scale_track_min_stop_duration.max) {
+		if (data.get_duration() >= scale_track_min_stop_duration.m_min && data.get_duration() <= scale_track_min_stop_duration.m_max) { /* FIXME: m_min and m_max have to be converted to internal units. */
 			this->painter->track_min_stop_duration = data.get_duration();
 		}
 		break;

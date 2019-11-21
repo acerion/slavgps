@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-DurationWidget::DurationWidget(const ParameterScale<Time_ll> & scale, QWidget * parent)
+DurationWidget::DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -53,74 +53,20 @@ DurationWidget::DurationWidget(const ParameterScale<Time_ll> & scale, QWidget * 
 	this->setLayout(this->m_hbox);
 
 
-	/* Always show "seconds" spinbox. */
-	this->m_seconds = new QSpinBox();
-	this->m_seconds->setMinimum(0);
-	this->m_seconds->setMaximum(59);
-	this->m_seconds->setSingleStep(1);
-	this->m_seconds->setValue(0);
-	this->m_seconds->setSuffix(tr("s"));
-	this->m_seconds->setToolTip(tr("Seconds"));
+	this->m_widget = new QSpinBox(parent);
+	this->m_widget->setMinimum(0);
+	this->m_widget->setMaximum(59);
+	this->m_widget->setSingleStep(1);
+	this->m_widget->setValue(0);
+	this->m_widget->setSuffix(tr("s"));
+	this->m_widget->setToolTip(tr("Widget"));
 
-	if (scale.max >= 60) { /* More than 59 seconds, so we need "minutes" spinbox. */
-		this->m_minutes = new QSpinBox();
-		this->m_minutes->setMinimum(0);
-		this->m_minutes->setMaximum(59);
-		this->m_minutes->setSingleStep(1);
-		this->m_minutes->setValue(0);
-		this->m_minutes->setSuffix(tr("m"));
-		this->m_minutes->setToolTip(tr("Minutes"));
-
-		if (scale.max >= 60 * 60) { /* More than 59 minutes and 59 seconds, so we need "hours" spinbox. */
-			this->m_hours = new QSpinBox();
-			this->m_hours->setMinimum(0);
-			this->m_hours->setMaximum(23);
-			this->m_hours->setSingleStep(1);
-			this->m_hours->setValue(0);
-			this->m_hours->setSuffix(tr("h"));
-			this->m_hours->setToolTip(tr("Hours"));
-
-			if (scale.max >= 24 * 60 * 60) { /* More than 23h 59m 59s, so we need "days" spinbox. */
-				this->m_days = new QSpinBox();
-				this->m_days->setMinimum(0);
-				this->m_days->setMaximum(365);
-				this->m_days->setSingleStep(1);
-				this->m_days->setValue(0);
-				this->m_days->setSuffix(tr("d"));
-				this->m_days->setToolTip(tr("Days"));
-			}
-		}
-	}
-
-	if (this->m_days) {
-		this->m_hbox->addWidget(this->m_days);
-	}
-	if (this->m_hours) {
-		if ((24 * 60 * 60) == scale.step) {
-			/* Size of step indicates that only widgets of "higher order" should be manipulated. */
-			this->m_hours->setDisabled(true);
-		}
-		this->m_hbox->addWidget(this->m_hours);
-	}
-	if (this->m_minutes) {
-		if ((60 * 60) == scale.step || (24 * 60 * 60) == scale.step) {
-			/* Size of step indicates that only widgets of "higher order" should be manipulated. */
-			this->m_minutes->setDisabled(true);
-		}
-		this->m_hbox->addWidget(this->m_minutes);
-	}
-	if (this->m_seconds) {
-		if (60 == scale.step || (60 * 60) == scale.step || (24 * 60 * 60) == scale.step) {
-			/* Size of step indicates that only widgets of "higher order" should be manipulated. */
-			this->m_seconds->setDisabled(true);
-		}
-		this->m_hbox->addWidget(this->m_seconds);
-	}
+	this->m_hbox->addWidget(this->m_widget);
 
 
-	/* Ensure the first entry field has focus so we can start
-	   typing straight away. */
-	this->setFocusProxy(this->m_seconds);
+	/* Ensure entry field has focus so we can start typing
+	   straight away. */
+	this->setFocusProxy(this->m_widget);
 
 	this->m_hbox->setContentsMargins(0, 0, 0, 0);
 }

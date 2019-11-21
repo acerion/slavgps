@@ -195,9 +195,8 @@ static std::mutex dem_files_mutex;
 
 
 
-/* Spin button scale. */
-/* FIXME: value of age is stored internally as seconds and as such is presented to user. Make the presentation more user-friendly. */
-static ParameterScale<Time_ll> scale_age(1, 365, SGVariant(Duration((VIK_CONFIG_DEFAULT_TILE_AGE / 86400), Time::get_internal_unit())), 1, 0); /* download_tile_age; hardcoded default value in days. */ // KKAMIL
+/* Spin button's scale. */
+static MeasurementScale<Duration, Time_ll, TimeUnit> scale_download_tile_age(1, 365, 7, 1, TimeUnit::Days, 0);
 
 
 
@@ -222,7 +221,7 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Duration, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age (days):"), WidgetType::Duration, &scale_age, NULL, "" }, // KKAMIL
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Duration, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age:"), WidgetType::Duration, &scale_download_tile_age, NULL, "" }, // KKAMIL
 };
 
 
@@ -231,7 +230,7 @@ static ParameterSpecification prefs[] = {
 void Download::init(void)
 {
 	CurlDownload::init();
-	Preferences::register_parameter_instance(prefs[0], scale_age.initial);
+	Preferences::register_parameter_instance(prefs[0], SGVariant(scale_download_tile_age.m_initial, prefs[0].type_id));
 }
 
 

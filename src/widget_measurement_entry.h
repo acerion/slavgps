@@ -103,12 +103,13 @@ namespace SlavGPS {
 
 	/*
 	  Tm: type of measurement (e.g. Altitude)
+	  Tm_ll: low-level type of measurement (e.g. Altitude_ll)
 	  Tu: type of unit of measurements (e.g. HeightUnit)
 	*/
-	template <class Tm, class Tu>
+	template <class Tm, class Tm_ll, class Tu>
 	class MeasurementEntry_2 {
 	public:
-		MeasurementEntry_2(const Tm & value_iu, const MeasurementScale<Tm> * scale, QWidget * parent = NULL)
+		MeasurementEntry_2(const Tm & value_iu, const MeasurementScale<Tm, Tm_ll, Tu> * scale, QWidget * parent = NULL)
 		{
 			this->meas_widget = new MeasurementEntryWidget_2(parent);
 
@@ -127,8 +128,8 @@ namespace SlavGPS {
 
 			if (scale) {
 				/* Order of calls is important. Use setDecimals() before using setValue(). */
-				qDebug() << "II    Measurement Entry 2: Setting scale: min =" << scale->m_min << "max =" << scale->m_max << "step =" << scale->m_step << "n_digits =" << scale->m_n_digits;
-				this->meas_widget->spin->setDecimals(scale->m_n_digits);
+				qDebug() << "II    Measurement Entry 2: Setting scale: min =" << scale->m_min << "max =" << scale->m_max << "step =" << scale->m_step << "precision =" << scale->m_precision;
+				this->meas_widget->spin->setDecimals(scale->m_precision);
 				this->meas_widget->spin->setMinimum(scale->m_min.get_ll_value());
 				this->meas_widget->spin->setMaximum(scale->m_max.get_ll_value());
 				this->meas_widget->spin->setSingleStep(scale->m_step.get_ll_value());

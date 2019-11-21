@@ -145,9 +145,9 @@ namespace SlavGPS {
 	class ParameterScale {
 	public:
 		ParameterScale(const T & new_min, const T & new_max, const SGVariant & new_initial, const T & new_step, int new_n_digits) :
-			min(new_min), max(new_max), initial(new_initial), step(new_step), n_digits(new_n_digits) {};
+			min(new_min), max(new_max), initial(new_initial), step(new_step), n_digits(new_n_digits) {}
 
-		bool is_in_range(const T & value) const { return (value >= this->min && value <= this->max); };
+		bool is_in_range(const T & value) const { return (value >= this->min && value <= this->max); }
 
 		T min;
 		T max;
@@ -160,13 +160,16 @@ namespace SlavGPS {
 
 
 
-	template <class T>
+	template <class T, typename T_ll, typename Tu>
 	class MeasurementScale {
 	public:
-		MeasurementScale(const T & min, const T & max, const T & initial, const T & step, int n_digits) :
-			m_min(min), m_max(max), m_initial(initial), m_step(step), m_n_digits(n_digits) {};
+		MeasurementScale(const T & min, const T & max, const T & initial, const T & step, int precision) :
+			m_min(min), m_max(max), m_initial(initial), m_step(step), m_precision(precision) {}
 
-		bool is_in_range(const T & value) const { return (value >= this->m_min && value <= this->m_max); };
+		MeasurementScale(T_ll min, T_ll max, T_ll initial, T_ll step, Tu unit, int precision) :
+			m_min(min, unit), m_max(max, unit), m_initial(initial, unit), m_step(step, unit), m_precision(precision) {}
+
+		bool is_in_range(const T & value) const { return (value >= this->m_min && value <= this->m_max); }
 
 		T m_min;
 		T m_max;
@@ -174,7 +177,7 @@ namespace SlavGPS {
 		T m_initial;
 		T m_step;
 
-		int m_n_digits;
+		int m_precision; /* When T_ll is equivalent of float, how many digits after comma to use? */
 	};
 
 

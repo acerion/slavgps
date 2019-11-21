@@ -186,7 +186,7 @@ static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_posit
 static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
 
 /* If user enters 0 then retry is disabled. */
-static ParameterScale<Time_ll> gpsd_retry_interval_scale(0,10000, SGVariant(Duration(10, Time::get_internal_unit())), 10, 0); // KKAMIL
+static MeasurementScale<Duration, Time_ll, TimeUnit> gpsd_retry_interval_scale(0, 10000, 10, 10, TimeUnit::Seconds, 0);
 
 /* If user enters 0 then default port number will be used. */
 static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT, SGVariantType::Int), 1, 0);

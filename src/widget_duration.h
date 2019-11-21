@@ -36,6 +36,7 @@
 
 #include "ui_builder.h"
 #include "measurements.h"
+#include "widget_measurement_entry.h"
 
 
 
@@ -49,7 +50,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 
-		DurationWidget(const ParameterScale<Time_ll> & scale, QWidget * parent = NULL);
+		DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent = NULL);
 		~DurationWidget() {};
 
 		sg_ret set_value(const Duration & duration);
@@ -62,11 +63,7 @@ namespace SlavGPS {
 
 	private:
 		QHBoxLayout * m_hbox = nullptr;
-
-		QSpinBox * m_days = nullptr;
-		QSpinBox * m_hours = nullptr;
-		QSpinBox * m_minutes = nullptr;
-		QSpinBox * m_seconds = nullptr;
+		QSpinBox * m_widget = nullptr;
 	};
 
 
