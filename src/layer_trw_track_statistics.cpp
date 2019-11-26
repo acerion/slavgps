@@ -58,7 +58,7 @@ TrackStatistics::TrackStatistics()
 
 	this->max_speed = Speed(0, Speed::get_internal_unit());
 
-	this->duration = Duration(0, Time::get_internal_unit());
+	this->duration = Duration(0, Duration::get_internal_unit());
 	this->start_time = Time(0, Time::get_internal_unit());
 	this->end_time = Time(0, Time::get_internal_unit());
 }

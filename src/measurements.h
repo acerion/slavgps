@@ -108,7 +108,6 @@ namespace SlavGPS {
 
 
 	class Coord;
-	class Duration;
 
 
 
@@ -164,11 +163,19 @@ namespace SlavGPS {
 	   accordingly. */
 	enum class TimeUnit {
 		Seconds, /* Default, internal unit. */
+	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_TIME TimeUnit::Seconds
+
+
+
+
+	enum class DurationUnit {
+		Seconds, /* Default, internal unit. */
 		Minutes,
 		Hours,
 		Days
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_TIME TimeUnit::Seconds
+#define SG_MEASUREMENT_INTERNAL_UNIT_DURATION DurationUnit::Seconds
 
 
 
@@ -195,11 +202,18 @@ namespace SlavGPS {
 
 	/* Low-level types corresponding to measurement classes. */
 	typedef time_t Time_ll;
+	typedef long int Duration_ll; /* Signed int allows negative durations. Maybe I will regret it later ;) */
 	typedef double Distance_ll;
 	typedef double Angle_ll;
 	typedef double Altitude_ll;
 	typedef double Speed_ll;
 	typedef double Gradient_ll;
+
+
+
+	template <typename Tu, typename Tll>
+	class Measurement;
+	typedef Measurement<DurationUnit, Duration_ll> Duration;
 
 
 
@@ -341,6 +355,17 @@ namespace SlavGPS {
 		*/
 		sg_ret set_timestamp_from_char_string(const char * str);
 		sg_ret set_timestamp_from_string(const QString & str);
+
+
+		/*
+		  Set value from a string that contains value only
+		  (does not contain any token representing unit).
+		  Assign default internal value to to measurement.
+
+		  To be used only with Time class.
+		*/
+		sg_ret set_duration_from_char_string(const char * str);
+		sg_ret set_duration_from_string(const QString & str);
 
 
 
@@ -679,27 +704,9 @@ namespace SlavGPS {
 	typedef Measurement<SpeedUnit, Speed_ll> Speed;
 	typedef Measurement<GradientUnit, Gradient_ll> Gradient;
 	typedef Measurement<TimeUnit, Time_ll> Time;
+	typedef Measurement<DurationUnit, Duration_ll> Duration;
 	typedef Measurement<AngleUnit, Angle_ll> Angle;
 	typedef Measurement<DistanceUnit, Distance_ll> Distance;
-
-
-
-
-	/*
-	  TODO_DEFINITELY_LATER: perhaps Duration_ll data type should
-	  be able to hold negative values. If Duration will be used to
-	  store difference between two Time points, this may be
-	  necessary for Duration_ll to have this property.
-	*/
-	class Duration : public Time {
-	public:
-		Duration() : Time() {}
-		Duration(Time_ll new_value, TimeUnit new_unit) : Time(new_value, new_unit) {}
-
-		QString to_string(void) const;
-		static Time_ll convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to);
-		Duration convert_to_unit(TimeUnit target_unit) const;
-	};
 
 
 

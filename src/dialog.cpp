@@ -428,16 +428,16 @@ sg_ret DurationDialog::get_value(Duration & duration)
 	   std::vector<SGLabelID> items; above. */
 	switch (selection) {
 	case 0: /* 1 minute. */
-		duration = Duration(60, TimeUnit::Seconds);
+		duration = Duration(60, DurationUnit::Seconds);
 		break;
 	case 1: /* 1 hour. */
-		duration = Duration(60 * 60, TimeUnit::Seconds);
+		duration = Duration(60 * 60, DurationUnit::Seconds);
 		break;
 	case 2: /* 1 day. */
-		duration = Duration(60 * 60 * 24, TimeUnit::Seconds);
+		duration = Duration(60 * 60 * 24, DurationUnit::Seconds);
 		break;
 	case 3: /* Custom value. */
-		duration = Duration((Time_ll) this->spinbox.value(), TimeUnit::Seconds);
+		duration = Duration((Time_ll) this->spinbox.value(), DurationUnit::Seconds);
 		break;
 	default:
 		duration = Duration();

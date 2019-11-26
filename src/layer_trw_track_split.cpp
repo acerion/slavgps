@@ -190,7 +190,7 @@ void Track::split_by_timestamp_cb(void)
 		return;
 	}
 
-	Duration threshold(60, Time::get_internal_unit());
+	Duration threshold(60, DurationUnit::Seconds);
 	QWidget * dialog_parent = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
@@ -224,7 +224,7 @@ void Track::split_by_timestamp_cb(void)
 
 		for (; iter != this->trackpoints.end(); iter++) {
 			const Time this_timestamp = (*iter)->timestamp;
-			const Time timestamp_delta = this_timestamp - prev_timestamp;
+			const Duration timestamp_delta = Time::get_abs_duration(this_timestamp, prev_timestamp);
 
 			/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
 

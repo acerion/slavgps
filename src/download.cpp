@@ -196,7 +196,7 @@ static std::mutex dem_files_mutex;
 
 
 /* Spin button's scale. */
-static MeasurementScale<Duration, Time_ll, TimeUnit> scale_download_tile_age(1, 365, 7, 1, TimeUnit::Days, 0);
+static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_download_tile_age(1, 365, 7, 1, DurationUnit::Days, 0);
 
 
 
@@ -221,7 +221,7 @@ static SGVariant convert_to_internal(SGVariant value)
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Duration, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age:"), WidgetType::Duration, &scale_download_tile_age, NULL, "" }, // KKAMIL
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::DurationType, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age:"), WidgetType::DurationType, &scale_download_tile_age, NULL, "" }, // KKAMIL
 };
 
 
@@ -544,7 +544,7 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 			return DownloadStatus::DownloadNotRequired;
 		}
 
-		Time_ll tile_age = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").get_duration().convert_to_unit(TimeUnit::Seconds).get_ll_value();
+		Duration_ll tile_age = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").get_duration().convert_to_unit(DurationUnit::Seconds).get_ll_value();
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);

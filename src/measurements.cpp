@@ -254,7 +254,7 @@ sg_ret Time::set_timestamp_from_char_string(const char * str)
 		this->m_valid = false;
 		return sg_ret::err_arg;
 	} else {
-		return this->set_value_from_string(QString(str));
+		return this->set_timestamp_from_string(QString(str));
 	}
 }
 
@@ -337,7 +337,8 @@ QString Time::get_time_string(Qt::DateFormat format) const
 
 
 
-QString SlavGPS::Duration::to_string(void) const
+template<>
+QString Duration::to_string(void) const
 {
 	QString result;
 
@@ -351,27 +352,88 @@ QString SlavGPS::Duration::to_string(void) const
 
 
 
-Time_ll Duration::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
+template<>
+sg_ret Duration::set_duration_from_string(const QString & str)
 {
-	Time_ll result = 0; /* TODO_LATER: this should be some form of NAN. */
+	this->m_ll_value = str.toLong(&this->m_valid); /* Duration_ll is signed. */
+
+	if (!this->m_valid) {
+		qDebug() << SG_PREFIX_W << "Setting invalid value of duration from string" << str;
+	}
+
+	return this->m_valid ? sg_ret::ok : sg_ret::err;
+}
+
+
+
+
+template<>
+sg_ret Duration::set_duration_from_char_string(const char * str)
+{
+	if (NULL == str) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of duation from NULL string";
+		this->m_valid = false;
+		return sg_ret::err_arg;
+	} else {
+		return this->set_duration_from_string(QString(str));
+	}
+}
+
+
+
+
+template<>
+bool Duration::is_zero(void) const
+{
+	if (!this->m_valid) {
+		return true;
+	}
+	return this->m_ll_value == 0;
+}
+
+
+
+
+template<>
+bool Duration::ll_value_is_valid(Time_ll value)
+{
+	return true; /* TODO_LATER: improve for Duration_ll data type. */
+}
+
+
+
+
+template<>
+DurationUnit Duration::get_internal_unit(void)
+{
+	return SG_MEASUREMENT_INTERNAL_UNIT_DURATION;
+}
+
+
+
+
+template<>
+Duration_ll Duration::convert_to_unit(Duration_ll value, DurationUnit from, DurationUnit to)
+{
+	Duration_ll result = 0; /* TODO_LATER: this should be some form of NAN. */
 
 	switch (from) {
-	case TimeUnit::Seconds:
+	case DurationUnit::Seconds:
 		qDebug() << SG_PREFIX_E << "Unhandled case";
 		break;
 
-	case TimeUnit::Minutes:
+	case DurationUnit::Minutes:
 		switch (to) {
-		case TimeUnit::Seconds:
+		case DurationUnit::Seconds:
 			result = 60 * value;
 			break;
-		case TimeUnit::Minutes:
+		case DurationUnit::Minutes:
 			result = value;
 			break;
-		case TimeUnit::Hours:
+		case DurationUnit::Hours:
 			qDebug() << SG_PREFIX_E << "Unhandled case";
 			break;
-		case TimeUnit::Days:
+		case DurationUnit::Days:
 			qDebug() << SG_PREFIX_E << "Unhandled case";
 			break;
 		default:
@@ -380,18 +442,18 @@ Time_ll Duration::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
 		}
 		break;
 
-	case TimeUnit::Hours:
+	case DurationUnit::Hours:
 		switch (to) {
-		case TimeUnit::Seconds:
+		case DurationUnit::Seconds:
 			result = 60 * 60 * value;
 			break;
-		case TimeUnit::Minutes:
+		case DurationUnit::Minutes:
 			result = 60 * value;
 			break;
-		case TimeUnit::Hours:
+		case DurationUnit::Hours:
 			result = value;
 			break;
-		case TimeUnit::Days:
+		case DurationUnit::Days:
 			qDebug() << SG_PREFIX_E << "Unhandled case";
 			break;
 		default:
@@ -400,18 +462,18 @@ Time_ll Duration::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
 		}
 		break;
 
-	case TimeUnit::Days:
+	case DurationUnit::Days:
 		switch (to) {
-		case TimeUnit::Seconds:
+		case DurationUnit::Seconds:
 			result = 24 * 60 * 60 * value;
 			break;
-		case TimeUnit::Minutes:
+		case DurationUnit::Minutes:
 			result = 60 * 60 * value;
 			break;
-		case TimeUnit::Hours:
+		case DurationUnit::Hours:
 			result = 60 * value;
 			break;
-		case TimeUnit::Days:
+		case DurationUnit::Days:
 			result = value;
 			break;
 		default:
@@ -431,7 +493,8 @@ Time_ll Duration::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
 
 
 
-Duration Duration::convert_to_unit(TimeUnit target_unit) const
+template<>
+Duration Duration::convert_to_unit(DurationUnit target_unit) const
 {
 	Duration result;
 	result.m_ll_value = Duration::convert_to_unit(this->m_ll_value, this->get_unit(), target_unit);
@@ -454,13 +517,23 @@ Duration Time::get_abs_duration(const Time & later, const Time & earlier)
 	if (later.m_unit != earlier.m_unit) {
 		qDebug() << SG_PREFIX_E << "Arguments have different units:" << (int) later.m_unit << (int) earlier.m_unit;
 	} else {
+		Duration_ll diff = 0;
 		if (later.m_ll_value >= earlier.m_ll_value) {
-			result.m_ll_value = later.m_ll_value - earlier.m_ll_value;
+			diff = later.m_ll_value - earlier.m_ll_value;
 		} else {
-			result.m_ll_value = earlier.m_ll_value - later.m_ll_value;
+			diff = earlier.m_ll_value - later.m_ll_value;
 		}
-		result.m_valid = Measurement::ll_value_is_valid(result.m_ll_value);
-		result.m_unit = later.m_unit;
+		result.set_ll_value(diff);
+
+		switch (later.m_unit) {
+		case TimeUnit::Seconds:
+			result.set_unit(DurationUnit::Seconds);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unhandled time unit" << (int) later.m_unit;
+			result.invalidate();
+			break;
+		}
 	}
 	return result;
 }
@@ -906,7 +979,7 @@ sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance
 		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) distance.get_unit();
 		return sg_ret::err;
 	}
-	if (duration.get_unit() != TimeUnit::Seconds) {
+	if (duration.get_unit() != DurationUnit::Seconds) {
 		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) duration.get_unit();
 		return sg_ret::err;
 	}
@@ -928,7 +1001,7 @@ sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, 
 		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << (int) altitude.get_unit();
 		return sg_ret::err;
 	}
-	if (duration.get_unit() != TimeUnit::Seconds) {
+	if (duration.get_unit() != DurationUnit::Seconds) {
 		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) duration.get_unit();
 		return sg_ret::err;
 	}

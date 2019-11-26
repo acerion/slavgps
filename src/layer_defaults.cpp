@@ -112,8 +112,8 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		value = SGVariant(variant.value<QColor>());
 		break;
 
-	case SGVariantType::Duration:
-		value = SGVariant(Duration(variant.toULongLong(), Time::get_internal_unit()));
+	case SGVariantType::DurationType:
+		value = SGVariant(Duration(variant.toULongLong(), Duration::get_internal_unit()));
 		break;
 
 	case SGVariantType::Latitude:
@@ -167,7 +167,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 	case SGVariantType::Color:
 		variant = value.val_color;
 		break;
-	case SGVariantType::Duration:
+	case SGVariantType::DurationType:
 		variant = QVariant((qulonglong) value.get_duration().get_ll_value());
 		break;
 	case SGVariantType::Latitude:

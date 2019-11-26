@@ -140,7 +140,7 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 	case WidgetType::DateTime:
 		result = "DateTime";
 		break;
-	case WidgetType::Duration:
+	case WidgetType::DurationType:
 		result = "Duration";
 		break;
 	case WidgetType::Latitude:
@@ -532,11 +532,11 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		widget = new SGDateTimeButton(param_value.get_timestamp(), this);
 		break;
 
-	case WidgetType::Duration:
-		assert (param_spec.type_id == SGVariantType::Duration);
-		if (param_spec.type_id == SGVariantType::Duration && param_spec.widget_data) {
+	case WidgetType::DurationType:
+		assert (param_spec.type_id == SGVariantType::DurationType);
+		if (param_spec.type_id == SGVariantType::DurationType && param_spec.widget_data) {
 			const Duration init_val = param_value.get_duration();
-			MeasurementScale<Duration, Time_ll, TimeUnit> * scale = (MeasurementScale<Duration, Time_ll, TimeUnit> *) param_spec.widget_data;
+			MeasurementScale<Duration, Duration_ll, DurationUnit> * scale = (MeasurementScale<Duration, Duration_ll, DurationUnit> *) param_spec.widget_data;
 			DurationWidget * widget_ = new DurationWidget(*scale);
 
 			widget = widget_;
@@ -730,7 +730,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = SGVariant(((SGDateTimeButton *) widget)->get_value());
 		break;
 
-	case WidgetType::Duration:
+	case WidgetType::DurationType:
 		rv = SGVariant(((DurationWidget *) widget)->get_value());
 		break;
 

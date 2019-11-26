@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-void DurationWidget::build_widget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent)
+void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, DurationUnit> & scale, QWidget * parent)
 {
 	this->m_hbox = new QHBoxLayout();
 
@@ -57,19 +57,19 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Time_ll, Time
 	this->m_widget->setSingleStep(scale.m_step.get_ll_value());
 	this->m_widget->setValue(scale.m_initial.get_ll_value());
 	switch (scale.m_unit) {
-	case TimeUnit::Seconds:
+	case DurationUnit::Seconds:
 		this->m_widget->setSuffix(tr("s"));
 		this->m_widget->setToolTip(tr("Duration in seconds"));
 		break;
-	case TimeUnit::Minutes:
+	case DurationUnit::Minutes:
 		this->m_widget->setSuffix(tr("m"));
 		this->m_widget->setToolTip(tr("Duration in minutes"));
 		break;
-	case TimeUnit::Hours:
+	case DurationUnit::Hours:
 		this->m_widget->setSuffix(tr("h"));
 		this->m_widget->setToolTip(tr("Duration in hours"));
 		break;
-	case TimeUnit::Days:
+	case DurationUnit::Days:
 		this->m_widget->setSuffix(tr("d"));
 		this->m_widget->setToolTip(tr("Duration in days"));
 		break;

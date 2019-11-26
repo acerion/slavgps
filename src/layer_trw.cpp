@@ -187,7 +187,7 @@ static ParameterScale<int> scale_track_elevation_factor       (              1, 
 static ParameterScale<int> scale_trackpoint_size              ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
 static ParameterScale<int> scale_track_direction_size         ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
-static MeasurementScale<Duration, Time_ll, TimeUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, TimeUnit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
+static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, DurationUnit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
 
 
 
@@ -315,7 +315,7 @@ static ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_DRAW_TRACK_ELEVATION,    "drawelevation",     SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Elevation"),             WidgetType::CheckButton,  NULL,                        sg_variant_false,            "" },
 	{ PARAM_TRACK_ELEVATION_FACTOR,  "elevation_factor",  SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw Elevation Height %:"),         WidgetType::HScale,       &scale_track_elevation_factor, NULL,                      "" },
 	{ PARAM_DRAW_TRACK_STOPS,        "drawstops",         SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Stops:"),                WidgetType::CheckButton,  NULL,                        sg_variant_false,            QObject::tr("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
-	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::Duration,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length:"),                 WidgetType::Duration,     &scale_track_min_stop_duration,NULL,                        "" }, // KKAMIL
+	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::DurationType, PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length:"),                 WidgetType::DurationType, &scale_track_min_stop_duration,NULL,                        "" }, // KKAMIL
 
 	{ PARAM_TRACK_BG_THICKNESS,      "bg_line_thickness", SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Thickness:"),      WidgetType::SpinBoxInt,   &scale_track_bg_thickness,   NULL,                        "" },
 	{ PARAM_TRK_BG_COLOR,            "trackbgcolor",      SGVariantType::Color,        PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Color"),           WidgetType::Color,        NULL,                        trackbgcolor_default,        "" },
@@ -1400,7 +1400,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 			/* Keep track of total time.
 			   There maybe gaps within a track (eg segments)
 			   but this should be generally good enough for a simple indicator. */
-			result.duration += (ts_last - ts_first);
+			result.duration += Time::get_abs_duration(ts_last, ts_first);
 		}
 	}
 
@@ -2953,7 +2953,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	Duration threshold(60, TimeUnit::Seconds);
+	Duration threshold(60, DurationUnit::Seconds);
 	if (false == Dialog::duration(tr("Merge Threshold..."),
 				      tr("Merge when time between tracks is less than:"),
 				      threshold,
@@ -4091,6 +4091,6 @@ LayerTRW::TracksTooltipData::TracksTooltipData()
 {
 	/* Track uses internal distance and time units, so this also uses internal unit. */
 	this->length = Distance(0, Distance::get_internal_unit());
-	this->duration = Duration(0, Time::get_internal_unit());
+	this->duration = Duration(0, Duration::get_internal_unit());
 
 }

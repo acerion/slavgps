@@ -801,7 +801,7 @@ void Track::reverse(void)
  */
 Duration Track::get_duration(bool segment_gaps) const
 {
-	Duration duration(0, Time::get_internal_unit());
+	Duration duration(0, Duration::get_internal_unit());
 
 	if (this->trackpoints.empty()) {
 		return duration;
@@ -838,7 +838,7 @@ Duration Track::get_duration(bool segment_gaps) const
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
 Duration Track::get_duration(void) const
 {
-	Duration result(0, Time::get_internal_unit());
+	Duration result(0, Duration::get_internal_unit());
 
 	Time ts_begin;
 	Time ts_end;
@@ -874,7 +874,7 @@ Speed Track::get_average_speed(void) const
 	}
 
 	Distance distance(0, Distance::get_internal_unit());
-	Duration duration(0, Time::get_internal_unit());
+	Duration duration(0, Duration::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -916,7 +916,7 @@ Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) 
 	}
 
 	Distance distance(0, Distance::get_internal_unit());
-	Duration duration(0, Time::get_internal_unit());
+	Duration duration(0, Duration::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
