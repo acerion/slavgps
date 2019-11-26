@@ -42,10 +42,8 @@ using namespace SlavGPS;
 
 
 
-DurationWidget::DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent)
+void DurationWidget::build_widget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent)
 {
-	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
-
 	this->m_hbox = new QHBoxLayout();
 
 	QLayout * old = this->layout();
@@ -54,12 +52,32 @@ DurationWidget::DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUni
 
 
 	this->m_widget = new QSpinBox(parent);
-	this->m_widget->setMinimum(0);
-	this->m_widget->setMaximum(59);
-	this->m_widget->setSingleStep(1);
-	this->m_widget->setValue(0);
-	this->m_widget->setSuffix(tr("s"));
-	this->m_widget->setToolTip(tr("Widget"));
+	this->m_widget->setMinimum(scale.m_min.get_ll_value());
+	this->m_widget->setMaximum(scale.m_max.get_ll_value());
+	this->m_widget->setSingleStep(scale.m_step.get_ll_value());
+	this->m_widget->setValue(scale.m_initial.get_ll_value());
+	switch (scale.m_unit) {
+	case TimeUnit::Seconds:
+		this->m_widget->setSuffix(tr("s"));
+		this->m_widget->setToolTip(tr("Duration in seconds"));
+		break;
+	case TimeUnit::Minutes:
+		this->m_widget->setSuffix(tr("m"));
+		this->m_widget->setToolTip(tr("Duration in minutes"));
+		break;
+	case TimeUnit::Hours:
+		this->m_widget->setSuffix(tr("h"));
+		this->m_widget->setToolTip(tr("Duration in hours"));
+		break;
+	case TimeUnit::Days:
+		this->m_widget->setSuffix(tr("d"));
+		this->m_widget->setToolTip(tr("Duration in days"));
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) scale.m_unit;
+		break;
+	}
+
 
 	this->m_hbox->addWidget(this->m_widget);
 
@@ -74,19 +92,39 @@ DurationWidget::DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUni
 
 
 
-
+/**
+   @reviewed-on 2019-11-25
+*/
 sg_ret DurationWidget::set_value(const Duration & duration)
 {
+	if (duration.get_unit() != this->m_unit) {
+		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << (int) this->m_unit << ", new unit =" << (int) duration.get_unit();
+		return sg_ret::err;
+	}
+
+	this->m_widget->setValue(duration.get_ll_value());
 	return sg_ret::ok;
 }
 
+
+
+
+/**
+   @reviewed-on 2019-11-25
+*/
 Duration DurationWidget::get_value(void) const
 {
-	Duration result;
-
+	Duration result(this->m_widget->value(), this->m_unit);
 	return result;
 }
 
+
+
+
+/**
+   @reviewed-on 2019-11-25
+*/
 void DurationWidget::clear_widget(void)
 {
+	this->m_widget->clear();
 }

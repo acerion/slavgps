@@ -50,7 +50,11 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 
-		DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent = NULL);
+		DurationWidget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent = NULL) :
+			m_unit(scale.m_unit)
+		{
+			this->build_widget(scale, parent);
+		}
 		~DurationWidget() {};
 
 		sg_ret set_value(const Duration & duration);
@@ -62,8 +66,11 @@ namespace SlavGPS {
 		void clear_widget(void);
 
 	private:
+		void build_widget(const MeasurementScale<Duration, Time_ll, TimeUnit> & scale, QWidget * parent);
+
 		QHBoxLayout * m_hbox = nullptr;
 		QSpinBox * m_widget = nullptr;
+		const TimeUnit m_unit;
 	};
 
 

@@ -351,6 +351,102 @@ QString SlavGPS::Duration::to_string(void) const
 
 
 
+Time_ll Duration::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
+{
+	Time_ll result = 0; /* TODO_LATER: this should be some form of NAN. */
+
+	switch (from) {
+	case TimeUnit::Seconds:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+
+	case TimeUnit::Minutes:
+		switch (to) {
+		case TimeUnit::Seconds:
+			result = 60 * value;
+			break;
+		case TimeUnit::Minutes:
+			result = value;
+			break;
+		case TimeUnit::Hours:
+			qDebug() << SG_PREFIX_E << "Unhandled case";
+			break;
+		case TimeUnit::Days:
+			qDebug() << SG_PREFIX_E << "Unhandled case";
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target duration unit" << (int) to;
+			break;
+		}
+		break;
+
+	case TimeUnit::Hours:
+		switch (to) {
+		case TimeUnit::Seconds:
+			result = 60 * 60 * value;
+			break;
+		case TimeUnit::Minutes:
+			result = 60 * value;
+			break;
+		case TimeUnit::Hours:
+			result = value;
+			break;
+		case TimeUnit::Days:
+			qDebug() << SG_PREFIX_E << "Unhandled case";
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target duration unit" << (int) to;
+			break;
+		}
+		break;
+
+	case TimeUnit::Days:
+		switch (to) {
+		case TimeUnit::Seconds:
+			result = 24 * 60 * 60 * value;
+			break;
+		case TimeUnit::Minutes:
+			result = 60 * 60 * value;
+			break;
+		case TimeUnit::Hours:
+			result = 60 * value;
+			break;
+		case TimeUnit::Days:
+			result = value;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target duration unit" << (int) to;
+			break;
+		}
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid source duration unit" << (int) from;
+		break;
+	}
+
+	return value;
+}
+
+
+
+
+Duration Duration::convert_to_unit(TimeUnit target_unit) const
+{
+	Duration result;
+	result.m_ll_value = Duration::convert_to_unit(this->m_ll_value, this->get_unit(), target_unit);
+	result.m_unit = target_unit;
+	result.m_valid = Duration::ll_value_is_valid(result.m_ll_value);
+	return result;
+}
+
+
+
+
+
+
+
+
 template<>
 Duration Time::get_abs_duration(const Time & later, const Time & earlier)
 {

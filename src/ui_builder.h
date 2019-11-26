@@ -163,11 +163,8 @@ namespace SlavGPS {
 	template <class T, typename T_ll, typename Tu>
 	class MeasurementScale {
 	public:
-		MeasurementScale(const T & min, const T & max, const T & initial, const T & step, int precision) :
-			m_min(min), m_max(max), m_initial(initial), m_step(step), m_precision(precision) {}
-
 		MeasurementScale(T_ll min, T_ll max, T_ll initial, T_ll step, Tu unit, int precision) :
-			m_min(min, unit), m_max(max, unit), m_initial(initial, unit), m_step(step, unit), m_precision(precision) {}
+			m_min(min, unit), m_max(max, unit), m_initial(initial, unit), m_step(step, unit), m_precision(precision), m_unit(unit) {}
 
 		bool is_in_range(const T & value) const { return (value >= this->m_min && value <= this->m_max); }
 
@@ -178,6 +175,8 @@ namespace SlavGPS {
 		T m_step;
 
 		int m_precision; /* When T_ll is equivalent of float, how many digits after comma to use? */
+
+		Tu m_unit;
 	};
 
 

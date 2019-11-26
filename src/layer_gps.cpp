@@ -456,7 +456,7 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->gpsd_port = data.u.val_int == 0 ? SG_GPSD_PORT : data.u.val_int;
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		this->gpsd_retry_interval = data.u.val_int;
+		this->gpsd_retry_interval = data.get_duration();
 		break;
 	case PARAM_REALTIME_REC:
 		this->realtime_record = data.u.val_bool;
@@ -1733,7 +1733,7 @@ bool LayerGPS::rt_ask_retry(void)
 				   "Should Viking keep trying (every %3 seconds)?")
 		.arg(this->gpsd_host)
 		.arg(this->gpsd_port)
-		.arg(this->gpsd_retry_interval);
+		.arg(this->gpsd_retry_interval.get_ll_value());
 
 	const int reply = QMessageBox::question(this->get_window(), tr("GPS Layer"), message);
 	return (reply == QMessageBox::Yes);
@@ -1754,14 +1754,14 @@ bool LayerGPS::rt_gpsd_connect_periodic_retry_cb(void)
 		return true;
 	}
 
-	if (this->gpsd_retry_interval <= 0) {
+	if (this->gpsd_retry_interval.get_ll_value() <= 0) {
 		qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, but interval is zero, not re-trying.";
 		return false;
 	}
 
 	/* Re-start timer. */
-	qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, re-arming timer for" << this->gpsd_retry_interval << "seconds";
-	this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval);
+	qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, re-arming timer for" << this->gpsd_retry_interval.to_string() << "seconds";
+	this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval.get_ll_value());
 
 	return false;
 }
@@ -1852,9 +1852,9 @@ void LayerGPS::rt_start_stop_tracking_cb(void)
 			return;
 		}
 
-		if (this->gpsd_retry_interval <= 0) {
+		if (this->gpsd_retry_interval.get_ll_value() <= 0) {
 			/* Failed to start tracking, and we can't retry. */
-			qDebug() << SG_PREFIX_W << "Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
+			qDebug() << SG_PREFIX_W << "Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval.to_string() << "(which is 0 or negative).";
 			this->realtime_tracking_in_progress = false;
 			this->first_realtime_trackpoint = false;
 			this->tp = NULL;
@@ -1870,7 +1870,7 @@ void LayerGPS::rt_start_stop_tracking_cb(void)
 		}
 
 		/* Try repeatedly in the future, every N seconds. */
-		this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval);
+		this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval.get_ll_value());
 
 		return;
 	}

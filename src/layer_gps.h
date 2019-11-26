@@ -278,7 +278,7 @@ namespace SlavGPS {
 		/* Params. */
 		QString gpsd_host;
 		int gpsd_port = SG_GPSD_PORT;
-		int gpsd_retry_interval = 10; /* The same value as in gpsd_retry_interval_scale. */
+		Duration gpsd_retry_interval = Duration(10, TimeUnit::Seconds); /* The same value as in gpsd_retry_interval_scale. */
 		bool realtime_record = false;
 		bool realtime_jump_to_start = false;
 		VehiclePosition vehicle_position = VehiclePosition::OnScreen; /* Default value is the same as in vehicle_position_enum. */

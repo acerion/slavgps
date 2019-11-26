@@ -544,12 +544,13 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 			return DownloadStatus::DownloadNotRequired;
 		}
 
-		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").u;
+		Time_ll tile_age = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").get_duration().convert_to_unit(TimeUnit::Seconds).get_ll_value();
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);
-		time_t file_time = buf.st_mtime;
-		if ((time(NULL) - file_time) < tile_age) {
+		const time_t now = time(NULL);
+		const time_t file_time = buf.st_mtime;
+		if ((now - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
 			return DownloadStatus::DownloadNotRequired;
 		}

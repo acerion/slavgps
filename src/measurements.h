@@ -665,7 +665,7 @@ namespace SlavGPS {
 
 		Tll m_ll_value = 0;
 
-	private:
+	protected:
 		Tu m_unit = (Tu) 565; /* Invalid unit. */
 		bool m_valid = false;
 	};
@@ -697,6 +697,8 @@ namespace SlavGPS {
 		Duration(Time_ll new_value, TimeUnit new_unit) : Time(new_value, new_unit) {}
 
 		QString to_string(void) const;
+		static Time_ll convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to);
+		Duration convert_to_unit(TimeUnit target_unit) const;
 	};
 
 

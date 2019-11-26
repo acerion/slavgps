@@ -256,7 +256,7 @@ static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_MAPNIK "plugins_directory",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry,   NULL,           plugins_default,  QObject::tr("You need to restart Viking for a change to this value to be used") },
 	{ 1, PREFERENCES_NAMESPACE_MAPNIK "fonts_directory",                     SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry,   NULL,           fonts_default,    QObject::tr("You need to restart Viking for a change to this value to be used") },
 	{ 2, PREFERENCES_NAMESPACE_MAPNIK "recurse_fonts_directory",             SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton,   NULL,           sg_variant_true,  QObject::tr("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK "rerender_after",                      SGVariantType::Duration,PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::Duration,      &scale_renderer_timeout, NULL,             QObject::tr("You need to restart Viking for a change to this value to be used") }, // KKAMIL
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK "rerender_after",                      SGVariantType::Duration,PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout:"),         WidgetType::Duration,      &scale_renderer_timeout, NULL,             QObject::tr("You need to restart Viking for a change to this value to be used") }, // KKAMIL
 	/* Changeable any time. */
 	{ 4, PREFERENCES_NAMESPACE_MAPNIK "carto",                               SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileSelector,  NULL,           NULL,             QObject::tr("The program to convert CartoCSS files into Mapnik XML") },
 	{ 5, PREFERENCES_NAMESPACE_MAPNIK "background_max_threads_local_mapnik", SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Threads:"),                  WidgetType::SpinBoxInt,    &scale_threads, NULL,             QObject::tr("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
@@ -307,8 +307,8 @@ void LayerMapnik::init(void)
 */
 void LayerMapnik::post_init(void)
 {
-	const int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").u.val_int;
-	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
+	const Duration seconds = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").get_duration().convert_to_unit(TimeUnit::Seconds);
+	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * seconds.get_ll_value()).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
 	const QString import_time_full_path = SlavGPSLocations::get_file_full_path("planet-import-complete");
