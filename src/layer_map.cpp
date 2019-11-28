@@ -429,7 +429,7 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
-	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Enumeration);
+	SGVariant var = LayerDefaults::get(LayerType::Map, maps_layer_param_specs[PARAM_MAP_TYPE_ID]);
 	if (!var.is_valid() || var.u.val_int == 0) {
 		var = map_type_default();
 	}

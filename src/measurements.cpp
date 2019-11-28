@@ -337,16 +337,45 @@ QString Time::get_time_string(Qt::DateFormat format) const
 
 
 
+/**
+   @reviewed-on 2019-11-27
+*/
 template<>
 QString Duration::to_string(void) const
 {
 	QString result;
 
-	const int seconds = this->m_ll_value % 60;
-	const int minutes = (this->m_ll_value / 60) % 60;
-	const int hours   = (this->m_ll_value / (60 * 60)) % 60;
+	switch (this->m_unit) {
+	case DurationUnit::Seconds:
+		result = QObject::tr("%1 s").arg(this->m_ll_value);
+		break;
+	case DurationUnit::Minutes:
+		result = QObject::tr("%1 m").arg(this->m_ll_value);
+		break;
+	case DurationUnit::Hours:
+		result = QObject::tr("%1 h").arg(this->m_ll_value);
+		break;
+	case DurationUnit::Days:
+		result = QObject::tr("%1 d").arg(this->m_ll_value);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) this->m_unit;
+		break;
+	}
+	return result;
+}
 
-	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+
+
+
+template<>
+const QString Duration::value_to_string_for_file(int precision) const
+{
+	QString result;
+	if (this->m_valid) {
+		result.setNum(this->m_ll_value);
+	}
+	return result;
 }
 
 

@@ -782,6 +782,10 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			fprintf(file, "#%.2x%.2x%.2x\n", this->val_color.red(), this->val_color.green(), this->val_color.blue());
 			break;
 
+		case SGVariantType::DurationType:
+			fprintf(file, "%s\n", this->get_duration().value_to_string_for_file().toUtf8().constData());
+			break;
+
 		case SGVariantType::Latitude:
 			fprintf(file, "%s\n", this->lat.value_to_string_for_file().toUtf8().constData());
 			break;

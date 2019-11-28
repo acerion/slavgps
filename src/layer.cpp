@@ -181,7 +181,7 @@ void Layer::postconfigure_interfaces(void)
 			/* TODO_2_LATER: make sure that the value read from Layer Defaults is valid.
 			   What if LayerDefaults doesn't contain value for given parameter? */
 			qDebug() << SG_PREFIX_I << "Wwill call LayerDefaults::get() for param" << param_spec->type_id;
-			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
+			param_value = LayerDefaults::get(layer_type, *param_spec);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}
 	}

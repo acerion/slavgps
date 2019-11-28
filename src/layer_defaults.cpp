@@ -60,7 +60,7 @@ bool LayerDefaults::loaded = false;
 
 
 
-SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString & param_name, SGVariantType type_id)
+SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const ParameterSpecification & param_spec)
 {
 	SGVariant value;
 	QString group = Layer::get_type_id_string(layer_type);
@@ -73,7 +73,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 	}
 
 
-	QString key(group + QString("/") + param_name);
+	QString key(group + QString("/") + param_spec.name);
 	QVariant variant = LayerDefaults::keyfile->value(key);
 
 	if (!variant.isValid()) {
@@ -83,7 +83,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		return value; /* Here the value is invalid. */
 	}
 
-	switch (type_id) {
+	switch (param_spec.type_id) {
 	case SGVariantType::Double:
 		value = SGVariant((double) variant.toDouble());
 		break;
@@ -113,7 +113,16 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		break;
 
 	case SGVariantType::DurationType:
-		value = SGVariant(Duration(variant.toULongLong(), Duration::get_internal_unit()));
+		/*
+		  For Duration we don't use program's internal units
+		  but parameter-specific units. Duration parameters
+		  are always in some specific unit, e.g. days or hours
+		  or seconds.
+		*/
+		{
+			MeasurementScale<Duration, Duration_ll, DurationUnit> * scale = (MeasurementScale<Duration, Duration_ll, DurationUnit> *) param_spec.widget_data;
+			value = SGVariant(Duration(variant.toLongLong(), scale->m_unit));
+		}
 		break;
 
 	case SGVariantType::Latitude:
@@ -130,7 +139,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		break;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled value type" << (int) type_id;
+		qDebug() << SG_PREFIX_E << "Unhandled value type" << (int) param_spec.type_id;
 		/* We don't set value using constructor, so the value will be invalid. */
 		break;
 	}
@@ -168,7 +177,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 		variant = value.val_color;
 		break;
 	case SGVariantType::DurationType:
-		variant = QVariant((qulonglong) value.get_duration().get_ll_value());
+		variant = QVariant((qlonglong) value.get_duration().get_ll_value());
 		break;
 	case SGVariantType::Latitude:
 		variant = QVariant(value.get_latitude().get_value());
@@ -213,7 +222,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 		   that the file has full, consistent set of
 		   values. */
 
-		SGVariant value_from_file = LayerDefaults::get_parameter_value(layer_type, param_spec->name, param_spec->type_id);
+		SGVariant value_from_file = LayerDefaults::get_parameter_value(layer_type, *param_spec);
 		if (value_from_file.is_valid()) {
 			/* The parameter has already been read from
 			   config file. No need to set the parameter
@@ -379,9 +388,9 @@ void LayerDefaults::uninit(void)
 
    Call this function to get the default value for the parameter requested.
 */
-SGVariant LayerDefaults::get(LayerType layer_type, const QString & param_name, SGVariantType param_type)
+SGVariant LayerDefaults::get(LayerType layer_type, const ParameterSpecification & param_spec)
 {
-	return LayerDefaults::get_parameter_value(layer_type, param_name, param_type);
+	return LayerDefaults::get_parameter_value(layer_type, param_spec);
 }
 
 
