@@ -364,11 +364,11 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
 
-	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
+		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		return ToolStatus::Ack == helper_move_tp(this, select_tool, ev, select_tool->gisview);
 
 	} else {
@@ -391,11 +391,11 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
 
-	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
+		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		return ToolStatus::Ack == helper_release_tp(this, select_tool, ev, gisview);
 
 	} else {
@@ -454,7 +454,7 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 		qDebug() << SG_PREFIX_I << "No trackpoint clicked";
 		return false;
 	}
-	const bool is_routes = tracks_or_routes.m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES;
+	const bool is_routes = tracks_or_routes.m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER;
 	qDebug() << SG_PREFIX_I << "Clicked trackpoint in" << (is_routes ? "route" : "track") << tp_search.closest_track->name;
 
 
@@ -798,8 +798,8 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 
-		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-		    || selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
+		    || selected_object_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 			/* We are searching for snap coordinates for
 			   trackpoint. Tell search tool to ignore
 			   coordinates of currently selected
@@ -837,7 +837,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	/* Search close waypoint. */
 	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
-		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 			/* We are searching for snap coordinates for
 			   waypoint. Tell search tool to ignore
 			   coordinates of currently selected waypoint,
@@ -1190,9 +1190,9 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		/* FIXME: how to handle a situation, when a route is being created right now? */
 		QString new_name;
 		if (this->is_route_tool) {
-			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE, QObject::tr("Route"));
+			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_ROUTE, QObject::tr("Route"));
 		} else {
-			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK, QObject::tr("Track"));
+			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_TRACK, QObject::tr("Track"));
 		}
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, this->is_route_tool, trw->get_window());

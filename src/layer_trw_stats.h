@@ -39,6 +39,7 @@
 
 
 
+#include "tree_item.h"
 #include "layer_trw_track.h"
 #include "layer_trw_track_statistics.h"
 
@@ -101,7 +102,7 @@ namespace SlavGPS {
 
 		StatsTable * stats_table = NULL;
 		QCheckBox * checkbox = NULL;
-		std::list<Track *> tracks;
+		std::list<TreeItem *> tree_items;
 		Layer * layer = NULL; /* Just a reference. */
 		SGObjectTypeID m_type_id; /* Type of object for which we get/show statistics. */
 

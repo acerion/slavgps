@@ -179,6 +179,10 @@ namespace SlavGPS {
 		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);
 
+		/* Get tree items from this object. For this object
+		   this would be Waypoint tree items. */
+		sg_ret get_tree_items(std::list<TreeItem *> & list) const;
+
 
 		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);

@@ -75,8 +75,8 @@ extern SelectedTreeItems g_selected;
 
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
-	this->m_type_id = SG_OBJ_TYPE_ID_TRW_WAYPOINTS;
-	this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT;
+	this->m_type_id = SG_OBJ_TYPE_ID_TRW_WAYPOINTS_CONTAINER;
+	this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_WAYPOINT;
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
 	this->name = tr("Waypoints");
@@ -237,6 +237,18 @@ void LayerTRWWaypoints::toggle_items_visibility(void)
 		(*iter)->toggle_visible();
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
+}
+
+
+
+
+sg_ret LayerTRWWaypoints::get_tree_items(std::list<TreeItem *> & list) const
+{
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		list.push_back(*iter);
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -1078,7 +1090,7 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 
 bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
 {
-	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		qDebug() << SG_PREFIX_E << "Attempting to move non-waypoint child" << child_tree_item.m_type_id;
 		return false;
 	}

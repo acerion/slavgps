@@ -79,7 +79,7 @@ Waypoint::Waypoint()
 {
 	this->name = tr("Waypoint");
 
-	this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT;
+	this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_WAYPOINT;
 
 	this->has_properties_dialog = true;
 
@@ -1021,15 +1021,10 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 {
 	Window * window = layer->get_window();
 
+	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
 
-	std::list<Waypoint *> tree_items;
-	if (layer->m_kind == LayerKind::TRW) {
-		((LayerTRW *) layer)->get_tree_items(tree_items);
-	} else if (layer->m_kind == LayerKind::Aggregate) {
-		((LayerAggregate *) layer)->get_tree_items(tree_items);
-	} else {
-		assert (0);
-	}
+	std::list<TreeItem *> tree_items;
+	layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_WAYPOINT);
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Waypoints found"), window);
 		return;
@@ -1049,7 +1044,7 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Icon,       true, QObject::tr("Symbol"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
 
 
-	TreeItemListDialogHelper<Waypoint *> dialog_helper;
+	TreeItemListDialogHelper<TreeItem *> dialog_helper;
 	dialog_helper.show_dialog(title, view_format, tree_items, window);
 }
 

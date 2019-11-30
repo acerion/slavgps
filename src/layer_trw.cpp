@@ -697,7 +697,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		return false;
 	}
 
-	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name(item->m_type_id, wp->name);
@@ -713,7 +713,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 			this->emit_tree_item_changed("TRW - paste waypoint");
 		}
 		return true;
-	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 		Track * trk = Track::unmarshall(pickle);
 
 		/* When copying - we'll create a new name based on the original. */
@@ -729,7 +729,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 			this->emit_tree_item_changed("TRW - paste track");
 		}
 		return true;
-	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		Track * trk = Track::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->name);
@@ -1191,17 +1191,17 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 			/* Also remember to (attempt to) convert each
 			   coordinate in case this is pasted into a
 			   different track_drawing_mode. */
-			if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+			if (type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
 				trw->add_track(trk);
 				trk->change_coord_mode(trw->coord_mode);
-			} else if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+			} else if (type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 				Waypoint * wp = Waypoint::unmarshall(pickle);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
 				trw->add_waypoint(wp);
 				wp->convert(trw->coord_mode);
-			} else if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+			} else if (type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets route name, so we don't have to do it here. */
 				trw->add_route(trk);
@@ -1950,18 +1950,18 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	if (sublayer) {
 		/* Upload only specified sublayer, not whole layer. */
 		xfer_all = false;
-		if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+		if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::TRK;
 
-		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::RTE;
 
-		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS) {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 			xfer_type = GPSTransferType::WPT;
 
-		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
 			xfer_type = GPSTransferType::RTE;
 		}
 	} else {
@@ -2041,7 +2041,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK, tr("Track")) ;
+		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_TRACK, tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
 		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_TRACK);
@@ -2078,7 +2078,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE, tr("Route")) ;
+		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_ROUTE, tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
 		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_ROUTE);
@@ -2312,9 +2312,10 @@ void LayerTRW::reset_waypoints()
 */
 QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, const QString & old_name)
 {
-	if (item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+	if (item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 		return this->tracks.new_unique_element_name(old_name);
-	} else if (item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+
+	} else if (item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		return this->waypoints.new_unique_element_name(old_name);
 	} else {
 		return this->routes.new_unique_element_name(old_name);
@@ -2382,13 +2383,13 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 	/* Handle item in old location. */
 	{
-		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 			source_trw->detach_from_container((Track *) tree_item);
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 			source_trw->detach_from_container((Track *) tree_item);
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 			source_trw->detach_from_container((Waypoint *) tree_item);
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
@@ -2407,7 +2408,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 		   here so that the layer can create and attach
 		   Tracks/Routes/Waypoints nodes if necessary. */
 
-		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 
 			this->add_track((Track *) tree_item);
 
@@ -2416,7 +2417,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->tracks.recalculate_bbox();
 			}
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 			this->add_route((Track *) tree_item);
 
 			this->routes.recalculate_bbox();
@@ -2424,7 +2425,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->routes.recalculate_bbox();
 			}
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 			this->add_waypoint((Waypoint *) tree_item);
 
 			this->waypoints.recalculate_bbox();
@@ -2454,9 +2455,9 @@ sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 		return sg_ret::ok;
 	}
 
-	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE
-	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
+	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE
+	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 
 		*result = true;
 		return sg_ret::ok;
@@ -2526,15 +2527,15 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 
 	/* If last sublayer of given type, then remove sublayer container.
 	   TODO: this sometimes doesn't work. */
-	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 		if (this->tracks.size() == 0) {
 			this->tree_view->detach_tree_item(&this->tracks);
 		}
-	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		if (this->routes.size() == 0) {
 			this->tree_view->detach_tree_item(&this->routes);
 		}
-	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		if (this->waypoints.size() == 0) {
 			this->tree_view->detach_tree_item(&this->waypoints);
 		}
@@ -2669,12 +2670,12 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 {
-	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		Waypoint * wp = (Waypoint *) item;
 		this->delete_waypoint(wp, confirm);
 
-	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-		   || item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
+		   || item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		Track * trk = (Track *) item;
 		this->delete_track(trk, confirm);
 	} else {
@@ -3149,33 +3150,25 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 
 
-/**
-   \brief Create the latest list of waypoints in this layer
-
-   Function returns freshly allocated container. The container itself is owned by caller. Elements in container are not.
-*/
-void LayerTRW::get_tree_items(std::list<SlavGPS::Waypoint *> & list)
-{
-	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
-		list.push_back(*iter);
-	}
-}
-
-
-
 
 /**
-   Fill the list with tracks and/or routes from the layer.
+   Fill the list with tracks and/or routes and/or waypoints from the layer.
 */
-void LayerTRW::get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const
+sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const
 {
-	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 		this->tracks.get_tree_items(list);
 	}
 
-	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		this->routes.get_tree_items(list);
 	}
+
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+		this->waypoints.get_tree_items(list);
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -3183,7 +3176,7 @@ void LayerTRW::get_tree_items(std::list<Track *> & list, const SGObjectTypeID & 
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_TRACKS, this->get_window());
+	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_A_TRACK, this->get_window());
 }
 
 
@@ -3191,7 +3184,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_ROUTES, this->get_window());
+	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_A_ROUTE, this->get_window());
 }
 
 

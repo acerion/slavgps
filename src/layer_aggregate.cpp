@@ -474,20 +474,6 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::get_tree_items(std::list<Waypoint *> & list)
-{
-	std::list<const Layer *> layers;
-	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
-
-	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
-	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		((LayerTRW *) (*iter))->get_tree_items(list);
-	}
-}
-
-
-
-
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Waypoint List").arg(this->name);
@@ -548,15 +534,19 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::get_tree_items(std::list<Track *> & list, const SGObjectTypeID & obj_type_id) const
+sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & obj_type_id) const
 {
 	std::list<Layer const *> layers;
 	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
 
-	/* For each TRW layers keep adding the tracks and/or routes to build a list of all of them. */
+	/* For each TRW layers keep adding the specified tree items to
+	   build a list of all of them. */
+	/* TODO: we should traverse a tree here, not get a list of specific layer kinds. */
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		((LayerTRW *) (*iter))->get_tree_items(list, obj_type_id);
+		(*iter)->get_tree_items(list, obj_type_id);
 	}
+
+	return sg_ret::ok;
 }
 
 

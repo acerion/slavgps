@@ -92,12 +92,12 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes)
 	this->init_item();
 
 	if (is_routes) {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_ROUTES;
-		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER;
+		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_ROUTE;
 		this->name = tr("Routes");
 	} else {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_TRACKS;
-		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK;
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER;
+		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_TRACK;
 		this->name = tr("Tracks");
 	}
 }
@@ -125,7 +125,7 @@ QString LayerTRWTracks::get_tooltip(void) const
 {
 	QString tooltip;
 
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
+	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
 		/* Very simple tooltip - may expand detail in the future. */
 		tooltip = tr("Routes: %1").arg(this->children_list.size());
 	} else {
@@ -395,11 +395,13 @@ void LayerTRWTracks::toggle_items_visibility(void)
 
 
 
-void LayerTRWTracks::get_tree_items(std::list<Track *> & list) const
+sg_ret LayerTRWTracks::get_tree_items(std::list<TreeItem *> & list) const
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		list.push_back(*iter);
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -544,7 +546,7 @@ static QString my_track_colors(int ii)
 
 void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common)
 {
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
+	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
 
 		int color_i = 0;
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
@@ -602,16 +604,16 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 Time LayerTRWTracks::get_earliest_timestamp(void) const
 {
 	Time result;
-	std::list<Track *> tracks_;
-	this->get_tree_items(tracks_);
+	std::list<TreeItem *> tree_items;
+	this->get_tree_items(tree_items);
 
 	/* TODO: we assume here that all tracks have timestamps. */
 
-	if (!tracks_.empty()) {
-		tracks_.sort(Track::compare_timestamp);
+	if (!tree_items.empty()) {
+		tree_items.sort(Track::compare_timestamp);
 
 		/* Only need to check the first track as they have been sorted by time. */
-		Track * trk = *(tracks_.begin());
+		Track * trk = (Track *) *(tree_items.begin());
 		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->timestamp.is_valid()) {
@@ -788,9 +790,9 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	menu.addSeparator();
 
 
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
+	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
 		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
-	} else if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
+	} else if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
 		this->sublayer_menu_routes_misc((LayerTRW *) this->owning_layer, menu);
 	}
 
@@ -859,12 +861,14 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title;
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
+	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
 		title = tr("%1: Tracks List").arg(this->owning_layer->name);
+		Track::list_dialog(title, this->owning_layer, SG_OBJ_TYPE_ID_TRW_A_TRACK); /* Show each track in this tracks container. */
 	} else {
 		title = tr("%1: Routes List").arg(this->owning_layer->name);
+		Track::list_dialog(title, this->owning_layer, SG_OBJ_TYPE_ID_TRW_A_ROUTE); /* Show each route in this routes container. */
 	}
-	Track::list_dialog(title, this->owning_layer, this->m_type_id);
+
 }
 
 
@@ -1140,8 +1144,8 @@ sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 
 bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 {
-	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
-	    && child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_A_TRACK
+	    && child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 		qDebug() << SG_PREFIX_E << "Attempting to move non-track/route child" << child_tree_item.m_type_id;
 		return false;
 	}

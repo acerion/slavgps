@@ -231,15 +231,15 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 /**
-   @brief Collect statistics for each item in this->tracks list
+   @brief Collect statistics for each item in this->tree_items list
 
    @stats: statistics object to be filled
    @include_invisible: whether to include invisible layers and tracks
 */
 void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisible)
 {
-	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
-		Track * trk = *iter;
+	for (auto iter = this->tree_items.begin(); iter != this->tree_items.end(); iter++) {
+		Track * trk = (Track *) *iter;
 		LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->m_kind == LayerKind::TRW);
 		qDebug() << SG_PREFIX_I << "Collecting stats with layer/tracks/routes/include visibility:"
@@ -261,8 +261,8 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	const bool include_invisible = (bool) state;
 	qDebug() << SG_PREFIX_D << "Include invisible items:" << include_invisible;
 
-	/* Re-use existing this->tracks. No need to re-get them from
-	   layers. this->tracks contains both visible and invisible
+	/* Re-use existing this->tree_items. No need to re-get them from
+	   layers. this->tree_items contains both visible and invisible
 	   tracks, so it's a matter of checking in collect_stats()
 	   which ones to include in stats. */
 
@@ -301,6 +301,9 @@ TRWStatsDialog::~TRWStatsDialog()
 */
 void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const SGObjectTypeID & type_id, QWidget * parent)
 {
+	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
+
+
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
 	dialog->setWindowTitle(QObject::tr("Statistics"));
 
@@ -324,14 +327,7 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const SG
 	dialog->layer = layer;
 	dialog->m_type_id = type_id;
 
-	if (layer->m_kind == LayerKind::TRW) {
-		((LayerTRW *) layer)->get_tree_items(dialog->tracks, dialog->m_type_id);
-	} else if (layer->m_kind == LayerKind::Aggregate) {
-		((LayerAggregate *) layer)->get_tree_items(dialog->tracks, dialog->m_type_id);
-	} else {
-		qDebug() << SG_PREFIX_E << "Wrong layer kind" << (int) layer->m_kind;
-		assert (0);
-	}
+	layer->get_tree_items(dialog->tree_items, dialog->m_type_id);
 	dialog->stats_table = new StatsTable(dialog);
 	vbox->addLayout(dialog->stats_table);
 

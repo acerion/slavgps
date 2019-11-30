@@ -438,3 +438,11 @@ sg_ret TreeItem::click_in_tree(const QString & debug)
 
 	return sg_ret::ok;
 }
+
+
+
+
+sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const
+{
+	return sg_ret::ok;
+}

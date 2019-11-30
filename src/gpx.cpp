@@ -1148,16 +1148,16 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 	/* Tracks sorted according to preferences. */
 	if (trw->tracks.size() && (trw->get_tracks_visibility() || (options && options->hidden))) {
 
-		std::list<Track *> track_values;
-		trw->tracks.get_tree_items(track_values);
+		std::list<TreeItem *> tree_items;
+		trw->tracks.get_tree_items(tree_items);
 
-		if (track_values.size()) {
+		if (tree_items.size()) {
 			switch (Preferences::get_gpx_export_trk_sort()) {
 			case GPXExportTrackSort::ByTime:
-				track_values.sort(Track::compare_timestamp);
+				tree_items.sort(Track::compare_timestamp);
 				break;
 			case GPXExportTrackSort::Alpha:
-				track_values.sort(TreeItem::compare_name_ascending);
+				tree_items.sort(TreeItem::compare_name_ascending);
 				break;
 			default:
 				break;
@@ -1165,8 +1165,8 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 
 			/* Loop around each list and write each one. */
 			context.options->is_route = false;
-			for (auto iter = track_values.begin(); iter != track_values.end(); iter++) {
-				gpx_write_track(*iter, &context);
+			for (auto iter = tree_items.begin(); iter != tree_items.end(); iter++) {
+				gpx_write_track((Track *) *iter, &context);
 			}
 		}
 	}
@@ -1175,15 +1175,15 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 	/* Routes always sorted by name. */
 	if (trw->routes.size() && (trw->get_routes_visibility() || (options && options->hidden))) {
 
-		std::list<Track *> route_values;
-		trw->routes.get_tree_items(route_values);
+		std::list<TreeItem *> tree_items;
+		trw->routes.get_tree_items(tree_items);
 
-		if (route_values.size()) {
-			route_values.sort(TreeItem::compare_name_ascending);
+		if (tree_items.size()) {
+			tree_items.sort(TreeItem::compare_name_ascending);
 
 			context.options->is_route = true;
-			for (auto iter = route_values.begin(); iter != route_values.end(); iter++) {
-				gpx_write_track(*iter, &context);
+			for (auto iter = tree_items.begin(); iter != tree_items.end(); iter++) {
+				gpx_write_track((Track *) *iter, &context);
 			}
 		}
 	}

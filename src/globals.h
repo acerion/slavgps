@@ -60,12 +60,6 @@ namespace SlavGPS {
 		bool operator() (const SGObjectTypeID & id1, const SGObjectTypeID & id2) const { return id1.m_val < id2.m_val; }
 	};
 #define SG_OBJ_TYPE_ID_ANY                      ""
-#define SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK         "sg.trw.track"
-#define SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE         "sg.trw.route"
-#define SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT      "sg.trw.waypoint"
-#define SG_OBJ_TYPE_ID_TRW_TRACKS               "sg.trw.tracks"
-#define SG_OBJ_TYPE_ID_TRW_ROUTES               "sg.trw.routes"
-#define SG_OBJ_TYPE_ID_TRW_WAYPOINTS            "sg.trw.waypoints"
 
 /* Globally unique tool IDS. */
 #define LAYER_TRW_TOOL_CREATE_WAYPOINT "sg.tool.layer_trw.create_waypoint"

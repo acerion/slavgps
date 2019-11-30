@@ -280,9 +280,9 @@ void Track::free()
 Track::Track(bool is_route)
 {
 	if (is_route) {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_ROUTE;
 	} else {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK;
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_TRACK;
 	}
 
 	this->ref_count = 1;
@@ -2154,7 +2154,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 	/* ATM can't upload a single waypoint but can do waypoints to a GPS.
 	   TODO_LATER: add this menu item to Waypoints as well? */
-	if (this->m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+	if (this->m_type_id != SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 	}
@@ -2784,7 +2784,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Convert and attach to new location. */
-	this->m_type_id = this->is_route() ? SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK : SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
+	this->m_type_id = this->is_route() ? SG_OBJ_TYPE_ID_TRW_A_TRACK : SG_OBJ_TYPE_ID_TRW_A_ROUTE;
 	if (this->is_track()) {
 		parent_layer->add_track(this);
 	} else {
@@ -3581,7 +3581,7 @@ void Track::extend_track_end_route_finder_cb(void)
 
 bool Track::is_route(void) const
 {
-	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
+	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE;
 }
 
 
@@ -3589,7 +3589,7 @@ bool Track::is_route(void) const
 
 bool Track::is_track(void) const
 {
-	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK;
+	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK;
 }
 
 
@@ -3695,14 +3695,17 @@ void Track::list_dialog(QString const & title, Layer * layer, const SGObjectType
 {
 	Window * window = layer->get_window();
 
+	assert (layer->m_kind == LayerKind::Aggregate || layer->m_kind == LayerKind::TRW);
 
-	std::list<Track *> tree_items;
-	if (layer->m_kind == LayerKind::Aggregate) {
-		((LayerAggregate *) layer)->get_tree_items(tree_items, type_id);
-	} else if (layer->m_kind == LayerKind::TRW) {
-		((LayerTRW *) layer)->get_tree_items(tree_items, type_id);
-	} else {
-		assert (0);
+	std::list<TreeItem *> tree_items;
+
+	/* Be careful here: type_id may be "all", which in context of
+	   this function means "tracks and routes". */
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
+		layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_TRACK);
+	}
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
+		layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_ROUTE);
 	}
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Tracks found"), window);
@@ -3728,7 +3731,7 @@ void Track::list_dialog(QString const & title, Layer * layer, const SGObjectType
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
 
 
-	TreeItemListDialogHelper<Track *> dialog_helper;
+	TreeItemListDialogHelper<TreeItem *> dialog_helper;
 	dialog_helper.show_dialog(title, view_format, tree_items, window);
 }
 

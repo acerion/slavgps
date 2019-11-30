@@ -58,6 +58,16 @@ namespace SlavGPS {
 
 
 
+#define SG_OBJ_TYPE_ID_TRW_A_TRACK              "sg.trw.track"
+#define SG_OBJ_TYPE_ID_TRW_A_ROUTE              "sg.trw.route"
+#define SG_OBJ_TYPE_ID_TRW_A_WAYPOINT           "sg.trw.waypoint"
+#define SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER     "sg.trw.tracks"
+#define SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER     "sg.trw.routes"
+#define SG_OBJ_TYPE_ID_TRW_WAYPOINTS_CONTAINER  "sg.trw.waypoints"
+
+
+
+
 	class GisViewport;
 	class LayerTRW;
 	class LayerTRWPainter;
@@ -267,15 +277,7 @@ namespace SlavGPS {
 		void diary_open(const QString & date_str);
 
 
-
-		/* Get tree items (direct and indirect children of the
-		   layer) of type "Waypoint". */
-		void get_tree_items(std::list<Waypoint *> & list);
-
-		/* Get tree items (direct and indirect children of the
-		   layer) of given type @param type_id (for now only
-		   tracks/routes). */
-		void get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const;
+		sg_ret get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const override;
 
 
 		void tp_show_properties_dialog();

@@ -103,15 +103,7 @@ namespace SlavGPS {
 		sg_ret detach_from_container(Layer * layer, bool * was_visible);
 		sg_ret detach_from_tree(Layer * layer);
 
-
-		/* Get tree items (direct and indirect children of the
-		   layer) of type "Waypoint". */
-		void get_tree_items(std::list<Waypoint *> & list);
-
-		/* Get tree items (direct and indirect children of the
-		   layer) of given type @param type_id (for now only
-		   tracks/routes). */
-		void get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const;
+		sg_ret get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const override;
 
 		Layer * get_top_visible_layer_of_type(LayerKind layer_kind);
 		void get_all_layers_of_kind(std::list<const Layer *> & layers, LayerKind layer_kind, bool include_invisible) const;

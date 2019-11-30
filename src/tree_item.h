@@ -240,6 +240,10 @@ namespace SlavGPS {
 		/* Get parent tree item. Parent tree item and owning layer may be two different tree items. */
 		TreeItem * get_parent_tree_item(void) const;
 
+		/* Get tree items (direct and indirect children of the
+		   layer) of given type @param type_id. */
+		virtual sg_ret get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const;
+
 
 		MenuOperation get_menu_operation_ids(void) const;
 		void set_menu_operation_ids(MenuOperation new_value);
