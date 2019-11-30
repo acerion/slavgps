@@ -275,7 +275,7 @@ namespace SlavGPS {
 
 
 		QString name;
-		QString type_id;
+		SGObjectTypeID m_type_id;
 		QStringList accepted_child_type_ids;
 
 		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */

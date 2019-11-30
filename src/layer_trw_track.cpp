@@ -280,9 +280,9 @@ void Track::free()
 Track::Track(bool is_route)
 {
 	if (is_route) {
-		this->type_id = "sg.trw.route";
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
 	} else {
-		this->type_id = "sg.trw.track";
+		this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK;
 	}
 
 	this->ref_count = 1;
@@ -2154,7 +2154,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 	/* ATM can't upload a single waypoint but can do waypoints to a GPS.
 	   TODO_LATER: add this menu item to Waypoints as well? */
-	if (this->type_id != "sg.trw.waypoint") {
+	if (this->m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 	}
@@ -2497,7 +2497,7 @@ QString Track::get_tooltip(void) const
 void Track::apply_dem_data_common(bool skip_existing_elevations)
 {
 	LayersPanel * panel = ThisApp::get_layers_panel();
-	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
 		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
@@ -2784,7 +2784,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Convert and attach to new location. */
-	this->type_id = this->is_route() ? "sg.trw.track": "sg.trw.route";
+	this->m_type_id = this->is_route() ? SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK : SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
 	if (this->is_track()) {
 		parent_layer->add_track(this);
 	} else {
@@ -3581,7 +3581,7 @@ void Track::extend_track_end_route_finder_cb(void)
 
 bool Track::is_route(void) const
 {
-	return this->type_id == "sg.trw.route";
+	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE;
 }
 
 
@@ -3589,7 +3589,7 @@ bool Track::is_route(void) const
 
 bool Track::is_track(void) const
 {
-	return this->type_id == "sg.trw.track";
+	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK;
 }
 
 
@@ -3691,16 +3691,16 @@ bool Track::is_selected(void) const
 
   Common method for showing a list of tracks with extended information
 */
-void Track::list_dialog(QString const & title, Layer * layer, const QString & type_id_string)
+void Track::list_dialog(QString const & title, Layer * layer, const SGObjectTypeID & type_id)
 {
 	Window * window = layer->get_window();
 
 
 	std::list<Track *> tree_items;
-	if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_tracks_list(tree_items, type_id_string);
-	} else if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_tracks_list(tree_items, type_id_string);
+	if (layer->m_kind == LayerKind::Aggregate) {
+		((LayerAggregate *) layer)->get_tree_items(tree_items, type_id);
+	} else if (layer->m_kind == LayerKind::TRW) {
+		((LayerTRW *) layer)->get_tree_items(tree_items, type_id);
 	} else {
 		assert (0);
 	}
@@ -3714,7 +3714,7 @@ void Track::list_dialog(QString const & title, Layer * layer, const QString & ty
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	TreeItemViewFormat view_format;
-	if (layer->type == LayerType::Aggregate) {
+	if (layer->m_kind == LayerKind::Aggregate) {
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("Parent Layer"))); // this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
 	}
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,       true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(TRACK_COLUMN, QHeaderView::Interactive);

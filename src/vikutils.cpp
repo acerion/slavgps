@@ -577,7 +577,7 @@ void CommandLineOptions::apply(Window * window)
 		}
 
 		/* Don't add map layer if one already exists. */
-		const std::list<const Layer *> map_layers = ThisApp::get_layers_panel()->get_all_layers_of_type(LayerType::Map, true);
+		const std::list<const Layer *> map_layers = ThisApp::get_layers_panel()->get_all_layers_of_kind(LayerKind::Map, true);
 		bool add_map = true;
 
 		for (auto iter = map_layers.begin(); iter != map_layers.end(); iter++) {
@@ -594,7 +594,7 @@ void CommandLineOptions::apply(Window * window)
 			LayerMap * layer = new LayerMap();
 
 			layer->set_map_type_id(the_type_id);
-			layer->set_name(Layer::get_type_ui_label(layer->type));
+			layer->set_name(Layer::get_translated_layer_kind_string(layer->m_kind));
 
 			ThisApp::get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_tree_item_changed("Command Line Options - Apply");

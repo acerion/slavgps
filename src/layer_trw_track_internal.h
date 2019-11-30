@@ -289,7 +289,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		static Track * unmarshall(Pickle & pickle);
 
-		static void list_dialog(QString const & title, Layer * layer, const QString & type_id);
+		static void list_dialog(QString const & title, Layer * layer, const SGObjectTypeID & obj_type_id);
 
 		QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format) override;
 

@@ -52,17 +52,17 @@ using namespace SlavGPS;
 
 
 
-LayerTool::LayerTool(Window * new_window, GisViewport * new_gisview, LayerType new_layer_type)
+LayerTool::LayerTool(Window * new_window, GisViewport * new_gisview, LayerKind layer_kind)
 {
 	this->window = new_window;
 	this->gisview = new_gisview;
-	this->layer_type = new_layer_type;
+	this->m_layer_kind = layer_kind;
 
-	if (layer_type == LayerType::Max) {
-		strcpy(this->debug_string, "LayerType::generic");
+	if (this->m_layer_kind == LayerKind::Max) {
+		strcpy(this->debug_string, "LayerKind::generic");
 	} else {
-		strcpy(this->debug_string, "LayerType::");
-		strcpy(this->debug_string + 11, Layer::get_type_id_string(layer_type).toUtf8().constData());
+		strcpy(this->debug_string, "LayerKind::");
+		strcpy(this->debug_string + 11, Layer::get_fixed_layer_kind_string(this->m_layer_kind).toUtf8().constData());
 	}
 	this->cursor_click = QCursor(Qt::ArrowCursor);
 	this->cursor_release = QCursor(Qt::ArrowCursor);
@@ -91,7 +91,7 @@ QString LayerTool::get_description() const
 
 bool LayerTool::activate_tool(void)
 {
-	if (this->layer_type == LayerType::Max) {
+	if (this->m_layer_kind == LayerKind::Max) {
 		/* Generic tool, does not depend on any layer being selected. */
 		return true;
 	}
@@ -163,7 +163,7 @@ ToolStatus LayerTool::handle_key_press(Layer * layer, QKeyEvent * event)
 bool LayerTool::is_activated(void) const
 {
 	if (!this->qa) {
-		qDebug() << SG_PREFIX_E << "QAction for" << this->id_string << "tool is NULL";
+		qDebug() << SG_PREFIX_E << "QAction for" << this->m_tool_id << "tool is NULL";
 		return false;
 	}
 	return this->qa->isChecked();

@@ -600,10 +600,10 @@ void Window::create_actions(void)
 		{
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), tr("&Layer Defaults"));
 
-			for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
-				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
-				qa->setData(QVariant((int) type));
-				qa->setIcon(Layer::get_interface(type)->action_icon);
+			for (LayerKind layer_kind = LayerKind::Aggregate; layer_kind < LayerKind::Max; ++layer_kind) {
+				qa = defaults_submenu->addAction("&" + Layer::get_translated_layer_kind_string(layer_kind) + "...");
+				qa->setData(QVariant((int) layer_kind));
+				qa->setIcon(Layer::get_interface(layer_kind)->action_icon);
 				/* Layer Defaults should be already initialized. If they aren't, it's because of runtime errors. */
 				qa->setEnabled(LayerDefaults::is_initialized());
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_layer_defaults_cb()));
@@ -990,16 +990,16 @@ void Window::update_status_bar_on_redraw(void)
 void Window::menu_layer_new_cb(void) /* Slot. */
 {
 	QAction * qa = (QAction *) QObject::sender();
-	LayerType layer_type = (LayerType) qa->data().toInt();
+	LayerKind layer_kind = (LayerKind) qa->data().toInt();
 
-	qDebug() << SG_PREFIX_I << "Clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
+	qDebug() << SG_PREFIX_I << "Clicked \"layer new\" for layer kind" << Layer::get_translated_layer_kind_string(layer_kind);
 
 
-	Layer * layer = Layer::construct_layer(layer_type, this->main_gis_vp, true);
+	Layer * layer = Layer::construct_layer(layer_kind, this->main_gis_vp, true);
 	if (layer) {
 		this->items_tree->add_layer(layer, this->main_gis_vp->get_coord_mode());
 
-		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
+		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_translated_layer_kind_string(layer_kind);
 		layer->draw_tree_item(this->main_gis_vp, false, false);
 
 		qDebug() << SG_PREFIX_I << "Will call draw_tree_items()";
@@ -1027,7 +1027,7 @@ void Window::draw_tree_items(GisViewport * gisview)
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
-		   || (new_trigger->type == LayerType::Aggregate)) {
+		   || (new_trigger->type == LayerKind::Aggregate)) {
 		gisview->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		gisview->set_half_drawn(true);
@@ -1075,8 +1075,8 @@ void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 {
 	/* Get either the selected layer itself, or an owner/parent of selected sublayer item. */
 	const Layer * layer = tree_item.to_layer();
-	qDebug() << SG_PREFIX_I << "Selected layer type" << layer->get_type_ui_label();
-	this->toolbox->activate_tools_group(layer->get_type_id_string());
+	qDebug() << SG_PREFIX_I << "Selected layer kind" << layer->get_translated_layer_kind_string();
+	this->toolbox->activate_tools_group(layer->get_fixed_layer_kind_string());
 }
 
 
@@ -1163,11 +1163,11 @@ QMenu * Window::get_layer_menu(QMenu * menu)
 
 QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 {
-	for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
+	for (LayerKind layer_kind = LayerKind::Aggregate; layer_kind < LayerKind::Max; ++layer_kind) {
 
-		const LayerInterface * iface = Layer::get_interface(type);
+		const LayerInterface * iface = Layer::get_interface(layer_kind);
 
-		QVariant variant((int) type);
+		QVariant variant((int) layer_kind);
 		QAction * qa = new QAction(iface->ui_labels.new_layer, this);
 		qa->setData(variant);
 		qa->setIcon(iface->action_icon);
@@ -1240,16 +1240,16 @@ void Window::create_ui(void)
 	/* Menu Tools -> layer-specific tools;
 	   Toolbar -> layer-specific tools. */
 	{
-		for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
+		for (LayerKind layer_kind = LayerKind::Aggregate; layer_kind < LayerKind::Max; ++layer_kind) {
 
 			/* We can't build the layer tools when a layer
 			   interface is constructed, because the layer
 			   tools require Window and Viewport
 			   variables, which may not be available at that time. */
 
-			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->main_gis_vp);
+			LayerToolContainer * tools = Layer::get_interface(layer_kind)->create_tools(this, this->main_gis_vp);
 			if (!tools) {
-				/* Either error, or given layer type has no layer-specific tools. */
+				/* Either error, or given layer kind has no layer-specific tools. */
 				continue;
 			}
 
@@ -1267,7 +1267,7 @@ void Window::create_ui(void)
 			const QList<QAction *> actions = tools_group->actions();
 
 			if (!actions.isEmpty()) {
-				tools_group->setObjectName(Layer::get_type_id_string(type));
+				tools_group->setObjectName(Layer::get_fixed_layer_kind_string(layer_kind));
 
 				this->toolbar->addSeparator();
 				this->toolbar->addActions(actions);
@@ -1523,7 +1523,7 @@ void Window::menu_copy_centre_cb(void)
 	}
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, message);
+	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, "", dummy, message);
 }
 
 
@@ -1973,14 +1973,14 @@ void Window::set_redraw_trigger(TreeItem * tree_item)
 void Window::show_layer_defaults_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	LayerType layer_type = (LayerType) qa->data().toInt();
+	LayerKind layer_kind = (LayerKind) qa->data().toInt();
 
-	qDebug() << SG_PREFIX_I << "Clicked \"layer defaults\" for layer type" << Layer::get_type_ui_label(layer_type);
+	qDebug() << SG_PREFIX_I << "Clicked \"layer defaults\" for layer kind" << Layer::get_translated_layer_kind_string(layer_kind);
 
-	if (Layer::get_interface(layer_type)->has_properties_dialog()) {
-		LayerDefaults::show_window(layer_type, this);
+	if (Layer::get_interface(layer_kind)->has_properties_dialog()) {
+		LayerDefaults::show_window(layer_kind, this);
 	} else {
-		Dialog::info(tr("This layer type has no configurable properties."), this);
+		Dialog::info(tr("This layer kind has no configurable properties."), this);
 	}
 
 	/* No update needed. */
@@ -3006,7 +3006,7 @@ void Window::menu_view_pan_cb(void)
 void Window::simple_map_update(bool only_new)
 {
 	/* Find the most relevent single map layer to operate on. */
-	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::Map);
+	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerKind::Map);
 	if (layer) {
 		((LayerMap *) layer)->download(this->main_gis_vp, only_new);
 	}
@@ -3170,7 +3170,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 
 void Window::export_to_common(SGFileType file_type, char const * extension)
 {
-	const std::list<const Layer *> layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
+	const std::list<const Layer *> layers = this->items_tree->get_all_layers_of_kind(LayerKind::TRW, true);
 	if (layers.empty()) {
 		Dialog::info(tr("Nothing to Export!"), this);
 		return;
@@ -3365,7 +3365,7 @@ void Window::menu_view_cache_info_cb(void)
 void Window::apply_new_preferences(void)
 {
 	/* Want to update all TRW layers. */
-	const std::list<Layer const *> layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
+	const std::list<Layer const *> layers = this->items_tree->get_all_layers_of_kind(LayerKind::TRW, true);
 	if (layers.empty()) {
 		return;
 	}
@@ -3439,7 +3439,7 @@ void Window::keyPressEvent(QKeyEvent * ev)
 
 	Layer * layer = this->items_tree->get_selected_layer();
 	if (layer && this->tb->active_tool && this->tb->active_tool->key_press) {
-		LayerType ltype = this->tb->active_tool->layer_type;
+		LayerKind ltype = this->tb->active_tool->m_layer_kind;
 		if (layer && ltype == layer->type) {
 			this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
 			return;

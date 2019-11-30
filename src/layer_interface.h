@@ -59,7 +59,7 @@ namespace SlavGPS {
 
 
 
-	typedef std::map<QString, LayerTool *, qstring_compare> LayerToolContainer;
+	typedef std::map<SGObjectTypeID, LayerTool *, sg_object_type_id_compare> LayerToolContainer;
 
 
 
@@ -76,19 +76,19 @@ namespace SlavGPS {
 		QKeySequence action_accelerator;
 		QIcon action_icon;
 
-		/* Create a container with layer-type-specific tools.
+		/* Create a container with layer-kind-specific tools.
 		   The container is owned by caller.
 		   Pointers in the container are owned by caller.
 
-		   By default a layer-type has no layer-specific tools. */
+		   By default a layer-kind has no layer-specific tools. */
 		virtual LayerToolContainer * create_tools(Window * window, GisViewport * gisview) { return NULL; };
 
-		/* Does given layer type have configurable properties that can be viewed and edited in dialog window?
+		/* Does given layer kind have configurable properties that can be viewed and edited in dialog window?
 		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */
 		bool has_properties_dialog(void) { return this->parameter_specifications.size() != 0; };
 
 
-		/* Specification of parameters in each layer type is
+		/* Specification of parameters in each layer kind is
 		   stored in 'parameters_c' C array.  During
 		   application startup, in Layer::preconfigure_interfaces(),
 		   pointers to these parameters in C array are stored in
@@ -96,7 +96,7 @@ namespace SlavGPS {
 		   specifications can be later accessed in C++-like
 		   fashion.
 
-		   Each layer type stores (here, in layer interface) a
+		   Each layer kind stores (here, in layer interface) a
 		   set of default values of parameters, to be used
 		   when user creates a new instance of layer of type X.
 
@@ -109,12 +109,12 @@ namespace SlavGPS {
 
 		struct {
 			QString new_layer;      /* Menu "Layers" -> "New type-X Layer". */
-			QString layer_type;     /* Stand-alone label for layer's type. Not to be concatenated with other string to form longer labels. */
-			QString layer_defaults; /* Title of "Default settings of layer type X" dialog window. */
+			QString translated_layer_kind;     /* Stand-alone label for layer's kind. Not to be concatenated with other string to form longer labels. */
+			QString layer_defaults; /* Title of "Default settings of layer kind X" dialog window. */
 		} ui_labels;
 
 	protected:
-		QString fixed_layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
+		QString fixed_layer_kind_string; /* Used in .vik files - this should never change to maintain file compatibility. */
 	};
 
 

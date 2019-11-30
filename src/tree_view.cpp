@@ -974,7 +974,7 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 			break;
 		}
 
-		qDebug() << SG_PREFIX_I << "Can drop" << tree_item->type_id << "onto" << parent_item->type_id;
+		qDebug() << SG_PREFIX_I << "Can drop" << tree_item->m_type_id << "onto" << parent_item->m_type_id;
 		accepts_all = true;
 	}
 
@@ -1146,7 +1146,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 	if (!selected_item->has_properties_dialog) {
 		Dialog::info(tr("This item has no configurable properties."), ThisApp::get_main_window());
-		qDebug() << SG_PREFIX_I << "Selected item" << selected_item->type_id << "has no configurable properties";
+		qDebug() << SG_PREFIX_I << "Selected item" << selected_item->m_type_id << "has no configurable properties";
 		return true;
 	}
 

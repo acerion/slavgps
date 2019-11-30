@@ -46,7 +46,7 @@ namespace SlavGPS {
 	class GisViewport;
 	class TreeView;
 	class Layer;
-	enum class LayerType;
+	enum class LayerKind;
 	enum class CoordMode;
 
 
@@ -66,7 +66,7 @@ namespace SlavGPS {
 		   If a sublayer is selected, get the sublayer's owning/parent layer. */
 		Layer * get_selected_layer();
 
-		Layer * get_layer_of_type(LayerType layer_type);
+		Layer * get_layer_of_kind(LayerKind layer_kind);
 
 
 		/**
@@ -75,8 +75,8 @@ namespace SlavGPS {
 		void clear(void);
 
 		void change_coord_mode(CoordMode mode);
-		std::list<const Layer *> get_all_layers_of_type(LayerType type, bool include_invisible) const;
-		bool has_any_layer_of_type(LayerType type);
+		std::list<const Layer *> get_all_layers_of_kind(LayerKind layer_kind, bool include_invisible) const;
+		bool has_any_layer_of_kind(LayerKind layer_kind);
 
 		void set_visible(bool visible);
 		bool get_visible(void) const;
@@ -94,7 +94,7 @@ namespace SlavGPS {
 		void context_menu_create_standard_items(QMenu * menu, uint16_t menu_operations);
 		void context_menu_add_new_layer_submenu(QMenu * menu);
 
-		Layer * go_up_to_layer(const TreeItem * tree_item, LayerType layer_type);
+		Layer * go_up_to_layer(const TreeItem * tree_item, LayerKind layer_kind);
 
 		void move_item(bool up);
 

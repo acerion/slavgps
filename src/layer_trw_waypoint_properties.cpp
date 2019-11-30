@@ -574,11 +574,11 @@ void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 	}
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
-	if (tree_item->type_id == "sg.trw.waypoint") {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "matches supported type";
 		this->dialog_data_set((Waypoint *) tree_item);
 	} else {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
 		this->dialog_data_reset();
 	}
 }

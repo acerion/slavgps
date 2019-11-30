@@ -229,7 +229,7 @@ namespace SlavGPS {
 
 		void reset_waypoints();
 
-		QString new_unique_element_name(const QString & type_id, const QString& old_name);
+		QString new_unique_element_name(const SGObjectTypeID & type_id, const QString& old_name);
 
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
@@ -268,13 +268,19 @@ namespace SlavGPS {
 
 
 
-		void get_waypoints_list(std::list<Waypoint *> & list);
-		void get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const;
+		/* Get tree items (direct and indirect children of the
+		   layer) of type "Waypoint". */
+		void get_tree_items(std::list<Waypoint *> & list);
+
+		/* Get tree items (direct and indirect children of the
+		   layer) of given type @param type_id (for now only
+		   tracks/routes). */
+		void get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const;
 
 
 		void tp_show_properties_dialog();
 
-		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const QString & object_type_id);
+		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const SGObjectTypeID & selected_object_type_id);
 
 
 		void sort_all();

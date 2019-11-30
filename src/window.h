@@ -77,7 +77,7 @@ namespace SlavGPS {
 	class ScreenPos;
 	class DataSource;
 	class StatusBar;
-	enum class LayerType;
+	enum class LayerKind;
 	enum class StatusBarField;
 
 
@@ -371,7 +371,7 @@ namespace SlavGPS {
 		LoadStatus file_load_status = LoadStatus::Code::ReadFailure; /* AKA none. */
 
 		/* Tool management state. */
-		LayerType tool_layer_type;
+		LayerKind tool_layer_kind;
 		uint16_t tool_tool_id;
 
 		/* Cursor of window's central widget. */

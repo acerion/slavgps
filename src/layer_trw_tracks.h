@@ -161,7 +161,11 @@ namespace SlavGPS {
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
 
-		void get_tracks_list(std::list<Track *> & list) const;
+		/* Get tree items (direct and indirect children of the
+		   layer) of given type @param type_id (for now only
+		   tracks/routes). */
+		void get_tree_items(std::list<Track *> & list) const;
+
 		void track_search_closest_tp(TrackpointSearch & search) const;
 
  		void change_coord_mode(CoordMode dest_mode);

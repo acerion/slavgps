@@ -113,7 +113,7 @@ ToolStatus helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * 
 
 		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint:" << new_coord;
-		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->m_type_id);
 
 		const bool recalculate_bbox = false; /* During moving of point we shouldn't recalculate Waypoints' bbox. */
 		wp->set_coord(new_coord, recalculate_bbox);
@@ -145,7 +145,7 @@ ToolStatus helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent
 	switch (ev->button()) {
 	case Qt::LeftButton: {
 		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->type_id);
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->m_type_id);
 
 		const bool recalculate_bbox = true; /* We have moved point to final position, so Waypoints' bbox can be recalculated. */
 		wp->set_coord(new_coord, recalculate_bbox);
@@ -190,7 +190,7 @@ ToolStatus helper_move_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * 
 
 		qDebug() << SG_PREFIX_I << "Will now set new position of trackpoint";
 		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, "sg.trw.track");
+		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, track->m_type_id);
 		track->selected_tp_set_coord(new_coord, false);
 		return ToolStatus::Ack;
 	}
@@ -220,7 +220,7 @@ ToolStatus helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent
 	}
 
 	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-	trw->get_nearby_snap_coordinates(new_coord, ev, gisview, "sg.trw.track");
+	trw->get_nearby_snap_coordinates(new_coord, ev, gisview, track->m_type_id);
 	track->selected_tp_set_coord(new_coord, true);
 
 	/* Object is released by tool (so its position no
@@ -252,7 +252,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 		qDebug() << SG_PREFIX_I << "Skipping non-left button";
 		return false;
 	}
-	if (this->type != LayerType::TRW) {
+	if (this->m_kind != LayerKind::TRW) {
 		qDebug() << SG_PREFIX_E << "Skipping non-TRW layer";
 		return false;
 	}
@@ -301,7 +301,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	qDebug() << SG_PREFIX_I << "Will set edited object state to NotSelected";
 	select_tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-	select_tool->selected_tree_item_type_id = "";
+	select_tool->selected_tree_item_type_id = SG_OBJ_TYPE_ID_ANY;
 
 	/* Erase info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -364,10 +364,13 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
+	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
-	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
+
+	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		return ToolStatus::Ack == helper_move_tp(this, select_tool, ev, select_tool->gisview);
+
 	} else {
 		qDebug() << SG_PREFIX_E << "Not moving due to unknown type id" << select_tool->selected_tree_item_type_id;
 		return false;
@@ -388,10 +391,13 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
+	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
-	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
+
+	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+		   || select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		return ToolStatus::Ack == helper_release_tp(this, select_tool, ev, gisview);
+
 	} else {
 		qDebug() << SG_PREFIX_E << "Not releasing due to unknown type id" << select_tool->selected_tree_item_type_id;
 		return false;
@@ -406,7 +412,7 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 	this->waypoints.search_closest_wp(wp_search);
 	if (NULL == wp_search.closest_wp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = "";
+		tool->selected_tree_item_type_id = SG_OBJ_TYPE_ID_ANY;
 		qDebug() << SG_PREFIX_I << "No waypoint clicked";
 		return false;
 	}
@@ -426,7 +432,7 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 		*/
 		tool->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
 	}
-	tool->selected_tree_item_type_id = wp_search.closest_wp->type_id;
+	tool->selected_tree_item_type_id = wp_search.closest_wp->m_type_id;
 
 
 	LayerTRW * trw = (LayerTRW *) wp_search.closest_wp->get_owning_layer();
@@ -444,11 +450,11 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 	tracks_or_routes.track_search_closest_tp(tp_search);
 	if (NULL == tp_search.closest_tp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = "";
+		tool->selected_tree_item_type_id = SG_OBJ_TYPE_ID_ANY;
 		qDebug() << SG_PREFIX_I << "No trackpoint clicked";
 		return false;
 	}
-	const bool is_routes = "sg.trw.routes" == tracks_or_routes.type_id;
+	const bool is_routes = tracks_or_routes.m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES;
 	qDebug() << SG_PREFIX_I << "Clicked trackpoint in" << (is_routes ? "route" : "track") << tp_search.closest_track->name;
 
 
@@ -466,7 +472,7 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 		qDebug() << SG_PREFIX_I << "Will set edited object state to IsSelected";
 		tool->edited_object_state = LayerToolSelect::ObjectState::IsSelected;
 	}
-	tool->selected_tree_item_type_id = tp_search.closest_track->type_id;
+	tool->selected_tree_item_type_id = tp_search.closest_track->m_type_id;
 
 
 	LayerTRW * trw = (LayerTRW *) tp_search.closest_track->get_owning_layer();
@@ -562,7 +568,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 		return false;
 	}
 
-	if (this->type != LayerType::TRW) {
+	if (this->m_kind != LayerKind::TRW) {
 		return false;
 	}
 
@@ -600,9 +606,9 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 
 
-LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerType::TRW)
+LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerKind::TRW)
 {
-	this->id_string = LAYER_TRW_TOOL_EDIT_WAYPOINT;
+	this->m_tool_id = LAYER_TRW_TOOL_EDIT_WAYPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_wp_18.png";
 	this->action_label       = QObject::tr("&Edit Waypoint");
@@ -631,7 +637,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	if (trw->type != LayerType::TRW) {
+	if (trw->m_kind != LayerKind::TRW) {
 		qDebug() << SG_PREFIX_D << "Not TRW layer";
 		return ToolStatus::Ignored;
 	}
@@ -663,7 +669,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		if (ScreenPos::are_closer_than(wp_pos, event_pos, WAYPOINT_SIZE_APPROX)) {
 			qDebug() << SG_PREFIX_I << "Will set edited object state to IsHeld";
 			this->edited_object_state = LayerToolSelect::ObjectState::IsHeld;
-			this->selected_tree_item_type_id = current_wp->type_id;
+			this->selected_tree_item_type_id = current_wp->m_type_id;
 
 			/* Layer's selected waypoint now becomes
 			   tool's selected waypoint. */
@@ -696,7 +702,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		/* We clicked on empty space, so no waypoint is selected. */
 		qDebug() << SG_PREFIX_I << "Setting edited object state to NotSelected";
 		this->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		this->selected_tree_item_type_id = "";
+		this->selected_tree_item_type_id = SG_OBJ_TYPE_ID_ANY;
 
 		if (wp_was_edited || some_object_was_released) {
 			trw->emit_tree_item_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
@@ -731,8 +737,8 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 
 ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
+	if (layer->m_kind != LayerKind::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -744,8 +750,8 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 
 ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
+	if (layer->m_kind != LayerKind::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -786,14 +792,14 @@ sg_ret LayerToolTRWEditWaypoint::change_coord_mode(CoordMode coord_mode)
 
   @reviewed-on: TBD
 */
-bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const QString & selected_object_type_id)
+bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const SGObjectTypeID & selected_object_type_id)
 {
 	/* Search close trackpoint in tracks AND routes. */
 	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 
-		if (selected_object_type_id == "sg.trw.track"
-		    || selected_object_type_id == "sg.trw.route") {
+		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+		    || selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 			/* We are searching for snap coordinates for
 			   trackpoint. Tell search tool to ignore
 			   coordinates of currently selected
@@ -831,7 +837,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	/* Search close waypoint. */
 	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
-		if (selected_object_type_id == "sg.trw.waypoint") {
+		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 			/* We are searching for snap coordinates for
 			   waypoint. Tell search tool to ignore
 			   coordinates of currently selected waypoint,
@@ -860,11 +866,11 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 
 
 
-LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisview_, bool is_route) : LayerTool(window_, gisview_, LayerType::TRW)
+LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisview_, bool is_route) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
 	this->is_route_tool = is_route;
 	if (is_route) {
-		this->id_string = LAYER_TRW_TOOL_CREATE_ROUTE;
+		this->m_tool_id = LAYER_TRW_TOOL_CREATE_ROUTE;
 
 		this->action_icon_path   = ":/icons/layer_tool/trw_add_route_18.png";
 		this->action_label       = QObject::tr("Create &Route");
@@ -875,7 +881,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisvi
 		this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 		this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
 	} else {
-		this->id_string = LAYER_TRW_TOOL_CREATE_TRACK;
+		this->m_tool_id = LAYER_TRW_TOOL_CREATE_TRACK;
 
 		this->action_icon_path   = ":/icons/layer_tool/trw_add_tr_18.png";
 		this->action_label       = QObject::tr("Create &Track");
@@ -1037,11 +1043,11 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 
 ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
 {
-	if (this->id_string == LAYER_TRW_TOOL_CREATE_TRACK && !this->creation_in_progress) {
+	if (this->m_tool_id == LAYER_TRW_TOOL_CREATE_TRACK && !this->creation_in_progress) {
 		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
 		return ToolStatus::Ignored;
 	}
-	if (this->id_string == LAYER_TRW_TOOL_CREATE_ROUTE && !this->creation_in_progress) {
+	if (this->m_tool_id == LAYER_TRW_TOOL_CREATE_ROUTE && !this->creation_in_progress) {
 		/* Route is not being created at the moment, so a Key can't affect work of this tool. */
 		return ToolStatus::Ignored;
 	}
@@ -1105,8 +1111,8 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	Trackpoint * tp = new Trackpoint();
 	tp->coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 
-	/* Maybe snap to other Trackpoint. */
-	trw->get_nearby_snap_coordinates(tp->coord, ev, gisview, "sg.trw.track");
+	/* Maybe snap to other point. */
+	trw->get_nearby_snap_coordinates(tp->coord, ev, gisview, track->m_type_id);
 
 	tp->newsegment = false;
 	tp->timestamp.invalidate();
@@ -1184,9 +1190,9 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		/* FIXME: how to handle a situation, when a route is being created right now? */
 		QString new_name;
 		if (this->is_route_tool) {
-			new_name = trw->new_unique_element_name("sg.trw.route", QObject::tr("Route"));
+			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE, QObject::tr("Route"));
 		} else {
-			new_name = trw->new_unique_element_name("sg.trw.track", QObject::tr("Track"));
+			new_name = trw->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK, QObject::tr("Track"));
 		}
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, this->is_route_tool, trw->get_window());
@@ -1211,7 +1217,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
-	if (trw->type != LayerType::TRW) {
+	if (trw->m_kind != LayerKind::TRW) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1272,9 +1278,9 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QM
 
 
 
-LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
+LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->id_string = LAYER_TRW_TOOL_CREATE_WAYPOINT;
+	this->m_tool_id = LAYER_TRW_TOOL_CREATE_WAYPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_wp_18.png";
 	this->action_label       = QObject::tr("Create &Waypoint");
@@ -1292,7 +1298,7 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	if (trw->type != LayerType::TRW) {
+	if (trw->m_kind != LayerKind::TRW) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1312,9 +1318,9 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 
 
 
-LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerType::TRW)
+LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerKind::TRW)
 {
-	this->id_string = LAYER_TRW_TOOL_EDIT_TRACKPOINT;
+	this->m_tool_id = LAYER_TRW_TOOL_EDIT_TRACKPOINT;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_tr_18.png";
 	this->action_label       = QObject::tr("Edit Trac&kpoint");
@@ -1356,7 +1362,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		return ToolStatus::Ignored;
 	}
 
-	if (trw->type != LayerType::TRW) {
+	if (trw->m_kind != LayerKind::TRW) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1380,7 +1386,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 			if (track->is_visible() && ScreenPos::are_closer_than(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
 				qDebug() << SG_PREFIX_I << "Will set edited object state to IsHeld";
 				this->edited_object_state = LayerToolSelect::ObjectState::IsHeld;
-				this->selected_tree_item_type_id = track->type_id;
+				this->selected_tree_item_type_id = track->m_type_id;
 				return ToolStatus::Ack;
 			}
 		} else {
@@ -1403,8 +1409,8 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
+	if (layer->m_kind != LayerKind::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -1416,8 +1422,8 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
+	if (layer->m_kind != LayerKind::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -1450,9 +1456,9 @@ sg_ret LayerToolTRWEditTrackpoint::change_coord_mode(CoordMode coord_mode)
 
 
 
-LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
+LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->id_string = LAYER_TRW_TOOL_ROUTE_FINDER;
+	this->m_tool_id = LAYER_TRW_TOOL_ROUTE_FINDER;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_find_route_18.png";
 	this->action_label       = QObject::tr("Route &Finder");
@@ -1630,9 +1636,9 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 
 
 
-LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
+LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->id_string = LAYER_TRW_TOOL_SHOW_PICTURE;
+	this->m_tool_id = LAYER_TRW_TOOL_SHOW_PICTURE;
 
 	this->action_icon_path   = ":/icons/layer_tool/trw_show_picture_18.png";
 	this->action_label       = QObject::tr("Show P&icture");
@@ -1648,8 +1654,8 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport *
 
 ToolStatus LayerToolTRWShowPicture::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->type;
+	if (layer->m_kind != LayerKind::TRW) {
+		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
 		return ToolStatus::Ignored;
 	}
 	LayerTRW * trw = (LayerTRW *) layer;

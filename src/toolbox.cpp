@@ -87,7 +87,7 @@ QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 		LayerTool * tool = iter->second;
 
 		QAction * qa = new QAction(tool->action_label, this->window);
-		qa->setObjectName(tool->id_string);
+		qa->setObjectName(tool->m_tool_id.m_val);
 		qa->setIcon(QIcon(tool->action_icon_path));
 		qa->setCheckable(true);
 
@@ -108,7 +108,7 @@ QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 
 
 
-LayerTool * Toolbox::get_tool(QString const & tool_id) const
+LayerTool * Toolbox::get_tool(const SGObjectTypeID & tool_id) const
 {
 	auto iter = this->tools.find(tool_id);
 	if (iter == this->tools.end()) {
@@ -122,7 +122,7 @@ LayerTool * Toolbox::get_tool(QString const & tool_id) const
 
 
 
-void Toolbox::activate_tool_by_id(const QString & tool_id)
+void Toolbox::activate_tool_by_id(const SGObjectTypeID & tool_id)
 {
 	LayerTool * tool = this->get_tool(tool_id);
 	if (NULL == tool) {
@@ -153,7 +153,7 @@ void Toolbox::activate_tool_by_id(const QString & tool_id)
 
 
 
-void Toolbox::deactivate_tool_by_id(const QString & tool_id)
+void Toolbox::deactivate_tool_by_id(const SGObjectTypeID & tool_id)
 {
 	LayerTool * tool = this->get_tool(tool_id);
 	if (NULL == tool) {
@@ -179,7 +179,7 @@ void Toolbox::deactivate_tool_by_id(const QString & tool_id)
 void Toolbox::deactivate_current_tool(void)
 {
 	if (this->active_tool) {
-		this->deactivate_tool_by_id(this->active_tool->id_string);
+		this->deactivate_tool_by_id(this->active_tool->m_tool_id);
 	}
 	this->active_tool = NULL;
 	this->active_tool_qa = NULL;
@@ -319,11 +319,10 @@ Layer * Toolbox::handle_mouse_event_common(void)
 	}
 
 
-	LayerType layer_tool_type = this->active_tool->layer_type;
-	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
-	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
+	if (this->active_tool->m_layer_kind != layer->m_kind           /* Click received for layer kind other than current layer's kind. */
+	    && this->active_tool->m_layer_kind != LayerKind::Max) {    /* Click received for something other than generic tool. */
 
-		qDebug() << SG_PREFIX_E << "Layer type does not match";
+		qDebug() << SG_PREFIX_E << "Layer kind" << this->active_tool->m_layer_kind << "does not match";
 		return NULL;
 	}
 
@@ -340,7 +339,7 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
+	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->m_tool_id;
 	this->active_tool->handle_mouse_click(layer, event);
 
 	return;
@@ -356,7 +355,7 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
+	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->m_tool_id;
 	this->active_tool->handle_mouse_double_click(layer, event);
 
 	return;
@@ -389,7 +388,7 @@ void Toolbox::handle_mouse_release(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
+	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->m_tool_id;
 	this->active_tool->handle_mouse_release(layer, event);
 
 	return;

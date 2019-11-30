@@ -348,65 +348,66 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	bool rv = false;
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint"
-	    || this->menu_data->sublayer->type_id == "sg.trw.track"
-	    || this->menu_data->sublayer->type_id == "sg.trw.route") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 
 		rv = true;
 		layer_trw_sublayer_menu_waypoint_track_route_properties(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.track"
-	    || this->menu_data->sublayer->type_id == "sg.trw.route") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 
 		layer_trw_sublayer_menu_track_route_profile(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoint"
-	    || this->menu_data->sublayer->type_id == "sg.trw.track"
-	    || this->menu_data->sublayer->type_id == "sg.trw.route") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 
 		layer_trw_sublayer_menu_waypoint_track_route_edit(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoints"
-	    || this->menu_data->sublayer->type_id == "sg.trw.tracks"
-	    || this->menu_data->sublayer->type_id == "sg.trw.routes") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
 
 		layer_trw_sublayer_menu_waypoints_tracks_routes_paste(this, menu);
 		menu.addSeparator();
 	}
 
 
-	if (ThisApp::get_layers_panel() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
+	if (ThisApp::get_layers_panel() && (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS ||
+					    this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT)) {
 		rv = true;
 		layer_trw_sublayer_menu_waypoints_waypoint_new(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoints") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS) {
 		layer_trw_sublayer_menu_waypoints_A(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.tracks") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
 		rv = true;
 		layer_trw_sublayer_menu_tracks_A(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.routes") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
 		rv = true;
 		layer_trw_sublayer_menu_routes_A(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoints"
-	    || this->menu_data->sublayer->type_id == "sg.trw.tracks"
-	    || this->menu_data->sublayer->type_id == "sg.trw.routes") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
 
 		layer_trw_sublayer_menu_tracks_routes_waypoints_sort(this, menu);
 	}
@@ -414,7 +415,9 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.track" || this->menu_data->sublayer->type_id == "sg.trw.route") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+
 		layer_trw_sublayer_menu_track_route_misc(this, menu, upload_submenu);
 	}
 
@@ -423,7 +426,8 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 	/* These are only made available if a suitable program is installed. */
 	if ((g_have_astro_program || g_have_diary_program)
-	    && (this->menu_data->sublayer->type_id == "sg.trw.track" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
+	    && (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+		|| this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT)) {
 
 		layer_trw_sublayer_menu_track_waypoint_diary_astro(this, menu, external_submenu);
 	}
@@ -433,24 +437,27 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 
 #ifdef VIK_CONFIG_GOOGLE
-	if (this->menu_data->sublayer->type_id == "sg.trw.route" && ((Track *) this->menu_data->sublayer)->is_valid_google_route())) {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE && ((Track *) this->menu_data->sublayer)->is_valid_google_route())) {
 		layer_trw_sublayer_menu_route_google_directions(this, menu);
 	}
 #endif
 
 
 	/* Some things aren't usable with routes. */
-	if (this->menu_data->sublayer->type_id == "sg.trw.track") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 		layer_trw_sublayer_menu_track_misc(this, menu, upload_submenu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.track" || this->menu_data->sublayer->type_id == "sg.trw.route") {
+	/* Menu item for editing a single trackpoint on track or route. */
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		layer_trw_sublayer_menu_track_route_edit_trackpoint(this, menu);
 	}
 
 
-	if (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint") {
+	if (this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS ||
+	    this->menu_data->sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		layer_trw_sublayer_menu_waypoints_waypoint_transform(this, menu);
 	}
 

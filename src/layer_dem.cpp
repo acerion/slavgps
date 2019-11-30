@@ -219,13 +219,13 @@ LayerDEMInterface::LayerDEMInterface()
 {
 	this->parameters_c = dem_layer_param_specs;
 
-	this->fixed_layer_type_string = "DEM"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "DEM"; /* Non-translatable. */
 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_D;
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New DEM Layer");
-	this->ui_labels.layer_type = QObject::tr("DEM");
+	this->ui_labels.translated_layer_kind = QObject::tr("DEM");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of DEM Layer");
 }
 
@@ -242,7 +242,7 @@ LayerToolContainer * LayerDEMInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolDEMDownload(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -1029,8 +1029,8 @@ LayerDEM::LayerDEM()
 {
 	qDebug() << SG_PREFIX_I << "LayerDEM::LayerDEM()";
 
-	this->type = LayerType::DEM;
-	strcpy(this->debug_string, "LayerType::DEM");
+	this->m_kind = LayerKind::DEM;
+	strcpy(this->debug_string, "LayerKind::DEM");
 	this->interface = &vik_dem_layer_interface;
 
 	this->dem_type = 0;
@@ -1050,7 +1050,7 @@ LayerDEM::LayerDEM()
 	}
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 }
 
 
@@ -1372,9 +1372,9 @@ static void free_dem_download_params(DEMDownloadJob * p)
 
 
 
-LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::DEM)
+LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::DEM)
 {
-	this->id_string = "sg.tool.layer_dem.dem_download";
+	this->m_tool_id = "sg.tool.layer_dem.dem_download";
 
 	this->action_icon_path   = ":/icons/layer_tool/dem_download_18.png";
 	this->action_label       = QObject::tr("&DEM Download");
@@ -1387,7 +1387,7 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisvi
 
 ToolStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	if (layer->type != LayerType::DEM) {
+	if (layer->m_kind != LayerKind::DEM) {
 		return ToolStatus::Ignored;
 	}
 

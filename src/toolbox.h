@@ -58,7 +58,7 @@ namespace SlavGPS {
 		   @return pointer to tool on success
 		   @return NULL on failure
 		*/
-		LayerTool * get_tool(const QString & tool_id) const;
+		LayerTool * get_tool(const SGObjectTypeID & tool_id) const;
 
 		const LayerTool * get_current_tool(void) const;
 
@@ -68,14 +68,14 @@ namespace SlavGPS {
 
 		   @param tool_id Tool's globally unique ID
 		*/
-		void activate_tool_by_id(const QString & tool_id);
+		void activate_tool_by_id(const SGObjectTypeID & tool_id);
 
 		/**
 		   @brief Deactivate a tool specified by its globally unique ID
 
 		   @param tool_id Tool's globally unique ID
 		*/
-		void deactivate_tool_by_id(const QString & tool_id);
+		void deactivate_tool_by_id(const SGObjectTypeID & tool_id);
 
 		void deactivate_current_tool(void);
 

@@ -225,3 +225,36 @@ bool SlavGPS::operator!=(SaveStatus::Code code, const SaveStatus & lhs)
 {
 	return !(code == lhs);
 }
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const SGObjectTypeID & type_id)
+{
+	debug.nospace() << type_id.m_val;
+	return debug;
+}
+
+
+
+
+bool SGObjectTypeID::operator==(const SGObjectTypeID & other) const
+{
+	return this->m_val == other.m_val;
+}
+
+
+
+
+bool SGObjectTypeID::operator==(const QString & other) const
+{
+	return this->m_val == other;
+}
+
+
+
+
+bool SGObjectTypeID::operator==(const char * other) const
+{
+	return this->m_val == QString(other);
+}

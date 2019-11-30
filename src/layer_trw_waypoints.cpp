@@ -75,8 +75,8 @@ extern SelectedTreeItems g_selected;
 
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
-	this->type_id = "sg.trw.waypoints";
-	this->accepted_child_type_ids << "sg.trw.waypoint";
+	this->m_type_id = SG_OBJ_TYPE_ID_TRW_WAYPOINTS;
+	this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT;
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
 	this->name = tr("Waypoints");
@@ -726,7 +726,7 @@ void LayerTRWWaypoints::apply_dem_data_only_missing_cb(void)
 void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 {
 	LayersPanel * panel = ThisApp::get_layers_panel();
-	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
 		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
@@ -795,7 +795,7 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 
 	if (this->bbox.intersects_with(viewport_bbox)) {
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->type_id << (*iter)->name;
+			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->m_type_id << (*iter)->name;
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
 	}
@@ -1064,7 +1064,7 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 		return sg_ret::ok;
 	}
 
-	if (this->accepted_child_type_ids.contains(tree_item->type_id)) {
+	if (this->accepted_child_type_ids.contains(tree_item->m_type_id.m_val)) {
 		*result = true;
 		return sg_ret::ok;
 	}
@@ -1078,8 +1078,8 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 
 bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
 {
-	if (child_tree_item.type_id != "sg.trw.waypoint") {
-		qDebug() << SG_PREFIX_E << "Attempting to move non-waypoint child" << child_tree_item.type_id;
+	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+		qDebug() << SG_PREFIX_E << "Attempting to move non-waypoint child" << child_tree_item.m_type_id;
 		return false;
 	}
 

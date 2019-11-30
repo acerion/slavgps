@@ -372,13 +372,13 @@ LayerTRWInterface::LayerTRWInterface()
 	this->parameter_groups.emplace_back(SGLabelID(QObject::tr("Tracks Advanced"), PARAMETER_GROUP_TRACKS_ADV));
 	this->parameter_groups.emplace_back(SGLabelID(QObject::tr("Metadata"),        PARAMETER_GROUP_METADATA));
 
-	this->fixed_layer_type_string = "TrackWaypoint"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "TrackWaypoint"; /* Non-translatable. */
 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New Track/Route/Waypoint Layer");
-	this->ui_labels.layer_type = QObject::tr("TrackWaypoint");
+	this->ui_labels.translated_layer_kind = QObject::tr("TrackWaypoint");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Track/Route/Waypoint Layer");
 }
 
@@ -398,25 +398,25 @@ LayerToolContainer * LayerTRWInterface::create_tools(Window * window, GisViewpor
 	LayerTool * tool = NULL;
 
 	tool = new LayerToolTRWNewWaypoint(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWNewTrack(window, gisview, false);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWNewTrack(window, gisview, true);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWExtendedRouteFinder(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWEditWaypoint(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWEditTrackpoint(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolTRWShowPicture(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -653,7 +653,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-		Clipboard::copy(ClipboardDataType::Sublayer, LayerType::TRW, item->type_id, pickle, item->name);
+		Clipboard::copy(ClipboardDataType::Sublayer, LayerKind::TRW, item->m_type_id, pickle, item->name);
 	}
 }
 
@@ -697,10 +697,10 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		return false;
 	}
 
-	if (item->type_id == "sg.trw.waypoint") {
+	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name("sg.trw.waypoint", wp->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, wp->name);
 		wp->set_name(uniq_name);
 
 		this->add_waypoint(wp);
@@ -713,12 +713,11 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 			this->emit_tree_item_changed("TRW - paste waypoint");
 		}
 		return true;
-	}
-	if (item->type_id == "sg.trw.track") {
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 		Track * trk = Track::unmarshall(pickle);
 
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name("sg.trw.track", trk->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->name);
 		trk->set_name(uniq_name);
 
 		this->add_track(trk);
@@ -730,11 +729,10 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 			this->emit_tree_item_changed("TRW - paste track");
 		}
 		return true;
-	}
-	if (item->type_id == "sg.trw.route") {
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		Track * trk = Track::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name("sg.trw.route", trk->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->name);
 		trk->set_name(uniq_name);
 
 		this->add_route(trk);
@@ -745,6 +743,8 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 			this->emit_tree_item_changed("TRW - paste route");
 		}
 		return true;
+	} else {
+		qDebug() << SG_PREFIX_E << "Unhandled object type id" << item->m_type_id;
 	}
 	return false;
 }
@@ -1191,17 +1191,17 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 			/* Also remember to (attempt to) convert each
 			   coordinate in case this is pasted into a
 			   different track_drawing_mode. */
-			if (type_id == "sg.trw.track") {
+			if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
 				trw->add_track(trk);
 				trk->change_coord_mode(trw->coord_mode);
-			} else if (type_id == "sg.trw.waypoint") {
+			} else if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 				Waypoint * wp = Waypoint::unmarshall(pickle);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
 				trw->add_waypoint(wp);
 				wp->convert(trw->coord_mode);
-			} else if (type_id == "sg.trw.route") {
+			} else if (type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets route name, so we don't have to do it here. */
 				trw->add_route(trk);
@@ -1950,18 +1950,18 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	if (sublayer) {
 		/* Upload only specified sublayer, not whole layer. */
 		xfer_all = false;
-		if (sublayer->type_id == "sg.trw.track") {
+		if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::TRK;
 
-		} else if (sublayer->type_id == "sg.trw.route") {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::RTE;
 
-		} else if (sublayer->type_id == "sg.trw.waypoints") {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_WAYPOINTS) {
 			xfer_type = GPSTransferType::WPT;
 
-		} else if (sublayer->type_id == "sg.trw.routes") {
+		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
 			xfer_type = GPSTransferType::RTE;
 		}
 	} else {
@@ -2041,7 +2041,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name("sg.trw.track", tr("Track")) ;
+		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK, tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
 		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_TRACK);
@@ -2078,7 +2078,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name("sg.trw.route", tr("Route")) ;
+		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE, tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
 		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_ROUTE);
@@ -2310,11 +2310,11 @@ void LayerTRW::reset_waypoints()
 /**
    \brief Get a a unique new name for element of type \param item_type_id
 */
-QString LayerTRW::new_unique_element_name(const QString & item_type_id, const QString & old_name)
+QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, const QString & old_name)
 {
-	if (item_type_id == "sg.trw.track") {
+	if (item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 		return this->tracks.new_unique_element_name(old_name);
-	} else if (item_type_id == "sg.trw.waypoint") {
+	} else if (item_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		return this->waypoints.new_unique_element_name(old_name);
 	} else {
 		return this->routes.new_unique_element_name(old_name);
@@ -2382,14 +2382,16 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 	/* Handle item in old location. */
 	{
-		if (tree_item->type_id == "sg.trw.track") {
+		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 			source_trw->detach_from_container((Track *) tree_item);
-		} else if (tree_item->type_id == "sg.trw.route") {
+
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 			source_trw->detach_from_container((Track *) tree_item);
-		} else if (tree_item->type_id == "sg.trw.waypoint") {
+
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 			source_trw->detach_from_container((Waypoint *) tree_item);
 		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->type_id << "of item" << tree_item->name;
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
 			return sg_ret::err;
 		}
 
@@ -2405,7 +2407,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 		   here so that the layer can create and attach
 		   Tracks/Routes/Waypoints nodes if necessary. */
 
-		if (tree_item->type_id == "sg.trw.track") {
+		if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 
 			this->add_track((Track *) tree_item);
 
@@ -2414,7 +2416,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->tracks.recalculate_bbox();
 			}
 
-		} else if (tree_item->type_id == "sg.trw.route") {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 			this->add_route((Track *) tree_item);
 
 			this->routes.recalculate_bbox();
@@ -2422,7 +2424,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->routes.recalculate_bbox();
 			}
 
-		} else if (tree_item->type_id == "sg.trw.waypoint") {
+		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 			this->add_waypoint((Waypoint *) tree_item);
 
 			this->waypoints.recalculate_bbox();
@@ -2430,7 +2432,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->waypoints.recalculate_bbox();
 			}
 		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->type_id << "of item" << tree_item->name;
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
 			return sg_ret::err;
 		}
 	}
@@ -2452,9 +2454,10 @@ sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 		return sg_ret::ok;
 	}
 
-	if ("sg.trw.track" == tree_item->type_id
-	    || "sg.trw.route" == tree_item->type_id
-	    || "sg.trw.waypoint" == tree_item->type_id) {
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE
+	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
+
 		*result = true;
 		return sg_ret::ok;
 	}
@@ -2523,20 +2526,20 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 
 	/* If last sublayer of given type, then remove sublayer container.
 	   TODO: this sometimes doesn't work. */
-	if (tree_item->type_id == "sg.trw.track") {
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK) {
 		if (this->tracks.size() == 0) {
 			this->tree_view->detach_tree_item(&this->tracks);
 		}
-	} else if (tree_item->type_id == "sg.trw.route") {
+	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		if (this->routes.size() == 0) {
 			this->tree_view->detach_tree_item(&this->routes);
 		}
-	} else if (tree_item->type_id == "sg.trw.waypoint") {
+	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		if (this->waypoints.size() == 0) {
 			this->tree_view->detach_tree_item(&this->waypoints);
 		}
 	} else {
-		qDebug() << SG_PREFIX_E << "Unexpected tree item type" << tree_item->type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected tree item type" << tree_item->m_type_id;
 		return sg_ret::err;
 	}
 
@@ -2666,14 +2669,16 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 {
-	if (item->type_id == "sg.trw.waypoint") {
+	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT) {
 		Waypoint * wp = (Waypoint *) item;
 		this->delete_waypoint(wp, confirm);
-	} else if (item->type_id == "sg.trw.track" || item->type_id == "sg.trw.route") {
+
+	} else if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+		   || item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
 		Track * trk = (Track *) item;
 		this->delete_track(trk, confirm);
 	} else {
-		qDebug() << SG_PREFIX_E << "Unexpected sublayer type" << item->type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected sublayer type" << item->m_type_id;
 	}
 }
 
@@ -3149,7 +3154,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
    Function returns freshly allocated container. The container itself is owned by caller. Elements in container are not.
 */
-void LayerTRW::get_waypoints_list(std::list<SlavGPS::Waypoint *> & list)
+void LayerTRW::get_tree_items(std::list<SlavGPS::Waypoint *> & list)
 {
 	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
 		list.push_back(*iter);
@@ -3162,14 +3167,14 @@ void LayerTRW::get_waypoints_list(std::list<SlavGPS::Waypoint *> & list)
 /**
    Fill the list with tracks and/or routes from the layer.
 */
-void LayerTRW::get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const
+void LayerTRW::get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const
 {
-	if (type_id_string == "" || type_id_string == "sg.trw.tracks") {
-		this->tracks.get_tracks_list(list);
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_TRACKS) {
+		this->tracks.get_tree_items(list);
 	}
 
-	if (type_id_string == "" || type_id_string == "sg.trw.routes") {
-		this->routes.get_tracks_list(list);
+	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_ROUTES) {
+		this->routes.get_tree_items(list);
 	}
 }
 
@@ -3178,7 +3183,7 @@ void LayerTRW::get_tracks_list(std::list<Track *> & list, const QString & type_i
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, "sg.trw.tracks", this->get_window());
+	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_TRACKS, this->get_window());
 }
 
 
@@ -3186,7 +3191,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, "sg.trw.routes", this->get_window());
+	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_ROUTES, this->get_window());
 }
 
 
@@ -3525,7 +3530,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		return;
 	}
 
-	const std::list<Layer const *> layers = panel->get_all_layers_of_type(LayerType::Map, true); /* Includes hidden map layer types. */
+	const std::list<Layer const *> layers = panel->get_all_layers_of_kind(LayerKind::Map, true); /* Includes hidden map layer types. */
 	int num_maps = layers.size();
 	if (!num_maps) {
 		Dialog::error(tr("No map layer in use. Create one first"), this->get_window());
@@ -3617,7 +3622,7 @@ SaveStatus LayerTRW::write_layer_data(FILE * file) const
 
 LayerTRW::LayerTRW() : Layer()
 {
-	this->type = LayerType::TRW;
+	this->m_kind = LayerKind::TRW;
 	strcpy(this->debug_string, "TRW");
 	this->interface = &vik_trw_layer_interface;
 
@@ -3628,7 +3633,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->painter = new LayerTRWPainter(this);
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */

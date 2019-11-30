@@ -79,7 +79,7 @@ Waypoint::Waypoint()
 {
 	this->name = tr("Waypoint");
 
-	this->type_id = "sg.trw.waypoint";
+	this->m_type_id = SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT;
 
 	this->has_properties_dialog = true;
 
@@ -585,7 +585,7 @@ void Waypoint::apply_dem_data_only_missing_cb(void)
 void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 {
 	LayersPanel * panel = ThisApp::get_layers_panel();
-	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
 		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
@@ -915,7 +915,7 @@ void Waypoint::display_debug_info(const QString & reference) const
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	qDebug() << SG_PREFIX_D << "@" << reference;
-	qDebug() << SG_PREFIX_D << "               Type ID =" << this->type_id;
+	qDebug() << SG_PREFIX_D << "               Type ID =" << this->m_type_id;
 
 	qDebug() << SG_PREFIX_D << "               Pointer =" << (quintptr) this;
 	qDebug() << SG_PREFIX_D << "                  Name =" << this->name;
@@ -1023,10 +1023,10 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 
 
 	std::list<Waypoint *> tree_items;
-	if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_waypoints_list(tree_items);
-	} else if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_waypoints_list(tree_items);
+	if (layer->m_kind == LayerKind::TRW) {
+		((LayerTRW *) layer)->get_tree_items(tree_items);
+	} else if (layer->m_kind == LayerKind::Aggregate) {
+		((LayerAggregate *) layer)->get_tree_items(tree_items);
 	} else {
 		assert (0);
 	}
@@ -1038,7 +1038,7 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	TreeItemViewFormat view_format;
-	if (layer->type == LayerType::Aggregate) {
+	if (layer->m_kind == LayerKind::Aggregate) {
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("ParentLayer"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::LayerName, QHeaderView::Interactive);
 	}
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,    true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Waypoint, QHeaderView::Interactive);

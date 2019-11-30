@@ -52,18 +52,6 @@ namespace SlavGPS {
 
 
 
-/* Globally unique tool IDS. */
-#define LAYER_TRW_TOOL_CREATE_WAYPOINT "sg.tool.layer_trw.create_waypoint"
-#define LAYER_TRW_TOOL_CREATE_TRACK    "sg.tool.layer_trw.create_track"
-#define LAYER_TRW_TOOL_CREATE_ROUTE    "sg.tool.layer_trw.create_route"
-#define LAYER_TRW_TOOL_ROUTE_FINDER    "sg.tool.layer_trw.route_finder"
-#define LAYER_TRW_TOOL_EDIT_WAYPOINT   "sg.tool.layer_trw.edit_waypoint"
-#define LAYER_TRW_TOOL_EDIT_TRACKPOINT "sg.tool.layer_trw.edit_trackpoint"
-#define LAYER_TRW_TOOL_SHOW_PICTURE    "sg.tool.layer_trw.show_picture"
-
-
-
-
 	class LayerToolTRWNewWaypoint : public LayerTool {
 	public:
 		LayerToolTRWNewWaypoint(Window * window, GisViewport * gisview);

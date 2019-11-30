@@ -31,6 +31,7 @@
 
 
 #include "dialog.h"
+#include "tree_item.h"
 
 
 
@@ -92,7 +93,7 @@ namespace SlavGPS {
 
 		QString window_title;
 		QString layer_title;
-		QString type_id; /* Internal identifier. */
+		SGObjectTypeID type_id; /* Internal identifier. */
 
 
 		DataSourceMode mode;

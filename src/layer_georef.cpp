@@ -136,13 +136,13 @@ LayerGeorefInterface::LayerGeorefInterface()
 {
 	this->parameters_c = georef_layer_param_specs;
 
-	this->fixed_layer_type_string = "GeoRef Map"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "GeoRef Map"; /* Non-translatable. */
 
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
-	this->ui_labels.layer_type = QObject::tr("GeoRef Map");
+	this->ui_labels.translated_layer_kind = QObject::tr("GeoRef Map");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GeoRef Map Layer");
 }
 
@@ -162,10 +162,10 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, GisView
 	LayerTool * tool = NULL;
 
 	tool = new LayerToolGeorefMove(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolGeorefZoom(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -1196,9 +1196,9 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 
 
-LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Georef)
+LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->id_string = "sg.tool.layer_georef.move";
+	this->m_tool_id = "sg.tool.layer_georef.move";
 
 	this->action_icon_path   = ":/icons/layer_tool/georef_move_18.png";
 	this->action_label       = QObject::tr("&Georef Move Map");
@@ -1222,8 +1222,8 @@ ToolStatus LayerToolGeorefMove::internal_handle_mouse_release(Layer * layer, QMo
 
 ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::Georef) {
-		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
+	if (this->m_kind != LayerKind::Georef) {
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -1239,9 +1239,9 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 
 
-LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Georef)
+LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->id_string = "sg.tool.layer_georef.zoom";
+	this->m_tool_id = "sg.tool.layer_georef.zoom";
 
 	this->action_icon_path   = ":/icons/layer_tool/georef_zoom_18.png";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
@@ -1262,8 +1262,8 @@ ToolStatus LayerToolGeorefZoom::internal_handle_mouse_click(Layer * layer, QMous
 
 ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::Georef) {
-		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
+	if (this->m_kind != LayerKind::Georef) {
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
 		return ToolStatus::Ignored;
 	}
 
@@ -1297,8 +1297,8 @@ ToolStatus LayerToolGeorefMove::internal_handle_mouse_click(Layer * layer, QMous
 
 ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::Georef) {
-		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
+	if (this->m_kind != LayerKind::Georef) {
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
 		return ToolStatus::Ignored;
 	}
 	this->click_x = ev->x();
@@ -1355,14 +1355,14 @@ LayerGeoref * SlavGPS::georef_layer_create(GisViewport * gisview, const QString 
 
 LayerGeoref::LayerGeoref()
 {
-	this->type = LayerType::Georef;
+	this->m_kind = LayerKind::Georef;
 	strcpy(this->debug_string, "GEOREF");
 	this->interface = &vik_georef_layer_interface;
 
 	/* Since GeoRef layer doesn't use uibuilder initializing this
 	   way won't do anything yet... */
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 }
 
 

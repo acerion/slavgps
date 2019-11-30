@@ -30,6 +30,7 @@
 
 
 #include "variant.h"
+#include "tree_item.h"
 
 
 
@@ -40,7 +41,7 @@ namespace SlavGPS {
 
 
 	class LayersPanel;
-	enum class LayerType;
+	enum class LayerKind;
 
 
 
@@ -108,7 +109,7 @@ namespace SlavGPS {
 
 	class Clipboard {
 	public:
-		static void copy(ClipboardDataType type, LayerType layer_type, const QString & type_id, Pickle & pickle, const QString & text);
+		static void copy(ClipboardDataType type, LayerKind layer_kind, const SGObjectTypeID & type_id, Pickle & pickle, const QString & text);
 		static void copy_selected(LayersPanel * panel);
 		static bool paste(LayersPanel * panel);
 		static ClipboardDataType get_current_type();

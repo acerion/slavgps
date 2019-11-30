@@ -104,11 +104,17 @@ namespace SlavGPS {
 		sg_ret detach_from_tree(Layer * layer);
 
 
-		void get_waypoints_list(std::list<Waypoint *> & list);
-		void get_tracks_list(std::list<Track *> & list, const QString & type_id) const;
+		/* Get tree items (direct and indirect children of the
+		   layer) of type "Waypoint". */
+		void get_tree_items(std::list<Waypoint *> & list);
 
-		Layer * get_top_visible_layer_of_type(LayerType layer_type);
-		void get_all_layers_of_type(std::list<const Layer *> & layers, LayerType layer_type, bool include_invisible) const;
+		/* Get tree items (direct and indirect children of the
+		   layer) of given type @param type_id (for now only
+		   tracks/routes). */
+		void get_tree_items(std::list<Track *> & list, const SGObjectTypeID & type_id) const;
+
+		Layer * get_top_visible_layer_of_type(LayerKind layer_kind);
+		void get_all_layers_of_kind(std::list<const Layer *> & layers, LayerKind layer_kind, bool include_invisible) const;
 		bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 		bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 

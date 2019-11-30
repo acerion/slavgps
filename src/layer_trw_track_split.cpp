@@ -159,7 +159,7 @@ sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & split_iters,
 		Track * new_trk = new Track(*this); /* Just copy track properties. */
 		const sg_ret mv = new_trk->move_trackpoints_from(*this, tp_iter_begin, tp_iter_end); /* Now move a range of trackpoints. */
 
-		const QString new_trk_name = parent_layer->new_unique_element_name(this->type_id, this->name);
+		const QString new_trk_name = parent_layer->new_unique_element_name(this->m_type_id, this->name);
 		new_trk->set_name(new_trk_name);
 
 		parent_layer->add_track(new_trk);

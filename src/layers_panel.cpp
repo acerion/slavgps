@@ -243,11 +243,11 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 	switch (item->get_tree_item_type()) {
 	case TreeItemType::Layer: {
 
-		qDebug() << SG_PREFIX_I << "Context menu event: menu for layer" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Context menu event: menu for layer" << item->m_type_id << item->name;
 
 		Layer * layer = item->to_layer();
 
-		/* "New layer -> layer types" submenu. */
+		/* "New layer -> layer kinds" submenu. */
 		MenuOperation ops = layer->get_menu_operation_ids();
 		ops = (MenuOperation) (ops | MenuOperationNew);
 		this->context_menu_create_standard_items(&menu, ops);
@@ -257,7 +257,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		}
 		break;
 	case TreeItemType::Sublayer:
-		qDebug() << SG_PREFIX_I << "Context menu event: menu for sublayer" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Context menu event: menu for sublayer" << item->m_type_id << item->name;
 
 		if (!item->add_context_menu_items(menu, true)) {
 			return;
@@ -328,7 +328,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	qDebug() << SG_PREFIX_I << "Selected layer is named" << selected_layer->get_name();
 
 
-	if (selected_layer->type == LayerType::Aggregate) {
+	if (selected_layer->m_kind == LayerKind::Aggregate) {
 		/* If selected layer is Aggregate layer, we want new
 		   layer to go into this selected Aggregate layer.
 
@@ -350,7 +350,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	   layers only under Aggregate layer, let's find the Aggregate
 	   layer by going up in hierarchy. */
 	qDebug() << SG_PREFIX_I << "Selected layer is non-Aggregate layer named" << selected_layer->get_name() << ", looking for Aggregate layer";
-	Layer * aggregate_candidate = this->go_up_to_layer(selected_layer, LayerType::Aggregate);
+	Layer * aggregate_candidate = this->go_up_to_layer(selected_layer, LayerKind::Aggregate);
 	if (aggregate_candidate) {
 		LayerAggregate * aggregate = (LayerAggregate *) aggregate_candidate;
 		assert (aggregate->tree_view);
@@ -448,7 +448,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 			Clipboard::copy_selected(this);
 
-			if (parent_layer->type == LayerType::AGGREGATE) {
+			if (parent_layer->m_kind == LayerKind::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item)) {
@@ -544,7 +544,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 				ThisApp::get_main_viewport()->set_trigger(NULL);
 			}
 
-			if (parent_layer->type == LayerType::AGGREGATE) {
+			if (parent_layer->m_kind == LayerKind::AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
@@ -608,15 +608,15 @@ Layer * LayersPanel::get_selected_layer()
 
 
 
-Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
+Layer * LayersPanel::get_layer_of_kind(LayerKind layer_kind)
 {
 	Layer * layer = this->get_selected_layer();
-	if (layer && layer->type == layer_type) {
+	if (layer && layer->m_kind == layer_kind) {
 		return layer;
 	}
 
 	if (this->toplayer->is_visible()) {
-		return this->toplayer->get_top_visible_layer_of_type(layer_type);
+		return this->toplayer->get_top_visible_layer_of_type(layer_kind);
 	}
 
 	return NULL;
@@ -625,19 +625,19 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 
 
-std::list<const Layer *> LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible) const
+std::list<const Layer *> LayersPanel::get_all_layers_of_kind(LayerKind layer_kind, bool include_invisible) const
 {
 	std::list<const Layer *> layers;
-	this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
+	this->toplayer->get_all_layers_of_kind(layers, layer_kind, include_invisible);
 	return layers;
 }
 
 
 
 
-bool LayersPanel::has_any_layer_of_type(LayerType type)
+bool LayersPanel::has_any_layer_of_kind(LayerKind layer_kind)
 {
-	std::list<const Layer *> layers = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
+	std::list<const Layer *> layers = this->get_all_layers_of_kind(layer_kind, true); /* Includes hidden layers. */
 	return layers.size () > 0;
 }
 
@@ -761,7 +761,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
   start from its parent, you have to calculate parent by yourself and
   pass the parent to this function.
 */
-Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerType expected_layer_type)
+Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerKind expected_layer_kind)
 {
 	TreeIndex const & item_index = tree_item->index;
         TreeIndex this_index = item_index;
@@ -775,7 +775,7 @@ Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerType expect
 		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
 		if (this_item->get_tree_item_type() == TreeItemType::Layer) {
 
-			if (((Layer *) this_item)->type == expected_layer_type) {
+			if (((Layer *) this_item)->m_kind == expected_layer_kind) {
 				return (Layer *) this_item; /* Returning matching layer. */
 			}
 		}

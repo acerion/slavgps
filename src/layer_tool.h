@@ -46,7 +46,7 @@ namespace SlavGPS {
 	class Window;
 	class GisViewport;
 	class Layer;
-	enum class LayerType;
+	enum class LayerKind;
 
 
 
@@ -76,7 +76,7 @@ namespace SlavGPS {
 	class LayerTool {
 
 	public:
-		LayerTool(Window * window, GisViewport * gisview, LayerType layer_type);
+		LayerTool(Window * window, GisViewport * gisview, LayerKind layer_kind);
 		virtual ~LayerTool();
 
 		QString get_description(void) const;
@@ -119,11 +119,11 @@ namespace SlavGPS {
 		GisViewport * gisview = NULL;
 
 
-		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
+		LayerKind m_layer_kind; /* Can be set to LayerKind::Max to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 
 		/* Globally unique tool ID, e.g. "sg.tool.generic.zoom", or "sg.tool.layer_dem.download".
 		   For internal use, not visible to end user. */
-		QString id_string;
+		SGObjectTypeID m_tool_id;
 
 		char debug_string[100]; /* For debug purposes only. */
 

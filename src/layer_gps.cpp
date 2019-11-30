@@ -280,13 +280,13 @@ LayerGPSInterface::LayerGPSInterface()
 	this->parameter_groups.emplace_back(SGLabelID(QObject::tr("Realtime Tracking Mode"), PARAMETER_GROUP_REALTIME_MODE));
 #endif
 
-	this->fixed_layer_type_string = "GPS"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "GPS"; /* Non-translatable. */
 
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New GPS Layer");
-	this->ui_labels.layer_type = QObject::tr("GPS");
+	this->ui_labels.translated_layer_kind = QObject::tr("GPS");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GPS Layer");
 }
 
@@ -1897,7 +1897,7 @@ void LayerGPS::rt_stop_tracking(void)
 
 LayerGPS::LayerGPS()
 {
-	this->type = LayerType::GPS;
+	this->m_kind = LayerKind::GPS;
 	strcpy(this->debug_string, "GPS");
 	this->interface = &vik_gps_layer_interface;
 
@@ -1930,7 +1930,7 @@ LayerGPS::LayerGPS()
 	}
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i] = new LayerTRW();

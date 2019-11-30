@@ -122,7 +122,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview
 	LayerTRW * trw = NULL;
 
 	bool create_layer = false;
-	if (layer == NULL || layer->type != LayerType::TRW) {
+	if (layer == NULL || layer->m_kind != LayerKind::TRW) {
 		/* Create layer if necessary. */
 
 		trw = (LayerTRW *) new LayerTRW();

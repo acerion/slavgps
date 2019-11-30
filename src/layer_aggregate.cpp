@@ -66,13 +66,13 @@ LayerAggregateInterface vik_aggregate_layer_interface;
 
 LayerAggregateInterface::LayerAggregateInterface()
 {
-	this->fixed_layer_type_string = "Aggregate"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "Aggregate"; /* Non-translatable. */
 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_A;
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New Aggregate Layer");
-	this->ui_labels.layer_type = QObject::tr("Aggregate");
+	this->ui_labels.translated_layer_kind = QObject::tr("Aggregate");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Aggregate Layer");
 }
 
@@ -115,12 +115,12 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, GisViewport * gisvi
 
 
 
-bool is_base_type(LayerType layer_type)
+bool is_base_type(LayerKind layer_kind)
 {
-	/* These types are 'base' types in that you what other information on top. */
-	return layer_type == LayerType::DEM
-		|| layer_type == LayerType::Map
-		|| layer_type == LayerType::Georef;
+	/* These kind are 'base' kinds in that you what other information on top. */
+	return layer_kind == LayerKind::DEM
+		|| layer_kind == LayerKind::Map
+		|| layer_kind == LayerKind::Georef;
 }
 
 
@@ -132,7 +132,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 	TreeView::AttachMode attach_mode = TreeView::AttachMode::Before;
 
 	/* These types are 'base' types in that you what other information on top. */
-	if (is_base_type(layer->type)) {
+	if (is_base_type(layer->m_kind)) {
 		attach_mode = TreeView::AttachMode::After;
 	}
 
@@ -197,7 +197,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	/* By default layers go to the top. */
 	bool put_above = true;
 
-	if (allow_reordering && is_base_type(layer->type)) {
+	if (allow_reordering && is_base_type(layer->m_kind)) {
 		put_above = false;
 	}
 
@@ -219,7 +219,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 
-	if (layer->type == LayerType::GPS) {
+	if (layer->m_kind == LayerKind::GPS) {
 		/* TODO_2_LATER: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->attach_children_to_tree();
 	}
@@ -341,8 +341,8 @@ void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_select
 			}
 		}
 
-		if (layer->type == LayerType::AGGREGATE
-		    || layer->type == LayerType::GPS
+		if (layer->m_kind == LayerKind::AGGREGATE
+		    || layer->m_kind == LayerKind::GPS
 		    || !gisview->get_half_drawn()) {
 
 			qDebug() << SG_PREFIX_I << "Calling draw_if_visible() for" << layer->name;
@@ -474,14 +474,14 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::get_waypoints_list(std::list<Waypoint *> & list)
+void LayerAggregate::get_tree_items(std::list<Waypoint *> & list)
 {
 	std::list<const Layer *> layers;
-	this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		((LayerTRW *) (*iter))->get_waypoints_list(list);
+		((LayerTRW *) (*iter))->get_tree_items(list);
 	}
 }
 
@@ -511,7 +511,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 	std::list<const Layer *> layers;
-	this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
 
 
 	std::list<TreeItem *> items_by_date;
@@ -548,14 +548,14 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const
+void LayerAggregate::get_tree_items(std::list<Track *> & list, const SGObjectTypeID & obj_type_id) const
 {
 	std::list<Layer const *> layers;
-	this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
 
 	/* For each TRW layers keep adding the tracks and/or routes to build a list of all of them. */
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		((LayerTRW *) (*iter))->get_tracks_list(list, type_id_string);
+		((LayerTRW *) (*iter))->get_tree_items(list, obj_type_id);
 	}
 }
 
@@ -745,7 +745,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 
 #ifdef K_TODO_MAYBE
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
-unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, GisViewport * gisview)
+unsigned int LayerAggregate::layer_tool(LayerKind layer_kind, VikToolInterfaceFunc tool_func, GdkEventButton * event, GisViewport * gisview)
 {
 	if (this->children->empty()) {
 		return false;
@@ -759,7 +759,7 @@ unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFu
 		Layer * layer = *iter;
 
 		/* If this layer "accepts" the tool call. */
-		if (layer->visible && layer->type == layer_type) {
+		if (layer->visible && layer->m_kind == layer_kind) {
 			if (tool_func(layer, event, gisview)) {
 				return 0;
 			} else {
@@ -768,8 +768,8 @@ unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFu
 		}
 
 		/* Recursive -- try the same for the child aggregate layer. */
-		else if (layer->visible && layer->type == LayerType::AGGREGATE) {
-			int rv = ((LayerAggregate *) layer)->layer_tool(layer_type, tool_func, event, gisview);
+		else if (layer->visible && layer->m_kind == LayerKind::Aggregate) {
+			int rv = ((LayerAggregate *) layer)->layer_tool(layer_kind, tool_func, event, gisview);
 			if (rv == 0) {
 				return 0;
 			} else if (rv == 2) {
@@ -791,7 +791,7 @@ unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFu
 
 
 
-Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
+Layer * LayerAggregate::get_top_visible_layer_of_type(LayerKind layer_kind)
 {
 	if (this->children->empty()) {
 		return NULL;
@@ -801,10 +801,10 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 	do {
 		child--;
 		Layer * layer = *child;
-		if (layer->is_visible() && layer->type == layer_type) {
+		if (layer->is_visible() && layer->m_kind == layer_kind) {
 			return layer;
-		} else if (layer->is_visible() && layer->type == LayerType::Aggregate) {
-			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(layer_type);
+		} else if (layer->is_visible() && layer->m_kind == LayerKind::Aggregate) {
+			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(layer_kind);
 			if (rv) {
 				return rv;
 			}
@@ -817,7 +817,7 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 
 
 
-void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, LayerType expected_layer_type, bool include_invisible) const
+void LayerAggregate::get_all_layers_of_kind(std::list<Layer const *> & layers, LayerKind expected_layer_kind, bool include_invisible) const
 {
 	if (this->children->empty()) {
 		return;
@@ -827,18 +827,18 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 	/* Where appropriate *don't* include non-visible layers. */
 	while (child != this->children->end()) {
 		Layer * layer = *child;
-		if (layer->type == LayerType::Aggregate) {
+		if (layer->m_kind == LayerKind::Aggregate) {
 			/* Don't even consider invisible aggregrates, unless told to. */
 			if (layer->is_visible() || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
-				aggregate->get_all_layers_of_type(layers, type, include_invisible);
+				aggregate->get_all_layers_of_kind(layers, expected_layer_kind, include_invisible);
 			}
-		} else if (expected_layer_type == layer->type) {
+		} else if (expected_layer_kind == layer->m_kind) {
 			if (layer->is_visible() || include_invisible) {
 				layers.push_back(layer); /* now in top down order */
 			}
-		} else if (expected_layer_type == LayerType::TRW) {
-			if (layer->type != LayerType::GPS) {
+		} else if (expected_layer_kind == LayerKind::TRW) {
+			if (layer->m_kind != LayerKind::GPS) {
 				continue;
 			}
 
@@ -906,17 +906,17 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, GisViewport *
 	/* Where appropriate *don't* include non-visible layers. */
 	while (child != this->children->end()) {
 
-		if (layer->type == LayerType::AGGREGATE) {
+		if (layer->m_kind == LayerKind::Aggregate) {
 
-				LayerAggregate * aggregate = (LayerAggregate *) layer;
+			LayerAggregate * aggregate = (LayerAggregate *) layer;
 
-			}
-		} else if (expected_layer_type == layer->type) {
+		}
+		} else if (expected_layer_kind == layer->m_kind) {
 			if (layer->visible) {
 				layers->push_back(layer); /* now in top down order */
 			}
-		} else if (expected_layer_type == LayerType::TRW) {
-			if (layer->type != LayerType::GPS) {
+		} else if (expected_layer_kind == LayerKind::TRW) {
+			if (layer->m_kind != LayerKind::GPS) {
 				continue;
 			}
 
@@ -1000,8 +1000,8 @@ sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, int row, int col)
 	/* Handle item in old location. */
 	{
 		Layer * layer = tree_item->get_owning_layer();
-		if (layer->type != LayerType::Aggregate) {
-			qDebug() << SG_PREFIX_E << "Moving item from layer owned by layer type" << layer->type;
+		if (layer->m_kind != LayerKind::Aggregate) {
+			qDebug() << SG_PREFIX_E << "Moving item from layer owned by layer kind" << layer->m_kind;
 			/* TODO: what about drag and drop of TRW layers from GPS layer? */
 			return sg_ret::err;
 		}
@@ -1060,11 +1060,11 @@ LayerAggregate::LayerAggregate()
 {
 	qDebug() << SG_PREFIX_I;
 
-	this->type = LayerType::Aggregate;
-	strcpy(this->debug_string, "LayerType::AGGREGATE");
+	this->m_kind = LayerKind::Aggregate;
+	strcpy(this->debug_string, "LayerKind::Aggregate");
 
 	this->interface = &vik_aggregate_layer_interface;
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 
 	this->children = new std::list<Layer *>;
 }

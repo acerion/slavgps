@@ -267,13 +267,13 @@ LayerMapInterface::LayerMapInterface()
 {
 	this->parameters_c = maps_layer_param_specs; /* Parameters. */
 
-	this->fixed_layer_type_string = "Map"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "Map"; /* Non-translatable. */
 
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New Map Layer");
-	this->ui_labels.layer_type = QObject::tr("Map");
+	this->ui_labels.translated_layer_kind = QObject::tr("Map");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Map Layer");
 }
 
@@ -291,7 +291,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapsDownload(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -301,7 +301,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, GisViewpor
 
 
 static ParameterSpecification prefs[] = {
-	{ (param_id_t) LayerType::Max, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, QObject::tr("Choose a directory to store cached Map tiles for this layer") },
+	{ (param_id_t) LayerKind::Max, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, QObject::tr("Choose a directory to store cached Map tiles for this layer") },
 };
 
 
@@ -429,7 +429,7 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
-	SGVariant var = LayerDefaults::get(LayerType::Map, maps_layer_param_specs[PARAM_MAP_TYPE_ID]);
+	SGVariant var = LayerDefaults::get(LayerKind::Map, maps_layer_param_specs[PARAM_MAP_TYPE_ID]);
 	if (!var.is_valid() || var.u.val_int == 0) {
 		var = map_type_default();
 	}
@@ -1466,7 +1466,7 @@ void SlavGPS::tile_info_add_file_info_strings(QStringList & items, const QString
 
 ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
-	if (!_layer || _layer->type != LayerType::Map) {
+	if (!_layer || _layer->m_kind != LayerKind::Map) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1537,9 +1537,9 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 
 
 
-LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Map)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Map)
 {
-	this->id_string = "sg.tool.layer_map.maps_download";
+	this->m_tool_id = "sg.tool.layer_map.maps_download";
 
 	this->action_icon_path   = ":/icons/layer_tool/map_download_18.png";
 	this->action_label       = QObject::tr("Maps Download");
@@ -1556,7 +1556,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gis
 ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
-	if (!_layer || _layer->type != LayerType::Map) {
+	if (!_layer || _layer->m_kind != LayerKind::Map) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1950,12 +1950,12 @@ LayerMap::LayerMap()
 {
 	qDebug() << SG_PREFIX_D << "Constructor called";
 
-	this->type = LayerType::Map;
+	this->m_kind = LayerKind::Map;
 	strcpy(this->debug_string, "MAP");
 	this->interface = &vik_map_layer_interface;
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 }
 
 

@@ -69,7 +69,7 @@ typedef struct {
 	int pid;
 	ClipboardDataType type;
 	QString type_id;    /* Type of tree item. */
-	LayerType layer_type;
+	LayerKind layer_kind;
 	unsigned int len;
 	char *text;
 	uint8_t data[0];
@@ -160,12 +160,12 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 		panel->add_layer(new_layer, viewport->get_coord_mode());
 	} else if (vc->type == ClipboardDataType::Sublayer) {
 		Layer * selected = panel->get_selected_layer();
-		if (selected && selected->type == vc->layer_type) {
+		if (selected && selected->type == vc->layer_kind) {
 			selected->paste_sublayer(vc->sublayer, vc->data, vc->len);
 		} else {
 			Dialog::error(tr("The clipboard contains sublayer data for %1 layers. "
 					 "You must select a layer of this type to paste the clipboard data.")
-				      .arg(Layer::get_interface(vc->layer_type)->name),
+				      .arg(Layer::get_interface(vc->layer_kind)->name),
 				      panel->get_window());
 		}
 	}
@@ -302,7 +302,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 {
 	Layer * selected = panel->get_selected_layer();
 
-	if (selected && selected->type == LayerType::TRW) {
+	if (selected && selected->m_kind == LayerKind::TRW) {
 		bool dummy = false;
 		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LatLon), dummy, selected->get_window());
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
@@ -448,7 +448,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	Layer * selected = panel->get_selected_layer();
 	TreeIndex index;
 	ClipboardDataType type = ClipboardDataType::None;
-	LayerType layer_type = LayerType::Aggregate;
+	LayerKind layer_kind = LayerKind::Aggregate;
 	QString type_id; /* Type ID of copied tree item. */
 	unsigned char * data = NULL;
 	unsigned int len = 0;
@@ -457,7 +457,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 		return;
 	}
 
-	layer_type = selected->type;
+	layer_kind = selected->m_kind;
 
 	QString name = selected->name; /* FIXME: look at how viking gets name in this function. */
 
@@ -492,16 +492,16 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	}
 #if 1
 	Pickle pickle;
-	Clipboard::copy(type, layer_type, type_id, pickle, name);
+	Clipboard::copy(type, layer_kind, type_id, pickle, name);
 #else
-	Clipboard::copy(type, layer_type, type_id, len, name, data);
+	Clipboard::copy(type, layer_kind, type_id, len, name, data);
 #endif
 }
 
 
 
 
-void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString & type_id, Pickle & pickle, const QString & text)
+void Clipboard::copy(ClipboardDataType type, LayerKind layer_kind, const SGObjectTypeID & type_id, Pickle & pickle, const QString & text)
 {
 #ifdef K
 	const int len = pickle.data_size();
@@ -509,7 +509,7 @@ void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	vc->type = type;
-	vc->layer_type = layer_type;
+	vc->layer_kind = layer_kind;
 	vc->type_id = type_id;
 	vc->len = len;
 	vc->text = text;

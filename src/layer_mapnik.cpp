@@ -171,13 +171,13 @@ LayerMapnikInterface::LayerMapnikInterface()
 {
 	this->parameters_c = mapnik_layer_param_specs;
 
-	this->fixed_layer_type_string = "Mapnik Rendering"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "Mapnik Rendering"; /* Non-translatable. */
 
 	// this->action_accelerator =  ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New Mapnik Rendering Layer");
-	this->ui_labels.layer_type = QObject::tr("Mapnik Rendering");
+	this->ui_labels.translated_layer_kind = QObject::tr("Mapnik Rendering");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Mapnik Rendering Layer");
 }
 
@@ -195,7 +195,7 @@ LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, GisView
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapnikFeature(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -1039,9 +1039,9 @@ void LayerMapnik::tile_info_cb(void)
 
 
 
-LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Mapnik)
+LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Mapnik)
 {
-	this->id_string = "sg.tool.layer_mapnik.feature";
+	this->m_tool_id = "sg.tool.layer_mapnik.feature";
 
 	this->action_icon_path   = ":/icons/layer_tool/mapnik_feature.png";
 	this->action_label       = QObject::tr("&Mapnik Features");
@@ -1100,12 +1100,12 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 
 LayerMapnik::LayerMapnik()
 {
-	this->type = LayerType::Mapnik;
+	this->m_kind = LayerKind::Mapnik;
 	strcpy(this->debug_string, "Mapnik");
 	this->interface = &vik_mapnik_layer_interface;
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label(this->type));
+	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
 
 	this->tile_size_x = size_default().u.val_int;
 }

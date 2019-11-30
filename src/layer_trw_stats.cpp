@@ -241,7 +241,7 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
 		Track * trk = *iter;
 		LayerTRW * trw = trk->get_parent_layer_trw();
-		assert (trw->type == LayerType::TRW);
+		assert (trw->m_kind == LayerKind::TRW);
 		qDebug() << SG_PREFIX_I << "Collecting stats with layer/tracks/routes/include visibility:"
 			 << trw->is_visible()
 			 << trw->get_tracks_visibility()
@@ -299,7 +299,7 @@ TRWStatsDialog::~TRWStatsDialog()
 
    Display a dialog with stats across many tracks.
 */
-void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QString & new_type_id_string, QWidget * parent)
+void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const SGObjectTypeID & type_id, QWidget * parent)
 {
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
 	dialog->setWindowTitle(QObject::tr("Statistics"));
@@ -322,14 +322,14 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QS
 	}
 
 	dialog->layer = layer;
-	dialog->type_id_string = new_type_id_string;
+	dialog->m_type_id = type_id;
 
-	if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
-	} else if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
+	if (layer->m_kind == LayerKind::TRW) {
+		((LayerTRW *) layer)->get_tree_items(dialog->tracks, dialog->m_type_id);
+	} else if (layer->m_kind == LayerKind::Aggregate) {
+		((LayerAggregate *) layer)->get_tree_items(dialog->tracks, dialog->m_type_id);
 	} else {
-		qDebug() << SG_PREFIX_E << "Wrong layer type" << (int) layer->type;
+		qDebug() << SG_PREFIX_E << "Wrong layer kind" << (int) layer->m_kind;
 		assert (0);
 	}
 	dialog->stats_table = new StatsTable(dialog);

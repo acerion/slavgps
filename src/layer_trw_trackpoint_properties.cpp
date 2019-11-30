@@ -426,8 +426,10 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	}
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
-	if (tree_item->type_id == "sg.trw.track" || tree_item->type_id == "sg.trw.route") {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
+	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK
+	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE) {
+
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "matches supported type";
 		Track * trk = (Track *) tree_item;
 		const size_t sel_tp_count = trk->get_selected_children().get_count();
 		if (1 == sel_tp_count) {
@@ -438,7 +440,7 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 			this->dialog_data_reset();
 		}
 	} else {
-		qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data, selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type";
+		qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data, selected tree item" << tree_item->m_type_id << tree_item->name << "doesn't match supported type";
 		this->dialog_data_reset();
 	}
 }

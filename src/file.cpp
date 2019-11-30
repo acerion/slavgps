@@ -387,7 +387,7 @@ static void file_write(FILE * file, LayerAggregate * top_level_layer, GisViewpor
 	while (stack.layers.size() && stack.layers.front().size()) {
 
 		const Layer * current = stack.layers.front().front();
-		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
+		fprintf(file, "\n~Layer %s\n", current->get_fixed_layer_kind_string().toUtf8().constData());
 		write_layer_params_and_data(file, current);
 
 		/* The layer at the front has been written, and we
@@ -488,34 +488,34 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 	}
 
 
-	const LayerType parent_type = this->stack.first->type;
-	if (parent_type != LayerType::Aggregate && parent_type != LayerType::GPS) {
+	const LayerKind parent_kind = this->stack.first->m_kind;
+	if (parent_kind != LayerKind::Aggregate && parent_kind != LayerKind::GPS) {
 		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_type);
+		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_kind);
 		this->stack.push(NULL); /* Inside INVALID layer. */
 		return;
 	}
 
-	const LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
+	const LayerKind layer_kind = Layer::kind_from_layer_kind_string(QString(line + 6));
 	TreeView * tree_view = NULL;
 
-	if (layer_type == LayerType::Max) {
+	if (layer_kind == LayerKind::Max) {
 		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
 		this->stack.push(NULL);
-	} else if (parent_type == LayerType::GPS) {
+	} else if (parent_kind == LayerKind::GPS) {
 		LayerGPS * parent = (LayerGPS *) this->stack.second;
 		Layer * child = parent->get_a_child();
 		this->stack.push(child);
-		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
-		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+		this->param_specs = Layer::get_interface(layer_kind)->parameters_c;
+		this->param_specs_count = Layer::get_interface(layer_kind)->parameter_specifications.size();
 
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << child->name << "under" << parent->name;
 		parent->tree_view->attach_to_tree(parent, child);
 
-	} else { /* Any other LayerType::X type. */
+	} else { /* Any other LayerKind::X type. */
 
-		Layer * layer = Layer::construct_layer(layer_type, gisview);
+		Layer * layer = Layer::construct_layer(layer_kind, gisview);
 		this->stack.push(layer);
 		this->param_specs = layer->get_interface().parameters_c;
 		this->param_specs_count = layer->get_interface().parameter_specifications.size();
@@ -558,14 +558,14 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->name << this->stack.second->name;
 
 		if (layer && parent_layer) {
-			if (parent_layer->type == LayerType::Aggregate) {
+			if (parent_layer->m_kind == LayerKind::Aggregate) {
 				//layer->attach_children_to_tree();
 				layer->post_read(gisview, true);
-			} else if (parent_layer->type == LayerType::GPS) {
+			} else if (parent_layer->m_kind == LayerKind::GPS) {
 				/* TODO_2_LATER: anything else needs to be done here? */
 			} else {
 				this->parse_status = sg_ret::err;
-				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) this->stack.first->type);
+				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (kind %d)\n", this->line_num, (int) this->stack.first->m_kind);
 			}
 		}
 		this->stack.pop();

@@ -87,16 +87,16 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 	LayerTool * tool = NULL;
 
 	tool = new LayerToolSelect(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new GenericToolRuler(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new GenericToolZoom(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	tool = new LayerToolPan(window, gisview);
-	tools->insert({{ tool->id_string, tool }});
+	tools->insert({{ tool->m_tool_id, tool }});
 
 	created = true;
 
@@ -108,9 +108,9 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 
 
 
-GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
+GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->id_string = "sg.tool.generic.ruler";
+	this->m_tool_id = "sg.tool.generic.ruler";
 
 	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
 	this->action_label       = QObject::tr("&Ruler");
@@ -262,9 +262,9 @@ void GenericToolRuler::reset_ruler(void)
 
 
 
-GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
+GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->id_string = "sg.tool.generic.zoom";
+	this->m_tool_id = "sg.tool.generic.zoom";
 
 	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
 	this->action_label       = QObject::tr("&Zoom");
@@ -485,9 +485,9 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 
 
 
-LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
+LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->id_string = "sg.tool.generic.pan";
+	this->m_tool_id = "sg.tool.generic.pan";
 
 	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
 	this->action_label       = QObject::tr("&Pan");
@@ -574,9 +574,9 @@ ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEven
 
 
 
-LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
+LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->id_string = "sg.tool.generic.select";
+	this->m_tool_id = "sg.tool.generic.select";
 
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");
@@ -587,7 +587,7 @@ LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : Lay
 
 
 
-LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_, LayerType layer_type_) : LayerTool(window_, gisview_, layer_type_)
+LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_, LayerKind layer_kind_) : LayerTool(window_, gisview_, layer_kind_)
 {
 }
 
@@ -603,7 +603,7 @@ LayerToolSelect::~LayerToolSelect()
 
 ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << SG_PREFIX_D << this->id_string;
+	qDebug() << SG_PREFIX_D << this->m_tool_id;
 
 	this->select_and_move_activated = false;
 
@@ -626,7 +626,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << SG_PREFIX_D << this->id_string;
+	qDebug() << SG_PREFIX_D << this->m_tool_id;
 
 	this->select_and_move_activated = false;
 
@@ -656,15 +656,15 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
-		qDebug() << SG_PREFIX_D << this->id_string << "handling double click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->m_tool_id << "handling double click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->get_main_gis_view(), this);
 	} else {
-		qDebug() << SG_PREFIX_D << this->id_string << "handle single click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->m_tool_id << "handle single click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->get_main_gis_view(), this);
 	}
 
 	if (!handled) {
-		qDebug() << SG_PREFIX_D << this->id_string << "mouse event not handled";
+		qDebug() << SG_PREFIX_D << this->m_tool_id << "mouse event not handled";
 		/* Deselect & redraw screen if necessary to remove the highlight. */
 
 		TreeView * tree_view = this->window->items_tree->get_tree_view();
@@ -672,7 +672,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 		if (selected_item) {
 			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO_LATER: improve this condition. */
 			if (selected_item->get_tree_item_type() == TreeItemType::Sublayer
-			    || selected_item->to_layer()->type == LayerType::TRW) {
+			    || selected_item->to_layer()->m_kind == LayerKind::TRW) {
 
 				tree_view->deselect_tree_item(selected_item);
 				if (this->window->clear_highlight()) {
@@ -726,7 +726,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseE
 	this->select_and_move_activated = false;
 
 	if (event->button() == Qt::RightButton) {
-		if (layer && layer->type == LayerType::TRW && layer->is_visible()) {
+		if (layer && layer->m_kind == LayerKind::TRW && layer->is_visible()) {
 			/* See if a TRW item is selected, and show menu for the item. */
 			layer->handle_select_tool_context_menu(event, this->window->get_main_gis_view());
 		}
@@ -741,12 +741,12 @@ bool LayerToolSelect::can_tool_move_object(void)
 {
 	switch (this->edited_object_state) {
 	case ObjectState::NotSelected:
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'NotSelected' state, tool =" << this->id_string;
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'NotSelected' state, tool =" << this->m_tool_id;
 		return false;
 
 	case ObjectState::IsSelected:
 		/* We didn't actually clicked-and-held an object. */
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'IsSelected' state, tool =" << this->id_string;
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'IsSelected' state, tool =" << this->m_tool_id;
 		return false;
 
 	case ObjectState::IsHeld:

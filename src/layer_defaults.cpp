@@ -60,10 +60,10 @@ bool LayerDefaults::loaded = false;
 
 
 
-SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const ParameterSpecification & param_spec)
+SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const ParameterSpecification & param_spec)
 {
 	SGVariant value;
-	QString group = Layer::get_type_id_string(layer_type);
+	QString group = Layer::get_fixed_layer_kind_string(layer_kind);
 
 
 	if (!LayerDefaults::keyfile) { /* Don't use LayerDefaults::loaded, it may be set to false during initialization stage. */
@@ -153,7 +153,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const Paramet
 
 
 
-void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType type_id)
+void LayerDefaults::save_parameter_value(const SGVariant & value, LayerKind layer_kind, const QString & param_name, SGVariantType type_id)
 {
 	QVariant variant;
 
@@ -193,7 +193,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 		break;
 	}
 
-	const QString group = Layer::get_type_id_string(layer_type);
+	const QString group = Layer::get_fixed_layer_kind_string(layer_kind);
 	QString key(group + QString("/") + param_name);
 	LayerDefaults::keyfile->setValue(key, variant);
 }
@@ -201,9 +201,9 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 
 
 
-void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
+void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerKind layer_kind)
 {
-	LayerInterface * interface = Layer::get_interface(layer_type);
+	LayerInterface * interface = Layer::get_interface(layer_kind);
 
 	/* Process each parameter. */
 	for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
@@ -222,7 +222,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 		   that the file has full, consistent set of
 		   values. */
 
-		SGVariant value_from_file = LayerDefaults::get_parameter_value(layer_type, *param_spec);
+		SGVariant value_from_file = LayerDefaults::get_parameter_value(layer_kind, *param_spec);
 		if (value_from_file.is_valid()) {
 			/* The parameter has already been read from
 			   config file. No need to set the parameter
@@ -235,7 +235,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 		/* Value of this parameter has not been read from
 		   config file. Try to find it in program's hardcoded
 		   values. */
-		qDebug() << SG_PREFIX_I << "Getting hardcoded value of parameter" << layer_type << param_spec->name;
+		qDebug() << SG_PREFIX_I << "Getting hardcoded value of parameter" << layer_kind << param_spec->name;
 		SGVariant hardcoded_value = param_spec->get_hardcoded_value();
 		if (!hardcoded_value.is_valid()) {
 			qDebug() << SG_PREFIX_I << "Parameter" << param_spec->name << "doesn't have hardcoded value";
@@ -243,7 +243,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 		}
 
 		qDebug() << SG_PREFIX_I << "Using" << hardcoded_value << "for parameter named" << param_spec->name;
-		save_parameter_value(hardcoded_value, layer_type, param_spec->name, param_spec->type_id);
+		save_parameter_value(hardcoded_value, layer_kind, param_spec->name, param_spec->type_id);
 	}
 }
 
@@ -271,9 +271,9 @@ bool LayerDefaults::save_to_file(void)
    \return true if "OK" key has been pressed in the dialog window,
    \return false otherwise
 */
-bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
+bool LayerDefaults::show_window(LayerKind layer_kind, QWidget * parent)
 {
-	LayerInterface * interface = Layer::get_interface(layer_type);
+	LayerInterface * interface = Layer::get_interface(layer_kind);
 
 	/* We want the dialog to present values of layer defaults, so
 	   the second argument must be interface->parameter_default_values. */
@@ -293,7 +293,7 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		const SGVariant param_value = dialog.get_param_value(param_spec);
 
 		values.at(iter->first) = param_value;
-		save_parameter_value(param_value, layer_type, param_spec.name, param_spec.type_id);
+		save_parameter_value(param_value, layer_kind, param_spec.name, param_spec.type_id);
 	}
 
 
@@ -306,15 +306,15 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 
 /**
-   @layer_type
+   @layer_kind
    @layer_param_spec
    @default_value
 
    Call this function to set the default value for the particular parameter.
 */
-void LayerDefaults::set(LayerType layer_type, const ParameterSpecification & layer_param_spec, const SGVariant & default_value)
+void LayerDefaults::set(LayerKind layer_kind, const ParameterSpecification & layer_param_spec, const SGVariant & default_value)
 {
-	save_parameter_value(default_value, layer_type, layer_param_spec.name, layer_param_spec.type_id);
+	save_parameter_value(default_value, layer_kind, layer_param_spec.name, layer_param_spec.type_id);
 }
 
 
@@ -331,7 +331,7 @@ bool LayerDefaults::init(void)
 	   interfaces have been configured.  In each program
 	   configuration we will always have Coordinate Layer, and
 	   that layer has more than zero configurable parameters. */
-	assert(Layer::get_interface(LayerType::Coordinates)->parameter_specifications.size());
+	assert(Layer::get_interface(LayerKind::Coordinates)->parameter_specifications.size());
 
 
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_LAYER_DEFAULTS_INI_FILE);
@@ -353,9 +353,9 @@ bool LayerDefaults::init(void)
 
 
 	/* Set any missing values from the program's internal/hardcoded defaults. */
-	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
-		qDebug() << SG_PREFIX_I << "Loading default values from hardcoded values for layer type" << layer_type;
-		LayerDefaults::fill_missing_from_hardcoded_defaults(layer_type);
+	for (LayerKind layer_kind = LayerKind::Aggregate; layer_kind < LayerKind::Max; ++layer_kind) {
+		qDebug() << SG_PREFIX_I << "Loading default values from hardcoded values for layer kind" << layer_kind;
+		LayerDefaults::fill_missing_from_hardcoded_defaults(layer_kind);
 	}
 
 
@@ -382,15 +382,15 @@ void LayerDefaults::uninit(void)
 
 
 /**
-   @layer_type
+   @layer_kind
    @param_name
    @param_type
 
    Call this function to get the default value for the parameter requested.
 */
-SGVariant LayerDefaults::get(LayerType layer_type, const ParameterSpecification & param_spec)
+SGVariant LayerDefaults::get(LayerKind layer_kind, const ParameterSpecification & param_spec)
 {
-	return LayerDefaults::get_parameter_value(layer_type, param_spec);
+	return LayerDefaults::get_parameter_value(layer_kind, param_spec);
 }
 
 
@@ -405,7 +405,7 @@ bool LayerDefaults::save(void)
 {
 	/*
 	  Default values of layer parameters may be edited only through
-	  dialog window in menu Edit -> Layer Defaults -> <layer type>.
+	  dialog window in menu Edit -> Layer Defaults -> <layer kind>.
 
 	  After every instance of editing the values in the dialog, the
 	  modified values are saved into layer's Interface and into keyfile.

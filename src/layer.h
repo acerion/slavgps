@@ -83,7 +83,7 @@ namespace SlavGPS {
 
 
 
-	enum class LayerType {
+	enum class LayerKind {
 		Aggregate = 0,
 		TRW,
 		Coordinates,
@@ -97,8 +97,8 @@ namespace SlavGPS {
 		Max /* Also use this value to indicate no layer association. */
 	};
 
-	LayerType& operator++(LayerType & layer_type);
- 	QDebug operator<<(QDebug debug, const LayerType & layer_type);
+	LayerKind& operator++(LayerKind & layer_kind);
+ 	QDebug operator<<(QDebug debug, const LayerKind & layer_kind);
 
 
 
@@ -124,10 +124,10 @@ namespace SlavGPS {
 		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Layer; }
 
 
-		static Layer * construct_layer(LayerType layer_type, GisViewport * gisview, bool interactive = false);
+		static Layer * construct_layer(LayerKind layer_kind, GisViewport * gisview, bool interactive = false);
 
 		const LayerInterface & get_interface(void) const;
-		static LayerInterface * get_interface(LayerType layer_type);
+		static LayerInterface * get_interface(LayerKind layer_kind);
 		void configure_interface(LayerInterface * intf, ParameterSpecification * param_specs);
 
 		/* Call before LayerDefaults::init() */
@@ -192,24 +192,24 @@ namespace SlavGPS {
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 
-		/* Most of layer types aren't able to store child layers.
+		/* Most of layer kinds aren't able to store child layers.
 		   Those that do, may have zero child layers at the moment. */
 		virtual int get_child_layers_count(void) const { return 0; };
 
-		/* Return list of children layers. Most of layer types won't have child layers. */
+		/* Return list of children layers. Most of layer kinds won't have child layers. */
 		virtual std::list<Layer const *> get_child_layers(void) const { std::list<Layer const *> a_list; return a_list; };
 
 		/* "type id string" means Layer's internal, fixed string
 		   that can be used in .vik file operations and to
 		   create internal IDs of objects. */
-		static LayerType type_from_type_id_string(const QString & type_id_string);
-		static QString get_type_id_string(LayerType type);
-		QString get_type_id_string(void) const;
+		static LayerKind kind_from_layer_kind_string(const QString & layer_kind_string);
+		static QString get_fixed_layer_kind_string(LayerKind kind);
+		QString get_fixed_layer_kind_string(void) const;
 
-		/* "type ui label" means human-readable label that is
-		   suitable for using in UI or in debug messages. */
-		static QString get_type_ui_label(LayerType type);
-		QString get_type_ui_label(void) const;
+		/* Get human-readable label that is suitable for using
+		   in UI or in debug messages. */
+		static QString get_translated_layer_kind_string(LayerKind kind);
+		QString get_translated_layer_kind_string(void) const;
 
 
 		static bool compare_timestamp_ascending(const Layer * first, const Layer * second);  /* Ascending: 1 -> 10 */
@@ -236,7 +236,7 @@ namespace SlavGPS {
 
 		/* QString name; */ /* Inherited from TreeItem. */
 
-		LayerType type;
+		LayerKind m_kind;
 
 	protected:
 

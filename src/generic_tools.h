@@ -116,7 +116,7 @@ namespace SlavGPS {
 
 		/* Just for passing arguments from derived class
 		   constructor to (grand)parent class constructor. */
-		LayerToolSelect(Window * window, GisViewport * gisview, LayerType layer_type);
+		LayerToolSelect(Window * window, GisViewport * gisview, LayerKind layer_kind);
 
 		~LayerToolSelect();
 
@@ -162,7 +162,7 @@ namespace SlavGPS {
 		*/
 		bool can_tool_move_object(void);
 
-		QString selected_tree_item_type_id;
+		SGObjectTypeID selected_tree_item_type_id;
 		ObjectState edited_object_state = ObjectState::NotSelected;
 
 	private:

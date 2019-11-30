@@ -73,7 +73,7 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 	switch (item->get_tree_item_type()) {
 	case TreeItemType::Layer: {
 
-		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->m_type_id << item->name;
 
 		/* We don't want a parent layer here. We want item
 		   cast to layer if the item is layer, or item's
@@ -91,7 +91,7 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 		break;
 
 	case TreeItemType::Sublayer:
-		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->m_type_id << item->name;
 
 		if (!item->add_context_menu_items(menu, true)) {
 			return;

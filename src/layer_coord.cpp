@@ -93,13 +93,13 @@ LayerCoordInterface::LayerCoordInterface()
 {
 	this->parameters_c = coord_layer_param_specs;
 
-	this->fixed_layer_type_string = "Coord"; /* Non-translatable. */
+	this->fixed_layer_kind_string = "Coord"; /* Non-translatable. */
 
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
 	this->ui_labels.new_layer = QObject::tr("New Coordinates Layer");
-	this->ui_labels.layer_type = QObject::tr("Coordinates");
+	this->ui_labels.translated_layer_kind = QObject::tr("Coordinates");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Coordinates Layer");
 }
 
@@ -705,10 +705,10 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 
 LayerCoord::LayerCoord()
 {
-	this->type = LayerType::Coordinates;
-	strcpy(this->debug_string, "LayerType::COORD");
+	this->m_kind = LayerKind::Coordinates;
+	strcpy(this->debug_string, "LayerKind::Coord");
 	this->interface = &vik_coord_layer_interface;
 
 	this->set_initial_parameter_values();
-	this->set_name(Layer::get_type_ui_label());
+	this->set_name(Layer::get_translated_layer_kind_string());
 }

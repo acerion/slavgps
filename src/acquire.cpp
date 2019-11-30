@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <vector>
+#include <map>
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -70,7 +71,7 @@ extern Babel babel;
 
 
 
-static QMap<QString, DataSource *> g_bfilters;
+static std::map<SGObjectTypeID, DataSource *, sg_object_type_id_compare> g_bfilters;
 static Track * bfilter_track = NULL;
 static AcquireContext * g_acquire_context = NULL;
 
@@ -115,7 +116,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	case DataSourceMode::AddToLayer: {
 		Layer * selected_layer = this->acquire_context.selected_layer;
-		if (selected_layer && selected_layer->type == LayerType::TRW) {
+		if (selected_layer && selected_layer->m_kind == LayerKind::TRW) {
 			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
 			this->acquire_context.target_trw_allocated = false;
 		} else {
@@ -132,7 +133,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		this->acquire_context.target_trw_allocated = false;
 		Layer * selected_layer = this->acquire_context.selected_layer;
-		if (selected_layer && selected_layer->type == LayerType::TRW) {
+		if (selected_layer && selected_layer->m_kind == LayerKind::TRW) {
 			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
 		} else {
 			/* TODO_UNKNOWN: now what? */
@@ -344,15 +345,15 @@ AcquireContext::AcquireContext()
 void AcquireContext::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	const QString filter_id = qa->data().toString();
+	const SGObjectTypeID * filter_id = (SGObjectTypeID *) qa->data().toULongLong();
 
-	auto iter = g_bfilters.find(filter_id);
+	auto iter = g_bfilters.find(*filter_id);
 	if (iter == g_bfilters.end()) {
-		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << filter_id;
+		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << *filter_id;
 		return;
 	}
 
-	Acquire::acquire_from_source(iter.value(), iter.value()->mode, *g_acquire_context);
+	Acquire::acquire_from_source(iter->second, iter->second->mode, *g_acquire_context);
 
 	return;
 }
@@ -365,8 +366,8 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 	QMenu * menu = NULL;
 
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
-		const QString filter_id = iter.key();
-		DataSource * filter = iter.value();
+		const SGObjectTypeID filter_id = iter->first;
+		DataSource * filter = iter->second;
 
 		if (filter->input_type != input_type) {
 			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu" << menu_label << ", type not matched";
@@ -379,7 +380,7 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 		}
 
 		QAction * action = new QAction(filter->window_title, g_acquire_context);
-		action->setData(filter_id);
+		action->setData((qulonglong) &filter_id);
 		QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
 		menu->addAction(action);
 	}
@@ -482,7 +483,7 @@ void Acquire::uninit(void)
 	delete g_acquire_context;
 
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
-		delete iter.value();
+		delete iter->second;
 	}
 }
 
@@ -491,18 +492,18 @@ void Acquire::uninit(void)
 
 sg_ret Acquire::register_bfilter(DataSource * bfilter)
 {
-	if (bfilter->type_id == "") {
-		qDebug() << SG_PREFIX_E << "bfilter with empty id";
+	if (bfilter->type_id == SG_OBJ_TYPE_ID_ANY) {
+		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
 		return sg_ret::err;
 	}
 
 	auto iter = g_bfilters.find(bfilter->type_id);
 	if (iter != g_bfilters.end()) {
-		qDebug() << SG_PREFIX_E << "Duplicate bfilter with id" << bfilter->type_id;
+		qDebug() << SG_PREFIX_E << "Duplicate bfilter with type id" << bfilter->type_id;
 		return sg_ret::err;
 	}
 
-	g_bfilters.insert(bfilter->type_id, bfilter);
+	g_bfilters.insert({ bfilter->type_id, bfilter });
 
 	return sg_ret::err;
 }

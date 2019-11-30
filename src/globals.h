@@ -37,6 +37,48 @@ namespace SlavGPS {
 
 
 
+	class SGObjectTypeID {
+	public:
+		SGObjectTypeID() {}
+		SGObjectTypeID(const QString & val) : m_val(val) {}
+		SGObjectTypeID(const char * val) : m_val(val) {}
+
+		bool operator==(const SGObjectTypeID & other) const;
+		bool operator==(const QString & other) const;
+		bool operator==(const char * other) const;
+
+		bool operator!=(const SGObjectTypeID & other) const { return !(*this == other); }
+		bool operator!=(const QString & other) const { return !(*this == other); }
+		bool operator!=(const char * other) const { return !(*this == other); }
+
+		QString m_val;
+	};
+	QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
+
+	/* Comparison class for std::maps with SGObjectTypeID as a key. */
+	struct sg_object_type_id_compare {
+		bool operator() (const SGObjectTypeID & id1, const SGObjectTypeID & id2) const { return id1.m_val < id2.m_val; }
+	};
+#define SG_OBJ_TYPE_ID_ANY                      ""
+#define SG_OBJ_TYPE_ID_TRW_SINGLE_TRACK         "sg.trw.track"
+#define SG_OBJ_TYPE_ID_TRW_SINGLE_ROUTE         "sg.trw.route"
+#define SG_OBJ_TYPE_ID_TRW_SINGLE_WAYPOINT      "sg.trw.waypoint"
+#define SG_OBJ_TYPE_ID_TRW_TRACKS               "sg.trw.tracks"
+#define SG_OBJ_TYPE_ID_TRW_ROUTES               "sg.trw.routes"
+#define SG_OBJ_TYPE_ID_TRW_WAYPOINTS            "sg.trw.waypoints"
+
+/* Globally unique tool IDS. */
+#define LAYER_TRW_TOOL_CREATE_WAYPOINT "sg.tool.layer_trw.create_waypoint"
+#define LAYER_TRW_TOOL_CREATE_TRACK    "sg.tool.layer_trw.create_track"
+#define LAYER_TRW_TOOL_CREATE_ROUTE    "sg.tool.layer_trw.create_route"
+#define LAYER_TRW_TOOL_ROUTE_FINDER    "sg.tool.layer_trw.route_finder"
+#define LAYER_TRW_TOOL_EDIT_WAYPOINT   "sg.tool.layer_trw.edit_waypoint"
+#define LAYER_TRW_TOOL_EDIT_TRACKPOINT "sg.tool.layer_trw.edit_trackpoint"
+#define LAYER_TRW_TOOL_SHOW_PICTURE    "sg.tool.layer_trw.show_picture"
+
+
+
+
 	typedef int param_id_t; /* This shall be a signed type. */
 
 

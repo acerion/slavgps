@@ -86,7 +86,7 @@ extern SelectedTreeItems g_selected;
 
 
 
-static LayerInterface * vik_layer_interfaces[(int) LayerType::Max] = {
+static LayerInterface * vik_layer_interfaces[(int) LayerKind::Max] = {
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
 	&vik_coord_layer_interface,
@@ -102,10 +102,10 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::Max] = {
 
 
 
-LayerInterface * Layer::get_interface(LayerType layer_type)
+LayerInterface * Layer::get_interface(LayerKind layer_kind)
 {
-	assert (layer_type < LayerType::Max);
-	return vik_layer_interfaces[(int) layer_type];
+	assert (layer_kind < LayerKind::Max);
+	return vik_layer_interfaces[(int) layer_kind];
 }
 
 
@@ -122,17 +122,17 @@ void Layer::preconfigure_interfaces(void)
 {
 	SGVariant param_value;
 
-	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
+	for (SlavGPS::LayerKind layer_kind = SlavGPS::LayerKind::Aggregate; layer_kind < SlavGPS::LayerKind::Max; ++layer_kind) {
 
-		qDebug() << SG_PREFIX_I << "Preconfiguring interface for layer type" << layer_type;
+		qDebug() << SG_PREFIX_I << "Preconfiguring interface for layer kind" << layer_kind;
 
-		LayerInterface * interface = Layer::get_interface(layer_type);
+		LayerInterface * interface = Layer::get_interface(layer_kind);
 
-		const QString path = QString(":/icons/layer/") + Layer::get_type_id_string(layer_type).toLower() + QString(".png");
+		const QString path = QString(":/icons/layer/") + Layer::get_fixed_layer_kind_string(layer_kind).toLower() + QString(".png");
 		interface->action_icon = QIcon(path);
 
 		if (!interface->parameters_c) {
-			/* Some layer types don't have parameters. */
+			/* Some layer kinds don't have parameters. */
 			continue;
 		}
 
@@ -150,14 +150,14 @@ void Layer::postconfigure_interfaces(void)
 {
 	SGVariant param_value;
 
-	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
+	for (SlavGPS::LayerKind layer_kind = SlavGPS::LayerKind::Aggregate; layer_kind < SlavGPS::LayerKind::Max; ++layer_kind) {
 
-		qDebug() << SG_PREFIX_I << "Postconfiguring interface for layer type" << layer_type;
+		qDebug() << SG_PREFIX_I << "Postconfiguring interface for layer kind" << layer_kind;
 
-		LayerInterface * interface = Layer::get_interface(layer_type);
+		LayerInterface * interface = Layer::get_interface(layer_kind);
 
 		if (!interface->parameters_c) {
-			/* Some layer types don't have parameters. */
+			/* Some layer kinds don't have parameters. */
 			continue;
 		}
 
@@ -181,7 +181,7 @@ void Layer::postconfigure_interfaces(void)
 			/* TODO_2_LATER: make sure that the value read from Layer Defaults is valid.
 			   What if LayerDefaults doesn't contain value for given parameter? */
 			qDebug() << SG_PREFIX_I << "Wwill call LayerDefaults::get() for param" << param_spec->type_id;
-			param_value = LayerDefaults::get(layer_type, *param_spec);
+			param_value = LayerDefaults::get(layer_kind, *param_spec);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}
 	}
@@ -206,75 +206,75 @@ const QString Layer::get_name(void) const
 
 
 
-QString Layer::get_type_id_string(void) const
+QString Layer::get_fixed_layer_kind_string(void) const
 {
-	return this->interface->fixed_layer_type_string;
+	return this->interface->fixed_layer_kind_string;
 }
 
 
 
 
-QString Layer::get_type_id_string(LayerType type)
+QString Layer::get_fixed_layer_kind_string(LayerKind layer_kind)
 {
-	return Layer::get_interface(type)->fixed_layer_type_string;
+	return Layer::get_interface(layer_kind)->fixed_layer_kind_string;
 }
 
 
 
 
-QString Layer::get_type_ui_label(void) const
+QString Layer::get_translated_layer_kind_string(void) const
 {
-	return this->get_interface(this->type)->ui_labels.layer_type;
+	return this->get_interface(this->m_kind)->ui_labels.translated_layer_kind;
 }
 
 
 
 
-QString Layer::get_type_ui_label(LayerType type)
+QString Layer::get_translated_layer_kind_string(LayerKind layer_kind)
 {
-	return Layer::get_interface(type)->ui_labels.layer_type;
+	return Layer::get_interface(layer_kind)->ui_labels.translated_layer_kind;
 }
 
 
 
 
-Layer * Layer::construct_layer(LayerType layer_type, GisViewport * gisview, bool interactive)
+Layer * Layer::construct_layer(LayerKind layer_kind, GisViewport * gisview, bool interactive)
 {
-	qDebug() << SG_PREFIX_I << "Will create new" << Layer::get_type_ui_label(layer_type) << "layer";
+	qDebug() << SG_PREFIX_I << "Will create new" << Layer::get_translated_layer_kind_string(layer_kind) << "layer";
 
 	Layer * layer = NULL;
 
-	switch (layer_type) {
-	case LayerType::Aggregate:
+	switch (layer_kind) {
+	case LayerKind::Aggregate:
 		layer = new LayerAggregate();
 		break;
-	case LayerType::TRW:
+	case LayerKind::TRW:
 		layer = new LayerTRW();
 		break;
-	case LayerType::Coordinates:
+	case LayerKind::Coordinates:
 		layer = new LayerCoord();
 		break;
-	case LayerType::Map:
+	case LayerKind::Map:
 		layer = new LayerMap();
 		break;
-	case LayerType::DEM:
+	case LayerKind::DEM:
 		layer = new LayerDEM();
 		break;
-	case LayerType::Georef:
+	case LayerKind::Georef:
 		layer = new LayerGeoref();
 		((LayerGeoref *) layer)->configure_from_viewport(gisview);
 		break;
 #ifdef HAVE_LIBMAPNIK
-	case LayerType::Mapnik:
+	case LayerKind::Mapnik:
 		layer = new LayerMapnik();
 		break;
 #endif
-	case LayerType::GPS:
+	case LayerKind::GPS:
 		layer = new LayerGPS();
 		break;
-	case LayerType::Max:
+	case LayerKind::Max:
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled layer type" << layer_type;
+		qDebug() << SG_PREFIX_E << "Unhandled layer kind" << layer_kind;
 		break;
 	}
 
@@ -289,8 +289,8 @@ Layer * Layer::construct_layer(LayerType layer_type, GisViewport * gisview, bool
 			return NULL;
 		}
 
-		/* Layer::get_type_ui_label() returns localized string. */
-		layer->set_name(Layer::get_type_ui_label(layer_type));
+		/* Layer::get_translated_layer_kind_string() returns localized string. */
+		layer->set_name(Layer::get_translated_layer_kind_string(layer_kind));
 	}
 
 	return layer;
@@ -301,7 +301,7 @@ Layer * Layer::construct_layer(LayerType layer_type, GisViewport * gisview, bool
 
 void Layer::marshall(Pickle & pickle)
 {
-	pickle.put_raw_object((char *) &this->type, sizeof (this->type));
+	pickle.put_raw_object((char *) &this->m_kind, sizeof (this->m_kind));
 
 	this->marshall_params(pickle);
 	return;
@@ -312,10 +312,10 @@ void Layer::marshall(Pickle & pickle)
 
 Layer * Layer::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
-	LayerType layer_type;
-	pickle.take_raw_object((char *) &layer_type, sizeof (layer_type));
+	LayerKind layer_kind;
+	pickle.take_raw_object((char *) &layer_kind, sizeof (layer_kind));
 
-	return vik_layer_interfaces[(int) layer_type]->unmarshall(pickle, gisview);
+	return vik_layer_interfaces[(int) layer_kind]->unmarshall(pickle, gisview);
 }
 
 
@@ -399,7 +399,7 @@ bool Layer::show_properties_dialog(void)
 /* Returns true if OK was pressed. */
 bool Layer::show_properties_dialog(GisViewport * gisview)
 {
-	qDebug() << SG_PREFIX_I << "Opening properties dialog for layer" << this->get_type_ui_label();
+	qDebug() << SG_PREFIX_I << "Opening properties dialog for layer" << this->get_translated_layer_kind_string();
 
 	const LayerInterface * iface = this->interface;
 
@@ -437,14 +437,14 @@ bool Layer::show_properties_dialog(GisViewport * gisview)
 
 
 
-LayerType Layer::type_from_type_id_string(const QString & type_id_string)
+LayerKind Layer::kind_from_layer_kind_string(const QString & layer_kind_string)
 {
-	for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
-		if (type_id_string == Layer::get_type_id_string(type)) {
+	for (LayerKind type = LayerKind::Aggregate; type < LayerKind::Max; ++type) {
+		if (layer_kind_string == Layer::get_fixed_layer_kind_string(type)) {
 			return type;
 		}
 	}
-	return LayerType::Max;
+	return LayerKind::Max;
 }
 
 
@@ -480,7 +480,7 @@ void Layer::set_initial_parameter_values(void)
 
 Layer::Layer()
 {
-	strcpy(this->debug_string, "LayerType::NUM_TYPES");
+	strcpy(this->debug_string, "LayerKind::Max");
 }
 
 
@@ -496,7 +496,7 @@ void Layer::post_read(GisViewport * gisview, bool from_file)
 
 QString Layer::get_tooltip(void) const
 {
-	return tr("%1 %2").arg(this->interface->ui_labels.layer_type).arg((long) this);
+	return tr("%1 %2").arg(this->interface->ui_labels.translated_layer_kind).arg((long) this);
 }
 
 
@@ -610,51 +610,51 @@ void Layer::unref_layer(void)
 
 
 
-LayerType& SlavGPS::operator++(LayerType& layer_type)
+LayerKind& SlavGPS::operator++(LayerKind& layer_kind)
 {
-	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
-	return layer_type;
+	layer_kind = static_cast<LayerKind>(static_cast<int>(layer_kind) + 1);
+	return layer_kind;
 }
 
 
 
 
-QDebug SlavGPS::operator<<(QDebug debug, const LayerType & layer_type)
+QDebug SlavGPS::operator<<(QDebug debug, const LayerKind & layer_kind)
 {
-	switch (layer_type) {
-	case LayerType::Aggregate:
+	switch (layer_kind) {
+	case LayerKind::Aggregate:
 		debug << "LayerAggregate";
 		break;
-	case LayerType::TRW:
+	case LayerKind::TRW:
 		debug << "LayerTRW";
 		break;
-	case LayerType::Coordinates:
+	case LayerKind::Coordinates:
 		debug << "LayerCoord";
 		break;
-	case LayerType::Georef:
+	case LayerKind::Georef:
 		debug << "LayerGeoref";
 		break;
-	case LayerType::GPS:
+	case LayerKind::GPS:
 		debug << "LayerGPS";
 		break;
-	case LayerType::Map:
+	case LayerKind::Map:
 		debug << "LayerMap";
 		break;
-	case LayerType::DEM:
+	case LayerKind::DEM:
 		debug << "LayerDEM";
 		break;
 #ifdef HAVE_LIBMAPNIK
-	case LayerType::Mapnik:
+	case LayerKind::Mapnik:
 		debug << "LayerMapnik";
 		break;
 #endif
-	case LayerType::Max:
-		qDebug() << SG_PREFIX_E << "Unexpectedly handling NUM_TYPES layer type";
+	case LayerKind::Max:
+		qDebug() << SG_PREFIX_E << "Unexpectedly handling LayerKind::Max";
 		debug << "(layer-type-last)";
 		break;
 	default:
 		debug << "layer-type-unknown";
-		qDebug() << SG_PREFIX_E << "Invalid layer type" << (int) layer_type;
+		qDebug() << SG_PREFIX_E << "Invalid layer kind" << (int) layer_kind;
 		break;
 	};
 

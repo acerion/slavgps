@@ -41,7 +41,7 @@ namespace SlavGPS {
 
 
 	class ParameterSpecification;
-	enum class LayerType;
+	enum class LayerKind;
 
 
 
@@ -52,10 +52,10 @@ namespace SlavGPS {
 		static bool init(void);
 		static void uninit(void);
 
-		static void set(LayerType layer_type, const ParameterSpecification & param_spec, const SGVariant & default_value);
-		static SGVariant get(LayerType layer_type, const ParameterSpecification & param_spec);
+		static void set(LayerKind layer_kind, const ParameterSpecification & param_spec, const SGVariant & default_value);
+		static SGVariant get(LayerKind layer_kind, const ParameterSpecification & param_spec);
 
-		static bool show_window(LayerType layer_type, QWidget * parent);
+		static bool show_window(LayerKind layer_kind, QWidget * parent);
 
 		static bool save(void);
 
@@ -64,13 +64,13 @@ namespace SlavGPS {
 	private:
 		static bool save_to_file(void);
 
-		static void fill_missing_from_hardcoded_defaults(LayerType layer_type);
+		static void fill_missing_from_hardcoded_defaults(LayerKind layer_kind);
 
 		/* Check value of ::is_valid() of returned variant to
 		   see whether lookup of parameter has succeeded. */
-		static SGVariant get_parameter_value(LayerType layer_type, const ParameterSpecification & param_spec);
+		static SGVariant get_parameter_value(LayerKind layer_kind, const ParameterSpecification & param_spec);
 
-		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType type_id);
+		static void save_parameter_value(const SGVariant & value, LayerKind layer_kind, const QString & param_name, SGVariantType type_id);
 
 		static QSettings * keyfile;
 		static bool loaded;
