@@ -1198,7 +1198,7 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->m_tool_id = "sg.tool.layer_georef.move";
+	this->m_tool_id = SGObjectTypeID("sg.tool.layer_georef.move");
 
 	this->action_icon_path   = ":/icons/layer_tool/georef_move_18.png";
 	this->action_label       = QObject::tr("&Georef Move Map");
@@ -1241,7 +1241,7 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->m_tool_id = "sg.tool.layer_georef.zoom";
+	this->m_tool_id = SGObjectTypeID("sg.tool.layer_georef.zoom");
 
 	this->action_icon_path   = ":/icons/layer_tool/georef_zoom_18.png";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");

@@ -40,8 +40,12 @@ namespace SlavGPS {
 	class SGObjectTypeID {
 	public:
 		SGObjectTypeID() {}
-		SGObjectTypeID(const QString & val) : m_val(val) {}
-		SGObjectTypeID(const char * val) : m_val(val) {}
+
+		/* Using 'explicit' to catch empty strings ("") used
+		   as "any" object ID passed as argument to
+		   function. */
+		explicit SGObjectTypeID(const QString & val) : m_val(val) {}
+		explicit SGObjectTypeID(const char * val) : m_val(val) {}
 
 		bool operator==(const SGObjectTypeID & other) const;
 		bool operator==(const QString & other) const;

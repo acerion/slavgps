@@ -110,7 +110,7 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 
 GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = "sg.tool.generic.ruler";
+	this->m_tool_id = SGObjectTypeID("sg.tool.generic.ruler");
 
 	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
 	this->action_label       = QObject::tr("&Ruler");
@@ -264,7 +264,7 @@ void GenericToolRuler::reset_ruler(void)
 
 GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = "sg.tool.generic.zoom";
+	this->m_tool_id = SGObjectTypeID("sg.tool.generic.zoom");
 
 	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
 	this->action_label       = QObject::tr("&Zoom");
@@ -487,7 +487,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 
 LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = "sg.tool.generic.pan";
+	this->m_tool_id = SGObjectTypeID("sg.tool.generic.pan");
 
 	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
 	this->action_label       = QObject::tr("&Pan");
@@ -576,7 +576,7 @@ ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEven
 
 LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = "sg.tool.generic.select";
+	this->m_tool_id = SGObjectTypeID("sg.tool.generic.select");
 
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");

@@ -2041,10 +2041,10 @@ void LayerTRW::new_track_cb() /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_TRACK, tr("Track")) ;
+		const QString uniq_name = this->new_unique_element_name(SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK), tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
-		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_TRACK);
+		this->get_window()->activate_tool_by_id(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_TRACK));
 	}
 }
 
@@ -2078,10 +2078,10 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
-		const QString uniq_name = this->new_unique_element_name(SG_OBJ_TYPE_ID_TRW_A_ROUTE, tr("Route")) ;
+		const QString uniq_name = this->new_unique_element_name(SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE), tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
-		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_ROUTE);
+		this->get_window()->activate_tool_by_id(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE));
 	}
 }
 
@@ -3176,7 +3176,7 @@ sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const SGObjectType
 
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_A_TRACK, this->get_window());
+	layer_trw_show_stats(this->name, this, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK), this->get_window());
 }
 
 
@@ -3184,7 +3184,7 @@ void LayerTRW::tracks_stats_cb(void)
 
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, SG_OBJ_TYPE_ID_TRW_A_ROUTE, this->get_window());
+	layer_trw_show_stats(this->name, this, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE), this->get_window());
 }
 
 
@@ -3216,7 +3216,7 @@ void LayerTRW::on_wp_properties_dialog_wp_coordinates_changed_cb(void)
 
 void LayerTRW::tp_show_properties_dialog()
 {
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_TRACKPOINT));
 	Window * window = ThisApp::get_main_window();
 
 	/* Signals. */
@@ -3464,11 +3464,11 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 	   that the mode is changed only when current mode is
 	   different than expected. */
 	{
-		LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+		LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
 		tool->change_coord_mode(dest_mode);
 	}
 	{
-		LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+		LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_TRACKPOINT));
 		tool->change_coord_mode(dest_mode);
 	}
 }
@@ -3577,7 +3577,7 @@ void LayerTRW::download_map_along_track_cb(void)
 void LayerTRW::track_list_dialog_cb(void)
 {
 	const QString title = tr("%1: Track and Route List").arg(this->name);
-	Track::list_dialog(title, this, "");
+	Track::list_dialog(title, this, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY));
 }
 
 
@@ -3800,7 +3800,7 @@ bool LayerTRW::selected_wp_reset(void)
 
 bool LayerTRW::get_track_creation_in_progress() const
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_TRACK));
 	if (NULL == new_track_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_TRACK;
 		return false;
@@ -3813,7 +3813,7 @@ bool LayerTRW::get_track_creation_in_progress() const
 
 void LayerTRW::reset_track_creation_in_progress()
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_TRACK));
 	if (NULL == new_track_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_TRACK;
 		return;
@@ -3828,7 +3828,7 @@ void LayerTRW::reset_track_creation_in_progress()
 
 bool LayerTRW::get_route_creation_in_progress() const
 {
-	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE));
 	if (NULL == new_route_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_ROUTE;
 		return false;
@@ -3841,7 +3841,7 @@ bool LayerTRW::get_route_creation_in_progress() const
 
 void LayerTRW::reset_route_creation_in_progress()
 {
-	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE));
 	if (NULL == new_route_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_ROUTE;
 		return;

@@ -79,7 +79,7 @@ Waypoint::Waypoint()
 {
 	this->name = tr("Waypoint");
 
-	this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_WAYPOINT;
+	this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_WAYPOINT);
 
 	this->has_properties_dialog = true;
 
@@ -497,7 +497,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
 
 
 	/* Signals. */
@@ -1024,7 +1024,7 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
 
 	std::list<TreeItem *> tree_items;
-	layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_WAYPOINT);
+	layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_WAYPOINT));
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Waypoints found"), window);
 		return;
@@ -1054,14 +1054,14 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 sg_ret Waypoint::properties_dialog_set(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
 	if (!wp_tool->is_activated()) {
 		/* Someone is asking to fill dialog data with waypoint
 		   when WP edit tool is not active. This is ok, maybe
 		   generic select tool is active and has been used to
 		   select a waypoint? */
 
-		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool("sg.tool.generic.select");
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(SGObjectTypeID("sg.tool.generic.select"));
 		if (!select_tool->is_activated()) {
 			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
 			return sg_ret::err;
@@ -1078,7 +1078,7 @@ sg_ret Waypoint::properties_dialog_set(void)
 sg_ret Waypoint::properties_dialog_reset(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}

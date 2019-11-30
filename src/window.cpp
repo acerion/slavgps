@@ -302,7 +302,7 @@ Window::Window()
 
 
 	/* Set the default tool + mode. */
-	this->toolbox->activate_tool_by_id("sg.tool.generic.pan");
+	this->toolbox->activate_tool_by_id(SGObjectTypeID("sg.tool.generic.pan"));
 	this->qa_drawmode_mercator->setChecked(true);
 
 	/* Set the application icon. */
@@ -1228,7 +1228,7 @@ void Window::create_ui(void)
 				default_qa->setChecked(true);
 				default_qa->trigger();
 
-				const QString default_tool_id = default_qa->objectName();
+				const SGObjectTypeID default_tool_id = SGObjectTypeID(default_qa->objectName()); /* TODO: tool ID may not be string, so ::objectName() won't return valid id. */
 				this->toolbox->activate_tool_by_id(default_tool_id);
 			}
 		} else {
@@ -1298,7 +1298,7 @@ void Window::layer_tool_cb(QAction * qa)
 
 	/* Now handle newly selected tool. */
 	if (qa) {
-		const QString new_tool_id = qa->objectName();
+		const SGObjectTypeID new_tool_id = SGObjectTypeID(qa->objectName()); /* TODO: tool ID may not be string, so ::objectName() won't return valid tool ID. */
 		qDebug() << SG_PREFIX_I << "Setting 'release' cursor for tool" << new_tool_id;
 
 		this->toolbox->activate_tool_by_id(new_tool_id);
@@ -1317,7 +1317,7 @@ void Window::layer_tool_cb(QAction * qa)
 
 
 
-void Window::activate_tool_by_id(const QString & tool_id)
+void Window::activate_tool_by_id(const SGObjectTypeID & tool_id)
 {
 	this->toolbox->deactivate_current_tool();
 	this->toolbox->activate_tool_by_id(tool_id);
@@ -1523,7 +1523,7 @@ void Window::menu_copy_centre_cb(void)
 	}
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, "", dummy, message);
+	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY), dummy, message);
 }
 
 

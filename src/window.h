@@ -154,7 +154,7 @@ namespace SlavGPS {
 
 		void set_redraw_trigger(TreeItem * tree_item);
 
-		void activate_tool_by_id(const QString & tool_id);
+		void activate_tool_by_id(const SGObjectTypeID & tool_id);
 
 		void open_file(const QString & new_document_full_path, bool set_as_current_document);
 

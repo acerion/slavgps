@@ -92,11 +92,11 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes)
 	this->init_item();
 
 	if (is_routes) {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER;
+		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER);
 		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_ROUTE;
 		this->name = tr("Routes");
 	} else {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER;
+		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER);
 		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_TRACK;
 		this->name = tr("Tracks");
 	}
@@ -863,10 +863,10 @@ void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 	QString title;
 	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
 		title = tr("%1: Tracks List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, SG_OBJ_TYPE_ID_TRW_A_TRACK); /* Show each track in this tracks container. */
+		Track::list_dialog(title, this->owning_layer, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK)); /* Show each track in this tracks container. */
 	} else {
 		title = tr("%1: Routes List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, SG_OBJ_TYPE_ID_TRW_A_ROUTE); /* Show each route in this routes container. */
+		Track::list_dialog(title, this->owning_layer, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE)); /* Show each route in this routes container. */
 	}
 
 }

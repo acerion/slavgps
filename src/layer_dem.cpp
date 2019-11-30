@@ -1374,7 +1374,7 @@ static void free_dem_download_params(DEMDownloadJob * p)
 
 LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::DEM)
 {
-	this->m_tool_id = "sg.tool.layer_dem.dem_download";
+	this->m_tool_id = SGObjectTypeID("sg.tool.layer_dem.dem_download");
 
 	this->action_icon_path   = ":/icons/layer_tool/dem_download_18.png";
 	this->action_label       = QObject::tr("&DEM Download");

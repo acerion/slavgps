@@ -280,9 +280,9 @@ void Track::free()
 Track::Track(bool is_route)
 {
 	if (is_route) {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_ROUTE;
+		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE);
 	} else {
-		this->m_type_id = SG_OBJ_TYPE_ID_TRW_A_TRACK;
+		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK);
 	}
 
 	this->ref_count = 1;
@@ -2784,7 +2784,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Convert and attach to new location. */
-	this->m_type_id = this->is_route() ? SG_OBJ_TYPE_ID_TRW_A_TRACK : SG_OBJ_TYPE_ID_TRW_A_ROUTE;
+	this->m_type_id = this->is_route() ? SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK) : SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE);
 	if (this->is_track()) {
 		parent_layer->add_track(this);
 	} else {
@@ -3549,7 +3549,7 @@ void Track::extend_track_end_cb(void)
 	Window * window = ThisApp::get_main_window();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
-	window->activate_tool_by_id(this->is_route() ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
+	window->activate_tool_by_id(this->is_route() ? SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE) : SGObjectTypeID(LAYER_TRW_TOOL_CREATE_TRACK));
 
 	if (!this->empty()) {
 		parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
@@ -3567,7 +3567,7 @@ void Track::extend_track_end_route_finder_cb(void)
 	Window * window = ThisApp::get_main_window();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
-	window->activate_tool_by_id(LAYER_TRW_TOOL_ROUTE_FINDER);
+	window->activate_tool_by_id(SGObjectTypeID(LAYER_TRW_TOOL_ROUTE_FINDER));
 
 	parent_layer->route_finder_started = true;
 
@@ -3702,10 +3702,10 @@ void Track::list_dialog(QString const & title, Layer * layer, const SGObjectType
 	/* Be careful here: type_id may be "all", which in context of
 	   this function means "tracks and routes". */
 	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
-		layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_TRACK);
+		layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK));
 	}
 	if (type_id == SG_OBJ_TYPE_ID_ANY || type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
-		layer->get_tree_items(tree_items, SG_OBJ_TYPE_ID_TRW_A_ROUTE);
+		layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE));
 	}
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Tracks found"), window);
@@ -3805,13 +3805,13 @@ sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate
 sg_ret Track::tp_properties_dialog_set(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_TRACKPOINT));
 	if (!tool->is_activated()) {
 		/* Someone is asking to fill dialog data with
 		   trackpoint when TP edit tool is not active. This is
 		   ok, maybe generic select tool is active and has
 		   been used to select a trackpoint? */
-		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool("sg.tool.generic.select");
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(SGObjectTypeID("sg.tool.generic.select"));
 		if (!select_tool->is_activated()) {
 			qDebug() << SG_PREFIX_E << "Trying to fill 'tp properties' dialog when neither 'tp edit' tool nor 'generic select' tool are active";
 			return sg_ret::err;
@@ -3828,7 +3828,7 @@ sg_ret Track::tp_properties_dialog_set(void)
 sg_ret Track::tp_properties_dialog_reset(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_TRACKPOINT));
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}

@@ -534,28 +534,34 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & obj_type_id) const
+/**
+   @reviewed-on 2019-11-30
+*/
+sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const
 {
-	std::list<Layer const *> layers;
-	this->get_all_layers_of_kind(layers, LayerKind::TRW, true);
+	sg_ret result = sg_ret::ok;
 
-	/* For each TRW layers keep adding the specified tree items to
-	   build a list of all of them. */
-	/* TODO: we should traverse a tree here, not get a list of specific layer kinds. */
-	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		(*iter)->get_tree_items(list, obj_type_id);
+	/* For each layer keep adding the specified tree items
+	   to build a list of all of them. */
+	for (auto iter = this->children->begin(); iter != this->children->end(); ++iter) {
+		if (sg_ret::ok != (*iter)->get_tree_items(list, type_id)) {
+			result = sg_ret::err;
+		}
 	}
 
-	return sg_ret::ok;
+	return result;
 }
 
 
 
 
+/**
+   @reviewed-on 2019-11-30
+*/
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
-	QString title = tr("%1: Track and Route List").arg(this->name);
-	Track::list_dialog(title, this, "");
+	const QString title = tr("%1: Track and Route List").arg(this->name);
+	Track::list_dialog(title, this, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY)); /* In this context "SG_OBJ_TYPE_ID_ANY" means tracks and routes. */
 }
 
 
@@ -563,7 +569,7 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->name, this, "", this->get_window());
+	layer_trw_show_stats(this->name, this, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY), this->get_window());
 }
 
 

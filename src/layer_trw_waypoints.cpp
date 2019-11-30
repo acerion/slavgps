@@ -75,7 +75,7 @@ extern SelectedTreeItems g_selected;
 
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
-	this->m_type_id = SG_OBJ_TYPE_ID_TRW_WAYPOINTS_CONTAINER;
+	this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_WAYPOINTS_CONTAINER);
 	this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_WAYPOINT;
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);

@@ -1041,7 +1041,7 @@ void LayerMapnik::tile_info_cb(void)
 
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Mapnik)
 {
-	this->m_tool_id = "sg.tool.layer_mapnik.feature";
+	this->m_tool_id = SGObjectTypeID("sg.tool.layer_mapnik.feature");
 
 	this->action_icon_path   = ":/icons/layer_tool/mapnik_feature.png";
 	this->action_label       = QObject::tr("&Mapnik Features");

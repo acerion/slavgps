@@ -449,7 +449,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	TreeIndex index;
 	ClipboardDataType type = ClipboardDataType::None;
 	LayerKind layer_kind = LayerKind::Aggregate;
-	QString type_id; /* Type ID of copied tree item. */
+	SGObjectTypeID type_id; /* Type ID of copied tree item. */
 	unsigned char * data = NULL;
 	unsigned int len = 0;
 
