@@ -195,7 +195,7 @@ LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, GisView
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapnikFeature(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	created = true;
 
@@ -1041,12 +1041,22 @@ void LayerMapnik::tile_info_cb(void)
 
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Mapnik)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.layer_mapnik.feature");
-
 	this->action_icon_path   = ":/icons/layer_tool/mapnik_feature.png";
 	this->action_label       = QObject::tr("&Mapnik Features");
 	this->action_tooltip     = QObject::tr("Mapnik Features");
 	// this->action_accelerator = ...; /* Empty accelerator. */
+}
+
+
+
+
+SGObjectTypeID LayerToolMapnikFeature::get_tool_id(void) const
+{
+	return LayerToolMapnikFeature::tool_id();
+}
+SGObjectTypeID LayerToolMapnikFeature::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_mapnik.feature");
 }
 
 

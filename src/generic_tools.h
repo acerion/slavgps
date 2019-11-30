@@ -56,6 +56,9 @@ namespace SlavGPS {
 		GenericToolZoom(Window * window, GisViewport * gisview);
 		~GenericToolZoom();
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
@@ -83,6 +86,9 @@ namespace SlavGPS {
 
 		bool deactivate_tool(void);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
@@ -102,6 +108,9 @@ namespace SlavGPS {
 		LayerToolPan(Window * window, GisViewport * gisview);
 		~LayerToolPan();
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
@@ -119,6 +128,7 @@ namespace SlavGPS {
 		LayerToolSelect(Window * window, GisViewport * gisview, LayerKind layer_kind);
 
 		~LayerToolSelect();
+
 
 		enum class ObjectState {
 			/* Object is not selected. Tool can't interact
@@ -161,6 +171,9 @@ namespace SlavGPS {
 		   to be moved.
 		*/
 		bool can_tool_move_object(void);
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 
 		SGObjectTypeID selected_tree_item_type_id;
 		ObjectState edited_object_state = ObjectState::NotSelected;

@@ -492,7 +492,7 @@ void Acquire::uninit(void)
 
 sg_ret Acquire::register_bfilter(DataSource * bfilter)
 {
-	if (bfilter->type_id == SG_OBJ_TYPE_ID_ANY) {
+	if (bfilter->type_id == SGObjectTypeID::any()) {
 		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
 		return sg_ret::err;
 	}

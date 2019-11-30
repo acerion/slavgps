@@ -497,7 +497,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 
 
 	/* Signals. */
@@ -1054,14 +1054,14 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 sg_ret Waypoint::properties_dialog_set(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
+	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 	if (!wp_tool->is_activated()) {
 		/* Someone is asking to fill dialog data with waypoint
 		   when WP edit tool is not active. This is ok, maybe
 		   generic select tool is active and has been used to
 		   select a waypoint? */
 
-		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(SGObjectTypeID("sg.tool.generic.select"));
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(LayerToolSelect::tool_id());
 		if (!select_tool->is_activated()) {
 			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
 			return sg_ret::err;
@@ -1078,7 +1078,7 @@ sg_ret Waypoint::properties_dialog_set(void)
 sg_ret Waypoint::properties_dialog_reset(void)
 {
 	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT));
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}

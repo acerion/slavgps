@@ -242,7 +242,7 @@ LayerToolContainer * LayerDEMInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolDEMDownload(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	created = true;
 
@@ -1374,12 +1374,22 @@ static void free_dem_download_params(DEMDownloadJob * p)
 
 LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::DEM)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.layer_dem.dem_download");
-
 	this->action_icon_path   = ":/icons/layer_tool/dem_download_18.png";
 	this->action_label       = QObject::tr("&DEM Download");
 	this->action_tooltip     = QObject::tr("DEM Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
+}
+
+
+
+
+SGObjectTypeID LayerToolDEMDownload::get_tool_id(void) const
+{
+	return LayerToolDEMDownload::tool_id();
+}
+SGObjectTypeID LayerToolDEMDownload::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_dem.dem_download");
 }
 
 

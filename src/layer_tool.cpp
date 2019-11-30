@@ -163,7 +163,7 @@ ToolStatus LayerTool::handle_key_press(Layer * layer, QKeyEvent * event)
 bool LayerTool::is_activated(void) const
 {
 	if (!this->qa) {
-		qDebug() << SG_PREFIX_E << "QAction for" << this->m_tool_id << "tool is NULL";
+		qDebug() << SG_PREFIX_E << "QAction for" << this->get_tool_id() << "tool is NULL";
 		return false;
 	}
 	return this->qa->isChecked();

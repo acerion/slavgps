@@ -55,6 +55,8 @@ namespace SlavGPS {
 		bool operator!=(const QString & other) const { return !(*this == other); }
 		bool operator!=(const char * other) const { return !(*this == other); }
 
+		static SGObjectTypeID any(void) { return SGObjectTypeID(""); }
+
 		QString m_val;
 	};
 	QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
@@ -63,16 +65,6 @@ namespace SlavGPS {
 	struct sg_object_type_id_compare {
 		bool operator() (const SGObjectTypeID & id1, const SGObjectTypeID & id2) const { return id1.m_val < id2.m_val; }
 	};
-#define SG_OBJ_TYPE_ID_ANY                      ""
-
-/* Globally unique tool IDS. */
-#define LAYER_TRW_TOOL_CREATE_WAYPOINT "sg.tool.layer_trw.create_waypoint"
-#define LAYER_TRW_TOOL_CREATE_TRACK    "sg.tool.layer_trw.create_track"
-#define LAYER_TRW_TOOL_CREATE_ROUTE    "sg.tool.layer_trw.create_route"
-#define LAYER_TRW_TOOL_ROUTE_FINDER    "sg.tool.layer_trw.route_finder"
-#define LAYER_TRW_TOOL_EDIT_WAYPOINT   "sg.tool.layer_trw.edit_waypoint"
-#define LAYER_TRW_TOOL_EDIT_TRACKPOINT "sg.tool.layer_trw.edit_trackpoint"
-#define LAYER_TRW_TOOL_SHOW_PICTURE    "sg.tool.layer_trw.show_picture"
 
 
 

@@ -291,7 +291,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapsDownload(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	created = true;
 
@@ -1539,8 +1539,6 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 
 LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Map)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.layer_map.maps_download");
-
 	this->action_icon_path   = ":/icons/layer_tool/map_download_18.png";
 	this->action_label       = QObject::tr("Maps Download");
 	this->action_tooltip     = QObject::tr("Maps Download");
@@ -1548,6 +1546,18 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gis
 
 	this->cursor_click = QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
 	this->cursor_release = QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
+}
+
+
+
+
+SGObjectTypeID LayerToolMapsDownload::get_tool_id(void) const
+{
+	return LayerToolMapsDownload::tool_id();
+}
+SGObjectTypeID LayerToolMapsDownload::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_map.maps_download");
 }
 
 

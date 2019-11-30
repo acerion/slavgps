@@ -302,7 +302,7 @@ Window::Window()
 
 
 	/* Set the default tool + mode. */
-	this->toolbox->activate_tool_by_id(SGObjectTypeID("sg.tool.generic.pan"));
+	this->toolbox->activate_tool_by_id(LayerToolPan::tool_id());
 	this->qa_drawmode_mercator->setChecked(true);
 
 	/* Set the application icon. */
@@ -1523,7 +1523,7 @@ void Window::menu_copy_centre_cb(void)
 	}
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY), dummy, message);
+	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, SGObjectTypeID::any(), dummy, message);
 }
 
 

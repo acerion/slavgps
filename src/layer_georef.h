@@ -205,6 +205,9 @@ namespace SlavGPS {
 	public:
 		LayerToolGeorefMove(Window * window, GisViewport * gisview);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
@@ -213,6 +216,9 @@ namespace SlavGPS {
 	class LayerToolGeorefZoom : public LayerTool {
 	public:
 		LayerToolGeorefZoom(Window * window, GisViewport * gisview);
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;

@@ -301,7 +301,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	qDebug() << SG_PREFIX_I << "Will set edited object state to NotSelected";
 	select_tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-	select_tool->selected_tree_item_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_ANY);
+	select_tool->selected_tree_item_type_id = SGObjectTypeID::any();
 
 	/* Erase info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -412,7 +412,7 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 	this->waypoints.search_closest_wp(wp_search);
 	if (NULL == wp_search.closest_wp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_ANY);
+		tool->selected_tree_item_type_id = SGObjectTypeID::any();
 		qDebug() << SG_PREFIX_I << "No waypoint clicked";
 		return false;
 	}
@@ -450,7 +450,7 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 	tracks_or_routes.track_search_closest_tp(tp_search);
 	if (NULL == tp_search.closest_tp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_ANY);
+		tool->selected_tree_item_type_id = SGObjectTypeID::any();
 		qDebug() << SG_PREFIX_I << "No trackpoint clicked";
 		return false;
 	}
@@ -608,8 +608,6 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerKind::TRW)
 {
-	this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_EDIT_WAYPOINT);
-
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_wp_18.png";
 	this->action_label       = QObject::tr("&Edit Waypoint");
 	this->action_tooltip     = QObject::tr("Edit Waypoint");
@@ -628,6 +626,18 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport
 LayerToolTRWEditWaypoint::~LayerToolTRWEditWaypoint()
 {
 	delete this->point_properties_dialog;
+}
+
+
+
+
+SGObjectTypeID LayerToolTRWEditWaypoint::get_tool_id(void) const
+{
+	return LayerToolTRWEditWaypoint::tool_id();
+}
+SGObjectTypeID LayerToolTRWEditWaypoint::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.edit_trackpoint");
 }
 
 
@@ -702,7 +712,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		/* We clicked on empty space, so no waypoint is selected. */
 		qDebug() << SG_PREFIX_I << "Setting edited object state to NotSelected";
 		this->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		this->selected_tree_item_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_ANY);
+		this->selected_tree_item_type_id = SGObjectTypeID::any();
 
 		if (wp_was_edited || some_object_was_released) {
 			trw->emit_tree_item_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
@@ -866,32 +876,57 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 
 
 
-LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisview_, bool is_route) : LayerTool(window_, gisview_, LayerKind::TRW)
+LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->is_route_tool = is_route;
-	if (is_route) {
-		this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE);
+	this->is_route_tool = false;
 
-		this->action_icon_path   = ":/icons/layer_tool/trw_add_route_18.png";
-		this->action_label       = QObject::tr("Create &Route");
-		this->action_tooltip     = QObject::tr("Create Route");
-		this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_B;
+	this->action_icon_path   = ":/icons/layer_tool/trw_add_tr_18.png";
+	this->action_label       = QObject::tr("Create &Track");
+	this->action_tooltip     = QObject::tr("Create Track");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_T;
 
-		this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-		this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
-		this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
-	} else {
-		this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_CREATE_TRACK);
+	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
+	this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
+}
 
-		this->action_icon_path   = ":/icons/layer_tool/trw_add_tr_18.png";
-		this->action_label       = QObject::tr("Create &Track");
-		this->action_tooltip     = QObject::tr("Create Track");
-		this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_T;
 
-		this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-		this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
-		this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
-	}
+
+
+LayerToolTRWNewRoute::LayerToolTRWNewRoute(Window * window_, GisViewport * gisview_) : LayerToolTRWNewTrack(window_, gisview_)
+{
+	this->is_route_tool = true;
+
+	this->action_icon_path   = ":/icons/layer_tool/trw_add_route_18.png";
+	this->action_label       = QObject::tr("Create &Route");
+	this->action_tooltip     = QObject::tr("Create Route");
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_B;
+
+	this->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
+	this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
+}
+
+
+
+
+
+SGObjectTypeID LayerToolTRWNewTrack::get_tool_id(void) const
+{
+	return LayerToolTRWNewTrack::tool_id();
+}
+SGObjectTypeID LayerToolTRWNewTrack::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.create_track");
+}
+
+SGObjectTypeID LayerToolTRWNewRoute::get_tool_id(void) const
+{
+	return LayerToolTRWNewRoute::tool_id();
+}
+SGObjectTypeID LayerToolTRWNewRoute::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.create_route");
 }
 
 
@@ -1043,11 +1078,11 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 
 ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
 {
-	if (this->m_tool_id == LAYER_TRW_TOOL_CREATE_TRACK && !this->creation_in_progress) {
+	if (this->get_tool_id() == LayerToolTRWNewTrack::tool_id() && !this->creation_in_progress) {
 		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
 		return ToolStatus::Ignored;
 	}
-	if (this->m_tool_id == LAYER_TRW_TOOL_CREATE_ROUTE && !this->creation_in_progress) {
+	if (this->get_tool_id() == LayerToolTRWNewRoute::tool_id() && !this->creation_in_progress) {
 		/* Route is not being created at the moment, so a Key can't affect work of this tool. */
 		return ToolStatus::Ignored;
 	}
@@ -1280,8 +1315,6 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QM
 
 LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_CREATE_WAYPOINT);
-
 	this->action_icon_path   = ":/icons/layer_tool/trw_add_wp_18.png";
 	this->action_label       = QObject::tr("Create &Waypoint");
 	this->action_tooltip     = QObject::tr("Create Waypoint");
@@ -1289,6 +1322,18 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, GisViewport *
 
 	this->cursor_click = QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
 	this->cursor_release = QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
+}
+
+
+
+
+SGObjectTypeID LayerToolTRWNewWaypoint::get_tool_id(void) const
+{
+	return LayerToolTRWNewWaypoint::tool_id();
+}
+SGObjectTypeID LayerToolTRWNewWaypoint::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.create_waypoint");
 }
 
 
@@ -1320,8 +1365,6 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 
 LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisViewport * gisview_) : LayerToolSelect(window_, gisview_, LayerKind::TRW)
 {
-	this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
-
 	this->action_icon_path   = ":/icons/layer_tool/trw_edit_tr_18.png";
 	this->action_label       = QObject::tr("Edit Trac&kpoint");
 	this->action_tooltip     = QObject::tr("Edit Trackpoint");
@@ -1340,6 +1383,18 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisView
 LayerToolTRWEditTrackpoint::~LayerToolTRWEditTrackpoint()
 {
 	delete this->point_properties_dialog;
+}
+
+
+
+
+SGObjectTypeID LayerToolTRWEditTrackpoint::get_tool_id(void) const
+{
+	return LayerToolTRWEditTrackpoint::tool_id();
+}
+SGObjectTypeID LayerToolTRWEditTrackpoint::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.edit_trackpoint");
 }
 
 
@@ -1458,8 +1513,6 @@ sg_ret LayerToolTRWEditTrackpoint::change_coord_mode(CoordMode coord_mode)
 
 LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_ROUTE_FINDER);
-
 	this->action_icon_path   = ":/icons/layer_tool/trw_find_route_18.png";
 	this->action_label       = QObject::tr("Route &Finder");
 	this->action_tooltip     = QObject::tr("Route Finder");
@@ -1469,6 +1522,18 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 	this->cursor_click = QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = QCursor(Qt::ArrowCursor);
+}
+
+
+
+
+SGObjectTypeID LayerToolTRWExtendedRouteFinder::get_tool_id(void) const
+{
+	return LayerToolTRWExtendedRouteFinder::tool_id();
+}
+SGObjectTypeID LayerToolTRWExtendedRouteFinder::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.route_finder");
 }
 
 
@@ -1588,9 +1653,9 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 	} else {
 		trw->selected_track_reset();
 
-		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(SGObjectTypeID(LAYER_TRW_TOOL_CREATE_ROUTE));
+		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
 		if (NULL == new_route_tool) {
-			qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_ROUTE;
+			qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewRoute::tool_id();
 			return ToolStatus::Ignored;
 		}
 
@@ -1638,8 +1703,6 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 
 LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::TRW)
 {
-	this->m_tool_id = SGObjectTypeID(LAYER_TRW_TOOL_SHOW_PICTURE);
-
 	this->action_icon_path   = ":/icons/layer_tool/trw_show_picture_18.png";
 	this->action_label       = QObject::tr("Show P&icture");
 	this->action_tooltip     = QObject::tr("Show Picture");
@@ -1647,6 +1710,18 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport *
 
 	this->cursor_click = QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	this->cursor_release = QCursor(Qt::ArrowCursor);
+}
+
+
+
+
+SGObjectTypeID LayerToolTRWShowPicture::get_tool_id(void) const
+{
+	return LayerToolTRWShowPicture::tool_id();
+}
+SGObjectTypeID LayerToolTRWShowPicture::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_trw.show_picture");
 }
 
 

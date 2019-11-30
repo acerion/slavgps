@@ -87,16 +87,16 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 	LayerTool * tool = NULL;
 
 	tool = new LayerToolSelect(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	tool = new GenericToolRuler(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	tool = new GenericToolZoom(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	tool = new LayerToolPan(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	created = true;
 
@@ -106,12 +106,8 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 
 
 
-
-
 GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.generic.ruler");
-
 	this->action_icon_path   = ":/icons/layer_tool/ruler_18.png";
 	this->action_label       = QObject::tr("&Ruler");
 	this->action_tooltip     = QObject::tr("Ruler Tool");
@@ -124,6 +120,18 @@ GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : L
 GenericToolRuler::~GenericToolRuler()
 {
 	delete this->ruler;
+}
+
+
+
+
+SGObjectTypeID GenericToolRuler::get_tool_id(void) const
+{
+	return GenericToolRuler::tool_id();
+}
+SGObjectTypeID GenericToolRuler::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.generic.ruler");
 }
 
 
@@ -264,8 +272,6 @@ void GenericToolRuler::reset_ruler(void)
 
 GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.generic.zoom");
-
 	this->action_icon_path   = ":/icons/layer_tool/zoom_18.png";
 	this->action_label       = QObject::tr("&Zoom");
 	this->action_tooltip     = QObject::tr("Zoom Tool");
@@ -277,6 +283,18 @@ GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : Lay
 
 GenericToolZoom::~GenericToolZoom()
 {
+}
+
+
+
+
+SGObjectTypeID GenericToolZoom::get_tool_id(void) const
+{
+	return GenericToolZoom::tool_id();
+}
+SGObjectTypeID GenericToolZoom::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.generic.zoom");
 }
 
 
@@ -487,8 +505,6 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 
 LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.generic.pan");
-
 	this->action_icon_path   = ":/icons/layer_tool/pan_22.png";
 	this->action_label       = QObject::tr("&Pan");
 	this->action_tooltip     = QObject::tr("Pan Tool");
@@ -503,6 +519,18 @@ LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool
 
 LayerToolPan::~LayerToolPan()
 {
+}
+
+
+
+
+SGObjectTypeID LayerToolPan::get_tool_id(void) const
+{
+	return LayerToolPan::tool_id();
+}
+SGObjectTypeID LayerToolPan::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.generic.pan");
 }
 
 
@@ -576,8 +604,6 @@ ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEven
 
 LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Max)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.generic.select");
-
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");
 	this->action_tooltip     = QObject::tr("Select Tool");
@@ -601,9 +627,21 @@ LayerToolSelect::~LayerToolSelect()
 
 
 
+SGObjectTypeID LayerToolSelect::get_tool_id(void) const
+{
+	return LayerToolSelect::tool_id();
+}
+SGObjectTypeID LayerToolSelect::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.generic.select");
+}
+
+
+
+
 ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << SG_PREFIX_D << this->m_tool_id;
+	qDebug() << SG_PREFIX_D << this->get_tool_id();
 
 	this->select_and_move_activated = false;
 
@@ -626,7 +664,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << SG_PREFIX_D << this->m_tool_id;
+	qDebug() << SG_PREFIX_D << this->get_tool_id();
 
 	this->select_and_move_activated = false;
 
@@ -656,15 +694,15 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
-		qDebug() << SG_PREFIX_D << this->m_tool_id << "handling double click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handling double click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->get_main_gis_view(), this);
 	} else {
-		qDebug() << SG_PREFIX_D << this->m_tool_id << "handle single click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handle single click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->get_main_gis_view(), this);
 	}
 
 	if (!handled) {
-		qDebug() << SG_PREFIX_D << this->m_tool_id << "mouse event not handled";
+		qDebug() << SG_PREFIX_D << this->get_tool_id() << "mouse event not handled";
 		/* Deselect & redraw screen if necessary to remove the highlight. */
 
 		TreeView * tree_view = this->window->items_tree->get_tree_view();
@@ -741,12 +779,12 @@ bool LayerToolSelect::can_tool_move_object(void)
 {
 	switch (this->edited_object_state) {
 	case ObjectState::NotSelected:
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'NotSelected' state, tool =" << this->m_tool_id;
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'NotSelected' state, tool =" << this->get_tool_id();
 		return false;
 
 	case ObjectState::IsSelected:
 		/* We didn't actually clicked-and-held an object. */
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'IsSelected' state, tool =" << this->m_tool_id;
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'IsSelected' state, tool =" << this->get_tool_id();
 		return false;
 
 	case ObjectState::IsHeld:

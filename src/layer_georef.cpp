@@ -162,10 +162,10 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, GisView
 	LayerTool * tool = NULL;
 
 	tool = new LayerToolGeorefMove(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	tool = new LayerToolGeorefZoom(window, gisview);
-	tools->insert({{ tool->m_tool_id, tool }});
+	tools->insert({{ tool->get_tool_id(), tool }});
 
 	created = true;
 
@@ -1198,8 +1198,6 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.layer_georef.move");
-
 	this->action_icon_path   = ":/icons/layer_tool/georef_move_18.png";
 	this->action_label       = QObject::tr("&Georef Move Map");
 	this->action_tooltip     = QObject::tr("Georef Move Map");
@@ -1207,6 +1205,18 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview
 
 	this->cursor_click = QCursor(Qt::ClosedHandCursor);
 	this->cursor_release = QCursor(Qt::OpenHandCursor);
+}
+
+
+
+
+SGObjectTypeID LayerToolGeorefMove::get_tool_id(void) const
+{
+	return LayerToolGeorefMove::tool_id();
+}
+SGObjectTypeID LayerToolGeorefMove::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_georef.move");
 }
 
 
@@ -1241,12 +1251,23 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerKind::Georef)
 {
-	this->m_tool_id = SGObjectTypeID("sg.tool.layer_georef.zoom");
-
 	this->action_icon_path   = ":/icons/layer_tool/georef_zoom_18.png";
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
 	this->action_tooltip     = QObject::tr("Georef Zoom Tool");
 	// this->action_accelerator = ...; /* Empty accelerator. */
+}
+
+
+
+
+SGObjectTypeID LayerToolGeorefZoom::get_tool_id(void) const
+{
+	return LayerToolGeorefZoom::tool_id();
+}
+
+SGObjectTypeID LayerToolGeorefZoom::tool_id(void)
+{
+	return SGObjectTypeID("sg.tool.layer_georef.zoom");
 }
 
 

@@ -561,7 +561,7 @@ sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObje
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
 	const QString title = tr("%1: Track and Route List").arg(this->name);
-	Track::list_dialog(title, this, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY)); /* In this context "SG_OBJ_TYPE_ID_ANY" means tracks and routes. */
+	Track::list_dialog(title, this, SGObjectTypeID::any()); /* In this context ::any() means tracks and routes. */
 }
 
 
@@ -569,7 +569,7 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->name, this, SGObjectTypeID(SG_OBJ_TYPE_ID_ANY), this->get_window());
+	layer_trw_show_stats(this->name, this, SGObjectTypeID::any(), this->get_window());
 }
 
 

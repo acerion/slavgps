@@ -56,6 +56,9 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWNewWaypoint(Window * window, GisViewport * gisview);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
@@ -64,6 +67,9 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWEditTrackpoint(Window * window, GisViewport * gisview);
 		~LayerToolTRWEditTrackpoint();
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 
 		TpPropertiesDialog * point_properties_dialog = NULL;
 
@@ -80,6 +86,9 @@ namespace SlavGPS {
 		LayerToolTRWExtendedRouteFinder(Window * window, GisViewport * gisview);
 		void undo(LayerTRW * trw, Track * track);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
@@ -92,6 +101,9 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWShowPicture(Window * window, GisViewport * gisview);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
@@ -100,6 +112,9 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWEditWaypoint(Window * window, GisViewport * gisview);
 		~LayerToolTRWEditWaypoint();
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 
 		sg_ret change_coord_mode(CoordMode coord_mode);
 
@@ -113,19 +128,31 @@ namespace SlavGPS {
 
 	class LayerToolTRWNewTrack : public LayerTool {
 	public:
-		LayerToolTRWNewTrack(Window * window, GisViewport * gisview, bool is_route_tool);
+		LayerToolTRWNewTrack(Window * window, GisViewport * gisview);
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 
 		bool is_route_tool = false;
 		LayerTRW * creation_in_progress = NULL;
 		Ruler * ruler = NULL;
 		QPixmap orig_viewport_pixmap;
 
-	private:
+	protected:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+	};
+
+
+	class LayerToolTRWNewRoute : public LayerToolTRWNewTrack {
+	public:
+		LayerToolTRWNewRoute(Window * window, GisViewport * gisview);
+
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
 	};
 
 

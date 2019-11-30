@@ -93,13 +93,10 @@ namespace SlavGPS {
 
 		virtual bool deactivate_tool(void);
 
-
-
-
-
-
 		/* Is the tool activated? / Is the button related to the tool pressed? */
 		bool is_activated(void) const;
+
+		virtual SGObjectTypeID get_tool_id(void) const = 0;
 
 
 		QString action_icon_path;
@@ -120,10 +117,6 @@ namespace SlavGPS {
 
 
 		LayerKind m_layer_kind; /* Can be set to LayerKind::Max to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
-
-		/* Globally unique tool ID, e.g. "sg.tool.generic.zoom", or "sg.tool.layer_dem.download".
-		   For internal use, not visible to end user. */
-		SGObjectTypeID m_tool_id;
 
 		char debug_string[100]; /* For debug purposes only. */
 

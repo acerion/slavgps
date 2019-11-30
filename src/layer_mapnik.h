@@ -152,6 +152,9 @@ namespace SlavGPS {
 	public:
 		LayerToolMapnikFeature(Window * window, GisViewport * gisview);
 
+		SGObjectTypeID get_tool_id(void) const override;
+		static SGObjectTypeID tool_id(void);
+
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
