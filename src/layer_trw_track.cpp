@@ -316,7 +316,10 @@ SGObjectTypeID Track::get_type_id(void) const
 }
 SGObjectTypeID Track::type_id(void)
 {
-	return SGObjectTypeID("sg.trw.track");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.trw.track");
+	return id;
 }
 
 #if 0
@@ -327,7 +330,10 @@ SGObjectTypeID Track::get_type_id(void) const
 #endif
 SGObjectTypeID Route::type_id(void)
 {
-	return SGObjectTypeID("sg.trw.route");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.trw.route");
+	return id;
 }
 
 

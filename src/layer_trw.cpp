@@ -1201,7 +1201,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 		if (consumed_length + pickle.peek_size() < original_data_size) {
 
 			const QString type_id_string = pickle.peek_string(sizeof (pickle_size_t)); /* Look at type id string that is after object size. */
-			SGObjectTypeID type_id = SGObjectTypeID(type_id_string);
+			SGObjectTypeID type_id = SGObjectTypeID(type_id_string.toUtf8().constData());
 
 			/* Also remember to (attempt to) convert each
 			   coordinate in case this is pasted into a

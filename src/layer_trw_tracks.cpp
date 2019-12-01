@@ -127,7 +127,10 @@ SGObjectTypeID LayerTRWTracks::get_type_id(void) const
 }
 SGObjectTypeID LayerTRWTracks::type_id(void)
 {
-	return SGObjectTypeID("sg.trw.tracks");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.trw.tracks");
+	return id;
 }
 #if 0
 SGObjectTypeID LayerTRWRoutes::get_type_id(void) const
@@ -137,7 +140,10 @@ SGObjectTypeID LayerTRWRoutes::get_type_id(void) const
 #endif
 SGObjectTypeID LayerTRWRoutes::type_id(void)
 {
-	return SGObjectTypeID("sg.trw.routes");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.trw.routes");
+	return id;
 }
 
 

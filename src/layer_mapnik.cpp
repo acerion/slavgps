@@ -1059,7 +1059,10 @@ SGObjectTypeID LayerToolMapnikFeature::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolMapnikFeature::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_mapnik.feature");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_mapnik.feature");
+	return id;
 }
 
 

@@ -1560,7 +1560,10 @@ SGObjectTypeID LayerToolMapsDownload::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolMapsDownload::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_map.maps_download");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_map.maps_download");
+	return id;
 }
 
 

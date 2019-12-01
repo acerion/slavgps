@@ -76,7 +76,10 @@ SGObjectTypeID DataSourceGeoJSON::get_source_id(void) const
 }
 SGObjectTypeID DataSourceGeoJSON::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.geojson");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.geojson");
+	return id;
 }
 
 

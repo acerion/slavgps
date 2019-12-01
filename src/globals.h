@@ -41,18 +41,26 @@ namespace SlavGPS {
 	class SGObjectTypeID {
 		friend QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
 	public:
-		SGObjectTypeID() {}
+		/**
+		   Used by QT's metatype system, and to create empty
+		   (non-initialized) objects.
+		*/
+		SGObjectTypeID();
 
-		/* Using 'explicit' to catch empty strings ("") used
-		   as "any" object ID passed as argument to
-		   function. */
-		explicit SGObjectTypeID(const QString & val) : m_val(val) {}
-		explicit SGObjectTypeID(const char * val) : m_val(val) {}
+		/**
+		   @param label is mandatory. It is used only for
+		   debugs, but if you pass NULL or empty string, you
+		   will get empty type id object.
+		*/
+		SGObjectTypeID(const char * label);
+		// SGObjectTypeID(const QString & val);
 
 		bool operator==(const SGObjectTypeID & other) const;
 		bool operator!=(const SGObjectTypeID & other) const { return !(*this == other); }
 
 		static SGObjectTypeID any(void) { return SGObjectTypeID(""); }
+
+		bool is_empty(void) const;
 
 		/* Comparison class for std::maps with SGObjectTypeID as a key. */
 		struct compare {
@@ -60,7 +68,8 @@ namespace SlavGPS {
 		};
 
 	protected:
-		QString m_val;
+		int m_val = 0; /* Zero means empty type id. */
+		char m_debug_string[100] = { '\0' };
 	};
 	QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
 

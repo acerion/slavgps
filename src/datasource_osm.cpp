@@ -87,7 +87,10 @@ SGObjectTypeID DataSourceOSMTraces::get_source_id(void) const
 }
 SGObjectTypeID DataSourceOSMTraces::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.osm_traces");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.osm_traces");
+	return id;
 }
 
 

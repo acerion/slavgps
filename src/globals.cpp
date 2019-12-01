@@ -23,6 +23,11 @@
 
 
 
+#include <mutex>
+
+
+
+
 #include "globals.h"
 #include "dialog.h"
 
@@ -35,6 +40,12 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Globals"
+
+
+
+
+static int g_object_type_id_counter;
+static std::mutex g_object_type_id_mutex;
 
 
 
@@ -229,16 +240,70 @@ bool SlavGPS::operator!=(SaveStatus::Code code, const SaveStatus & lhs)
 
 
 
+/**
+   @reviewed on 2019-12-01
+*/
+SGObjectTypeID::SGObjectTypeID() {}
+
+
+
+
+/**
+   @reviewed on 2019-12-01
+*/
+SGObjectTypeID::SGObjectTypeID(const char * debug_id)
+{
+	if (nullptr != debug_id && '\0' != debug_id[0]) {
+		snprintf(this->m_debug_string, sizeof (this->m_debug_string), "%s", debug_id);
+
+		g_object_type_id_mutex.lock();
+		/* First iterate then assign: first valid ID will be non-zero. */
+		g_object_type_id_counter++;
+		this->m_val = g_object_type_id_counter;
+		g_object_type_id_mutex.unlock();
+
+		qDebug() << SG_PREFIX_I << "Created object type id" << this->m_val << "for object class" << debug_id;
+	} else {
+		/* Client code shouldn't use empty ID. Let't not set
+		   m_val, and treat it as error. */
+		qDebug() << SG_PREFIX_E << "Creating empty object type id because debug id is empty";
+	}
+}
+
+
+
+
+/**
+   @reviewed on 2019-12-01
+*/
 QDebug SlavGPS::operator<<(QDebug debug, const SGObjectTypeID & type_id)
 {
-	debug.nospace() << type_id.m_val;
+	if (0 == type_id.m_val) {
+		debug << "Empty object type id";
+	} else {
+		debug << type_id.m_val << "/" << type_id.m_debug_string;
+	}
 	return debug;
 }
 
 
 
 
+/**
+   @reviewed on 2019-12-01
+*/
 bool SGObjectTypeID::operator==(const SGObjectTypeID & other) const
 {
 	return this->m_val == other.m_val;
+}
+
+
+
+
+/**
+   @reviewed on 2019-12-01
+*/
+bool SGObjectTypeID::is_empty(void) const
+{
+	return 0 == this->m_val;
 }

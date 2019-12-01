@@ -301,7 +301,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	qDebug() << SG_PREFIX_I << "Will set edited object state to NotSelected";
 	select_tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-	select_tool->selected_tree_item_type_id = SGObjectTypeID::any();
+	select_tool->selected_tree_item_type_id = SGObjectTypeID();
 
 	/* Erase info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -363,7 +363,6 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 */
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	/* FIXME: slowdown: comparing strings. */
 	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
 		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
 
@@ -390,7 +389,6 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 */
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	/* FIXME: slowdown: comparing strings. */
 	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
 		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
 
@@ -412,7 +410,7 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 	this->waypoints.search_closest_wp(wp_search);
 	if (NULL == wp_search.closest_wp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = SGObjectTypeID::any();
+		tool->selected_tree_item_type_id = SGObjectTypeID();
 		qDebug() << SG_PREFIX_I << "No waypoint clicked";
 		return false;
 	}
@@ -450,7 +448,7 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 	tracks_or_routes.track_search_closest_tp(tp_search);
 	if (NULL == tp_search.closest_tp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		tool->selected_tree_item_type_id = SGObjectTypeID::any();
+		tool->selected_tree_item_type_id = SGObjectTypeID();
 		qDebug() << SG_PREFIX_I << "No trackpoint clicked";
 		return false;
 	}
@@ -637,7 +635,10 @@ SGObjectTypeID LayerToolTRWEditWaypoint::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWEditWaypoint::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.edit_waypoint");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.edit_waypoint");
+	return id;
 }
 
 
@@ -712,7 +713,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		/* We clicked on empty space, so no waypoint is selected. */
 		qDebug() << SG_PREFIX_I << "Setting edited object state to NotSelected";
 		this->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
-		this->selected_tree_item_type_id = SGObjectTypeID::any();
+		this->selected_tree_item_type_id = SGObjectTypeID();
 
 		if (wp_was_edited || some_object_was_released) {
 			trw->emit_tree_item_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
@@ -917,7 +918,10 @@ SGObjectTypeID LayerToolTRWNewTrack::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWNewTrack::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.create_track");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.create_track");
+	return id;
 }
 
 SGObjectTypeID LayerToolTRWNewRoute::get_tool_id(void) const
@@ -926,7 +930,10 @@ SGObjectTypeID LayerToolTRWNewRoute::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWNewRoute::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.create_route");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.create_route");
+	return id;
 }
 
 
@@ -1333,7 +1340,10 @@ SGObjectTypeID LayerToolTRWNewWaypoint::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWNewWaypoint::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.create_waypoint");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.create_waypoint");
+	return id;
 }
 
 
@@ -1394,7 +1404,10 @@ SGObjectTypeID LayerToolTRWEditTrackpoint::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWEditTrackpoint::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.edit_trackpoint");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.edit_trackpoint");
+	return id;
 }
 
 
@@ -1533,7 +1546,10 @@ SGObjectTypeID LayerToolTRWExtendedRouteFinder::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWExtendedRouteFinder::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.route_finder");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.route_finder");
+	return id;
 }
 
 
@@ -1721,7 +1737,10 @@ SGObjectTypeID LayerToolTRWShowPicture::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolTRWShowPicture::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_trw.show_picture");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_trw.show_picture");
+	return id;
 }
 
 

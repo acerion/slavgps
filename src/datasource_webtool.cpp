@@ -150,7 +150,10 @@ SGObjectTypeID DataSourceOnlineService::get_source_id(void) const
 }
 SGObjectTypeID DataSourceOnlineService::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.online_service");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.online_service");
+	return id;
 }
 
 

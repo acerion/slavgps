@@ -75,7 +75,10 @@ SGObjectTypeID DataSourceFile::get_source_id(void) const
 }
 SGObjectTypeID DataSourceFile::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.file");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.file");
+	return id;
 }
 
 

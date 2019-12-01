@@ -345,11 +345,14 @@ AcquireContext::AcquireContext()
 void AcquireContext::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	const SGObjectTypeID * filter_id = (SGObjectTypeID *) qa->data().toULongLong();
 
-	auto iter = g_bfilters.find(*filter_id);
+	QVariant property = qa->property("property_bfilter_id");
+	const SGObjectTypeID filter_id = property.value<SGObjectTypeID>();
+	qDebug() << SG_PREFIX_I << "Callback called for bfilter" << filter_id;
+
+	auto iter = g_bfilters.find(filter_id);
 	if (iter == g_bfilters.end()) {
-		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << *filter_id;
+		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << filter_id;
 		return;
 	}
 
@@ -380,7 +383,12 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 		}
 
 		QAction * action = new QAction(filter->window_title, g_acquire_context);
-		action->setData((qulonglong) &filter_id);
+
+		/* The property will be used later to lookup a bfilter. */
+		QVariant property;
+		property.setValue(filter_id);
+		action->setProperty("property_bfilter_id", property);
+
 		QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
 		menu->addAction(action);
 	}
@@ -492,7 +500,7 @@ void Acquire::uninit(void)
 
 sg_ret Acquire::register_bfilter(DataSource * bfilter)
 {
-	if (bfilter->get_source_id() == SGObjectTypeID::any()) {
+	if (bfilter->get_source_id().is_empty()) {
 		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
 		return sg_ret::err;
 	}

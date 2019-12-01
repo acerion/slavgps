@@ -1516,8 +1516,10 @@ void Window::menu_copy_centre_cb(void)
 		message = coord.get_lat_lon().to_string();
 	}
 
+#if 0
 	Pickle dummy;
 	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, SGObjectTypeID::any(), dummy, message);
+#endif
 }
 
 

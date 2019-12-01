@@ -109,7 +109,10 @@ SGObjectTypeID DataSourceWikipedia::get_source_id(void) const
 }
 SGObjectTypeID DataSourceWikipedia::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.wikipedia");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.wikipedia");
+	return id;
 }
 
 

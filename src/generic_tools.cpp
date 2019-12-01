@@ -141,7 +141,10 @@ SGObjectTypeID GenericToolRuler::get_tool_id(void) const
 }
 SGObjectTypeID GenericToolRuler::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.generic.ruler");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.generic.ruler");
+	return id;
 }
 
 
@@ -304,7 +307,10 @@ SGObjectTypeID GenericToolZoom::get_tool_id(void) const
 }
 SGObjectTypeID GenericToolZoom::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.generic.zoom");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.generic.zoom");
+	return id;
 }
 
 
@@ -540,7 +546,10 @@ SGObjectTypeID LayerToolPan::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolPan::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.generic.pan");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.generic.pan");
+	return id;
 }
 
 
@@ -643,7 +652,10 @@ SGObjectTypeID LayerToolSelect::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolSelect::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.generic.select");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.generic.select");
+	return id;
 }
 
 

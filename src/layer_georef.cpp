@@ -1224,7 +1224,10 @@ SGObjectTypeID LayerToolGeorefMove::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolGeorefMove::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_georef.move");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_georef.move");
+	return id;
 }
 
 
@@ -1275,7 +1278,10 @@ SGObjectTypeID LayerToolGeorefZoom::get_tool_id(void) const
 
 SGObjectTypeID LayerToolGeorefZoom::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_georef.zoom");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_georef.zoom");
+	return id;
 }
 
 

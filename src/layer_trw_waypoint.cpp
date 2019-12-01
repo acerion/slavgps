@@ -133,7 +133,10 @@ SGObjectTypeID Waypoint::get_type_id(void) const
 }
 SGObjectTypeID Waypoint::type_id(void)
 {
-	return SGObjectTypeID("sg.trw.waypoint");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.trw.waypoint");
+	return id;
 }
 
 

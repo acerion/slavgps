@@ -94,7 +94,10 @@ SGObjectTypeID BFilterSimplify::get_source_id(void) const
 }
 SGObjectTypeID BFilterSimplify::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.simplify");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.simplify");
+	return id;
 }
 
 
@@ -202,7 +205,10 @@ SGObjectTypeID BFilterCompress::get_source_id(void) const
 }
 SGObjectTypeID BFilterCompress::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.compress");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.compress");
+	return id;
 }
 
 
@@ -304,7 +310,10 @@ SGObjectTypeID BFilterDuplicates::get_source_id(void) const
 }
 SGObjectTypeID BFilterDuplicates::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.remove_duplicated_wp");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.remove_duplicated_wp");
+	return id;
 }
 
 
@@ -377,7 +386,10 @@ SGObjectTypeID BFilterManual::get_source_id(void) const
 }
 SGObjectTypeID BFilterManual::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.manual");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.manual");
+	return id;
 }
 
 
@@ -459,7 +471,10 @@ SGObjectTypeID BFilterPolygon::get_source_id(void) const
 }
 SGObjectTypeID BFilterPolygon::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.polygon");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.polygon");
+	return id;
 }
 
 
@@ -537,7 +552,10 @@ SGObjectTypeID BFilterExcludePolygon::get_source_id(void) const
 }
 SGObjectTypeID BFilterExcludePolygon::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.bfilter.exclude_polygon");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.bfilter.exclude_polygon");
+	return id;
 }
 
 

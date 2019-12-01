@@ -1393,7 +1393,10 @@ SGObjectTypeID LayerToolDEMDownload::get_tool_id(void) const
 }
 SGObjectTypeID LayerToolDEMDownload::tool_id(void)
 {
-	return SGObjectTypeID("sg.tool.layer_dem.dem_download");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.tool.layer_dem.dem_download");
+	return id;
 }
 
 

@@ -263,9 +263,10 @@ void SGDateTimeButton::mousePressEvent(QMouseEvent * ev)
 void SGDateTimeButton::copy_formatted_time_string_cb(void)
 {
 	qDebug() << "SLOT: Date Time Button: copy formatted time string";
-
+#if 0
 	Pickle dummy;
 	Clipboard::copy(ClipboardDataType::Text, LayerKind::Aggregate, SGObjectTypeID::any(), dummy, this->text());
+#endif
 }
 
 

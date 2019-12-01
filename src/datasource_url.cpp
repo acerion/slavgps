@@ -85,7 +85,10 @@ SGObjectTypeID DataSourceURL::get_source_id(void) const
 }
 SGObjectTypeID DataSourceURL::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.url");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.url");
+	return id;
 }
 
 

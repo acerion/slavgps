@@ -452,5 +452,6 @@ sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const SGObjectType
 
 SGObjectTypeID TreeItem::get_type_id(void) const
 {
-	return SGObjectTypeID::any(); /* Catch-all value for all tree item types that don't need specific value. */
+	qDebug() << SG_PREFIX_W << "Returning empty object type id for object" << this->name;
+	return SGObjectTypeID(); /* Empty value for all tree item types that don't need specific value. */
 }

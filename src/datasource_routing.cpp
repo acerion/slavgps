@@ -76,7 +76,10 @@ SGObjectTypeID DataSourceRouting::get_source_id(void) const
 }
 SGObjectTypeID DataSourceRouting::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.routing");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.routing");
+	return id;
 }
 
 

@@ -96,7 +96,10 @@ SGObjectTypeID DataSourceGPS::get_source_id(void) const
 }
 SGObjectTypeID DataSourceGPS::source_id(void)
 {
-	return SGObjectTypeID("sg.datasource.gps");
+	/* Using 'static' to ensure that a type ID will be created
+	   only once for this class of objects. */
+	static SGObjectTypeID id("sg.datasource.gps");
+	return id;
 }
 
 
