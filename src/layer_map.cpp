@@ -291,7 +291,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapsDownload(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	tools->insert({ tool->get_tool_id(), tool });
 
 	created = true;
 

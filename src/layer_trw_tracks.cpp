@@ -92,12 +92,12 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes)
 	this->init_item();
 
 	if (is_routes) {
-		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER);
-		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_ROUTE;
+		this->m_type_id = LayerTRWRoutes::type_id();
+		this->accepted_child_type_ids.push_back(Route::type_id());
 		this->name = tr("Routes");
 	} else {
-		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER);
-		this->accepted_child_type_ids << SG_OBJ_TYPE_ID_TRW_A_TRACK;
+		this->m_type_id = LayerTRWTracks::type_id();
+		this->accepted_child_type_ids.push_back(Track::type_id());
 		this->name = tr("Tracks");
 	}
 }
@@ -121,11 +121,33 @@ LayerTRWTracks::~LayerTRWTracks()
 
 
 
+SGObjectTypeID LayerTRWTracks::get_type_id(void) const
+{
+	return this->m_type_id;
+}
+SGObjectTypeID LayerTRWTracks::type_id(void)
+{
+	return SGObjectTypeID("sg.trw.tracks");
+}
+#if 0
+SGObjectTypeID LayerTRWRoutes::get_type_id(void) const
+{
+	return this->m_type_id;
+}
+#endif
+SGObjectTypeID LayerTRWRoutes::type_id(void)
+{
+	return SGObjectTypeID("sg.trw.routes");
+}
+
+
+
+
 QString LayerTRWTracks::get_tooltip(void) const
 {
 	QString tooltip;
 
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
+	if (this->get_type_id() == LayerTRWRoutes::type_id()) {
 		/* Very simple tooltip - may expand detail in the future. */
 		tooltip = tr("Routes: %1").arg(this->children_list.size());
 	} else {
@@ -546,7 +568,7 @@ static QString my_track_colors(int ii)
 
 void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common)
 {
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
+	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 
 		int color_i = 0;
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
@@ -790,9 +812,9 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	menu.addSeparator();
 
 
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
+	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
-	} else if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
+	} else if (this->get_type_id() == LayerTRWRoutes::type_id()) {
 		this->sublayer_menu_routes_misc((LayerTRW *) this->owning_layer, menu);
 	}
 
@@ -861,12 +883,12 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title;
-	if (this->m_type_id == SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER) {
+	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		title = tr("%1: Tracks List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK)); /* Show each track in this tracks container. */
+		Track::list_dialog(title, this->owning_layer, Track::type_id()); /* Show each track in this tracks container. */
 	} else {
 		title = tr("%1: Routes List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE)); /* Show each route in this routes container. */
+		Track::list_dialog(title, this->owning_layer, Route::type_id()); /* Show each route in this routes container. */
 	}
 
 }
@@ -1129,7 +1151,8 @@ sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 		return sg_ret::ok;
 	}
 
-	if (this->accepted_child_type_ids.contains(tree_item->m_type_id.m_val)) {
+	auto iter = std::find(this->accepted_child_type_ids.begin(), this->accepted_child_type_ids.end(), tree_item->get_type_id());
+	if (iter != this->accepted_child_type_ids.end()) {
 		qDebug() << SG_PREFIX_I << "Accepted child type ids =" << this->accepted_child_type_ids << ", dropped item type id =" << tree_item->m_type_id;
 		*result = true;
 		return sg_ret::ok;
@@ -1144,8 +1167,8 @@ sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 
 bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 {
-	if (child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_A_TRACK
-	    && child_tree_item.m_type_id != SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
+	if (child_tree_item.get_type_id() != Track::type_id()
+	    && child_tree_item.get_type_id() != Route::type_id()) {
 		qDebug() << SG_PREFIX_E << "Attempting to move non-track/route child" << child_tree_item.m_type_id;
 		return false;
 	}

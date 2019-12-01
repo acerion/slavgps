@@ -195,7 +195,7 @@ LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, GisView
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolMapnikFeature(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	tools->insert({ tool->get_tool_id(), tool });
 
 	created = true;
 

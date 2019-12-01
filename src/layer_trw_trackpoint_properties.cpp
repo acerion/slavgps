@@ -426,8 +426,8 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	}
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
-	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
-	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
+	if (tree_item->get_type_id() == Track::type_id()
+	    || tree_item->get_type_id() == Route::type_id()) {
 
 		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "matches supported type";
 		Track * trk = (Track *) tree_item;

@@ -144,6 +144,9 @@ namespace SlavGPS {
 		Time get_earliest_timestamp(void) const;
 
 
+		SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
+
 
 		void list_trk_uids(std::list<sg_uid_t> & list);
 
@@ -230,6 +233,15 @@ namespace SlavGPS {
 		TracksMap children_map;
 
 		void init_item(void);
+	};
+
+
+
+
+	class LayerTRWRoutes {
+	public:
+		//SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
 	};
 
 

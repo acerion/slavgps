@@ -242,7 +242,7 @@ LayerToolContainer * LayerDEMInterface::create_tools(Window * window, GisViewpor
 	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolDEMDownload(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	tools->insert({ tool->get_tool_id(), tool });
 
 	created = true;
 

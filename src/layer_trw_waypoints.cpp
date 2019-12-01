@@ -76,7 +76,7 @@ extern SelectedTreeItems g_selected;
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
 	this->m_type_id = LayerTRWWaypoints::type_id();
-	this->accepted_child_type_ids << Waypoint::type_id().m_val;
+	this->accepted_child_type_ids.push_back(Waypoint::type_id());
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
 	this->name = tr("Waypoints");
@@ -1088,7 +1088,8 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 		return sg_ret::ok;
 	}
 
-	if (this->accepted_child_type_ids.contains(tree_item->m_type_id.m_val)) {
+	auto iter = std::find(this->accepted_child_type_ids.begin(), this->accepted_child_type_ids.end(), tree_item->get_type_id());
+	if (iter != this->accepted_child_type_ids.end()) {
 		*result = true;
 		return sg_ret::ok;
 	}

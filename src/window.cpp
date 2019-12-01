@@ -1228,7 +1228,8 @@ void Window::create_ui(void)
 				default_qa->setChecked(true);
 				default_qa->trigger();
 
-				const SGObjectTypeID default_tool_id = SGObjectTypeID(default_qa->objectName()); /* TODO: tool ID may not be string, so ::objectName() won't return valid id. */
+				QVariant property = default_qa->property("property_tool_id");
+				const SGObjectTypeID default_tool_id = property.value<SGObjectTypeID>();
 				this->toolbox->activate_tool_by_id(default_tool_id);
 			}
 		} else {
@@ -1298,7 +1299,8 @@ void Window::layer_tool_cb(QAction * qa)
 
 	/* Now handle newly selected tool. */
 	if (qa) {
-		const SGObjectTypeID new_tool_id = SGObjectTypeID(qa->objectName()); /* TODO: tool ID may not be string, so ::objectName() won't return valid tool ID. */
+		QVariant property = qa->property("property_tool_id");
+		const SGObjectTypeID new_tool_id = property.value<SGObjectTypeID>();
 		qDebug() << SG_PREFIX_I << "Setting 'release' cursor for tool" << new_tool_id;
 
 		this->toolbox->activate_tool_by_id(new_tool_id);

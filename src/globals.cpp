@@ -242,19 +242,3 @@ bool SGObjectTypeID::operator==(const SGObjectTypeID & other) const
 {
 	return this->m_val == other.m_val;
 }
-
-
-
-
-bool SGObjectTypeID::operator==(const QString & other) const
-{
-	return this->m_val == other;
-}
-
-
-
-
-bool SGObjectTypeID::operator==(const char * other) const
-{
-	return this->m_val == QString(other);
-}

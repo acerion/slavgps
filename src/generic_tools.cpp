@@ -83,20 +83,26 @@ LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * g
 	}
 
 	auto tools = new LayerToolContainer;
-
 	LayerTool * tool = NULL;
 
+	/* I'm using assertions to verify that tools have unique IDs
+	   (at least unique within a group of tools). */
+
 	tool = new LayerToolSelect(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	auto status = tools->insert({ tool->get_tool_id(), tool });
+	assert(status.second);
 
 	tool = new GenericToolRuler(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	status = tools->insert({ tool->get_tool_id(), tool });
+	assert(status.second);
 
 	tool = new GenericToolZoom(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	status = tools->insert({ tool->get_tool_id(), tool });
+	assert(status.second);
 
 	tool = new LayerToolPan(window, gisview);
-	tools->insert({{ tool->get_tool_id(), tool }});
+	status = tools->insert({ tool->get_tool_id(), tool });
+	assert(status.second);
 
 	created = true;
 

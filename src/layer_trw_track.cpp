@@ -280,9 +280,9 @@ void Track::free()
 Track::Track(bool is_route)
 {
 	if (is_route) {
-		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE);
+		this->m_type_id = Route::type_id();
 	} else {
-		this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK);
+		this->m_type_id = Track::type_id();
 	}
 
 	this->ref_count = 1;
@@ -305,6 +305,29 @@ Track::Track(bool is_route)
 Track::Track(const Track & from) : Track(from.is_route())
 {
 	this->copy_properties(from);
+}
+
+
+
+
+SGObjectTypeID Track::get_type_id(void) const
+{
+	return this->m_type_id;
+}
+SGObjectTypeID Track::type_id(void)
+{
+	return SGObjectTypeID("sg.trw.track");
+}
+
+#if 0
+SGObjectTypeID Track::get_type_id(void) const
+{
+	return this->m_type_id;
+}
+#endif
+SGObjectTypeID Route::type_id(void)
+{
+	return SGObjectTypeID("sg.trw.route");
 }
 
 
@@ -2784,7 +2807,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Convert and attach to new location. */
-	this->m_type_id = this->is_route() ? SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK) : SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE);
+	this->m_type_id = this->is_route() ? Track::type_id() : Route::type_id();
 	if (this->is_track()) {
 		parent_layer->add_track(this);
 	} else {
@@ -3581,7 +3604,7 @@ void Track::extend_track_end_route_finder_cb(void)
 
 bool Track::is_route(void) const
 {
-	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE;
+	return this->m_type_id == Route::type_id();
 }
 
 
@@ -3589,7 +3612,7 @@ bool Track::is_route(void) const
 
 bool Track::is_track(void) const
 {
-	return this->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK;
+	return this->m_type_id == Track::type_id();
 }
 
 
@@ -3701,11 +3724,11 @@ void Track::list_dialog(QString const & title, Layer * layer, const SGObjectType
 
 	/* Be careful here: type_id may be "all", which in context of
 	   this function means "tracks and routes". */
-	if (type_id == SGObjectTypeID::any() || type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
-		layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_TRACK));
+	if (type_id == SGObjectTypeID::any() || type_id == Track::type_id()) {
+		layer->get_tree_items(tree_items, Track::type_id());
 	}
-	if (type_id == SGObjectTypeID::any() || type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
-		layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_ROUTE));
+	if (type_id == SGObjectTypeID::any() || type_id == Route::type_id()) {
+		layer->get_tree_items(tree_items, Route::type_id());
 	}
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Tracks found"), window);

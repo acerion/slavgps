@@ -58,14 +58,6 @@ namespace SlavGPS {
 
 
 
-#define SG_OBJ_TYPE_ID_TRW_A_TRACK              "sg.trw.track"
-#define SG_OBJ_TYPE_ID_TRW_A_ROUTE              "sg.trw.route"
-#define SG_OBJ_TYPE_ID_TRW_TRACKS_CONTAINER     "sg.trw.tracks"
-#define SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER     "sg.trw.routes"
-
-
-
-
 	class GisViewport;
 	class LayerTRW;
 	class LayerTRWPainter;

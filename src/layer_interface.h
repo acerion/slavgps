@@ -59,7 +59,7 @@ namespace SlavGPS {
 
 
 
-	typedef std::map<SGObjectTypeID, LayerTool *, sg_object_type_id_compare> LayerToolContainer;
+	typedef std::map<SGObjectTypeID, LayerTool *, SGObjectTypeID::compare> LayerToolContainer;
 
 
 

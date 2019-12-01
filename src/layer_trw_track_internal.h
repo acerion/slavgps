@@ -216,7 +216,8 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 
 
-
+		SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
 
 
 		/* For now we only support no more than one selected
@@ -508,6 +509,15 @@ namespace SlavGPS {
 
 		void extend_track_end_cb(void);
 		void extend_track_end_route_finder_cb(void);
+	};
+
+
+
+
+	class Route {
+	public:
+		//SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
 	};
 
 

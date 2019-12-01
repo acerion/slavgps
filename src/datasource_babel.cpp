@@ -81,13 +81,3 @@ DataSourceBabel::~DataSourceBabel()
 {
 	qDebug() << SG_PREFIX_D;
 }
-
-
-
-
-SGObjectTypeID DataSourceBabel::get_source_id(void) const
-{
-}
-SGObjectTypeID DataSourceBabel::source_id(void)
-{
-}

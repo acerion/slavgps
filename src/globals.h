@@ -26,6 +26,7 @@
 
 
 
+#include <QObject>
 #include <QString>
 #include <QDebug>
 
@@ -38,6 +39,7 @@ namespace SlavGPS {
 
 
 	class SGObjectTypeID {
+		friend QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
 	public:
 		SGObjectTypeID() {}
 
@@ -48,23 +50,19 @@ namespace SlavGPS {
 		explicit SGObjectTypeID(const char * val) : m_val(val) {}
 
 		bool operator==(const SGObjectTypeID & other) const;
-		bool operator==(const QString & other) const;
-		bool operator==(const char * other) const;
-
 		bool operator!=(const SGObjectTypeID & other) const { return !(*this == other); }
-		bool operator!=(const QString & other) const { return !(*this == other); }
-		bool operator!=(const char * other) const { return !(*this == other); }
 
 		static SGObjectTypeID any(void) { return SGObjectTypeID(""); }
 
+		/* Comparison class for std::maps with SGObjectTypeID as a key. */
+		struct compare {
+			bool operator() (const SGObjectTypeID & id1, const SGObjectTypeID & id2) const { return id1.m_val < id2.m_val; }
+		};
+
+	protected:
 		QString m_val;
 	};
 	QDebug operator<<(QDebug debug, const SGObjectTypeID & id);
-
-	/* Comparison class for std::maps with SGObjectTypeID as a key. */
-	struct sg_object_type_id_compare {
-		bool operator() (const SGObjectTypeID & id1, const SGObjectTypeID & id2) const { return id1.m_val < id2.m_val; }
-	};
 
 
 
@@ -180,6 +178,11 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
+
+
+
+
+Q_DECLARE_METATYPE(SlavGPS::SGObjectTypeID)
 
 
 

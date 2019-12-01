@@ -71,7 +71,7 @@ extern Babel babel;
 
 
 
-static std::map<SGObjectTypeID, DataSource *, sg_object_type_id_compare> g_bfilters;
+static std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_bfilters;
 static Track * bfilter_track = NULL;
 static AcquireContext * g_acquire_context = NULL;
 

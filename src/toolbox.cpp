@@ -87,7 +87,11 @@ QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 		LayerTool * tool = iter->second;
 
 		QAction * qa = new QAction(tool->action_label, this->window);
-		qa->setObjectName(tool->get_tool_id().m_val);
+
+		QVariant property;
+		property.setValue(tool->get_tool_id());
+		qa->setProperty("property_tool_id", property);
+
 		qa->setIcon(QIcon(tool->action_icon_path));
 		qa->setCheckable(true);
 
