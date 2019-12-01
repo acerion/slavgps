@@ -79,6 +79,18 @@ DataSourceGeoTag::DataSourceGeoTag()
 
 
 
+SGObjectTypeID DataSourceGeoTag::get_source_id(void) const
+{
+	return DataSourceGeoTag::source_id();
+}
+SGObjectTypeID DataSourceGeoTag::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.geotag");
+}
+
+
+
+
 int DataSourceGeoTag::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceGeoTagDialog config_dialog(this->window_title);

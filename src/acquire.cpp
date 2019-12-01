@@ -492,18 +492,18 @@ void Acquire::uninit(void)
 
 sg_ret Acquire::register_bfilter(DataSource * bfilter)
 {
-	if (bfilter->type_id == SGObjectTypeID::any()) {
+	if (bfilter->get_source_id() == SGObjectTypeID::any()) {
 		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
 		return sg_ret::err;
 	}
 
-	auto iter = g_bfilters.find(bfilter->type_id);
+	auto iter = g_bfilters.find(bfilter->get_source_id());
 	if (iter != g_bfilters.end()) {
-		qDebug() << SG_PREFIX_E << "Duplicate bfilter with type id" << bfilter->type_id;
+		qDebug() << SG_PREFIX_E << "Duplicate bfilter with type id" << bfilter->get_source_id();
 		return sg_ret::err;
 	}
 
-	g_bfilters.insert({ bfilter->type_id, bfilter });
+	g_bfilters.insert({ bfilter->get_source_id(), bfilter });
 
 	return sg_ret::err;
 }

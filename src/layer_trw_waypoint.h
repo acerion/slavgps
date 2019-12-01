@@ -125,6 +125,8 @@ namespace SlavGPS {
 		sg_ret properties_dialog_set(void);
 		static sg_ret properties_dialog_reset(void);
 
+		SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
 
 
 		/* bool visible = true; */ /* Inherited from TreeItem. */

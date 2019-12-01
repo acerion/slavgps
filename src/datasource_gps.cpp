@@ -90,6 +90,18 @@ DataSourceGPS::DataSourceGPS()
 
 
 
+SGObjectTypeID DataSourceGPS::get_source_id(void) const
+{
+	return DataSourceGPS::source_id();
+}
+SGObjectTypeID DataSourceGPS::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.gps");
+}
+
+
+
+
 /*********************************************************
  * Definitions and routines for acquiring data from GPS.
  *********************************************************/

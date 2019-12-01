@@ -70,6 +70,18 @@ DataSourceGeoJSON::DataSourceGeoJSON()
 
 
 
+SGObjectTypeID DataSourceGeoJSON::get_source_id(void) const
+{
+	return DataSourceGeoJSON::source_id();
+}
+SGObjectTypeID DataSourceGeoJSON::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.geojson");
+}
+
+
+
+
 int DataSourceGeoJSON::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceGeoJSONDialog config_dialog(this->window_title);

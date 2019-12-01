@@ -81,6 +81,18 @@ DataSourceOSMTraces::DataSourceOSMTraces(GisViewport * new_gisview)
 
 
 
+SGObjectTypeID DataSourceOSMTraces::get_source_id(void) const
+{
+	return DataSourceOSMTraces::source_id();
+}
+SGObjectTypeID DataSourceOSMTraces::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.osm_traces");
+}
+
+
+
+
 int DataSourceOSMTraces::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceOSMTracesDialog config_dialog(this->window_title, this->gisview);

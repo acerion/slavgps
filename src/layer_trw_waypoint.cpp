@@ -79,7 +79,7 @@ Waypoint::Waypoint()
 {
 	this->name = tr("Waypoint");
 
-	this->m_type_id = SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_WAYPOINT);
+	this->m_type_id = Waypoint::type_id();
 
 	this->has_properties_dialog = true;
 
@@ -122,6 +122,18 @@ Waypoint::Waypoint(const Coord & coord) : Waypoint()
 
 Waypoint::~Waypoint()
 {
+}
+
+
+
+
+SGObjectTypeID Waypoint::get_type_id(void) const
+{
+	return Waypoint::type_id();
+}
+SGObjectTypeID Waypoint::type_id(void)
+{
+	return SGObjectTypeID("sg.trw.waypoint");
 }
 
 
@@ -1024,7 +1036,7 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
 
 	std::list<TreeItem *> tree_items;
-	layer->get_tree_items(tree_items, SGObjectTypeID(SG_OBJ_TYPE_ID_TRW_A_WAYPOINT));
+	layer->get_tree_items(tree_items, Waypoint::type_id());
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Waypoints found"), window);
 		return;

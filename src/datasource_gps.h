@@ -58,6 +58,9 @@ namespace SlavGPS {
 
 		int run_config_dialog(AcquireContext * acquire_context);
 
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
+
 		AcquireProgressDialog * create_progress_dialog(void * user_data);
 
 		sg_ret on_complete(void);

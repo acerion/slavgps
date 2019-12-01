@@ -446,3 +446,11 @@ sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const SGObjectType
 {
 	return sg_ret::ok;
 }
+
+
+
+
+SGObjectTypeID TreeItem::get_type_id(void) const
+{
+	return SGObjectTypeID::any(); /* Catch-all value for all tree item types that don't need specific value. */
+}

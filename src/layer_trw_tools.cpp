@@ -364,7 +364,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
 		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
 
 	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
@@ -391,7 +391,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* FIXME: slowdown: comparing strings. */
-	if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
 		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
 
 	} else if (select_tool->selected_tree_item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
@@ -847,7 +847,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	/* Search close waypoint. */
 	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
-		if (selected_object_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+		if (selected_object_type_id == Waypoint::type_id()) {
 			/* We are searching for snap coordinates for
 			   waypoint. Tell search tool to ignore
 			   coordinates of currently selected waypoint,

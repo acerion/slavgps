@@ -144,6 +144,18 @@ DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_titl
 
 
 
+SGObjectTypeID DataSourceOnlineService::get_source_id(void) const
+{
+	return DataSourceOnlineService::source_id();
+}
+SGObjectTypeID DataSourceOnlineService::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.online_service");
+}
+
+
+
+
 int DataSourceOnlineService::run_config_dialog(AcquireContext * acquire_context)
 {
 	int answer;

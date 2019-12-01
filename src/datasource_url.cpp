@@ -79,6 +79,18 @@ DataSourceURL::DataSourceURL()
 
 
 
+SGObjectTypeID DataSourceURL::get_source_id(void) const
+{
+	return DataSourceURL::source_id();
+}
+SGObjectTypeID DataSourceURL::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.url");
+}
+
+
+
+
 int DataSourceURL::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceURLDialog config_dialog(this->window_title);

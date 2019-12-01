@@ -48,6 +48,9 @@ namespace SlavGPS {
 		~DataSourceURL() {};
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 

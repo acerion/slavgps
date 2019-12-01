@@ -69,6 +69,18 @@ DataSourceFile::DataSourceFile()
 
 
 
+SGObjectTypeID DataSourceFile::get_source_id(void) const
+{
+	return DataSourceFile::source_id();
+}
+SGObjectTypeID DataSourceFile::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.file");
+}
+
+
+
+
 int DataSourceFile::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceFileDialog config_dialog("");

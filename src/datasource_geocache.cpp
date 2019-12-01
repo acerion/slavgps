@@ -82,6 +82,18 @@ DataSourceGeoCache::DataSourceGeoCache(GisViewport * new_gisview)
 
 
 
+SGObjectTypeID DataSourceGeoCache::get_source_id(void) const
+{
+	return DataSourceGeoCache::source_id();
+}
+SGObjectTypeID DataSourceGeoCache::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.geocache");
+}
+
+
+
+
 static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::Entry, NULL, NULL, NULL },
 	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::Entry, NULL, NULL, NULL },

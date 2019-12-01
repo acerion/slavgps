@@ -86,6 +86,17 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * new_gisview)
 
 
 
+SGObjectTypeID DataSourceOSMMyTraces::get_source_id(void) const
+{
+	return DataSourceOSMMyTraces::source_id();
+}
+SGObjectTypeID DataSourceOSMMyTraces::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.osm_my_traces");
+}
+
+
+
 
 /* Comment from constructor function from viking: */
 /* Reuse GPS functions.

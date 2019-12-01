@@ -697,7 +697,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		return false;
 	}
 
-	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	if (item->get_type_id() == Waypoint::type_id()) {
 		Waypoint * wp = Waypoint::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name(item->m_type_id, wp->name);
@@ -1196,7 +1196,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
 				trw->add_track(trk);
 				trk->change_coord_mode(trw->coord_mode);
-			} else if (type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+			} else if (type_id == Waypoint::type_id().m_val) {
 				Waypoint * wp = Waypoint::unmarshall(pickle);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
 				trw->add_waypoint(wp);
@@ -1958,7 +1958,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 			trk = (Track *) sublayer;
 			xfer_type = GPSTransferType::RTE;
 
-		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+		} else if (sublayer->get_type_id() == Waypoint::type_id()) {
 			xfer_type = GPSTransferType::WPT;
 
 		} else if (sublayer->m_type_id == SG_OBJ_TYPE_ID_TRW_ROUTES_CONTAINER) {
@@ -2315,7 +2315,7 @@ QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, c
 	if (item_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK) {
 		return this->tracks.new_unique_element_name(old_name);
 
-	} else if (item_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	} else if (item_type_id == Waypoint::type_id()) {
 		return this->waypoints.new_unique_element_name(old_name);
 	} else {
 		return this->routes.new_unique_element_name(old_name);
@@ -2389,7 +2389,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE) {
 			source_trw->detach_from_container((Track *) tree_item);
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+		} else if (tree_item->get_type_id() == Waypoint::type_id()) {
 			source_trw->detach_from_container((Waypoint *) tree_item);
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
@@ -2425,7 +2425,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->routes.recalculate_bbox();
 			}
 
-		} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+		} else if (tree_item->get_type_id() == Waypoint::type_id()) {
 			this->add_waypoint((Waypoint *) tree_item);
 
 			this->waypoints.recalculate_bbox();
@@ -2457,7 +2457,7 @@ sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 
 	if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_TRACK
 	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_ROUTE
-	    || tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	    || tree_item->get_type_id() == Waypoint::type_id()) {
 
 		*result = true;
 		return sg_ret::ok;
@@ -2535,7 +2535,7 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 		if (this->routes.size() == 0) {
 			this->tree_view->detach_tree_item(&this->routes);
 		}
-	} else if (tree_item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
 		if (this->waypoints.size() == 0) {
 			this->tree_view->detach_tree_item(&this->waypoints);
 		}
@@ -2670,7 +2670,7 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 {
-	if (item->m_type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	if (item->get_type_id() == Waypoint::type_id()) {
 		Waypoint * wp = (Waypoint *) item;
 		this->delete_waypoint(wp, confirm);
 
@@ -3164,7 +3164,7 @@ sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const SGObjectType
 		this->routes.get_tree_items(list);
 	}
 
-	if (type_id == SGObjectTypeID::any() || type_id == SG_OBJ_TYPE_ID_TRW_A_WAYPOINT) {
+	if (type_id == SGObjectTypeID::any() || type_id == Waypoint::type_id()) {
 		this->waypoints.get_tree_items(list);
 	}
 

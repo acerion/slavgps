@@ -103,6 +103,18 @@ DataSourceWikipedia::DataSourceWikipedia()
 
 
 
+SGObjectTypeID DataSourceWikipedia::get_source_id(void) const
+{
+	return DataSourceWikipedia::source_id();
+}
+SGObjectTypeID DataSourceWikipedia::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.wikipedia");
+}
+
+
+
+
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */

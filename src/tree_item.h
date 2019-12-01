@@ -257,6 +257,8 @@ namespace SlavGPS {
 
 		virtual void display_debug_info(const QString & reference) const;
 
+		virtual SGObjectTypeID get_type_id(void) const;
+
 		/**
 		   @brief Move child tree item up (closer to beginning of container) or down (closer to end of container)
 

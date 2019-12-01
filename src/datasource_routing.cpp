@@ -70,6 +70,18 @@ DataSourceRouting::DataSourceRouting()
 
 
 
+SGObjectTypeID DataSourceRouting::get_source_id(void) const
+{
+	return DataSourceRouting::source_id();
+}
+SGObjectTypeID DataSourceRouting::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.routing");
+}
+
+
+
+
 int DataSourceRouting::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceRoutingDialog config_dialog(this->window_title);

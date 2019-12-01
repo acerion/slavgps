@@ -91,9 +91,11 @@ namespace SlavGPS {
 
 		virtual AcquireProgressDialog * create_progress_dialog(const QString & title);
 
+		/* ID unique for every type of data source. */
+		virtual SGObjectTypeID get_source_id(void) const = 0;
+
 		QString window_title;
 		QString layer_title;
-		SGObjectTypeID type_id; /* Internal identifier. */
 
 
 		DataSourceMode mode;

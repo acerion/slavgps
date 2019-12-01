@@ -219,8 +219,8 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
-
-
+		SGObjectTypeID get_type_id(void) const override;
+		static SGObjectTypeID type_id(void);
 
 		DefaultNameGenerator name_generator;
 

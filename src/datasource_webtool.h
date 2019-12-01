@@ -59,6 +59,9 @@ namespace SlavGPS {
 
 		void cleanup(void * data);
 
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
+
 		GisViewport * gisview = NULL;
 		OnlineService_query * online_service = NULL;
 	};

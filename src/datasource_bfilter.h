@@ -51,6 +51,9 @@ namespace SlavGPS {
 		BFilterSimplify();
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterSimplifyDialog : public DataSourceDialog {
@@ -69,6 +72,9 @@ namespace SlavGPS {
 		BFilterCompress();
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterCompressDialog : public DataSourceDialog {
@@ -87,6 +93,9 @@ namespace SlavGPS {
 		BFilterDuplicates();
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterDuplicatesDialog : public DataSourceDialog {
@@ -103,6 +112,9 @@ namespace SlavGPS {
 		BFilterManual();
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterManualDialog : public DataSourceDialog {
@@ -120,6 +132,9 @@ namespace SlavGPS {
 	public:
 		BFilterPolygon();
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterPolygonDialog : public DataSourceDialog {
@@ -135,6 +150,9 @@ namespace SlavGPS {
 	public:
 		BFilterExcludePolygon();
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 	class BFilterExcludePolygonDialog : public DataSourceDialog {

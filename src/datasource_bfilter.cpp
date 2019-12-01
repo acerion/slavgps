@@ -69,7 +69,6 @@ BFilterSimplify::BFilterSimplify()
 {
 	this->window_title = QObject::tr("Simplify All Tracks...");
 	this->layer_title = QObject::tr("Simplified Tracks");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.simplify");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -84,6 +83,18 @@ BFilterSimplify::BFilterSimplify()
 		bfilter_simplify_params_defaults[0] = SGVariant(tmp, SGVariantType::Int);
 		bfilter_simplify_default_set = true;
 	}
+}
+
+
+
+
+SGObjectTypeID BFilterSimplify::get_source_id(void) const
+{
+	return BFilterSimplify::source_id();
+}
+SGObjectTypeID BFilterSimplify::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.simplify");
 }
 
 
@@ -166,7 +177,6 @@ BFilterCompress::BFilterCompress()
 {
 	this->window_title = QObject::tr("Compress Tracks...");
 	this->layer_title = QObject::tr("Compressed Tracks");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.compress");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -181,6 +191,18 @@ BFilterCompress::BFilterCompress()
 		bfilter_compress_params_defaults[0] = SGVariant(tmp);
 		bfilter_compress_default_set = true;
 	}
+}
+
+
+
+
+SGObjectTypeID BFilterCompress::get_source_id(void) const
+{
+	return BFilterCompress::source_id();
+}
+SGObjectTypeID BFilterCompress::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.compress");
 }
 
 
@@ -267,11 +289,22 @@ BFilterDuplicates::BFilterDuplicates()
 {
 	this->window_title = QObject::tr("Remove Duplicate Waypoints");
 	this->layer_title = QObject::tr("Remove Duplicate Waypoints");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.remove_duplicated_wp");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
+}
+
+
+
+
+SGObjectTypeID BFilterDuplicates::get_source_id(void) const
+{
+	return BFilterDuplicates::source_id();
+}
+SGObjectTypeID BFilterDuplicates::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.remove_duplicated_wp");
 }
 
 
@@ -329,11 +362,22 @@ BFilterManual::BFilterManual()
 {
 	this->window_title = QObject::tr("Manual filter");
 	this->layer_title = QObject::tr("Manual filter");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.manual");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
+}
+
+
+
+
+SGObjectTypeID BFilterManual::get_source_id(void) const
+{
+	return BFilterManual::source_id();
+}
+SGObjectTypeID BFilterManual::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.manual");
 }
 
 
@@ -400,11 +444,22 @@ BFilterPolygon::BFilterPolygon()
 {
 	this->window_title = QObject::tr("Waypoints Inside This");
 	this->layer_title = QObject::tr("Polygonized Layer");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.polygon");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
+}
+
+
+
+
+SGObjectTypeID BFilterPolygon::get_source_id(void) const
+{
+	return BFilterPolygon::source_id();
+}
+SGObjectTypeID BFilterPolygon::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.polygon");
 }
 
 
@@ -467,11 +522,22 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 {
 	this->window_title = QObject::tr("Waypoints Outside This");
 	this->layer_title = QObject::tr("Polygonzied Layer");
-	this->type_id = SGObjectTypeID("sg.datasource.bfilter.exclude_polygon");
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
+}
+
+
+
+
+SGObjectTypeID BFilterExcludePolygon::get_source_id(void) const
+{
+	return BFilterExcludePolygon::source_id();
+}
+SGObjectTypeID BFilterExcludePolygon::source_id(void)
+{
+	return SGObjectTypeID("sg.datasource.bfilter.exclude_polygon");
 }
 
 

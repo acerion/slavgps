@@ -49,6 +49,9 @@ namespace SlavGPS {
 		virtual int kill(const QString & status);
 
 		virtual int run_config_dialog(AcquireContext * acquire_context) { return QDialog::Rejected; };
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
 	};
 
 

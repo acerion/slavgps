@@ -44,6 +44,10 @@ namespace SlavGPS {
 		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) override;
 
 		int run_config_dialog(AcquireContext * acquire_context);
+
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
+
 	private:
 		QStringList selected_files;
 	};

@@ -52,6 +52,9 @@ namespace SlavGPS {
 
 		AcquireProgressDialog * create_progress_dialog(const QString & title);
 
+		SGObjectTypeID get_source_id(void) const override;
+		static SGObjectTypeID source_id(void);
+
 		ListSelectionWidget * list_selection_widget = NULL;
 	};
 
