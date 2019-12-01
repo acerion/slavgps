@@ -70,7 +70,7 @@ namespace SlavGPS {
 	public:
 		LayerDEMInterface();
 		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
-		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
+		LayerToolContainer create_tools(Window * window, GisViewport * gisview);
 	};
 
 

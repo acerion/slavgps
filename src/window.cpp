@@ -981,7 +981,7 @@ void Window::update_status_bar_on_redraw(void)
 
 	qDebug() << SG_PREFIX_I << "Viking scale is" << scale;
 	this->status_bar->set_message(StatusBarField::Zoom, scale);
-	this->display_tool_name();
+	this->display_current_tool_name();
 }
 
 
@@ -1198,19 +1198,14 @@ void Window::create_ui(void)
 	/* Menu Tools -> Generic tools;
 	   Toolbar -> Generic Tools. */
 	{
-		LayerToolContainer * tools = GenericTools::create_tools(this, this->main_gis_vp);
+		LayerToolContainer tools = GenericTools::create_tools(this, this->main_gis_vp);
 
-		QActionGroup * tools_group = this->toolbox->add_tools(tools);
-
-		/* Tools should have been moved to toolbox. Delete container (but not the tools themselves). */
-		tools->erase(tools->begin(), tools->end());
-		delete tools;
-
-		if (tools_group) {
-			const QList <QAction *> actions = tools_group->actions();
+		QActionGroup * action_group = this->toolbox->add_tools(tools);
+		if (action_group) {
+			const QList <QAction *> actions = action_group->actions();
 
 			if (!actions.isEmpty()) {
-				tools_group->setObjectName("generic");
+				action_group->setObjectName("generic");
 
 				this->toolbar->addSeparator();
 				this->toolbar->addActions(actions);
@@ -1219,18 +1214,20 @@ void Window::create_ui(void)
 				this->menu_tools->addActions(actions);
 
 				/* The same callback for all generic tools. */
-				connect(tools_group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
+				connect(action_group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tool_cb(QAction *)));
 
-				/* We want some action in "generic tools"
-				   group to be active by default. Let it be
-				   the first tool in the group. */
-				QAction * default_qa = actions.first();
-				default_qa->setChecked(true);
-				default_qa->trigger();
+				{
+					/* We want some action in "generic tools"
+					   group to be active by default. Let it be
+					   the first tool in the group. */
+					QAction * default_qa = actions.first();
+					default_qa->setChecked(true);
+					default_qa->trigger();
 
-				QVariant property = default_qa->property("property_tool_id");
-				const SGObjectTypeID default_tool_id = property.value<SGObjectTypeID>();
-				this->toolbox->activate_tool_by_id(default_tool_id);
+					QVariant property = default_qa->property("property_tool_id");
+					const SGObjectTypeID default_tool_id = property.value<SGObjectTypeID>();
+					this->toolbox->activate_tool_by_id(default_tool_id);
+				}
 			}
 		} else {
 			qDebug() << SG_PREFIX_E << "NULL generic tools group";
@@ -1248,27 +1245,22 @@ void Window::create_ui(void)
 			   tools require Window and Viewport
 			   variables, which may not be available at that time. */
 
-			LayerToolContainer * tools = Layer::get_interface(layer_kind)->create_tools(this, this->main_gis_vp);
-			if (!tools) {
+			LayerToolContainer tools = Layer::get_interface(layer_kind)->create_tools(this, this->main_gis_vp);
+			if (tools.empty()) {
 				/* Either error, or given layer kind has no layer-specific tools. */
 				continue;
 			}
 
-			QActionGroup * tools_group = this->toolbox->add_tools(tools);
-
-			/* Tools should have been moved to toolbox. Delete container (but not the tools themselves). */
-			tools->erase(tools->begin(), tools->end());
-			delete tools;
-
-			if (!tools_group) {
+			QActionGroup * action_group = this->toolbox->add_tools(tools);
+			if (!action_group) {
 				qDebug() << SG_PREFIX_E << "NULL layer tools group";
 				continue;
 			}
 
-			const QList<QAction *> actions = tools_group->actions();
+			const QList<QAction *> actions = action_group->actions();
 
 			if (!actions.isEmpty()) {
-				tools_group->setObjectName(Layer::get_fixed_layer_kind_string(layer_kind));
+				action_group->setObjectName(Layer::get_fixed_layer_kind_string(layer_kind));
 
 				this->toolbar->addSeparator();
 				this->toolbar->addActions(actions);
@@ -1276,10 +1268,10 @@ void Window::create_ui(void)
 				this->menu_tools->addSeparator();
 				this->menu_tools->addActions(actions);
 
-				tools_group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
+				action_group->setEnabled(false); /* A layer-specific tool group is disabled by default, until a specific layer is selected in tree view. */
 
 				/* The same callback for all layer tools. */
-				connect(tools_group, SIGNAL (triggered(QAction *)), this, SLOT (layer_tool_cb(QAction *)));
+				connect(action_group, SIGNAL (triggered(QAction *)), this, SLOT (layer_tool_cb(QAction *)));
 			}
 		}
 	}
@@ -1312,7 +1304,7 @@ void Window::layer_tool_cb(QAction * qa)
 		} else {
 			this->main_gis_vp->setCursor(tool->cursor_release);
 		}
-		this->display_tool_name();
+		this->display_current_tool_name();
 	}
 }
 
@@ -1929,11 +1921,18 @@ void Window::show_background_jobs_window_cb(void)
 
 
 
-void Window::display_tool_name(void)
+/**
+   @brief Show in toolbal a name of currently selected layer tool
+
+   @reviewed-on 2019-12-01
+*/
+void Window::display_current_tool_name(void)
 {
 	const LayerTool * tool = this->toolbox->get_current_tool();
 	if (tool) {
 		this->status_bar->set_message(StatusBarField::Tool, tool->get_description());
+	} else {
+		this->status_bar->set_message(StatusBarField::Tool, "");
 	}
 }
 

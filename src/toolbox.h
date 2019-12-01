@@ -47,7 +47,7 @@ namespace SlavGPS {
 		   @param tools - container with tools that should be added to toolbox
 		   @return group of freshly created QActions that correspond to the tools
 		*/
-		QActionGroup * add_tools(LayerToolContainer * tools);
+		QActionGroup * add_tools(const LayerToolContainer & tools);
 
 		/**
 		   @brief Get tool by its globally-unique ID

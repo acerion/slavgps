@@ -315,7 +315,7 @@ namespace SlavGPS {
 		void create_actions(void);
 		void create_ui(void);
 
-		void display_tool_name();
+		void display_current_tool_name(void);
 
 		/**
 		   Function used to update "recent files" entry in

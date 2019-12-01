@@ -45,7 +45,7 @@ namespace SlavGPS {
 
 	class GenericTools {
 	public:
-		static LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
+		static LayerToolContainer create_tools(Window * window, GisViewport * gisview);
 	};
 
 

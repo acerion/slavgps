@@ -149,26 +149,30 @@ LayerGeorefInterface::LayerGeorefInterface()
 
 
 
-LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, GisViewport * gisview)
+/**
+   @reviewed-on 2019-12-01
+*/
+LayerToolContainer LayerGeorefInterface::create_tools(Window * window, GisViewport * gisview)
 {
+	LayerToolContainer tools;
+
 	/* This method should be called only once. */
 	static bool created = false;
 	if (created) {
-		return NULL;
+		return tools;
 	}
 
-	auto tools = new LayerToolContainer;
-	LayerTool * tool = NULL;
+	LayerTool * tool = nullptr;
 
 	/* I'm using assertions to verify that tools have unique IDs
 	   (at least unique within a group of tools). */
 
 	tool = new LayerToolGeorefMove(window, gisview);
-	auto status = tools->insert({ tool->get_tool_id(), tool });
+	auto status = tools.insert({ tool->get_tool_id(), tool });
 	assert(status.second);
 
 	tool = new LayerToolGeorefZoom(window, gisview);
-	status = tools->insert({ tool->get_tool_id(), tool });
+	status = tools.insert({ tool->get_tool_id(), tool });
 	assert(status.second);
 
 	created = true;

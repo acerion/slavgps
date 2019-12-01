@@ -73,21 +73,26 @@ Toolbox::~Toolbox()
 
 
 
-QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
+QActionGroup * Toolbox::add_tools(const LayerToolContainer & new_tools)
 {
-	if (!new_tools) {
-		qDebug() << SG_PREFIX_E << "NULL tools container";
+	if (new_tools.empty()) {
+		qDebug() << SG_PREFIX_E << "Empty input tools container";
 		return NULL;
 	}
 
-	QActionGroup * group = new QActionGroup(this->window);
+	QActionGroup * action_group = new QActionGroup(this->window);
 
-	for (auto iter = new_tools->begin(); iter != new_tools->end(); iter++) {
+	for (auto iter = new_tools.begin(); iter != new_tools.end(); iter++) {
 
 		LayerTool * tool = iter->second;
 
 		QAction * qa = new QAction(tool->action_label, this->window);
 
+		/* The property will allow us to look up a tool
+		   assigned to clicked qaction. The tools are
+		   persistent objects with some state, not just some
+		   one-off functions, so they have to reside in memory
+		   and be activated on click. */
 		QVariant property;
 		property.setValue(tool->get_tool_id());
 		qa->setProperty("property_tool_id", property);
@@ -97,16 +102,16 @@ QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 
 		tool->qa = qa;
 
-		group->addAction(qa);
+		action_group->addAction(qa);
 	}
 
 	/* We should now get our own copies of Tools - we will become their owner.
 	   The container will be deleted by caller of this function. */
-	this->tools.insert(new_tools->begin(), new_tools->end());
+	this->tools.insert(new_tools.begin(), new_tools.end()); /* TODO: this should be std::move(). */
 
-	this->action_groups.push_back(group);
+	this->action_groups.push_back(action_group);
 
-	return group;
+	return action_group;
 }
 
 
@@ -129,7 +134,7 @@ LayerTool * Toolbox::get_tool(const SGObjectTypeID & tool_id) const
 void Toolbox::activate_tool_by_id(const SGObjectTypeID & tool_id)
 {
 	LayerTool * tool = this->get_tool(tool_id);
-	if (NULL == tool) {
+	if (nullptr == tool) {
 		qDebug() << SG_PREFIX_E << "Trying to activate a non-existent tool with id =" << tool_id;
 		return;
 	}
@@ -147,7 +152,6 @@ void Toolbox::activate_tool_by_id(const SGObjectTypeID & tool_id)
 	if (tool->activate_tool()) {
 		this->active_tool = tool;
 		this->active_tool_qa = tool->qa;
-		this->active_tool->qa->setChecked(true);
 	}
 
 	return;

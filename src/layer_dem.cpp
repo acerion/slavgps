@@ -232,17 +232,21 @@ LayerDEMInterface::LayerDEMInterface()
 
 
 
-LayerToolContainer * LayerDEMInterface::create_tools(Window * window, GisViewport * gisview)
+/**
+   @reviewed-on 2019-12-01
+*/
+LayerToolContainer LayerDEMInterface::create_tools(Window * window, GisViewport * gisview)
 {
+	LayerToolContainer tools;
+
 	/* This method should be called only once. */
 	static bool created = false;
 	if (created) {
-		return NULL;
+		return tools;
 	}
-	auto tools = new LayerToolContainer;
 
 	LayerTool * tool = new LayerToolDEMDownload(window, gisview);
-	tools->insert({ tool->get_tool_id(), tool });
+	tools.insert({ tool->get_tool_id(), tool });
 
 	created = true;
 

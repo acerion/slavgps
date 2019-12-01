@@ -78,10 +78,12 @@ namespace SlavGPS {
 
 		/* Create a container with layer-kind-specific tools.
 		   The container is owned by caller.
-		   Pointers in the container are owned by caller.
-
-		   By default a layer-kind has no layer-specific tools. */
-		virtual LayerToolContainer * create_tools(Window * window, GisViewport * gisview) { return NULL; };
+		   Pointers in the container are owned by caller. */
+		virtual LayerToolContainer create_tools(Window * window, GisViewport * gisview)
+		{
+			LayerToolContainer none; /* By default a layer-kind has no layer-specific tools. */
+			return none;
+		}
 
 		/* Does given layer kind have configurable properties that can be viewed and edited in dialog window?
 		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */
