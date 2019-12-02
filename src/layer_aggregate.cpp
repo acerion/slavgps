@@ -535,16 +535,16 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 /**
-   @reviewed-on 2019-11-30
+   @reviewed-on 2019-12-01
 */
-sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const
+sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const
 {
 	sg_ret result = sg_ret::ok;
 
 	/* For each layer keep adding the specified tree items
 	   to build a list of all of them. */
 	for (auto iter = this->children->begin(); iter != this->children->end(); ++iter) {
-		if (sg_ret::ok != (*iter)->get_tree_items(list, type_id)) {
+		if (sg_ret::ok != (*iter)->get_tree_items(list, wanted_types)) {
 			result = sg_ret::err;
 		}
 	}
@@ -556,12 +556,13 @@ sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const SGObje
 
 
 /**
-   @reviewed-on 2019-11-30
+   @reviewed-on 2019-12-01
 */
-void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
+void LayerAggregate::track_and_route_list_dialog_cb(void) /* Slot. */
 {
-	const QString title = tr("%1: Track and Route List").arg(this->name);
-	Track::list_dialog(title, this, SGObjectTypeID::any()); /* In this context ::any() means tracks and routes. */
+	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
+	const QString title = tr("%1: Tracks and Routes List").arg(this->name);
+	Track::list_dialog(title, this, wanted_types);
 }
 
 
@@ -569,7 +570,8 @@ void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
-	layer_trw_show_stats(this->name, this, SGObjectTypeID::any(), this->get_window());
+	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
+	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
 }
 
 
@@ -613,8 +615,8 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (analyse_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks and Routes List..."));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_and_route_list_dialog_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));

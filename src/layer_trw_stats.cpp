@@ -291,15 +291,7 @@ TRWStatsDialog::~TRWStatsDialog()
 
 
 
-/**
-   @name: name of object, for which the stats will be calculated
-   @layer: layer containing given tracks/routes
-   @type_id_string: type of TRW sublayer to show stats for
-   @parent: parent widget
-
-   Display a dialog with stats across many tracks.
-*/
-void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const SGObjectTypeID & type_id, QWidget * parent)
+void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const std::list<SGObjectTypeID> & wanted_types, QWidget * parent)
 {
 	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
 
@@ -325,9 +317,8 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const SG
 	}
 
 	dialog->layer = layer;
-	dialog->m_type_id = type_id;
 
-	layer->get_tree_items(dialog->tree_items, dialog->m_type_id);
+	layer->get_tree_items(dialog->tree_items, wanted_types);
 	dialog->stats_table = new StatsTable(dialog);
 	vbox->addLayout(dialog->stats_table);
 

@@ -3167,20 +3167,24 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 
 /**
-   Fill the list with tracks and/or routes and/or waypoints from the layer.
+   @reviewed-on 2019-12-01
 */
-sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const
+sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const
 {
-	if (type_id == SGObjectTypeID::any() || type_id == Track::type_id()) {
-		this->tracks.get_tree_items(list);
-	}
+	for (auto iter = wanted_types.begin(); iter != wanted_types.end(); ++iter) {
+		if (*iter ==  Track::type_id()) {
+			this->tracks.get_tree_items(list);
 
-	if (type_id == SGObjectTypeID::any() || type_id == Route::type_id()) {
-		this->routes.get_tree_items(list);
-	}
+		} else if (*iter == Route::type_id()) {
+			this->routes.get_tree_items(list);
 
-	if (type_id == SGObjectTypeID::any() || type_id == Waypoint::type_id()) {
-		this->waypoints.get_tree_items(list);
+		} else if (*iter == Waypoint::type_id()) {
+			this->waypoints.get_tree_items(list);
+
+		} else {
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << *iter;
+			return sg_ret::err;
+		}
 	}
 
 	return sg_ret::ok;
@@ -3189,17 +3193,25 @@ sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const SGObjectType
 
 
 
+/**
+   @reviewed on 2019-12-01
+*/
 void LayerTRW::tracks_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, Track::type_id(), this->get_window());
+	const std::list<SGObjectTypeID> wanted_types = { Track::type_id() };
+	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
 }
 
 
 
 
+/**
+   @reviewed on 2019-12-01
+*/
 void LayerTRW::routes_stats_cb(void)
 {
-	layer_trw_show_stats(this->name, this, Route::type_id(), this->get_window());
+	const std::list<SGObjectTypeID> wanted_types = { Route::type_id() };
+	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
 }
 
 
@@ -3589,18 +3601,25 @@ void LayerTRW::download_map_along_track_cb(void)
 
 
 
-void LayerTRW::track_list_dialog_cb(void)
+/**
+   @reviewed on 2019-12-01
+*/
+void LayerTRW::track_and_route_list_dialog_cb(void)
 {
-	const QString title = tr("%1: Track and Route List").arg(this->name);
-	Track::list_dialog(title, this, SGObjectTypeID::any());
+	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
+	const QString title = tr("%1: Tracks and Routes List").arg(this->name);
+	Track::list_dialog(title, this, wanted_types);
 }
 
 
 
 
+/**
+   @reviewed on 2019-12-01
+*/
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	const QString title = tr("%1: Waypoint List").arg(this->name);
+	const QString title = tr("%1: Waypoints List").arg(this->name);
 	Waypoint::list_dialog(title, this);
 }
 

@@ -104,7 +104,6 @@ namespace SlavGPS {
 		QCheckBox * checkbox = NULL;
 		std::list<TreeItem *> tree_items;
 		Layer * layer = NULL; /* Just a reference. */
-		SGObjectTypeID m_type_id; /* Type of object for which we get/show statistics. */
 
 		void collect_stats(TrackStatistics & stats, bool include_invisible);
 		void display_stats(TrackStatistics & stats);
@@ -118,12 +117,12 @@ namespace SlavGPS {
 
 
 	/**
-	   Show statistics of tracks or routes (depending on @param
-	   type_id) of TRW layer(s): either @param layer is the TRW
-	   layer, or @param layer is an aggregate layer containing TRW
-	   layers.
+	   Show statistics of tracks and/or routes (depending on
+	   @param wanted_types) of TRW layer(s): either @param layer
+	   is the TRW layer, or @param layer is an aggregate layer
+	   containing TRW layers.
 	*/
-	void layer_trw_show_stats(const QString & name, Layer * layer, const SGObjectTypeID & type_id, QWidget * parent = NULL);
+	void layer_trw_show_stats(const QString & name, Layer * layer, const std::list<SGObjectTypeID> & wanted_types, QWidget * parent = NULL);
 
 
 

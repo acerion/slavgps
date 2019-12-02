@@ -717,7 +717,7 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 	}
 
 	qa = menu.addAction(tr("&Tracks List..."));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_or_route_list_dialog_cb()));
 
 	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (tracks_stats_cb()));
@@ -770,8 +770,8 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
 	}
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&List Routes..."));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Routes List..."));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_or_route_list_dialog_cb()));
 
 
 	qa = menu.addAction(tr("&Statistics"));
@@ -886,17 +886,25 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 
 
 
-void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
+/**
+   @reviewed-on 2019-12-01
+*/
+void LayerTRWTracks::track_or_route_list_dialog_cb(void) /* Slot. */
 {
+	std::list<SGObjectTypeID> wanted_types;
 	QString title;
+
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
+		/* Show each track in this tracks container. */
+		wanted_types.push_back(Track::type_id());
 		title = tr("%1: Tracks List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, Track::type_id()); /* Show each track in this tracks container. */
 	} else {
+		 /* Show each route in this routes container. */
+		wanted_types.push_back(Route::type_id());
 		title = tr("%1: Routes List").arg(this->owning_layer->name);
-		Track::list_dialog(title, this->owning_layer, Route::type_id()); /* Show each route in this routes container. */
 	}
 
+	Track::list_dialog(title, this->owning_layer, wanted_types);
 }
 
 

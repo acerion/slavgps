@@ -267,7 +267,12 @@ namespace SlavGPS {
 		void diary_open(const QString & date_str);
 
 
-		sg_ret get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const override;
+		/**
+		   @brief Fill the list with tracks and/or routes
+		   and/or waypoints (depending on @param wanted_types)
+		   from the layer
+		*/
+		sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const override;
 
 
 		void tp_show_properties_dialog();
@@ -461,7 +466,7 @@ namespace SlavGPS {
 		void append_track_cb(void);
 		void download_map_along_track_cb(void);
 		void edit_trackpoint_cb(void);
-		void track_list_dialog_cb(void);
+		void track_and_route_list_dialog_cb(void);
 
 		void append_other_cb(void);
 		void routes_stats_cb();

@@ -3720,22 +3720,14 @@ bool Track::is_selected(void) const
 
   Common method for showing a list of tracks with extended information
 */
-void Track::list_dialog(QString const & title, Layer * layer, const SGObjectTypeID & type_id)
+void Track::list_dialog(QString const & title, Layer * layer, const std::list<SGObjectTypeID> & wanted_types)
 {
 	Window * window = layer->get_window();
 
 	assert (layer->m_kind == LayerKind::Aggregate || layer->m_kind == LayerKind::TRW);
 
 	std::list<TreeItem *> tree_items;
-
-	/* Be careful here: type_id may be "all", which in context of
-	   this function means "tracks and routes". */
-	if (type_id == SGObjectTypeID::any() || type_id == Track::type_id()) {
-		layer->get_tree_items(tree_items, Track::type_id());
-	}
-	if (type_id == SGObjectTypeID::any() || type_id == Route::type_id()) {
-		layer->get_tree_items(tree_items, Route::type_id());
-	}
+	layer->get_tree_items(tree_items, wanted_types);
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Tracks found"), window);
 		return;

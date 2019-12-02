@@ -58,8 +58,6 @@ namespace SlavGPS {
 		bool operator==(const SGObjectTypeID & other) const;
 		bool operator!=(const SGObjectTypeID & other) const { return !(*this == other); }
 
-		static SGObjectTypeID any(void) { return SGObjectTypeID(""); }
-
 		bool is_empty(void) const;
 
 		/* Comparison class for std::maps with SGObjectTypeID as a key. */

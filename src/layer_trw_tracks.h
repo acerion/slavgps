@@ -217,7 +217,12 @@ namespace SlavGPS {
 		void items_visibility_off_cb(void);
 		void items_visibility_toggle_cb(void);
 
-		void track_list_dialog_cb(void);
+		/**
+		   @brief Display list of Track or Route objects,
+		   depending on which container the callback is
+		   connected for.
+		*/
+		void track_or_route_list_dialog_cb(void);
 
 		void paste_sublayer_cb(void);
 

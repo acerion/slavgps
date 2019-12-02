@@ -87,6 +87,11 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		static Waypoint * unmarshall(Pickle & pickle);
 
+		/**
+		   @param layer can be also Aggregate layer - the
+		   function then goes through all child layers of the
+		   Aggregate layer in search of Waypoints.
+		*/
 		static void list_dialog(QString const & title, Layer * layer);
 
 		QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format) override;

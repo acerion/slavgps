@@ -103,7 +103,7 @@ namespace SlavGPS {
 		sg_ret detach_from_container(Layer * layer, bool * was_visible);
 		sg_ret detach_from_tree(Layer * layer);
 
-		sg_ret get_tree_items(std::list<TreeItem *> & list, const SGObjectTypeID & type_id) const override;
+		sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const override;
 
 		Layer * get_top_visible_layer_of_type(LayerKind layer_kind);
 		void get_all_layers_of_kind(std::list<const Layer *> & layers, LayerKind layer_kind, bool include_invisible) const;
@@ -131,7 +131,14 @@ namespace SlavGPS {
 		void sort_timestamp_ascend_cb(void);
 		void sort_timestamp_descend_cb(void);
 		void analyse_cb(void);
-		void track_list_dialog_cb(void);
+
+		/**
+		   @brief Show all TRW Tracks and TRW routes from all
+		   TRW layers laying directly and indirectly in this
+		   aggregate layer
+		*/
+		void track_and_route_list_dialog_cb(void);
+
 		void waypoint_list_dialog_cb(void);
 		void search_date_cb(void);
 	};

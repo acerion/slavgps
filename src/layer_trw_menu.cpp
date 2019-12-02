@@ -279,8 +279,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	}
 
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks and Routes List..."));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_and_route_list_dialog_cb()));
 	qa->setEnabled((bool) (this->tracks.size() + this->routes.size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));

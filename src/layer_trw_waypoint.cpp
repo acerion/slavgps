@@ -1031,6 +1031,8 @@ sg_ret Waypoint::propagate_new_waypoint_name(void)
    @layer: the layer, from which a list of waypoints should be extracted
 
    Common method for showing a list of waypoints with extended information
+
+   TODO: merge with Track::list_dialog()
 */
 void Waypoint::list_dialog(QString const & title, Layer * layer)
 {
@@ -1038,8 +1040,10 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 
 	assert (layer->m_kind == LayerKind::TRW || layer->m_kind == LayerKind::Aggregate);
 
+	const std::list<SGObjectTypeID> wanted_types = { Waypoint::type_id() };
+
 	std::list<TreeItem *> tree_items;
-	layer->get_tree_items(tree_items, Waypoint::type_id());
+	layer->get_tree_items(tree_items, wanted_types);
 	if (tree_items.empty()) {
 		Dialog::info(QObject::tr("No Waypoints found"), window);
 		return;
