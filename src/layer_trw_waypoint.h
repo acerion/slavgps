@@ -88,6 +88,11 @@ namespace SlavGPS {
 		static Waypoint * unmarshall(Pickle & pickle);
 
 		/**
+		   @brief Common method for showing a list of waypoints with extended information
+
+		   @title: the title for the dialog
+		   @layer: the layer, from which a list of waypoints should be extracted
+
 		   @param layer can be also Aggregate layer - the
 		   function then goes through all child layers of the
 		   Aggregate layer in search of Waypoints.
@@ -132,6 +137,8 @@ namespace SlavGPS {
 
 		SGObjectTypeID get_type_id(void) const override;
 		static SGObjectTypeID type_id(void);
+
+		static TreeItemViewFormat get_view_format_header(bool include_parent_layer);
 
 
 		/* bool visible = true; */ /* Inherited from TreeItem. */

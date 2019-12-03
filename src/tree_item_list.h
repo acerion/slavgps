@@ -47,6 +47,7 @@
 #include "application_state.h"
 #include "measurements.h"
 #include "tree_item.h"
+#include "layer.h"
 
 
 
@@ -59,6 +60,7 @@ namespace SlavGPS {
 	class TreeItem;
 	class GisViewport;
 	class TreeItem;
+	class Window;
 
 
 
@@ -232,6 +234,39 @@ namespace SlavGPS {
 		this->dialog->view->resizeColumnsToContents();
 		this->dialog->view->setVisible(true);
 	}
+
+
+
+
+	template <class T>
+	class TreeItemListDialogWrapper {
+	public:
+		TreeItemListDialogWrapper(Layer * parent_layer) : m_parent_layer(parent_layer) {}
+
+		bool find_tree_items(const std::list<SGObjectTypeID> & wanted_types)
+		{
+			this->m_parent_layer->get_tree_items(this->m_tree_items, wanted_types);
+			if (this->m_tree_items.empty()) {
+				return false;
+			}
+			return true;
+		}
+
+		sg_ret show_tree_items(const QString & title)
+		{
+			TreeItemViewFormat view_format = T::get_view_format_header(this->m_parent_layer->m_kind == LayerKind::Aggregate);
+			TreeItemListDialogHelper<TreeItem *> dialog_helper;
+			Window * window = this->m_parent_layer->get_window();
+			dialog_helper.show_dialog(title, view_format, this->m_tree_items, window);
+
+
+			return sg_ret::ok;
+		}
+
+	private:
+		const Layer * m_parent_layer = nullptr;
+		std::list<TreeItem *> m_tree_items;
+	};
 
 
 

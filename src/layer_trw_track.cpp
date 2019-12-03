@@ -3714,46 +3714,18 @@ bool Track::is_selected(void) const
 
 
 /**
-   @title: the title for the dialog
-   @layer: The layer, from which a list of tracks should be extracted
-   @type_id_string: TreeItem type to be show in list (empty string for both tracks and routes)
-
-  Common method for showing a list of tracks with extended information
+   @reviewed-on 2019-12-02
 */
-void Track::list_dialog(QString const & title, Layer * layer, const std::list<SGObjectTypeID> & wanted_types)
+void Track::list_dialog(QString const & title, Layer * parent_layer, const std::list<SGObjectTypeID> & wanted_types)
 {
-	Window * window = layer->get_window();
+	assert (parent_layer->m_kind == LayerKind::Aggregate || parent_layer->m_kind == LayerKind::TRW);
 
-	assert (layer->m_kind == LayerKind::Aggregate || layer->m_kind == LayerKind::TRW);
-
-	std::list<TreeItem *> tree_items;
-	layer->get_tree_items(tree_items, wanted_types);
-	if (tree_items.empty()) {
-		Dialog::info(QObject::tr("No Tracks found"), window);
+	TreeItemListDialogWrapper<Track> list_dialog(parent_layer);
+	if (!list_dialog.find_tree_items(wanted_types)) {
+		Dialog::info(QObject::tr("No Tracks found"), parent_layer->get_window());
 		return;
 	}
-
-
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	TreeItemViewFormat view_format;
-	if (layer->m_kind == LayerKind::Aggregate) {
-		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("Parent Layer"))); // this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
-	}
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,       true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(TRACK_COLUMN, QHeaderView::Interactive);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp,     true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility,    true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,       true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::DurationProp,  true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
-
-
-	TreeItemListDialogHelper<TreeItem *> dialog_helper;
-	dialog_helper.show_dialog(title, view_format, tree_items, window);
+	list_dialog.show_tree_items(title);
 }
 
 
@@ -3856,4 +3828,31 @@ sg_ret Track::tp_properties_dialog_reset(void)
 	qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data";
 	tool->point_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
+}
+
+
+
+
+TreeItemViewFormat Track::get_view_format_header(bool include_parent_layer)
+{
+	TreeItemViewFormat view_format;
+
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+
+	if (include_parent_layer) {
+		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("Parent Layer"))); // this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
+	}
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,       true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(TRACK_COLUMN, QHeaderView::Interactive);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp,     true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility,    true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,       true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::DurationProp,  true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
+
+	return view_format;
 }

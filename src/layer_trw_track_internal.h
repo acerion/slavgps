@@ -291,6 +291,12 @@ namespace SlavGPS {
 		static Track * unmarshall(Pickle & pickle);
 
 		/**
+		   @brief Common method for showing a list of tracks with extended information
+
+		   @title: the title for the dialog
+		   @layer: The layer, from which a list of tracks/routes should be extracted (may be Aggregate layer)
+		   @wanted_types: type IDs of items to be shown in list (tracks and/or routes)
+
 		   @param layer can be also Aggregate layer - the
 		   function then goes through all child layers of the
 		   Aggregate layer in search of @param wanted_types
@@ -383,6 +389,8 @@ namespace SlavGPS {
 		sg_ret selected_tp_set_coord(const Coord & new_coord, bool do_recalculate_bbox);
 
 		LayerTRW * get_parent_layer_trw() const;
+
+		static TreeItemViewFormat get_view_format_header(bool include_parent_layer);
 
 
 		/* QString name; */ /* Inherited from TreeItem. */
