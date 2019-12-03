@@ -58,7 +58,12 @@ namespace SlavGPS {
 		Speed max_speed;
 		unsigned long trackpoints = 0;
 		unsigned int segments = 0;
-		Duration duration;
+
+		/* Simple sum of track durations. Even for two tracks
+		   that overlap in time domain the result will be
+		   duration1 + duration2. */
+		Duration sum_of_durations;
+
 		Time start_time;
 		Time end_time;
 		int count = 0;

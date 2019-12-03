@@ -175,9 +175,9 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Avg. Speed */
-	const bool valid = stats.duration.is_valid() && !stats.duration.is_zero();
+	const bool valid = stats.sum_of_durations.is_valid() && !stats.sum_of_durations.is_zero();
 	Speed avg_speed;
-	avg_speed.make_speed(stats.length, stats.duration);
+	avg_speed.make_speed(stats.length, stats.sum_of_durations);
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
@@ -220,10 +220,10 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Total Duration. */
-	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(stats.duration.to_string());
+	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(stats.sum_of_durations.to_string());
 
 
-	const Duration average_duration = Duration(stats.duration.get_ll_value() / stats.count, stats.duration.get_unit()); /* TODO_MAYBE: can we do division more elegantly? */
+	const Duration average_duration = stats.sum_of_durations / stats.count;
 	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(average_duration.to_string());
 }
 
