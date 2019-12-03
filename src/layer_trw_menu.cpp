@@ -288,7 +288,6 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	qa->setEnabled((bool) (this->waypoints.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	/* TODO_LATER: Should use selected layer's centre - rather than implicitly using the current viewport. */
 	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_main_gis_view(), NULL);
 }
 
@@ -327,9 +326,6 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 
 
 	/* There were no selected waypoints. Add submenu items with
-	   external tools pre-configured for selected sublayer.
-
-	   TODO_LATER: Should use selected items centre - rather than
-	   implicitly using the current viewport. */
+	   external tools pre-configured for selected sublayer. */
 	ExternalTools::add_menu_items(external_submenu, gisview, NULL);
 }
