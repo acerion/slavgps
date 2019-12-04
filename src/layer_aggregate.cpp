@@ -220,7 +220,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 	if (layer->m_kind == LayerKind::GPS) {
-		/* TODO_2_LATER: move this in some reasonable place. Putting it here is just a workaround. */
+		/* TODO_LATER: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->attach_children_to_tree();
 	}
 
@@ -741,7 +741,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 
 
 
-#ifdef K_TODO_MAYBE
+#ifdef TODO_MAYBE
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
 unsigned int LayerAggregate::layer_tool(LayerKind layer_kind, VikToolInterfaceFunc tool_func, GdkEventButton * event, GisViewport * gisview)
 {
@@ -1000,7 +1000,7 @@ sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, int row, int col)
 		Layer * layer = tree_item->get_owning_layer();
 		if (layer->m_kind != LayerKind::Aggregate) {
 			qDebug() << SG_PREFIX_E << "Moving item from layer owned by layer kind" << layer->m_kind;
-			/* TODO: what about drag and drop of TRW layers from GPS layer? */
+			/* TODO_LATER: what about drag and drop of TRW layers from GPS layer? */
 			return sg_ret::err;
 		}
 
@@ -1074,7 +1074,7 @@ void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_
 {
 	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->is_visible()) {
-		/* TODO_2_LATER: this can used from the background - e.g. in acquire
+		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());

@@ -222,7 +222,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
-	const TrackPoints::iterator & current_point_iter = this->current_track->get_selected_children().front().m_iter; /* TODO: where do we check if it's valid? */
+	const TrackPoints::iterator & current_point_iter = this->current_track->get_selected_children().front().m_iter; /* TODO_LATER: where do we check if it's valid? */
 	const bool is_route = this->current_track->is_route();
 
 	this->name_entry->setText(this->current_point->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */

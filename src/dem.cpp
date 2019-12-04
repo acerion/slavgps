@@ -184,7 +184,7 @@ bool DEM::parse_header(char * buffer)
 	get_double_and_continue(&buffer, &val, "orig vert units");
 	/* this->orig_vert_units = val; now done below */
 
-	/* TODO_2_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
+	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		this->east_scale = 10.0; /* meters */
 		this->north_scale = 10.0;
@@ -550,7 +550,7 @@ bool DEM::read_other(const QString & full_path)
 		fclose(file);
 		return false;
 	}
-	/* TODO_2_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
+	/* TODO_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
 	this->n_columns = 0;
 	/* Use the two variables to record state for ->parse_block(). */
@@ -567,7 +567,7 @@ bool DEM::read_other(const QString & full_path)
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}
 
-	/* TODO_2_LATER - class C records (right now says 'Invalid' and dies) */
+	/* TODO_LATER - class C records (right now says 'Invalid' and dies) */
 
 	fclose(file);
 	file = NULL;
@@ -750,7 +750,7 @@ int16_t DEM::get_east_north_shepard_interpolation(double east_seconds, double no
 	double t = 0.0;
 	double b = 0.0;
 
-#ifdef K_TODO_MAYBE
+#ifdef TODO_MAYBE
 	/* Derived method by Franke & Nielson. Does not seem to work too well here. */
 	for (int i = 0; i < 4; i++) {
 		const double tmp = pow((1.0 * (max_dist - distances[i]) / max_dist * distances[i]), 2);
@@ -796,7 +796,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_southwest.lon = this->min_east_seconds / 3600.0;
 
 	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		/* TODO_2_LATER: add smarter error handling of invalid
+		/* TODO_LATER: add smarter error handling of invalid
 		   band letter. In theory the source object should be
 		   valid and for sure contain valid band letter. */
 

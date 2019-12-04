@@ -236,7 +236,7 @@ sg_ret Waypoint::set_coord(const Coord & new_coord, bool do_recalculate_bbox, bo
 
 		/* Update properties dialog with the most recent coordinates
 		   of released waypoint. */
-		/* TODO_OPTIMIZATION: optimize by changing only coordinates in
+		/* TODO_MAYBE: optimize by changing only coordinates in
 		   the dialog. This is the only parameter that will change
 		   when a point is moved in x/y plane. We may consider also
 		   updating an alternative altitude indicator, if the altitude
@@ -519,12 +519,12 @@ bool Waypoint::show_properties_dialog_cb(void)
 	{
 		/* Disconnect all old connections that may have been made from
 		   this global dialog to other TRW layer. */
-		/* TODO: also disconnect these signals in dialog code when the dialog is closed? */
+		/* TODO_LATER: also disconnect these signals in dialog code when the dialog is closed? */
 		tool->point_properties_dialog->disconnect();
 
 		/* Make new connections to current TRW layer. */
-#if K_TODO
-		connect(tool->wp_properties_dialog, SIGNAL (accepted()), parent_layer, SLOT (on_wp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
+#if TODO_LATER
+		connect(tool->wp_properties_dialog, SIGNAL (accepted()), parent_layer, SLOT (on_wp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO_LATER: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
 #endif
 		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 	}
@@ -565,7 +565,7 @@ QString Waypoint::get_tooltip(void) const
 {
 	QString result;
 	if (!GarminSymbols::is_none_symbol_name(this->symbol_name)) {
-		/* TODO: test that symbol name is visible in tooltip. */
+		/* TODO_LATER: test that symbol name is visible in tooltip. */
 		result += this->symbol_name + "\n";
 	}
 

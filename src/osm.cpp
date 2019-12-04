@@ -127,7 +127,7 @@ void OSM::init(void)
 
 	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
 
-#ifdef K_TODO_LATER /* Correctly handle %d arguments in the string. */
+#ifdef TODO_LATER /* Correctly handle %d arguments in the string. */
 	/* Note the use of positional parameters. */
 	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
 #endif
@@ -200,7 +200,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj
 	}
 
 	if (metatile.is_compressed) {
-		/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
+		/* TODO_MAYBE: Not handled yet - I don't think this is used often - so implement later if necessary. */
 		qDebug() << SG_PREFIX_E << "Handling of compressed metatile not implemented";
 		return pixmap;
 	}

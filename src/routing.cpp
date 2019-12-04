@@ -172,7 +172,7 @@ void Routing::register_engine(RoutingEngine * engine)
 		/* Update the label (possibly different). */
 		routing_engine_combo_items[len - 1].label = label;
 
-		/* TODO_2_LATER: verify that updated list of routers is displayed correctly a combo list in dialog. */
+		/* TODO_LATER: verify that updated list of routers is displayed correctly a combo list in dialog. */
 	} else {
 		qDebug() << "DD: Routing: register:" << string_id << "is new: append";
 		routing_engines.push_back(engine);
@@ -185,10 +185,10 @@ void Routing::register_engine(RoutingEngine * engine)
 		/* Add the string id. */
 		routing_engine_ids.push_back(string_id);
 
-		/* TODO_2_LATER: verify that constructed list of routers is visible as a combo list in dialog. */
+		/* TODO_LATER: verify that constructed list of routers is visible as a combo list in dialog. */
 
 #ifdef K_FIXME_RESTORE
-		/* TODO_2_LATER: previously the string IDs of routing engines
+		/* TODO_LATER: previously the string IDs of routing engines
 		   were passed to UI builder like below. Verify
 		   whether this is still necessary. */
 		prefs[0].extra_widget_data = routing_engine_ids;

@@ -120,7 +120,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
 			this->acquire_context.target_trw_allocated = false;
 		} else {
-			/* TODO_UNKNOWN: now what? */
+			/* TODO_LATER: now what? */
 		}
 		}
 		break;
@@ -136,7 +136,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 		if (selected_layer && selected_layer->m_kind == LayerKind::TRW) {
 			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
 		} else {
-			/* TODO_UNKNOWN: now what? */
+			/* TODO_LATER: now what? */
 		}
 		}
 		break;

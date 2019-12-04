@@ -616,7 +616,7 @@ void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
 
 void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 {
-	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
@@ -647,7 +647,7 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 	const double min_elevation = this->min_elev.get_ll_value();
 	const double max_elevation = this->max_elev.get_ll_value();
 
-	Coord tmp; /* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+	Coord tmp; /* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
 	LatLon counter;
 	int32_t x;
@@ -795,7 +795,7 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 
 void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 {
-	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 10); /* TODO_LATER: smarter calculation. */
 
 	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
 	Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
@@ -846,7 +846,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 
 	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
 
-	/* TODO_2_LATER: smarter handling of invalid band letter
+	/* TODO_LATER: smarter handling of invalid band letter
 	   value. In theory the source object should be valid and for
 	   sure contain valid band letter. */
 	UTM counter(NAN, NAN, dem->utm.get_zone(), dem->utm.get_band_letter());
@@ -882,7 +882,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 
 
 			{
-				/* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+				/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 				ScreenPos pos;
 				gisview->coord_to_screen_pos(Coord(counter, viewport_coord_mode), pos);
 
@@ -1092,7 +1092,7 @@ DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon 
 
 DEMDownloadJob::~DEMDownloadJob()
 {
-	/* TODO: make DEMDownloadJob a QT child of a DEM layer, so
+	/* TODO_MAYBE: make DEMDownloadJob a QT child of a DEM layer, so
 	   that the job is destroyed when a layer is destroyed. */
 }
 
@@ -1239,7 +1239,7 @@ void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord 
 
 static void dem24k_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	/* TODO_2_LATER: dest dir. */
+	/* TODO_LATER: dest dir. */
 	const QString cmdline = QString("%1 %2 %3")
 		.arg(DEM24K_DOWNLOAD_SCRIPT)
 		.arg(floor(dl_job->lat * 8) / 8, 0, 'f', 3, '0')  /* "%.03f" */

@@ -484,7 +484,7 @@ sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 	  Invalidate. Old crosshair would be invalid in graph with new
 	  sizes.
 
-	  TODO: selection of tp should survive resizing of
+	  TODO_MAYBE: selection of tp should survive resizing of
 	  graphs. Maybe we should save not only crosshair position,
 	  but also Distance or Time on x axis, and then, based on that
 	  value we should re-calculate ::m_selection_ch.
@@ -997,7 +997,7 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 
 ProfileViewBase::~ProfileViewBase()
 {
-	/* TODO: delete ::widget? */
+	/* TODO_MAYBE: delete ::widget? */
 }
 
 

@@ -493,7 +493,7 @@ Trackpoint * GPSPointParser::create_trackpoint(CoordMode coordinate_mode)
 	/* Trackpoint's extended attributes. */
 	if (this->line_extended) {
 		tp->gps_speed = this->line_speed;
-		tp->course = Angle(this->line_course, AngleUnit::Degrees);  /* TODO: verify unit read from file. */
+		tp->course = Angle(this->line_course, AngleUnit::Degrees);  /* TODO_LATER: verify unit read from file. */
 		tp->nsats = this->line_sat;
 		tp->fix_mode = (GPSFixMode) this->line_fix_mode;
 		tp->hdop = this->line_hdop;

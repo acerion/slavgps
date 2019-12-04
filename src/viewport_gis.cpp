@@ -251,7 +251,7 @@ GisViewport * GisViewport::copy(int target_total_width, int target_total_height,
 	new_object->set_coord_mode(this->get_coord_mode());
 	new_object->set_center_coord(this->center_coord, false);
 	new_object->set_viking_scale(target_viking_scale);
-	//new_object->set_bbox(this->get_bbox()); /* TODO: why without this the scaling works correctly? */
+	//new_object->set_bbox(this->get_bbox()); /* TODO_LATER: why without this the scaling works correctly? */
 
 	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->get_bbox();
 	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << new_object->get_bbox();
@@ -1049,7 +1049,7 @@ sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & ce
 
 	const int zone_diff = zone - this->center_coord.utm.get_zone();
 
-	/* TODO: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
+	/* TODO_LATER: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
 	center_in_other_zone = this->center_coord.utm;
 	center_in_other_zone.shift_easting_by(-(zone_diff * this->utm_zone_width));
 	center_in_other_zone.set_zone(zone);
@@ -1147,7 +1147,7 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 	const double ympp = this->viking_scale.y;
 
 	/* Distance of pixel specified by pos_x/pos_y from viewport's
-	   central pixel.  TODO: verify location of pos_x and pos_y in
+	   central pixel.  TODO_LATER: verify location of pos_x and pos_y in
 	   these equations. */
 	const fpixel delta_x_pixels = pos_x - this->central_get_x_center_pixel();
 	const fpixel delta_y_pixels = this->central_get_y_center_pixel() - pos_y;
@@ -1166,13 +1166,13 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
 
-			/* Calculate correct band letter.  TODO: there
+			/* Calculate correct band letter.  TODO_LATER: there
 			   has to be an easier way to do this. */
 			{
 				/* We only need this initial
 				   assignment to avoid assertion fail
 				   in ::to_lat_lon(). */
-				assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+				assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 				coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
 
 				/* Calculated lat_lon will contain
@@ -1194,7 +1194,7 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 			test_coord.set_coord_mode(CoordMode::UTM);
 
 			test_coord.utm.set_zone(this->center_coord.utm.get_zone());
-			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
 			test_coord.utm.easting = (delta_x_pixels * xmpp) + this->center_coord.utm.easting;
 
@@ -1247,7 +1247,7 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 
 		case GisViewportDrawMode::Expedia:
 			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center_coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
-						       /* TODO: make sure that this is ok, that we don't need to use central_get_width()/get_height() here. */
+						       /* TODO_LATER: make sure that this is ok, that we don't need to use central_get_width()/get_height() here. */
 						       this->central_get_x_center_pixel(),
 						       this->central_get_y_center_pixel());
 			break;
@@ -1351,7 +1351,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 			const double vert_distance_m = coord.utm.get_northing() - this->center_coord.utm.get_northing();
 
 			*pos_x = x_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
-			*pos_y = y_center_pixel - (vert_distance_m / ympp); /* TODO: plus or minus? */
+			*pos_y = y_center_pixel - (vert_distance_m / ympp); /* TODO_LATER: plus or minus? */
 		}
 		break;
 

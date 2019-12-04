@@ -100,7 +100,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 	if (this->gisview->get_draw_mode() == GisViewportDrawMode::UTM) {
 		Coord test = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
 		LatLon lat_lon = test.get_lat_lon();
-		/* TODO: get_height() or get_q_bottommost_pixel()? */
+		/* TODO_LATER: get_height() or get_q_bottommost_pixel()? */
 		/* FIXME: magic number. */
 		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->central_get_height() / 11000.0; // about 11km per degree latitude
 

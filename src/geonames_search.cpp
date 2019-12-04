@@ -61,7 +61,7 @@ using namespace SlavGPS;
    ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
-/* TODO_2_LATER: update username in the query string. */
+/* TODO_LATER: update username in the query string. */
 #define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%1&south=%2&east=%3&west=%4&lang=%5&maxRows=%6&username=viking"
 
 #define GEONAMES_FEATURE_PATTERN      "\"feature\""
@@ -388,7 +388,7 @@ std::list<Geoname *> Geonames::select_geonames(const std::list<Geoname *> & all_
 	//const QStringList headers = { QObject::tr("Select the articles you want to add.") };
 	//std::list<Geoname *> selected = Geonames::select_from_list(*progress_dialog, QObject::tr("Select articles"), headers, all_geonames, window);
 
-	// TODO: Dialog::error(QObject::tr("Nothing was selected"), parent);
+	// TODO_LATER: Dialog::error(QObject::tr("Nothing was selected"), parent);
 
 
 	list_widget.add_elements(all_geonames);

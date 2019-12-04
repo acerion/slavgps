@@ -208,7 +208,7 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 
 
 	this->name_entry->setText(this->current_point->name);
-	this->coord_widget->set_value(this->current_point->get_coord()); /* TODO: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
+	this->coord_widget->set_value(this->current_point->get_coord()); /* TODO_LATER: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
 	this->timestamp_widget->set_timestamp(this->current_point->get_timestamp(), this->current_point->get_coord());
 	this->altitude_widget->set_value_iu(this->current_point->altitude);
 	this->comment_entry->setText(this->current_point->comment);
@@ -525,14 +525,14 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	switch ((WpPropertiesDialog::Action) action) {
 	case WpPropertiesDialog::Action::DeleteSelectedPoint:
-		/* TODO: implement.
+		/* TODO_LATER: implement.
 		trw->delete_selected_wp(wp);
 		*/
 		trw->emit_tree_item_changed("Indicating deletion of waypoint");
 		break;
 
 	case WpPropertiesDialog::Action::NextPoint:
-		/* TODO: implement
+		/* TODO_LATER: implement
 		if (sg_ret::ok != track->move_selection_to_next_tp()) {
 			break;
 		}
@@ -543,7 +543,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		break;
 
 	case WpPropertiesDialog::Action::PreviousPoint:
-		/* TODO: implement
+		/* TODO_LATER: implement
 		if (sg_ret::ok != track->move_selection_to_previous_tp()) {
 			break;
 		}

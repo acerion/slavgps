@@ -253,7 +253,7 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 		.arg(lat_lon.lat)
 		.arg(lat_lon.lon)
 		.arg((lat_lon.lon > -30) ? "EUR0809" : "USA0409")
-		.arg(src.scale.get_scale_value()) /* This should be an integer value. TODO_2_LATER: verify whether we get correct member of scale object. */
+		.arg(src.scale.get_scale_value()) /* This should be an integer value. TODO_LATER: verify whether we get correct member of scale object. */
 		.arg(width)
 		.arg(height);
 

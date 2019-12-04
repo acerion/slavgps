@@ -528,7 +528,7 @@ QString LatLon::to_string(void) const
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown degree format" << (int) format;
-		break; /* TODO: you should return here. */
+		break; /* TODO_LATER: you should return here. */
 	}
 
 	QString result = QString("%1 %2").arg(lat_string, lon_string);
@@ -612,7 +612,7 @@ bool UTM::is_the_same_zone(const UTM & utm1, const UTM & utm2)
 
 sg_ret UTM::shift_zone_by(int shift)
 {
-	this->zone += shift; /* TODO: wrap result to allowable range. */
+	this->zone += shift; /* TODO_LATER: wrap result to allowable range. */
 	return sg_ret::ok;
 }
 

@@ -272,7 +272,7 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext
 		lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
 		if (!lat_lon.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Invalid lat/lon from defaults" << lat_lon;
-			/* TODO_2_LATER: now what? How to handle invalid lat/lon? */
+			/* TODO_LATER: now what? How to handle invalid lat/lon? */
 		}
 	}
 
@@ -317,7 +317,7 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 
 bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_center)
 {
-	/* TODO_2_LATER: real calculation. */
+	/* TODO_LATER: real calculation. */
 	return circle_center.x() > -1000
 		&& circle_center.y() > -1000
 		&& circle_center.x() < (this->gisview->central_get_width() + 1000)

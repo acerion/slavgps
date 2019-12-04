@@ -140,7 +140,7 @@ sg_ret TrackData<Tx, Tx_ll, Ty, Ty_ll>::compress_into(TrackData & target, int co
 	assert(i == target.n_points);
 
 	target.valid = true;
-	target.calculate_min_max(); /* TODO: rethink how we calculate min/max of compressed. */
+	target.calculate_min_max(); /* TODO_LATER: rethink how we calculate min/max of compressed. */
 	snprintf(target.debug, sizeof (target.debug), "Compressed %s", this->debug);
 
 	return sg_ret::ok;
@@ -216,7 +216,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 		this->x[i] = (*iter)->timestamp.get_ll_value();
 		if (i > 0 && this->x[i] <= this->x[i - 1]) {
-			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
+			/* TODO_LATER: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
 			this->x[i] = this->x[i - 1];
 		}
@@ -355,7 +355,7 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 {
 	TrackData result;
 
-	/* TODO: this function does not set this->tps[]. */
+	/* TODO_LATER: this function does not set this->tps[]. */
 
 
 	const int tp_count = trk->get_tp_count();
@@ -639,7 +639,7 @@ sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::make_track_data_speed_over_tim
 	i++;
 
 	for (; i < tp_count; i++) {
-		/* TODO: handle invalid distance values in data_dt. */
+		/* TODO_LATER: handle invalid distance values in data_dt. */
 
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
@@ -717,7 +717,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 	do {
 		this->x[i] = (*iter)->timestamp.get_ll_value();
 		if (i > 0 && this->x[i] <= this->x[i - 1]) {
-			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
+			/* TODO_LATER: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
 			this->x[i] = this->x[i - 1];
 		}
@@ -1019,7 +1019,7 @@ sg_ret TrackDataBase::apply_unit_conversion_time(Time_ll * values, Time & min, T
 	/* There is only one unit for time, so there is no need to
 	   convert anything to different unit.
 
-	   TODO: check in future that this is still true.
+	   TODO_MAYBE: check in future that this is still true.
 	*/
 
 	return sg_ret::ok;
@@ -1038,7 +1038,7 @@ sg_ret TrackDataBase::apply_unit_conversion_gradient(Gradient_ll * values, Gradi
 	/* There is only one unit for gradient, so there is no need to
 	   convert anything to different unit.
 
-	   TODO: check in future that this is still true. */
+	   TODO_MAYBE: check in future that this is still true. */
 
 	return sg_ret::ok;
 }

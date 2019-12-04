@@ -456,7 +456,7 @@ void ViewportPixmap::apply_total_sizes(int new_total_width, int new_total_height
 
 
 	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate snapshot buffer with size" << this->total_width << this->total_height;
-	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
+	/* TODO_LATER trigger: only if this is enabled!!! */
 	this->vpixmap_snapshot = QPixmap(this->total_width, this->total_height); /* Reset snapshot buffer with new size */
 
 
@@ -733,7 +733,7 @@ ScreenPos ViewportPixmap::central_get_center_screen_pos(void) const
 */
 void ViewportPixmap::clear(void)
 {
-	/* TODO: should we also clear vpixmap and vpixmap_snapshot? */
+	/* TODO_LATER: should we also clear vpixmap and vpixmap_snapshot? */
 	this->painter.eraseRect(0, 0, this->total_width, this->total_height);
 }
 

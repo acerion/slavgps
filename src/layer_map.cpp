@@ -1038,7 +1038,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 		if (this->map_zoom_x != xmpp || this->map_zoom_y != ympp) {
 			pixmap_scale = PixmapScale(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
 			xmpp = this->map_zoom_x;
-			ympp = this->map_zoom_x; /* TODO: this is setting ympp from map_zoom_x. Verify this. */
+			ympp = this->map_zoom_x; /* TODO_LATER: this is setting ympp from map_zoom_x. Verify this. */
 			if (!pixmap_scale.condition_1()) {
 
 				if (pixmap_scale.condition_2()) {
@@ -2021,7 +2021,7 @@ sg_ret LayerMap::handle_downloaded_tile_cb(void)
 
 bool LayerMap::is_tile_visible(const TileInfo & tile_info)
 {
-	/* TODO_2_LATER: implement. */
+	/* TODO_LATER: implement. */
 	return true;
 }
 

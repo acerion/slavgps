@@ -90,7 +90,7 @@ extern LayerTool * trw_layer_tools[];
 
 
 static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
-static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return ToolStatus::Ignored; } /* TODO_2_LATER: implement the function for route finder tool. */
+static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return ToolStatus::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
 
 
 
@@ -207,7 +207,7 @@ ToolStatus helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent
 	if (ev->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
 	}
-	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
+	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO_LATER: how can we be sure that a trackpoint is selected? */
 	if (nullptr == track) {
 		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
 		/* Well, there was no track that was edited, so nothing to do here. */
@@ -1557,7 +1557,7 @@ SGObjectTypeID LayerToolTRWExtendedRouteFinder::tool_id(void)
 
 ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	/* TODO_2_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
+	/* TODO_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
 	return ToolStatus::Ignored;
 }
 

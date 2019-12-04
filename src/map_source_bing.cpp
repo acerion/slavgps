@@ -118,7 +118,7 @@ MapSourceBing::MapSourceBing()
 {
 	this->bing_api_key = "<no-set>";
 	this->logo.logo_pixmap = QPixmap(":/icons/bing_maps.png");
-	this->logo.logo_id = "Bing Maps"; /* TODO_2_LATER: verify this label, whether it is unique for this map source. */
+	this->logo.logo_id = "Bing Maps"; /* TODO_LATER: verify this label, whether it is unique for this map source. */
 }
 
 
@@ -199,7 +199,7 @@ void MapSourceBing::add_copyright(GisViewport * gisview, const LatLonBBox & bbox
 	const TileScale tile_scale = viking_scale.to_tile_scale();
 
 	/* Load imagery providers. */
-	if (0 == this->providers.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */
+	if (0 == this->providers.size() && "<no-set>" != this->bing_api_key) { /* TODO_LATER: also check this->bing_api_key.isEmpty()? */
 		if (this->loading_providers) {
 			/* Wait until providers are loaded before processing them. */
 			return;

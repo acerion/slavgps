@@ -1149,7 +1149,7 @@ void LayerTRW::marshall(Pickle & pickle)
 	Pickle helper_pickle;
 
 	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1158,7 +1158,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1167,7 +1167,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1226,7 +1226,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 			}
 		}
 		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
-#ifdef TODO_2_LATER
+#ifdef TODO_LATER
 		// See marshalling above for order of how this is written  // kamilkamil
 		pickle.data += sizeof_len_and_subtype + pickle.peek_size();
 #endif
@@ -1994,7 +1994,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	if (gps_upload_config.exec() != QDialog::Accepted) {
 		return;
 	}
-	gps_upload_config.save_transfer_options(); /* TODO_IMPROVEMENT: hide this call inside of DataSourceGPSDialog::exec() */
+	gps_upload_config.save_transfer_options(); /* TODO_LATER: hide this call inside of DataSourceGPSDialog::exec() */
 
 
 	/* Apply settings to transfer to the GPS device. */
@@ -2173,7 +2173,7 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 	this->tree_view->attach_to_tree(&this->waypoints, wp); /* push item to the end of parent nodes. */
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
-	/* TODO: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
+	/* TODO_LATER: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
 	this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 
 
@@ -2541,7 +2541,7 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 	this->tree_view->detach_tree_item(tree_item);
 
 	/* If last sublayer of given type, then remove sublayer container.
-	   TODO: this sometimes doesn't work. */
+	   TODO_LATER: this sometimes doesn't work. */
 	if (tree_item->get_type_id() == Track::type_id()) {
 		if (this->tracks.size() == 0) {
 			this->tree_view->detach_tree_item(&this->tracks);
@@ -2946,7 +2946,7 @@ void LayerTRW::merge_by_segment_cb(void)
 	/* Currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened. */
 	const unsigned int n_segments = track->merge_segments();
-	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned int. */
+	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO_MAYBE: verify that "%n" format correctly handles unsigned int. */
 	Dialog::info(msg, this->get_window());
 }
 
@@ -3250,7 +3250,7 @@ void LayerTRW::tp_show_properties_dialog()
 	{
 		/* Disconnect all old connections that may have been
 		   made from this global dialog to other TRW layer. */
-		/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
+		/* TODO_LATER: also disconnect the signals in dialog code when the dialog is closed? */
 		tool->point_properties_dialog->disconnect();
 
 		/* Make new connections to current TRW layer. */

@@ -99,7 +99,7 @@ static struct {
 	{ "Fishing Area",                    "fish",                 7,  "white fish symbol",                 "wp_fish",            "wp_fish_large",            NULL },
 	{ "Gas Station",                     "fuel",                 8,  "white fuel symbol",                 "wp_fuel",            "wp_fuel_large",            NULL },
 	{ "Horn",                            "horn",                 9,  "white horn symbol",                 "wp_horn",            "wp_horn_large",            NULL },
-#ifdef TODO_2_LATER
+#ifdef TODO_LATER
 	{ "Residence",                       "house",               10,  "white house symbol",                "wp_house",           "wp_house_large",           NULL },
 	{ "Restaurant",                      "knife",               11,  "white knife & fork symbol",         "wp_knife",           "wp_knife_large",           NULL },
 	{ "Light",                           "light",               12,  "white light symbol",                "wp_light",           "wp_light_large",           NULL },

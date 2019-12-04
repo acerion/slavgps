@@ -107,7 +107,7 @@ QActionGroup * Toolbox::add_tools(const LayerToolContainer & new_tools)
 
 	/* We should now get our own copies of Tools - we will become their owner.
 	   The container will be deleted by caller of this function. */
-	this->tools.insert(new_tools.begin(), new_tools.end()); /* TODO: this should be std::move(). */
+	this->tools.insert(new_tools.begin(), new_tools.end()); /* TODO_LATER: this should be std::move(). */
 
 	this->action_groups.push_back(action_group);
 

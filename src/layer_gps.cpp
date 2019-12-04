@@ -1109,22 +1109,22 @@ void GPSSession::run(void)
 	if (this->transfer.direction == GPSDirection::Download) {
 		BabelProcess * importer = new BabelProcess();
 		importer->set_options(this->babel_opts);
-		importer->set_input("", this->transfer.serial_port); /* TODO: type of input? */
+		importer->set_input("", this->transfer.serial_port); /* TODO_LATER: type of input? */
 
 		acquire_context.target_trw = this->trw;
 		importer->set_acquire_context(&acquire_context);
-		importer->set_progress_dialog(NULL /* TODO: progr_dialog */);
+		importer->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
 		save_status = (sg_ret::ok == importer->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
 	} else {
 		BabelProcess * exporter = new BabelProcess();
 		exporter->set_options(this->babel_opts);
-		exporter->set_output("", this->transfer.serial_port); /* TODO: type of output? */
+		exporter->set_output("", this->transfer.serial_port); /* TODO_LATER: type of output? */
 
 		acquire_context.target_trw = this->trw;
 		acquire_context.target_trk = this->trk;
 		exporter->set_acquire_context(&acquire_context);
-		exporter->set_progress_dialog(NULL /* TODO: progr_dialog */);
+		exporter->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
 		save_status = exporter->export_through_gpx(this->trw, this->trk);
 	}
@@ -1610,7 +1610,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int hdiv = 6;
 		const int vdiv = 6;
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-		const int width = gisview->central_get_width(); /* TODO: shouldn't we get central x/y pixels here? */
+		const int width = gisview->central_get_width(); /* TODO_LATER: shouldn't we get central x/y pixels here? */
 		const int height = gisview->central_get_height();
 		fpixel vx, vy;
 

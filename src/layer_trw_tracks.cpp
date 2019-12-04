@@ -635,7 +635,7 @@ Time LayerTRWTracks::get_earliest_timestamp(void) const
 	std::list<TreeItem *> tree_items;
 	this->get_tree_items(tree_items);
 
-	/* TODO: we assume here that all tracks have timestamps. */
+	/* TODO_LATER: we assume here that all tracks have timestamps. */
 
 	if (!tree_items.empty()) {
 		tree_items.sort(Track::compare_timestamp);
@@ -810,7 +810,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 
 	assert (this->menu_operation_ids == MenuOperationPaste);
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO_2_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
+	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
@@ -958,13 +958,13 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 
-#ifdef K_TODO_MAYBE
+#ifdef TODO_MAYBE
 	if (this->bbox.intersects_with(viewport->get_bbox())) {
 #endif
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
-#ifdef K_TODO_MAYBE
+#ifdef TODO_MAYBE
 	}
 #endif
 }

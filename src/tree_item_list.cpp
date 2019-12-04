@@ -410,14 +410,15 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 		parent_layer->unlock_remove();
 	}
 
-#if K_TODO  /* The dialog may be invoked from LayerAggregate's context
-	       menu, which means that there may be multiple TRW
-	       layers.  For each of them we need to call
-	       trw->udpate_tree_item(), but we must be sure that this
-	       doesn't trigger few redraws in a row. There must be
-	       only one redraw, final one. Most probably triggered
-	       from a layer (either TRW layer or Aggregate layer), for
-	       which a context menu item has been triggered. */
+#if TODO_ALTER
+	/* The dialog may be invoked from LayerAggregate's context
+	   menu, which means that there may be multiple TRW layers.
+	   For each of them we need to call trw->udpate_tree_item(),
+	   but we must be sure that this doesn't trigger few redraws
+	   in a row. There must be only one redraw, final one. Most
+	   probably triggered from a layer (either TRW layer or
+	   Aggregate layer), for which a context menu item has been
+	   triggered. */
 	if (changed) {
 		trk->update_tree_item_properties();
 		parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track in Track list dialog");

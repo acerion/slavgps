@@ -475,7 +475,7 @@ sg_ret GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & 
 		/* coverity[toctou] */
 		if (0 != utime(file_full_path.toUtf8().constData(), &utb)) {
 			qDebug() << SG_PREFIX_E << "Couldn't set time on file" << file_full_path;
-			return sg_ret::err; /* TODO: some kind of rollback? */
+			return sg_ret::err; /* TODO_MAYBE: some kind of rollback? */
 		}
 	}
 

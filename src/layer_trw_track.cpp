@@ -1121,7 +1121,7 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 
 /**
-   TODO: selecting a trackpoint just on basis of pointer address is weak. Maybe also add some unique-per-tp id?
+   TODO_LATER: selecting a trackpoint just on basis of pointer address is weak. Maybe also add some unique-per-tp id?
 */
 sg_ret Track::select_tp(const Trackpoint * tp)
 {
@@ -1354,7 +1354,7 @@ void Track::marshall(Pickle & pickle)
 		iter++;
 		ntp++;
 	}
-#if TODO_2_LATER
+#if TODO_LATER
 	*(unsigned int *)(byte_array->data + intp) = ntp;
 #endif
 
@@ -1362,7 +1362,7 @@ void Track::marshall(Pickle & pickle)
 	pickle.put_string(this->comment);
 	pickle.put_string(this->description);
 	pickle.put_string(this->source);
-	/* TODO_2_LATER: where is ->type? */
+	/* TODO_LATER: where is ->type? */
 }
 
 
@@ -1376,7 +1376,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	const pickle_size_t data_size = pickle.take_size();
 	const QString type_id = pickle.take_string();
 
-#ifdef K_TODO_LATER
+#ifdef TODO_LATER
 	Track * new_trk = new Track(((Track *)pickle.data)->is_route());
 	/* Basic properties: */
 	new_trk->visible = ((Track *)pickle.data)->visible;
@@ -1405,7 +1405,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	new_trk->comment = pickle.take_string();
 	new_trk->description = pickle.take_string();
 	new_trk->source = pickle.take_string();
-	/* TODO_2_LATER: where is ->type? */
+	/* TODO_LATER: where is ->type? */
 #else
 	Track * new_trk = new Track(false);
 #endif
@@ -1442,7 +1442,7 @@ void Track::recalculate_bbox(void)
 	}
 	this->bbox.validate();
 
-	/* TODO_2_LATER: enable this debug and verify whether it appears only
+	/* TODO_LATER: enable this debug and verify whether it appears only
 	   once for a given track during import ("acquire") of the
 	   track from external file. */
 	// qDebug() << SG_PREFIX_D << "Recalculated bounds of track:" << this->bbox;
@@ -2452,7 +2452,7 @@ void Track::smooth_it(bool flat)
 {
 	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, ThisApp::get_main_window());
 }
 
@@ -2534,7 +2534,7 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 	unsigned long n_changed = this->apply_dem_data(skip_existing_elevations);
 
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, ThisApp::get_main_window());
 }
 
@@ -3543,7 +3543,7 @@ void Track::delete_points_same_position_cb(void)
 	parent_layer->deselect_current_trackpoint(this);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, ThisApp::get_main_window());
 
 	this->emit_tree_item_changed("Deleted trackpoints with the same position");
@@ -3564,7 +3564,7 @@ void Track::delete_points_same_time_cb(void)
 	parent_layer->deselect_current_trackpoint(this);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, ThisApp::get_main_window());
 
 	this->emit_tree_item_changed("Deleted trackpoints with the same timestamp");
@@ -3770,7 +3770,7 @@ sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate
 
 	/* Update properties dialog with the most recent coordinates
 	   of tp. */
-	/* TODO_OPTIMIZATION: optimize by changing only coordinates in
+	/* TODO_MAYBE: optimize by changing only coordinates in
 	   the dialog. This is the only parameter that will change
 	   when a point is moved in x/y plane.  We may consider also
 	   updating an alternative altitude indicator, if the altitude

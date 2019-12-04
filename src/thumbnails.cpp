@@ -569,7 +569,7 @@ static QString md5_hash(const char * message)
 
 bool Thumbnails::apply_image_orientation(QPixmap & image, sg_exif_image_orientation orientation)
 {
-	/* TODO: handle all orientations, apply them to image. */
+	/* TODO_LATER: handle all orientations, apply them to image. */
 
 	QTransform transform;
 	bool result = true;

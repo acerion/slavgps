@@ -195,8 +195,8 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 	AcquireContext acquire_context(gisview->get_window(), gisview, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
 
-#ifdef K_TODO
-	/* TODO: I think that this is already done in AcquireWorker::on_complete_process() */
+#ifdef TODO_LATER
+	/* TODO_LATER: I think that this is already done in AcquireWorker::on_complete_process() */
 	if (acquire_context.trw) {
 		acquire_context.trw->attach_children_to_tree();
 	}

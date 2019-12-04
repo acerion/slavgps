@@ -481,7 +481,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleUnit::Degrees); /* TODO: verify unit read from gpx file. */
+		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleUnit::Degrees); /* TODO_LATER: verify unit read from gpx file. */
 		importer->cdata.clear();
 		break;
 
@@ -1225,7 +1225,7 @@ SaveStatus GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW
 	file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file =" << file_full_path;
 
-	FILE * file2 = fdopen(tmp_file.handle(), "w"); /* TODO: close the file? */
+	FILE * file2 = fdopen(tmp_file.handle(), "w"); /* TODO_LATER: close the file? */
 
 	SaveStatus save_status;
 	if (trk) {

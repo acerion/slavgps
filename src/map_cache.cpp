@@ -360,7 +360,7 @@ void flush_matching(const std::string & key_part)
 /**
    Appears this is only used when redownloading tiles (i.e. to invalidate old images)
 
-   TODO: protect map cache with mutex?
+   TODO_LATER: protect map cache with mutex?
 */
 void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID map_type_id, const QString & file_name)
 {

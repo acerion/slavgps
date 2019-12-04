@@ -154,7 +154,7 @@ void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	/* TODO: apply the tooltip to all visible columns? */
+	/* TODO_LATER: apply the tooltip to all visible columns? */
 	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	const QString tooltip = tree_item->get_tooltip();
 	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item->name;
@@ -1091,7 +1091,7 @@ QMimeData * TreeModel::mimeData(const QModelIndexList & indexes) const
 
 		TreeItem * tree_item = this->view->get_tree_item(index);
 		if (list.contains(tree_item)) {
-			/* TODO: verify why when dragging a single
+			/* TODO_LATER: verify why when dragging a single
 			   item the @indexes contains two copies of
 			   index of dragged item.. */
 			continue;

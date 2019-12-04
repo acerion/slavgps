@@ -1167,7 +1167,7 @@ void LayerGeoref::goto_center_cb(void)
 	GisViewport * gisview = ThisApp::get_main_gis_view();
 	UTM utm = gisview->get_center_coord().get_utm();
 
-	/* TODO: verify image_width/height - shouldn't they be center pixels? */
+	/* TODO_LATER: verify image_width/height - shouldn't they be center pixels? */
 	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
 	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
 
@@ -1377,7 +1377,7 @@ LayerGeoref * SlavGPS::georef_layer_create(GisViewport * gisview, const QString 
 	layer->mpp_northing = ympp;
 
 	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
-	gisview->set_center_coord(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
+	gisview->set_center_coord(bbox.get_center_lat_lon()); /* TODO_LATER: is this call necessary if we call ::set_bbox() below? */
 
 	/* Set best zoom level. */
 	gisview->set_bbox(bbox);

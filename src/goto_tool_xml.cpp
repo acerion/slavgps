@@ -42,7 +42,7 @@
 
 
 
-/* TODO_2_LATER:
+/* TODO_LATER:
 
    1. the implementation captures only the first result returned by
       server.  If the server returns more than one location of a name,

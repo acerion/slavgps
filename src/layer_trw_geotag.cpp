@@ -502,7 +502,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 			if (!updated_existing_waypoint) {
 				new_wp->set_name(new_wp_name);
 				this->trw->add_waypoint_from_file(new_wp);
-				/* TODO_2_LATER: do we delete the new_wp if we don't add it to layer? How was it done in Viking? */
+				/* TODO_LATER: do we delete the new_wp if we don't add it to layer? How was it done in Viking? */
 			}
 
 			/* Mark for redraw. */

@@ -77,7 +77,7 @@ extern bool vik_debug;
 
 
 
-/* TODO_IMPROVEMENT in the future we could have support for other shells (change command strings), or not use a shell at all. */
+/* TODO_MAYBE in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
 
@@ -226,7 +226,7 @@ void BabelProcess::set_output(const QString & file_type, const QString & file_fu
    \param args: list of program's arguments (program's name is not on that list)
 
    \param cb: callback that is run upon new data from STDOUT (?).
-   (TODO_2_LATER: STDERR would be nice since we usually redirect STDOUT)
+   (TODO_MAYBE: STDERR would be nice since we usually redirect STDOUT)
 
    \param cb_data: data passed along to \param cb
 
@@ -550,7 +550,7 @@ sg_ret BabelProcess::run_process(void)
 	this->process->waitForFinished(-1);
 
 #ifdef FIXME_RESTORE
-	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);

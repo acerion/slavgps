@@ -79,7 +79,7 @@ sg_ret TileInfo::get_itms_lat_lon_ul_br(LatLon & lat_lon_ul, LatLon & lat_lon_br
 	  coords, i.e. it is coordinate of u-l corner of a next tile
 	  that is +one to the right and +one to the bottom.
 
-	  TODO: what if we are at a bottom or on the right of an x/y grid of tiles?
+	  TODO_LATER: what if we are at a bottom or on the right of an x/y grid of tiles?
 	*/
 	TileInfo next_tile_info = *this;
 	next_tile_info.x++;

@@ -264,7 +264,7 @@ sg_ret Time::set_timestamp_from_char_string(const char * str)
 template<>
 bool Time::ll_value_is_valid(Time_ll value)
 {
-	return true; /* TODO: improve for Time_ll data type. */
+	return true; /* TODO_LATER: improve for Time_ll data type. */
 }
 
 
@@ -286,7 +286,7 @@ const QString Time::value_to_string_for_file(int precision) const
 #if 0
 bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
 {
-	/* TODO: shouldn't this be difftime()? */
+	/* TODO_LATER: shouldn't this be difftime()? */
 	return lhs.m_ll_value < rhs.m_ll_value;
 }
 #endif

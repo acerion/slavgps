@@ -117,7 +117,7 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 
 sg_ret MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
 {
-	/* TODO_2_LATER: slowdown here! */
+	/* TODO_LATER: slowdown here! */
 	const double mpp = scale_to_mpp(src.scale.get_scale_value());
 	coord.set_coord_mode(CoordMode::UTM); /* This function decides what will be the coord mode of returned coordinate. */
 	coord.utm.set_zone(src.z);

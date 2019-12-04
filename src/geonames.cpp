@@ -39,7 +39,7 @@ void Geonames::init(void)
 
 	/* Goto */
 	GotoToolXML * geonames = new GotoToolXML(QObject::tr("Geonames"),
-						 "http://api.geonames.org/search?q=%1&maxRows=1&lang=en&style=short&username=viking", /* TODO_2_LATER: update username value. */
+						 "http://api.geonames.org/search?q=%1&maxRows=1&lang=en&style=short&username=viking", /* TODO_LATER: update username value. */
 						 "geonames/geoname/lat",
 						 "geonames/geoname/lng");
 	GoTo::register_tool(geonames);

@@ -562,7 +562,7 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 				//layer->attach_children_to_tree();
 				layer->post_read(gisview, true);
 			} else if (parent_layer->m_kind == LayerKind::GPS) {
-				/* TODO_2_LATER: anything else needs to be done here? */
+				/* TODO_MAYBE: anything else needs to be done here? */
 			} else {
 				this->parse_status = sg_ret::err;
 				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (kind %d)\n", this->line_num, (int) this->stack.first->m_kind);

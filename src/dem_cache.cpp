@@ -244,7 +244,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 
 
 
-/* TODO_2_LATER: keep a (sorted) linked list of DEMs and select the best resolution one. */
+/* TODO_MAYBE: keep a (sorted) linked list of DEMs and select the best resolution one. */
 Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation method)
 {
 	Altitude result; /* Invalid by default. */

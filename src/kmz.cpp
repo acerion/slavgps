@@ -407,7 +407,7 @@ KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, GisViewport
 	zip_int64_t zindex = zip_name_locate(archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS);
 	if (zindex == -1) {
 		fprintf(stderr, "WARNING: Unable to find doc.kml\n");
-		ret.kmz_status = KMZOpenStatus::KMZOpenStatus::NoDoc; /* TODO_2_LATER: in original viking code we didn't return a "no doc.kml" status here, even though there was a status value defined for this event. */
+		ret.kmz_status = KMZOpenStatus::KMZOpenStatus::NoDoc; /* TODO_LATER: in original viking code we didn't return a "no doc.kml" status here, even though there was a status value defined for this event. */
 		goto kmz_cleanup;
 	}
 

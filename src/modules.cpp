@@ -212,7 +212,7 @@ static void modules_load_config(void)
 		modules_load_config_from_dir(data_dirs.at(i));
 	}
 
-#ifdef K_TODO
+#ifdef TODO_LATER
 	/* Check if system config is set. */
 	modules_load_config_from_dir(VIKING_SYSCONFDIR);
 #endif

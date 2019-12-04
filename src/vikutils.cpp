@@ -149,7 +149,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 						if (sg_ret::ok == speed_value.make_speed(distance, duration)) {
 							speed_type = "*"; // Interpolated
 						} else {
-							/* TODO: now what? */
+							/* TODO_LATER: now what? */
 						}
 
 					} else {
@@ -180,7 +180,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 						if (sg_ret::ok == speed_value.make_speed(altitude, duration)) {
 							speed_type = "*"; // Interpolated
 						} else {
-							/* TODO: now what? */
+							/* TODO_LATER: now what? */
 						}
 					} else {
 						speed_type = "**"; // Unavailable

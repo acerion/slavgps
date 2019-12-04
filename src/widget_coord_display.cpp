@@ -144,7 +144,7 @@ sg_ret CoordEntryWidget::set_coord_mode(const CoordMode coord_mode)
 
 
 
-/* TODO: what should take precedence: coord mode of @param coord, or global selection of coord mode? */
+/* TODO_LATER: what should take precedence: coord mode of @param coord, or global selection of coord mode? */
 sg_ret CoordEntryWidget::set_value(const Coord & coord, bool block_signal)
 {
 	switch (coord.get_coord_mode()) {

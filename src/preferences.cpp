@@ -369,7 +369,7 @@ bool Preferences::set_param_value(const QString & param_name, const SGVariant & 
 /**
    Returns: true on success.
 
-   TODO_2_LATER: report errors to end user.
+   TODO_LATER: report errors to end user.
 */
 bool Preferences::save_to_file(void)
 {

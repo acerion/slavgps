@@ -272,7 +272,7 @@ Window::Window()
 
 			/* Adjust geometry of panel dock.
 
-			   TODO_2_LATER: this doesn't work. Either
+			   TODO_LATER: this doesn't work. Either
 			   setGeometry() doesn't work, or something
 			   overwrites panel's size. */
 
@@ -1143,7 +1143,7 @@ void Window::center_changed_cb(GisViewport * gisview) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Called";
 
-	/* TODO_2_LATER: see if this comment should be implemented or not:
+	/* TODO_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
 	this->qa_previous_location->setEnabled(gisview->back_available());
 	this->qa_next_location->setEnabled(gisview->forward_available());
@@ -1487,7 +1487,7 @@ void Window::menu_edit_delete_all_cb(void)
 		this->items_tree->clear();
 		this->set_current_document_full_path("");
 
-		/* TODO: verify if this call is needed, maybe removing
+		/* TODO_LATER: verify if this call is needed, maybe removing
 		   all tree items has triggered re-painting of
 		   viewport? */
 		this->draw_tree_items(this->main_gis_vp);
@@ -1718,7 +1718,7 @@ void Window::goto_previous_location_cb(void)
 {
 	const bool changed = this->main_gis_vp->go_back();
 
-	/* TODO: is this function call necessary? */
+	/* TODO_LATER: is this function call necessary? */
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
 	   (otherwise we would get stuck in an infinite loop!). */
@@ -1736,7 +1736,7 @@ void Window::goto_next_location_cb(void)
 {
 	bool changed = this->main_gis_vp->go_forward();
 
-	/* TODO: is this function call necessary? */
+	/* TODO_LATER: is this function call necessary? */
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
 	   (otherwise we would get stuck in an infinite loop!). */
@@ -2470,7 +2470,7 @@ void Window::finish_new(void)
 
 		this->items_tree->get_top_layer()->add_layer(layer, true);
 
-		/* TODO: verify if this call is necessary. Maybe
+		/* TODO_LATER: verify if this call is necessary. Maybe
 		   adding new layer has triggered re-painting
 		   already? */
 		this->draw_tree_items(this->main_gis_vp);
@@ -2747,7 +2747,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	int level = qa->data().toInt();
 	qDebug() << SG_PREFIX_SLOT << "'Zoom Changed' callback" << qa->text() << level;
 
-	double requested_scale = pow(2, level - 5); /* TODO: encapsulate? */
+	double requested_scale = pow(2, level - 5); /* TODO_LATER: encapsulate? */
 
 	/* But has it really changed? */
 	const double current_scale = this->main_gis_vp->get_viking_scale().get_x();
@@ -2829,7 +2829,7 @@ static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString con
 
 
 
-	int active = 5 + round(log(viking_scale.get_x()) / log(2)); /* TODO: encapsulate. Inverse expression "pow(2, level - 5)" has shown up elsewhere. */
+	int active = 5 + round(log(viking_scale.get_x()) / log(2)); /* TODO_LATER: encapsulate. Inverse expression "pow(2, level - 5)" has shown up elsewhere. */
 	/* Ensure value derived from mpp is in bounds of the menu. */
 	if (active >= (int) zoom_actions.size()) {
 		active = zoom_actions.size() - 1;
@@ -3061,7 +3061,7 @@ static bool window_pan_timeout(Window * window)
 	window->single_click_pending = false;
 	window->viewport->set_center_coord(window->delayed_pan_pos);
 
-	/* TODO: verify if this call is necessary. Maybe call to
+	/* TODO_LATER: verify if this call is necessary. Maybe call to
 	   set_center_coord() has emitted a signal that triggered
 	   re-painting already? */
 	window->draw_tree_items(this->main_gis_vp);
