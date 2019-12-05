@@ -3856,3 +3856,73 @@ TreeItemViewFormat Track::get_view_format_header(bool include_parent_layer)
 
 	return view_format;
 }
+
+
+
+
+/**
+   @reviewed-on 2019-12-04
+*/
+Speed Track::get_gps_speed(const Trackpoint * tp)
+{
+	Speed result;
+	if (nullptr == tp) {
+		return result;
+	} else {
+		result = Speed(tp->gps_speed, SpeedUnit::MetresPerSecond); /* We are dealing with GPS trackpoints, so natural unit is m/s. */
+		return result;
+	}
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-04
+*/
+Speed Track::get_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
+{
+	Speed result;
+	if (nullptr == tp || nullptr == tp_prev) {
+		return result;
+	}
+	if (!tp->timestamp.is_valid() || !tp_prev->timestamp.is_valid()) {
+		/* Can't calculate speed without valid time delta. */
+		return result;
+	}
+	if (tp->timestamp == tp_prev->timestamp) {
+		/* This actually is not an error. */
+		result = Speed(0, SpeedUnit::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
+		return result;
+	}
+
+	const Distance distance_diff = Coord::distance_2(tp_prev->coord, tp->coord);
+	const Duration duration = Time::get_abs_duration(tp_prev->timestamp, tp->timestamp);
+	result.make_speed(distance_diff, duration);
+
+	return result;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-04
+*/
+Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
+{
+	Duration result;
+	if (nullptr == tp || nullptr == tp_prev) {
+		return result;
+	}
+	if (!tp->timestamp.is_valid() || !tp_prev->timestamp.is_valid()) {
+		/* Can't calculate speed without valid time delta. */
+		return result;
+	}
+	if (tp->timestamp == tp_prev->timestamp) {
+		result = Duration(0, DurationUnit::Seconds); /* Since we deal with GPS trackpoints, let's use seconds. */
+		return result;
+	}
+	result = Time::get_abs_duration(tp_prev->timestamp, tp->timestamp);
+	return result;
+}

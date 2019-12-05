@@ -135,35 +135,19 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			break;
 
 		case 'S': {
-			Speed speed_value;
-			QString speed_type;
-
-			if (std::isnan(tp->gps_speed) && tp_prev) {
-				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
-					if (tp->timestamp != tp_prev->timestamp) {
-
-						/* Work out from previous trackpoint location and time difference. */
-						const Distance distance = Coord::distance_2(tp->coord, tp_prev->coord);
-						const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
-						const Speed speed;
-						if (sg_ret::ok == speed_value.make_speed(distance, duration)) {
-							speed_type = "*"; // Interpolated
-						} else {
-							/* TODO_LATER: now what? */
-						}
-
-					} else {
-						speed_type = "**";
-					}
-				} else {
-					speed_type = "**";
-				}
+			Speed speed = Track::get_gps_speed(tp);
+			if (speed.is_valid()) {
+				values[i] = QObject::tr("%1Speed: %2").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
 			} else {
-				speed_value = Speed(tp->gps_speed, SpeedUnit::MetresPerSecond);
-				speed_type = "";
-			}
+				speed = Track::get_diff_speed(tp, tp_prev);
 
-			values[i] = QObject::tr("%1Speed%2: %3").arg(separator).arg(speed_type).arg(speed_value.convert_to_unit(speed_unit).to_string());
+				if (speed.is_valid()) {
+					/* Asterisk is used to indicate diff speed. */
+					values[i] = QObject::tr("%1Speed*: %2").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
+				} else {
+					values[i] = QObject::tr("%1Speed: --").arg(SG_MEASUREMENT_INVALID_VALUE_STRING);
+				}
+			}
 			break;
 		}
 

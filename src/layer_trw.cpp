@@ -1497,11 +1497,11 @@ void LayerTRW::set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Tra
 	if (!ApplicationState::get_string(VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT, statusbar_format_code)) {
 		/* Otherwise use default. */
 		statusbar_format_code = "KEATDN";
-	} else {
-		/* Format code may want to show speed - so may need previous trkpt to work it out. */
-		auto iter = std::prev(tp_ref.m_iter);
-		tp_prev = iter == track->end() ? NULL : *iter;
 	}
+
+	/* Format code may want to show speed - so may need previous trkpt to work it out. */
+	auto iter = std::prev(tp_ref.m_iter);
+	tp_prev = iter == track->end() ? NULL : *iter;
 
 	Trackpoint * tp = tp_ref.m_iter == track->end() ? NULL : *tp_ref.m_iter;
 	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);

@@ -263,30 +263,19 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 		const Distance distance_diff = Coord::distance_2(prev_point->coord, this->current_point->coord);
 		this->diff_dist->setText(distance_diff.convert_to_unit(distance_unit).to_nice_string());
 
-		if (prev_point->timestamp.is_valid() && this->current_point->timestamp.is_valid()) {
-			const Time timestamp_diff = prev_point->timestamp - this->current_point->timestamp;
-			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value()));
-			if (prev_point->timestamp == this->current_point->timestamp) {
-				this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
-			} else {
-				const Duration duration = Time::get_abs_duration(prev_point->timestamp, this->current_point->timestamp);
-				Speed speed_diff;
-				speed_diff.make_speed(distance_diff, duration);
-				this->diff_speed->setText(speed_diff.convert_to_unit(speed_unit).to_string());
-			}
-		} else {
-			this->diff_time->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
-			this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
-		}
+		this->diff_time->setText(Track::get_diff_time(prev_point, *current_point_iter).to_string());
+		this->diff_speed->setText(Track::get_diff_speed(prev_point, *current_point_iter).convert_to_unit(speed_unit).to_nice_string());
 	} else {
 		this->diff_dist->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
+		this->diff_time->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
+		this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
 	}
 
 
 	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string();
 
 	this->course->setText(this->current_point->course.to_string());
-	this->speed->setText(Speed(this->current_point->gps_speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
+	this->gps_speed->setText(Track::get_gps_speed(this->current_point).convert_to_unit(speed_unit).to_string());
 	this->hdop->setText(Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
 	this->pdop->setText(Distance(this->current_point->pdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
 	this->vdop->setText(Altitude(this->current_point->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
@@ -491,15 +480,15 @@ sg_ret TpPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * parent_
 
 	this->diff_speed = new QLabel("");
 	this->diff_speed->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), this->widgets_row, left_col);
+	this->grid->addWidget(new QLabel(tr("Speed to Prev.:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->diff_speed, this->widgets_row, right_col);
 
 	this->widgets_row++;
 
-	this->speed = new QLabel("");
-	this->speed->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("Speed:")), this->widgets_row, left_col);
-	this->grid->addWidget(this->speed, this->widgets_row, right_col);
+	this->gps_speed = new QLabel("");
+	this->gps_speed->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("GPS Speed:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->gps_speed, this->widgets_row, right_col);
 
 	this->widgets_row++;
 
@@ -555,7 +544,7 @@ void TpPropertiesWidget::clear_widgets(void)
 	this->diff_dist->setText("");
 	this->diff_time->setText("");
 	this->diff_speed->setText("");
-	this->speed->setText("");
+	this->gps_speed->setText("");
 	this->vdop->setText("");
 	this->hdop->setText("");
 	this->pdop->setText("");

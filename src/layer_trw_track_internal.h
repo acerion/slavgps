@@ -379,6 +379,39 @@ namespace SlavGPS {
 
 		bool show_properties_dialog(void) override;
 
+
+		/**
+		   @brief Get GPS Speed from this specific trackpoint
+
+		   Returns invalid Speed object if given trackpoint
+		   doesn't have GPS Speed set.
+		 */
+		static Speed get_gps_speed(const Trackpoint * tp);
+
+		/**
+		   @brief Get speed calculated using distance to
+		   previous tp and time difference to previous tp
+
+		   Returns invalid Speed object if given trackpoint
+		   @param tp is first in track (there is no previous
+		   trackpoint that could be used in calculations) or
+		   if other data necessary for calculations is not
+		   present.
+		*/
+		static Speed get_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev);
+
+		/**
+		   @brief Get time difference between two trackpoints
+
+		   Returns invalid Duration object if given trackpoint
+		   @param tp is first in track (there is no previous
+		   trackpoint that could be used in calculations) or
+		   if other data necessary for calculations is not
+		   present.
+		*/
+		static Duration get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev);
+
+
 		sg_ret tp_properties_dialog_set(void);
 		static sg_ret tp_properties_dialog_reset(void);
 

@@ -81,8 +81,8 @@ namespace SlavGPS {
 		QLabel * course = NULL;
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;
-		QLabel * diff_speed = NULL;
-		QLabel * speed = NULL;
+		QLabel * diff_speed = NULL; /* Speed calculated from distance and time diff between two trackpoints. */
+		QLabel * gps_speed = NULL; /* GPS speed taken from given trackpoint. */
 		QLabel * vdop = NULL;
 		QLabel * hdop = NULL;
 		QLabel * pdop = NULL;
