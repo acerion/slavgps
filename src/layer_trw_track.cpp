@@ -3907,7 +3907,7 @@ Speed Track::get_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
 
 
 /**
-   @reviewed-on 2019-12-04
+   @reviewed-on 2019-12-05
 */
 Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
 {
@@ -3916,7 +3916,7 @@ Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
 		return result;
 	}
 	if (!tp->timestamp.is_valid() || !tp_prev->timestamp.is_valid()) {
-		/* Can't calculate speed without valid time delta. */
+		/* Can't calculate duration without valid time delta. */
 		return result;
 	}
 	if (tp->timestamp == tp_prev->timestamp) {

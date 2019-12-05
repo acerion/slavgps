@@ -87,7 +87,7 @@ bool vik_version = false;
 
 
 static struct kdtree * kd_timezones = NULL;
-
+static Speed get_climb_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev);
 
 
 
@@ -152,31 +152,20 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 		}
 
 		case 'B': {
-			Speed speed_value;
-			QString speed_type;
-			if (std::isnan(climb) && tp_prev) {
-				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
-					if (tp->timestamp != tp_prev->timestamp) {
-						/* Work out from previous trackpoint altitudes and time difference.
-						   'speed' can be negative if going downhill. */
-						const Altitude altitude = (tp->altitude - tp_prev->altitude);
-						const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
-						if (sg_ret::ok == speed_value.make_speed(altitude, duration)) {
-							speed_type = "*"; // Interpolated
-						} else {
-							/* TODO_LATER: now what? */
-						}
-					} else {
-						speed_type = "**"; // Unavailable
-					}
-				} else {
-					speed_type = "**";
-				}
+			/* Climbing speed. May be negative if we are going downhill. */
+			Speed speed;
+			if (false == std::isnan(climb)) {
+				speed = Speed(climb, SpeedUnit::MetresPerSecond);
+				values[i] = QObject::tr("%1Climb Speed: %2").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
 			} else {
-				speed_value = Speed(climb, SpeedUnit::MetresPerSecond);
-				speed_type = "";
+				speed = get_climb_diff_speed(tp, tp_prev);
+				if (speed.is_valid()) {
+					/* Asterisk is used to indicate diff speed. */
+					values[i] = QObject::tr("%1Climb Speed*: %2").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
+				} else {
+					values[i] = QObject::tr("%1Climb Speed: --").arg(SG_MEASUREMENT_INVALID_VALUE_STRING);
+				}
 			}
-			values[i] = QObject::tr("%1Climb: %2").arg(separator).arg(speed_value.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
@@ -268,6 +257,44 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 	msg = values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8];
 	return msg;
+}
+
+
+
+
+/**
+   @brief Calculate climb rate (rate of going up or down) between two trackpoints
+
+   Returns invalid Speed object if given trackpoint @param tp is first
+   in track (there is no previous trackpoint that could be used in
+   calculations) or if other data necessary for calculations is not
+   present.
+
+   @reviewed on 2019-12-05
+*/
+Speed get_climb_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
+{
+	Speed result;
+
+	if (nullptr == tp || nullptr == tp_prev) {
+		return result;
+	}
+	if (!tp->timestamp.is_valid() || !tp_prev->timestamp.is_valid()) {
+		/* Can't calculate speed without valid time delta. */
+		return result;
+	}
+	if (tp->timestamp == tp_prev->timestamp) {
+		result = Speed(0, SpeedUnit::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
+		return result;
+	}
+
+	/* Work out from previous trackpoint altitudes and time difference.
+	   Speed can be negative if going downhill. */
+	const Altitude altitude = (tp->altitude - tp_prev->altitude);
+	const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
+	result.make_speed(altitude, duration);
+
+	return result;
 }
 
 
