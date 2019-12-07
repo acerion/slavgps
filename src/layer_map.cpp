@@ -130,16 +130,18 @@ static std::map<MapTypeID, MapSource *> map_source_interfaces;
 /* List of labels (string) and IDs (MapTypeID) for each map type. */
 static WidgetEnumerationData map_types_enum = {
 	{},
-	(int) MapTypeID::OSMCycle
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) MapTypeID::OSMCycle,
+	"",
 };
-static SGVariant map_type_default(void) { return SGVariant(map_types_enum.default_value, SGVariantType::Enumeration); }
+static SGVariant map_type_default(void) { return SGVariant(map_types_enum.default_id, SGVariantType::Enumeration); }
 
 
 
 
 static WidgetEnumerationData map_zooms_enum = {
 	{
-		SGLabelID(QObject::tr("Use Viking Zoom Level"), 0), /* LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE = 0 */
+		SGLabelID(QObject::tr("Use Viking Zoom Level"), LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE),
 		SGLabelID(QObject::tr("0.25"),       1),
 		SGLabelID(QObject::tr("0.5"),        2),
 		SGLabelID(QObject::tr("1"),          3),
@@ -161,9 +163,10 @@ static WidgetEnumerationData map_zooms_enum = {
 		SGLabelID(QObject::tr("USGS 200k"), 19),
 		SGLabelID(QObject::tr("USGS 250k"), 20),
 	},
-	0
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE,
+	""
 };
-static SGVariant map_zooms_default(void) { return SGVariant(map_zooms_enum.default_value, SGVariantType::Enumeration); }
 
 
 
@@ -207,9 +210,10 @@ static WidgetEnumerationData cache_layout_enum = {
 		SGLabelID("Viking", (int) MapCacheLayout::Viking),
 		SGLabelID("OSM",    (int) MapCacheLayout::OSM),
 	},
-	(int) MapCacheLayout::Viking
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) MapCacheLayout::Viking,
+	""
 };
-static SGVariant cache_layout_default(void) { return SGVariant(cache_layout_enum.default_value, SGVariantType::Enumeration); }
 
 
 
@@ -231,14 +235,14 @@ FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::File
 
 static ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::Enumeration,   &map_types_enum,     map_type_default,     "" },
+	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::Enumeration,   &map_types_enum,     NULL,                 "" },
 	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,                directory_default,    "" },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::Enumeration,   &cache_layout_enum,  cache_layout_default, QObject::tr("This determines the tile storage layout on disk") },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::Enumeration,   &cache_layout_enum,  NULL,                 QObject::tr("This determines the tile storage layout on disk") },
 	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
 	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
 	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,                sg_variant_true,      "" },
 	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::Enumeration,   &map_zooms_enum,     map_zooms_default,    QObject::tr("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::Enumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
 	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,          NULL,                NULL,                 "" }, /* Guard. */
 };
@@ -257,7 +261,7 @@ void LayerMap::set_autodownload_default(bool autodownload)
 void LayerMap::set_cache_default(MapCacheLayout layout)
 {
 	/* Override default value returned by the default param function. */
-	cache_layout_enum.default_value = (int) layout;
+	cache_layout_enum.default_id = (int) layout;
 }
 
 
@@ -433,10 +437,10 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
 	SGVariant var = LayerDefaults::get(LayerKind::Map, maps_layer_param_specs[PARAM_MAP_TYPE_ID]);
-	if (!var.is_valid() || var.u.val_int == 0) {
+	if (!var.is_valid() || var.u.val_enumeration == (int) MapTypeID::Default) {
 		var = map_type_default();
 	}
-	return (MapTypeID) var.u.val_int;
+	return (MapTypeID) var.u.val_enumeration;
 }
 
 
@@ -547,8 +551,8 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->set_cache_dir(data.val_string);
 		break;
 	case PARAM_CACHE_LAYOUT:
-		if ((MapCacheLayout) data.u.val_int < MapCacheLayout::Num) {
-			this->cache_layout = (MapCacheLayout) data.u.val_int;
+		if ((MapCacheLayout) data.u.val_enumeration < MapCacheLayout::Num) {
+			this->cache_layout = (MapCacheLayout) data.u.val_enumeration;
 		}
 		break;
 	case PARAM_FILE:
@@ -590,13 +594,13 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->adl_only_missing = data.u.val_bool;
 		break;
 	case PARAM_MAP_ZOOM:
-		if (data.u.val_int < (int) map_zooms_enum.values.size()) {
-			this->map_zoom_id = data.u.val_int;
+		if (data.u.val_enumeration < (int) map_zooms_enum.values.size()) { /* TODO_LATER: don't compare integers, try to find enum ID in map_zooms_enum */
+			this->map_zoom_id = data.u.val_enumeration;
 			this->map_zoom_x = map_zooms_x[this->map_zoom_id];
 			this->map_zoom_y = map_zooms_y[this->map_zoom_id];
 		} else {
-			qDebug() << SG_PREFIX_W << "Unknown Map Zoom" << data.u.val_int;
-			this->map_zoom_id = LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE; /* Safe fallback value. */
+			qDebug() << SG_PREFIX_W << "Unknown Map Zoom" << data.u.val_enumeration;
+			this->map_zoom_id = map_zooms_enum.default_id;
 		}
 		break;
 	default:
@@ -657,7 +661,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->adl_only_missing); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
 	case PARAM_MAP_ZOOM:
-		rv = SGVariant((int32_t) this->map_zoom_id, maps_layer_param_specs[PARAM_MAP_ZOOM].type_id);
+		rv = SGVariant((int) this->map_zoom_id, maps_layer_param_specs[PARAM_MAP_ZOOM].type_id);
 		break;
 	default: break;
 	}

@@ -58,7 +58,7 @@ namespace SlavGPS {
 		Double,
 		Int,
 
-		Enumeration,
+		Enumeration, /* Underlying, machine type shall be "int". */
 		String,
 		Boolean,
 		Color,
@@ -80,6 +80,7 @@ namespace SlavGPS {
 	union SGVariantPODFields {
 		double val_double;
 		int32_t val_int;
+		int val_enumeration;
 		bool val_bool;
 		void * val_pointer; /* For internal usage - don't save this value in a file! */
 	};

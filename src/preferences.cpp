@@ -72,7 +72,9 @@ static WidgetEnumerationData degree_format_enum = {
 		SGLabelID(QObject::tr("DMS"), (int) DegreeFormat::DMS),
 		SGLabelID(QObject::tr("Raw"), (int) DegreeFormat::Raw),
 	},
-	(int) DegreeFormat::DDD
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) DegreeFormat::DDD,
+	QString("")
 };
 
 static WidgetEnumerationData unit_distance_enum = {
@@ -81,7 +83,9 @@ static WidgetEnumerationData unit_distance_enum = {
 		SGLabelID(QObject::tr("Miles"),          (int) DistanceUnit::Miles),
 		SGLabelID(QObject::tr("Nautical Miles"), (int) DistanceUnit::NauticalMiles),
 	},
-	(int) DistanceUnit::Kilometres
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) DistanceUnit::Kilometres,
+	""
 };
 
 static WidgetEnumerationData unit_speed_enum = {
@@ -91,7 +95,9 @@ static WidgetEnumerationData unit_speed_enum = {
 		SGLabelID(QObject::tr("m/s"),   (int) SpeedUnit::MetresPerSecond),
 		SGLabelID(QObject::tr("knots"), (int) SpeedUnit::Knots)
 	},
-	(int) SpeedUnit::KilometresPerHour
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) SpeedUnit::KilometresPerHour,
+	""
 };
 
 static WidgetEnumerationData unit_height_enum = {
@@ -99,7 +105,9 @@ static WidgetEnumerationData unit_height_enum = {
 		SGLabelID(QObject::tr("Metres"), (int) HeightUnit::Metres),
 		SGLabelID(QObject::tr("Feet"),   (int) HeightUnit::Feet),
 	},
-	(int) HeightUnit::Metres
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) HeightUnit::Metres,
+	""
 };
 
 
@@ -109,7 +117,9 @@ static WidgetEnumerationData time_ref_frame_enum = {
 		SGLabelID(QObject::tr("World"),  (int) SGTimeReference::World),
 		SGLabelID(QObject::tr("UTC"),    (int) SGTimeReference::UTC),
 	},
-	(int) SGTimeReference::Locale
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) SGTimeReference::Locale,
+	""
 };
 
 
@@ -142,7 +152,9 @@ static WidgetEnumerationData kml_export_unit_enum = {
 		SGLabelID(QObject::tr("Statute"),  1),
 		SGLabelID(QObject::tr("Nautical"), 2),
 	},
-	0
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	0,
+	""
 };
 
 static WidgetEnumerationData gpx_export_trk_sort_enum = {
@@ -151,7 +163,9 @@ static WidgetEnumerationData gpx_export_trk_sort_enum = {
 		SGLabelID(QObject::tr("Time"),         1),
 		SGLabelID(QObject::tr("Creation"),     2),
 	},
-	0
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	0,
+	""
 };
 
 static WidgetEnumerationData gpx_export_wpt_symbols_enum = {
@@ -159,7 +173,9 @@ static WidgetEnumerationData gpx_export_wpt_symbols_enum = {
 		SGLabelID(QObject::tr("Title Case"), 0),
 		SGLabelID(QObject::tr("Lowercase"),  1),
 	},
-	0
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	0,
+	""
 };
 
 static ParameterSpecification io_prefs[] = {
@@ -187,7 +203,9 @@ static WidgetEnumerationData vik_fileref_enum = {
 		SGLabelID(QObject::tr("Absolute"), (int) FilePathFormat::Absolute),
 		SGLabelID(QObject::tr("Relative"), (int) FilePathFormat::Relative),
 	},
-	(int) FilePathFormat::Absolute
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	(int) FilePathFormat::Absolute,
+	""
 };
 
 static ParameterScale<int> scale_recent_files(-1, 25, SGVariant(10, SGVariantType::Int), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
@@ -207,7 +225,9 @@ static WidgetEnumerationData startup_method_enum = {
 		SGLabelID(QObject::tr("Specified File"), 2),
 		SGLabelID(QObject::tr("Auto Location"),  3),
 	},
-	0
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	0,
+	""
 };
 
 static ParameterSpecification startup_prefs[] = {
@@ -611,7 +631,7 @@ void Preferences::register_default_values()
 
 DegreeFormat Preferences::get_degree_format(void)
 {
-	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "degree_format").u.val_int;
+	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "degree_format").u.val_enumeration;
 }
 
 
@@ -619,7 +639,7 @@ DegreeFormat Preferences::get_degree_format(void)
 
 DistanceUnit Preferences::get_unit_distance()
 {
-	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_distance").u.val_int;
+	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_distance").u.val_enumeration;
 }
 
 
@@ -627,7 +647,7 @@ DistanceUnit Preferences::get_unit_distance()
 
 SpeedUnit Preferences::get_unit_speed(void)
 {
-	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_speed").u.val_int;
+	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_speed").u.val_enumeration;
 }
 
 
@@ -635,7 +655,7 @@ SpeedUnit Preferences::get_unit_speed(void)
 
 HeightUnit Preferences::get_unit_height(void)
 {
-	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_height").u.val_int;
+	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_height").u.val_enumeration;
 }
 
 
@@ -667,7 +687,7 @@ Longitude Preferences::get_default_lon(void)
 
 SGTimeReference Preferences::get_time_ref_frame()
 {
-	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "time_reference_frame").u.val_int;
+	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "time_reference_frame").u.val_enumeration;
 }
 
 
@@ -677,7 +697,7 @@ SGTimeReference Preferences::get_time_ref_frame()
 
 KMLExportUnits Preferences::get_kml_export_units()
 {
-	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "kml_export_units").u.val_int;
+	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "kml_export_units").u.val_enumeration;
 }
 
 
@@ -685,7 +705,7 @@ KMLExportUnits Preferences::get_kml_export_units()
 
 GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 {
-	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_track_sort").u.val_int;
+	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_track_sort").u.val_enumeration;
 }
 
 
@@ -693,7 +713,7 @@ GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 
 GPXExportWptSymName Preferences::get_gpx_export_wpt_sym_name()
 {
-	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names").u.val_int;
+	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names").u.val_enumeration;
 }
 
 
@@ -726,7 +746,7 @@ QString Preferences::get_external_gpx_program_2(void)
 
 FilePathFormat Preferences::get_file_path_format()
 {
-	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode").u.val_int;
+	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode").u.val_enumeration;
 }
 
 
@@ -766,7 +786,7 @@ bool Preferences::get_add_default_map_layer()
 
 StartupMethod Preferences::get_startup_method()
 {
-	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_method").u.val_int;
+	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_method").u.val_enumeration;
 }
 
 

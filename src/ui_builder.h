@@ -72,7 +72,7 @@ namespace SlavGPS {
 		None = 0,
 
 		CheckButton,
-		RadioGroup,
+		RadioGroup,     /* SGVariantType::Enumeration. */
 		SpinBoxDouble,  /* SGVariantType::Double */
 		SpinBoxInt,     /* SGVariantType::Int */
 		Entry,
@@ -81,11 +81,10 @@ namespace SlavGPS {
 		FolderEntry,
 		HScale,         /* SGVariantType::Double or SGVariantType::Int */
 		Color,
-		ComboBox,       /* SGVariantType::String or SGVariantType::Enumeration */
 		FileList,
 		DateTime,
 		DurationType,   /* SGVariantType::DurationType. */
-		Enumeration,
+		Enumeration,    /* SGVariantType::Enumeration. */
 
 		Latitude,
 		Longitude,
@@ -186,7 +185,7 @@ namespace SlavGPS {
 	public:
 		SGLabelID(const QString & label_, int id_) : label(label_), id(id_) {};
 		QString label;
-		int id = 0;
+		int id = 0; /* This shall be forever 'int' type. */
 	};
 
 
@@ -194,8 +193,42 @@ namespace SlavGPS {
 
 	class WidgetEnumerationData {
 	public:
+
+		/**
+		   Find string that matches given @param id
+
+		   Remember that strings may be translated
+		   (localized), so this method may have sense only for
+		   non-localizable enumerations.
+		*/
+		bool find_label_value(int id, QString & label) const;
+
+		/**
+		   @brief Find ID that matches given @param string
+
+		   Remember that strings may be translated
+		   (localized), so this method may have sense only for
+		   non-localizable enumerations.
+		*/
+		bool find_id_value(const QString & label, int & id) const;
+
 		std::vector<SGLabelID> values;
-		int default_value;
+
+		/*
+		  Primary type specifies whether this data holds list
+		  of integer enumerations with associated strings, or
+		  a list of strings with associated IDs.
+
+		  Most of time this will be the former
+		  (SGVariantType::Enumeration), and ::default_id
+		  should be used. But for e.g. gps protocols this will
+		  be the latter (SGVariantType::String), and
+		  ::default_string should be used.
+		*/
+		SGVariantType primary_type;
+
+		int default_id; /* This shall be forever 'int' type. This is not an array index, but enumeration: one of enumerations in ::values. */
+		QString default_string;
 	};
 
 

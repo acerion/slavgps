@@ -52,9 +52,11 @@ namespace SlavGPS {
 	class RadioGroupWidget : public QGroupBox {
 		Q_OBJECT
 	public:
-		RadioGroupWidget(const QString & title, const std::vector<SGLabelID> * items, QWidget * parent = NULL);
+		RadioGroupWidget(const QString & title, const WidgetEnumerationData * items, QWidget * parent = NULL);
 		~RadioGroupWidget();
 
+		/* In these two functions "id" is an identifier/enum,
+		   and it shall always be of "int" type. */
 		int get_id_of_selected(void);
 		void set_id_of_selected(int id);
 

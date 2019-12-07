@@ -54,13 +54,19 @@ using namespace SlavGPS;
 
 
 static std::vector<RoutingEngine *> routing_engines;   /* List to register all routing engines. */
-static std::vector<SGLabelID> routing_engine_combo_items;
+static WidgetEnumerationData routing_engines_enum = {
+	{
+	},
+	SGVariantType::String, /* This object is a list of strings with associated integers. */
+	0,
+	""
+};
 static std::vector<QString> routing_engine_ids; /* These are string IDs. */
 
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::ComboBox, &routing_engine_combo_items, NULL, "" },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::Enumeration, &routing_engines_enum, NULL, "" },
 };
 
 
@@ -112,7 +118,7 @@ RoutingEngine * routing_ui_find_engine(const QString & id)
 */
 RoutingEngine * Routing::get_default_engine(void)
 {
-	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING "default").val_string;
+	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING "default").val_string; /* TODO: the type is ".u.val_enumeration", not val_string. */
 	RoutingEngine * engine = routing_ui_find_engine(id);
 	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */
@@ -162,7 +168,7 @@ void Routing::register_engine(RoutingEngine * engine)
 #endif
 
 		/* Update GUI arrays. */
-		size_t len = routing_engine_combo_items.size();
+		size_t len = routing_engines_enum.values.size();
 		for (; len > 0 ; len--) {
 			if (routing_engine_ids[len - 1] == string_id) {
 				break;
@@ -170,17 +176,17 @@ void Routing::register_engine(RoutingEngine * engine)
 		}
 
 		/* Update the label (possibly different). */
-		routing_engine_combo_items[len - 1].label = label;
+		routing_engines_enum.values[len - 1].label = label;
 
 		/* TODO_LATER: verify that updated list of routers is displayed correctly a combo list in dialog. */
 	} else {
 		qDebug() << "DD: Routing: register:" << string_id << "is new: append";
 		routing_engines.push_back(engine);
 
-		const size_t len = routing_engine_combo_items.size();
+		const size_t len = routing_engines_enum.values.size();
 
 		/* Add the label. */
-		routing_engine_combo_items.push_back(SGLabelID(label, (int) len)); /* We use old length of vector as numeric ID. */
+		routing_engines_enum.values.push_back(SGLabelID(label, (int) len)); /* We use old length of vector as numeric ID. */
 
 		/* Add the string id. */
 		routing_engine_ids.push_back(string_id);

@@ -88,12 +88,12 @@ SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const Paramet
 		value = SGVariant((double) variant.toDouble());
 		break;
 
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		value = SGVariant((int32_t) variant.toLongLong(), SGVariantType::Int);
 		break;
 
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		value = SGVariant((int32_t) variant.toLongLong(), SGVariantType::Enumeration);
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		value = SGVariant(variant.toInt(), SGVariantType::Enumeration);
 		break;
 
 	case SGVariantType::Boolean:
@@ -161,11 +161,11 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerKind laye
 	case SGVariantType::Double:
 		variant = QVariant((double) value.u.val_double);
 		break;
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		variant = QVariant((qlonglong) value.u.val_int);
 		break;
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		variant = QVariant((qlonglong) value.u.val_int);
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		variant = QVariant(value.u.val_enumeration);
 		break;
 	case SGVariantType::Boolean:
 		variant = QVariant((bool) value.u.val_bool);

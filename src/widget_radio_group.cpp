@@ -45,14 +45,15 @@ using namespace SlavGPS;
 
 
 
-RadioGroupWidget::RadioGroupWidget(const QString & title_, const std::vector<SGLabelID> * items, QWidget * parent_widget) : QGroupBox(parent_widget)
+RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetEnumerationData * items, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;
 
 	bool first_checked = false;
 
-	for (auto iter = items->begin(); iter != items->end(); iter++) {
+	/* TODO_LATER: select default value in the radio group using items->default_id. */
+	for (auto iter = items->values.begin(); iter != items->values.end(); iter++) {
 		QRadioButton * radio = new QRadioButton((*iter).label);
 		this->group->addButton(radio, (*iter).id);
 		this->vbox->addWidget(radio);

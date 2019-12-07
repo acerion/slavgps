@@ -105,9 +105,10 @@ static WidgetEnumerationData dem_source_enum = {
 		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         DEM_SOURCE_DEM24K),
 #endif
 	},
-	DEM_SOURCE_SRTM
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	DEM_SOURCE_SRTM,
+	""
 };
-static SGVariant dem_source_default(void) { return SGVariant(dem_source_enum.default_value, SGVariantType::Enumeration); }
 
 
 
@@ -117,9 +118,10 @@ static WidgetEnumerationData dem_type_enum = {
 		SGLabelID(QObject::tr("Absolute height"), DEM_TYPE_HEIGHT),
 		SGLabelID(QObject::tr("Height gradient"), DEM_TYPE_GRADIENT),
 	},
-	DEM_TYPE_HEIGHT
+	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
+	DEM_TYPE_HEIGHT,
+	""
 };
-static SGVariant dem_type_default(void) { return SGVariant(dem_type_enum.default_value, SGVariantType::Enumeration); }
 
 
 
@@ -146,13 +148,13 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,                NULL,                "" },
-	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum,    dem_source_default,  QObject::tr("Source of DEM data") },
-	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                color_default,       "" },
-	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,      dem_type_default,    "" },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::AltitudeType,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::AltitudeWidget,        &scale_min_elev_iu,  NULL,                "" },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::AltitudeType,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::AltitudeWidget,        &scale_max_elev_iu,  NULL,                "" },
-	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                NULL,                "" }, /* Guard. */
+	{ PARAM_FILES,      "files",    SGVariantType::StringList,    PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,                NULL,           "" },
+	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum,    NULL,           QObject::tr("Source of DEM data") },
+	{ PARAM_COLOR,      "color",    SGVariantType::Color,         PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                color_default,  "" },
+	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,      NULL,           "" },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::AltitudeWidget,  &scale_min_elev_iu,  NULL,           "" },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::AltitudeWidget,  &scale_max_elev_iu,  NULL,           "" },
+	{ NUM_PARAMS,       "",         SGVariantType::Empty,         PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                NULL,           "" }, /* Guard. */
 };
 
 
@@ -387,7 +389,7 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 		break;
 
 	case PARAM_SOURCE:
-		this->source = param_value.u.val_int;
+		this->source = param_value.u.val_enumeration;
 		break;
 
 	case PARAM_TYPE:

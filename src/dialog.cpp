@@ -382,11 +382,13 @@ DurationDialog::DurationDialog(const QString & title, const QString & label, con
 	QLabel main_label(label);
 
 
-	std::vector<SGLabelID> items;
-	items.push_back(SGLabelID(QObject::tr("1 min"), 0));
-	items.push_back(SGLabelID(QObject::tr("1 hour"), 1));
-	items.push_back(SGLabelID(QObject::tr("1 day"), 2));
-	items.push_back(SGLabelID(QObject::tr("Custom (in seconds):"), 3));
+	WidgetEnumerationData items;
+	items.values.push_back(SGLabelID(QObject::tr("1 min"), 0));
+	items.values.push_back(SGLabelID(QObject::tr("1 hour"), 1));
+	items.values.push_back(SGLabelID(QObject::tr("1 day"), 2));
+	items.values.push_back(SGLabelID(QObject::tr("Custom (in seconds):"), 3));
+	items.primary_type = SGVariantType::Enumeration; /* List of integer IDs with associated strings. */
+	items.default_id = 0;
 	this->radio_group = new RadioGroupWidget("", &items, NULL); /* This widget will be deleted by its parent Qt layout. */
 
 

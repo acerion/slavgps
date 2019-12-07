@@ -131,9 +131,6 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 	case WidgetType::Color:
 		result = "Color";
 		break;
-	case WidgetType::ComboBox:
-		result = "ComboBox";
-		break;
 	case WidgetType::FileList:
 		result = "FileList";
 		break;
@@ -366,42 +363,36 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		}
 		break;
 
-	case WidgetType::ComboBox:
 	case WidgetType::Enumeration: {
 
-		assert (param_spec.type_id == SGVariantType::Enumeration
-			|| param_spec.type_id == SGVariantType::String);
-
 		QComboBox * widget_ = new QComboBox(this);
-
 		int selected_idx = 0;
 
-		if (param_spec.widget_data) {
-			const WidgetEnumerationData * enum_data = (WidgetEnumerationData *) param_spec.widget_data;
-			int i = 0;
-			for (auto iter = enum_data->values.begin(); iter != enum_data->values.end(); iter++) {
-				if (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Enumeration) {
-					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
-					if (param_value.u.val_int == (int32_t) (*iter).id) {
-						selected_idx = i;
-					}
-				} else if (param_spec.type_id == SGVariantType::String) {
-					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
-					if (param_value.val_string == (*iter).label) {
-						selected_idx = i;
-					}
-				} else {
-					qDebug() << SG_PREFIX_E << "Unsupported parameter spec type for combobox:" << param_spec.type_id;
-				}
+		assert (param_spec.widget_data);
+		const WidgetEnumerationData * enum_data = (WidgetEnumerationData *) param_spec.widget_data;
+		assert (param_spec.type_id == enum_data->primary_type);
 
-				i++;
+		int i = 0;
+		for (auto iter = enum_data->values.begin(); iter != enum_data->values.end(); iter++) {
+			widget_->addItem((*iter).label, QVariant((*iter).id));
+
+			if (param_spec.type_id == SGVariantType::Enumeration) {
+				if (param_value.u.val_enumeration == (*iter).id) {
+					selected_idx = i;
+				}
+			} else if (param_spec.type_id == SGVariantType::String) {
+				if (param_value.val_string == (*iter).label) {
+					selected_idx = i;
+				}
+			} else {
+				qDebug() << SG_PREFIX_E << "Unexpected type id" << (int) param_spec.type_id;
+				assert(0);
 			}
-		} else {
-			; /* For some combo boxes the algorithm of adding items may be  non-standard. */
+
+			i++;
 		}
 
 		widget_->setCurrentIndex(selected_idx);
-
 		widget = widget_;
 	}
 		break;
@@ -410,9 +401,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		assert (param_spec.type_id == SGVariantType::Enumeration);
 		assert (param_spec.widget_data);
 		{
-			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec.widget_data;
-			assert (items);
-			RadioGroupWidget * widget_ = new RadioGroupWidget("", items, this);
+			const WidgetEnumerationData * enum_data = (const WidgetEnumerationData *) param_spec.widget_data;
+			RadioGroupWidget * widget_ = new RadioGroupWidget("", enum_data, this);
 			widget = widget_;
 		}
 		break;
@@ -644,41 +634,21 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = SGVariant((bool) ((QCheckBox *) widget)->isChecked());
 		break;
 
-	case WidgetType::ComboBox:
 	case WidgetType::Enumeration:
-		assert (param_spec.type_id == SGVariantType::Enumeration
-			|| param_spec.type_id == SGVariantType::String);
-
 		if (param_spec.type_id == SGVariantType::Enumeration) {
 			rv = SGVariant(((QComboBox *) widget)->currentData().toInt(), SGVariantType::Enumeration);
-
 		} else if (param_spec.type_id == SGVariantType::String) {
 			rv = SGVariant(((QComboBox *) widget)->currentText());
-
-			/* TODO_LATER: look at old implementation below.
-			   Verify if in places that use SGVariantType::String +
-			   WidgetType::ComboBox this code is still needed. */
-#ifdef K_OLD_IMPLEMENTATION
-			if (param_spec.extra_widget_data) {
-				/* Combobox displays labels and we want values from extra. */
-				const int pos = widget->currentIndex();
-				const QStringList * strings = (const QStringList *) param_spec.extra_widget_data;
-				rv = SGVariant(strings->at(pos));
-			} else {
-				/* Return value of UI label of selected combo box. */
-				rv = SGVariant(widget->currentText());
-			}
-#endif
 		} else {
-			qDebug() << SG_PREFIX_E << "Saving value of widget" << widget_type_get_label(param_spec.widget_type) << ", unsupported parameter spec type for combobox:" << param_spec.type_id;
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << (int) param_spec.type_id;
+			assert (0);
 		}
-
 		break;
 
 	case WidgetType::RadioGroup:
 		assert (param_spec.type_id == SGVariantType::Enumeration);
-		/* get_id_of_selected() returns arbitrary ID. */
-		rv = SGVariant((int32_t) ((RadioGroupWidget *) widget)->get_id_of_selected(), SGVariantType::Enumeration);
+		/* get_id_of_selected() returns an ID, not an index. */
+		rv = SGVariant(((RadioGroupWidget *) widget)->get_id_of_selected(), SGVariantType::Enumeration);
 		break;
 
 	case WidgetType::SpinBoxInt:
@@ -785,6 +755,20 @@ SGVariant ParameterSpecification::get_hardcoded_value(void) const
 		}
 		break;
 
+	case WidgetType::Enumeration:
+		assert (nullptr != this->widget_data);
+		{
+			const WidgetEnumerationData * enum_data = (const WidgetEnumerationData *) this->widget_data;
+			if (enum_data->primary_type == SGVariantType::Enumeration) {
+				param_value = SGVariant(enum_data->default_id, SGVariantType::Enumeration);
+			} else if (enum_data->primary_type == SGVariantType::String) {
+				param_value = SGVariant(enum_data->default_string);
+			} else {
+				qDebug() << SG_PREFIX_E << "Unexpected type id" << (int) enum_data->primary_type;
+			}
+		}
+		break;
+
 	default:
 		if (this->hardcoded_default_value) {
 			param_value = this->hardcoded_default_value();
@@ -793,4 +777,45 @@ SGVariant ParameterSpecification::get_hardcoded_value(void) const
 	}
 
 	return param_value; /* param_value.is_valid() may or may not return true. */
+}
+
+
+
+
+/**
+   Find string that matches given @param id
+
+   Remember that strings may be translated
+   (localized), so this method may have sense only for
+   non-localizable enumerations.
+*/
+bool WidgetEnumerationData::find_label_value(int id, QString & label) const
+{
+	for (auto iter = this->values.begin(); iter != this->values.end(); iter++) {
+		if (iter->id == id) {
+			label = iter->label;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+
+/**
+   @brief Find ID that matches given @param string
+
+   Remember that strings may be translated (localized), so this method
+   may have sense only for non-localizable enumerations.
+*/
+bool WidgetEnumerationData::find_id_value(const QString & label, int & id) const
+{
+	for (auto iter = this->values.begin(); iter != this->values.end(); iter++) {
+		if (iter->label == label) {
+			id = iter->id;
+			return true;
+		}
+	}
+	return false;
 }

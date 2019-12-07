@@ -214,14 +214,16 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 
 
 
-	std::vector<SGLabelID> file_format_items;
+	WidgetEnumerationData file_format_items;
 	if (save_mode == ViewportToImage::SaveMode::FileKMZ) {
 		/* Only one file format. */
-		file_format_items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
+		file_format_items.values.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	} else {
-		file_format_items.push_back(SGLabelID(tr("Save as PNG"), (int) ViewportToImage::FileFormat::PNG));
-		file_format_items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
+		file_format_items.values.push_back(SGLabelID(tr("Save as PNG"), (int) ViewportToImage::FileFormat::PNG));
+		file_format_items.values.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	}
+	file_format_items.default_id = (int) ViewportToImage::FileFormat::JPEG;
+
 	this->output_format_radios = new RadioGroupWidget(tr("Output format"), &file_format_items, this);
 	this->output_format_radios->set_id_of_selected((int) file_format);
 

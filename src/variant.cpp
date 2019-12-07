@@ -70,11 +70,11 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::Double:
 		this->u.val_double = (double) strtod(str, NULL);
 		break;
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		this->u.val_int = strtol(str, NULL, 10);
 		break;
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		this->u.val_int = strtol(str, NULL, 10);
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		this->u.val_enumeration = (int) strtol(str, NULL, 10);
 		break;
 	case SGVariantType::Boolean:
 		this->u.val_bool = TEST_BOOLEAN(str);
@@ -120,11 +120,11 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	case SGVariantType::Double:
 		this->u.val_double = str.toDouble();
 		break;
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		this->u.val_int = str.toLong();
 		break;
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		this->u.val_int = str.toLong();
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		this->u.val_enumeration = (int) str.toLong();
 		break;
 	case SGVariantType::Boolean:
 		this->u.val_bool = TEST_BOOLEAN(str.toUtf8().constData());
@@ -190,9 +190,19 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 
 SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::Int || type_id_ == SGVariantType::Enumeration);
 	this->type_id = type_id_;
-	this->u.val_int = i;
+
+	switch (type_id_) {
+	case SGVariantType::Int:
+		this->u.val_int = i;
+		break;
+	case SGVariantType::Enumeration:
+		this->u.val_enumeration = i;
+		break;
+	default:
+		assert (type_id_ == SGVariantType::Int || type_id_ == SGVariantType::Enumeration);
+		break;
+	}
 }
 
 
@@ -341,11 +351,11 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::Double:
 		debug << QString("%1").arg(value.u.val_double, 0, 'f', 12);
 		break;
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		debug << value.u.val_int;
 		break;
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		debug << value.u.val_int;
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		debug << value.u.val_enumeration;
 		break;
 	case SGVariantType::String:
 		debug << value.val_string;
@@ -461,11 +471,11 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 	case SGVariantType::Double:
 		this->u.val_double = other.u.val_double;
 		break;
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		this->u.val_int = other.u.val_int;
 		break;
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		this->u.val_int = other.u.val_int;
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		this->u.val_enumeration = other.u.val_enumeration;
 		break;
 	case SGVariantType::String:
 		this->val_string = other.val_string;
@@ -560,11 +570,11 @@ QString SGVariant::to_string() const
 	case SGVariantType::Double:
 		return QString("%1").arg(this->u.val_double, 0, 'f', 20);
 
-	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+	case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 		return QString("%1").arg(this->u.val_int);
 
-	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		return QString("%1").arg(this->u.val_int);
+	case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+		return QString("%1").arg(this->u.val_enumeration);
 
 	case SGVariantType::String:
 		return this->val_string;
@@ -762,12 +772,12 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			break;
 		}
 
-		case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
+		case SGVariantType::Int: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
 			fprintf(file, "%d\n", this->u.val_int);
 			break;
 
-		case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-			fprintf(file, "%d\n", this->u.val_int);
+		case SGVariantType::Enumeration: /* 'SGVariantType::Int' and 'SGVariantType::Enumeration' are distinct types, so keep them in separate cases. */
+			fprintf(file, "%d\n", this->u.val_enumeration);
 			break;
 
 		case SGVariantType::Boolean:
