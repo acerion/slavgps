@@ -47,12 +47,16 @@
 #include "ui_util.h"
 #include "vikutils.h"
 #include "measurements.h"
-#include "widget_radio_group.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class RadioGroupWidget;
 
 
 

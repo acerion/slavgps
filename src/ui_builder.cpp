@@ -398,11 +398,17 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::RadioGroup:
-		assert (param_spec.type_id == SGVariantType::Enumeration);
-		assert (param_spec.widget_data);
+		if (param_spec.type_id != SGVariantType::Enumeration) {
+			assert(param_spec.type_id == SGVariantType::Enumeration);
+			return nullptr;
+		}
+		if (nullptr == param_spec.widget_data) {
+			assert(nullptr != param_spec.widget_data);
+			return nullptr;
+		}
 		{
 			const WidgetEnumerationData * enum_data = (const WidgetEnumerationData *) param_spec.widget_data;
-			RadioGroupWidget * widget_ = new RadioGroupWidget("", enum_data, this);
+			RadioGroupWidget * widget_ = new RadioGroupWidget("", *enum_data, this);
 			widget = widget_;
 		}
 		break;
@@ -647,8 +653,8 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::RadioGroup:
 		assert (param_spec.type_id == SGVariantType::Enumeration);
-		/* get_id_of_selected() returns an ID, not an index. */
-		rv = SGVariant(((RadioGroupWidget *) widget)->get_id_of_selected(), SGVariantType::Enumeration);
+		/* get_selected_id() returns an integer ID, not an index. */
+		rv = SGVariant(((RadioGroupWidget *) widget)->get_selected_id(), SGVariantType::Enumeration);
 		break;
 
 	case WidgetType::SpinBoxInt:

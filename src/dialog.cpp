@@ -42,9 +42,11 @@
 
 #include "dialog.h"
 #include "ui_util.h"
+#include "ui_builder.h"
 #include "date_time_dialog.h"
 #include "lat_lon.h"
 #include "viewport_internal.h"
+#include "widget_radio_group.h"
 
 
 
@@ -389,7 +391,7 @@ DurationDialog::DurationDialog(const QString & title, const QString & label, con
 	items.values.push_back(SGLabelID(QObject::tr("Custom (in seconds):"), 3));
 	items.primary_type = SGVariantType::Enumeration; /* List of integer IDs with associated strings. */
 	items.default_id = 0;
-	this->radio_group = new RadioGroupWidget("", &items, NULL); /* This widget will be deleted by its parent Qt layout. */
+	this->radio_group = new RadioGroupWidget("", items, NULL); /* This widget will be deleted by its parent Qt layout. */
 
 
 	this->spinbox.setMinimum(1); /* [seconds] */
@@ -424,7 +426,7 @@ DurationDialog::DurationDialog(const QString & title, const QString & label, con
 */
 sg_ret DurationDialog::get_value(Duration & duration)
 {
-	const int selection = this->radio_group->get_id_of_selected();
+	const int selection = this->radio_group->get_selected_id();
 
 	/* Values checked in this switch match list of items pushed to
 	   std::vector<SGLabelID> items; above. */
@@ -456,6 +458,7 @@ sg_ret DurationDialog::get_value(Duration & duration)
 
 void DurationDialog::spin_changed_cb(__attribute__((unused)) int new_value)
 {
-	/* Enable "custom value" checkbox. */
-	this->radio_group->set_id_of_selected(3);
+	/* User is modifying spin next to "custom value" checkbox, so
+	   select that checkbox. */
+	this->radio_group->set_selected_id(3);
 }

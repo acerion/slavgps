@@ -12,7 +12,6 @@
 
 
 #include "dialog.h"
-#include "widget_radio_group.h"
 #include "viewport_zoom.h"
 
 
@@ -25,6 +24,7 @@ namespace SlavGPS {
 
 	class GisViewport;
 	class Window;
+	class RadioGroupWidget;
 
 
 

@@ -22,6 +22,7 @@
 
 
 #include <cstring>
+#include <cassert>
 
 
 
@@ -44,23 +45,32 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Widget Radio Group"
 
-RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetEnumerationData * items, QWidget * parent_widget) : QGroupBox(parent_widget)
+
+
+
+RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetEnumerationData & items, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
+	assert(items.primary_type == SGVariantType::Int);
+
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;
 
-	bool first_checked = false;
+	bool any_checked = false;
 
-	/* TODO_LATER: select default value in the radio group using items->default_id. */
-	for (auto iter = items->values.begin(); iter != items->values.end(); iter++) {
-		QRadioButton * radio = new QRadioButton((*iter).label);
-		this->group->addButton(radio, (*iter).id);
-		this->vbox->addWidget(radio);
-		if (!first_checked) {
-			radio->setChecked(true);
-			first_checked = true;
+	for (auto iter = items.values.begin(); iter != items.values.end(); iter++) {
+		QRadioButton * button = new QRadioButton((*iter).label);
+		this->group->addButton(button, (*iter).id);
+		if (iter->id == items.default_id) {
+			button->setChecked(true);
+			any_checked = true;
 		}
+		this->vbox->addWidget(button);
+	}
+
+	if (false == any_checked) {
+		qDebug() << SG_PREFIX_E << "No button is initially checked: couldn't find default ID in @param items";
 	}
 
 	this->setLayout(this->vbox);
@@ -71,7 +81,6 @@ RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetEnumerati
 
 RadioGroupWidget::~RadioGroupWidget()
 {
-	qDebug() << "RadioGroupWidget destructor called";
 	delete this->vbox;
 	delete this->group;
 }
@@ -79,7 +88,7 @@ RadioGroupWidget::~RadioGroupWidget()
 
 
 
-int RadioGroupWidget::get_id_of_selected(void)
+int RadioGroupWidget::get_selected_id(void)
 {
 	return this->group->checkedId();
 }
@@ -87,7 +96,15 @@ int RadioGroupWidget::get_id_of_selected(void)
 
 
 
-void RadioGroupWidget::set_id_of_selected(int id)
+/**
+   @reviewed-on 2019-12-07
+*/
+void RadioGroupWidget::set_selected_id(int id)
 {
-	this->group->button(id)->setChecked(true);
+	QAbstractButton * button = this->group->button(id);
+	if (nullptr == button) {
+		qDebug() << SG_PREFIX_E << "Failed to look up button with id" << id;
+	} else {
+		button->setChecked(true);
+	}
 }

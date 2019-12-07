@@ -47,6 +47,7 @@
 #include "statusbar.h"
 #include "layers_panel.h"
 #include "kmz.h"
+#include "widget_radio_group.h"
 
 
 
@@ -222,10 +223,10 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 		file_format_items.values.push_back(SGLabelID(tr("Save as PNG"), (int) ViewportToImage::FileFormat::PNG));
 		file_format_items.values.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	}
-	file_format_items.default_id = (int) ViewportToImage::FileFormat::JPEG;
+	file_format_items.default_id = (int) file_format;
+	file_format_items.primary_type = SGVariantType::Int;
+	this->output_format_radios = new RadioGroupWidget(tr("Output format"), file_format_items, this);
 
-	this->output_format_radios = new RadioGroupWidget(tr("Output format"), &file_format_items, this);
-	this->output_format_radios->set_id_of_selected((int) file_format);
 
 	this->grid->addWidget(this->output_format_radios, row, 0, 1, 2);
 	row++;
@@ -299,7 +300,7 @@ void ViewportSaveDialog::get_scaled_parameters(int & width, int & height, Viking
 */
 ViewportToImage::FileFormat ViewportSaveDialog::get_image_format(void) const
 {
-	return (ViewportToImage::FileFormat) this->output_format_radios->get_id_of_selected();
+	return (ViewportToImage::FileFormat) this->output_format_radios->get_selected_id();
 }
 
 

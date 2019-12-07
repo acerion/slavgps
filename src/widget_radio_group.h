@@ -52,13 +52,20 @@ namespace SlavGPS {
 	class RadioGroupWidget : public QGroupBox {
 		Q_OBJECT
 	public:
-		RadioGroupWidget(const QString & title, const WidgetEnumerationData * items, QWidget * parent = NULL);
+		RadioGroupWidget(const QString & title, const WidgetEnumerationData & items, QWidget * parent = NULL);
 		~RadioGroupWidget();
 
-		/* In these two functions "id" is an identifier/enum,
-		   and it shall always be of "int" type. */
-		int get_id_of_selected(void);
-		void set_id_of_selected(int id);
+		/*
+		  In these two functions "id" is an identifier/enum,
+		  and it shall always be of "int" type.
+
+		  Notice that for now this widget only supports
+		  enumerations where integer is the primary type of
+		  ID. Enumerations where String is primary type of ID
+		  are not supported (yet).
+		*/
+		int get_selected_id(void);
+		void set_selected_id(int id);
 
 	private:
 		QVBoxLayout * vbox = NULL;
