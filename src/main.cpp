@@ -153,6 +153,7 @@ int main(int argc, char ** argv)
 
 	Measurements::unit_tests();
 	Coords::unit_tests();
+	SGVariant::unit_tests();
 
 	MeasurementScale<Duration, Duration_ll, DurationUnit> aaa(1, 10, 5, 1, DurationUnit::Seconds, 0);
 

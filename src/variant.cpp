@@ -86,7 +86,8 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_string = str;
 		break;
 	case SGVariantType::StringList:
-		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
+		this->val_string_list = QString(str).split('\n', QString::SkipEmptyParts);
+		qDebug() << SG_PREFIX_I << "Generated string list" << this->val_string_list << "from input string" << str;
 		break;
 	case SGVariantType::Timestamp:
 		this->val_timestamp.set_timestamp_from_string(str);
@@ -136,7 +137,8 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_string = str;
 		break;
 	case SGVariantType::StringList:
-		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
+		this->val_string_list = str.split('\n', QString::SkipEmptyParts);
+		qDebug() << SG_PREFIX_I << "Generated string list" << this->val_string_list << "from input string" << str;
 		break;
 	case SGVariantType::Timestamp:
 		this->val_timestamp.set_timestamp_from_string(str);
@@ -210,9 +212,20 @@ SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 
 SGVariant::SGVariant(const char * str, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::String);
-	this->type_id = type_id_;
-	this->val_string = QString(str);
+	switch (type_id_) {
+	case SGVariantType::String:
+		this->val_string = QString(str);
+		this->type_id = type_id_;
+		break;
+	case SGVariantType::StringList:
+		this->val_string_list = QString(str).split('\n', QString::SkipEmptyParts);
+		this->type_id = type_id_;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected type id" << (int) type_id_ << "for string" << str;
+		assert(0);
+		break;
+	}
 }
 
 
@@ -220,9 +233,20 @@ SGVariant::SGVariant(const char * str, SGVariantType type_id_)
 
 SGVariant::SGVariant(const QString & str, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::String);
-	this->type_id = type_id_;
-	this->val_string = str;
+	switch (type_id_) {
+	case SGVariantType::String:
+		this->val_string = str;
+		this->type_id = type_id_;
+		break;
+	case SGVariantType::StringList:
+		this->val_string_list = str.split('\n', QString::SkipEmptyParts);
+		this->type_id = type_id_;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected type id" << (int) type_id_ << "for string" << str;
+		assert(0);
+		break;
+	}
 }
 
 
@@ -817,4 +841,55 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			break;
 		}
 	}
+}
+
+
+
+
+bool SGVariant::unit_tests(void)
+{
+	/* Verify conversion of single string into list of strings. */
+	{
+		/* char* string, without '\n' separator at the end. */
+		{
+			const char * input_string = "substring1\nsubstring2\nsubstring3";
+			SGVariant variant(input_string, SGVariantType::StringList);
+			QStringList expected_output = { "substring1", "substring2", "substring3" };
+
+			qDebug() << SG_PREFIX_I << variant << expected_output;
+			assert (variant.val_string_list == expected_output);
+		}
+
+		/* char* string, with '\n' separator at the beginning and the end. */
+		{
+			const char * input_string = "\nsubstring1\nsubstring2\nsubstring3\n";
+			SGVariant variant(input_string, SGVariantType::StringList);
+			QStringList expected_output = { "substring1", "substring2", "substring3" };
+
+			qDebug() << SG_PREFIX_I << variant << expected_output;
+			assert (variant.val_string_list == expected_output);
+		}
+
+		/* QString, without '\n' separator at the end. */
+		{
+			const QString input_string("substring1\nsubstring2\nsubstring3");
+			SGVariant variant(input_string, SGVariantType::StringList);
+			QStringList expected_output = { "substring1", "substring2", "substring3" };
+
+			qDebug() << SG_PREFIX_I << variant << expected_output;
+			assert (variant.val_string_list == expected_output);
+		}
+
+		/* QString, with '\n' separator at the beginning and the end. */
+		{
+			const QString input_string("\nsubstring1\nsubstring2\nsubstring3\n");
+			SGVariant variant(input_string, SGVariantType::StringList);
+			QStringList expected_output = { "substring1", "substring2", "substring3" };
+
+			qDebug() << SG_PREFIX_I << variant << expected_output;
+			assert (variant.val_string_list == expected_output);
+		}
+	}
+
+	return true;
 }

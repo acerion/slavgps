@@ -110,8 +110,13 @@ namespace SlavGPS {
 		   created variant. */
 		SGVariant(int32_t i,                  SGVariantType type_id);
 
+		/* If type_id == SGVariantType::StringList, these two
+		   constructors treat '\n' characters in @param s as
+		   string separators, and split @param s into list of
+		   strings accordingly. */
 		SGVariant(const QString & s,          SGVariantType type_id = SGVariantType::String);
 		SGVariant(const char * s,             SGVariantType type_id = SGVariantType::String);
+
 		SGVariant(bool b,                     SGVariantType type_id = SGVariantType::Boolean);
 		SGVariant(int r, int g, int b, int a, SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QColor & color,       SGVariantType type_id = SGVariantType::Color);
@@ -137,6 +142,8 @@ namespace SlavGPS {
 		SGVariant & operator=(const SGVariant & other);
 
 		bool is_valid(void) const { return this->type_id != SGVariantType::Empty; }
+
+		static bool unit_tests(void);
 
 		SGVariantType type_id;
 

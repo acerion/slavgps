@@ -136,7 +136,23 @@ public:
 	void handle_layer_begin(const char * line, GisViewport * gisview);
 	void handle_layer_end(const char * line, GisViewport * gisview);
 	void handle_layer_data_begin(const QString & dirpath);
-	void handle_layer_parameters(const char * line, size_t line_len);
+
+	/**
+	   @brief Handle a single layer parameter contained in given @param line
+	*/
+	void handle_layer_parameter(const char * line, size_t line_len);
+
+	/**
+	   @brief Save layer's "string list" parameter(s) to the layer
+
+	   During the reading of layer's parameters, we have been
+	   treating string lists in a special way: we didn't save them
+	   immediately to the layer, but have been accumulating the
+	   members of "string list" parameter(s). This function saves
+	   all such lists (there can be more than one per layer) into
+	   the layer.
+	*/
+	void push_string_lists_to_layer(Layer * layer);
 
 	sg_ret read_header(Layer * top_layer, GisViewport * gisview, LatLon & lat_lon);
 
@@ -146,7 +162,16 @@ public:
 
 	size_t line_num = 0;
 
-	QHash<param_id_t, QStringList> string_lists; /* Parameter id -> value of parameter (value of parameter is of type QStringList). */
+	/*
+	  Parameter id -> value of parameter (value of parameter is of type QStringList).
+
+	  For now only DEM Layer has a parameter of type StringList,
+	  and it's only one such parameter (list of SRTM files). But
+	  let's be prepared to support layer types that have multiple
+	  parameters of type StringList, and let's use hash map for
+	  this.
+	*/
+	QHash<param_id_t, QStringList> string_lists;
 
 	sg_ret parse_status = sg_ret::ok;
 
@@ -431,7 +456,12 @@ static void string_list_set_param(param_id_t param_id, const QStringList & strin
 
 
 
-SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
+/**
+   @brief Parse given @param line, create SGVariant from it
+
+   Parse given string, create a SGVariant of type @param type_id.
+*/
+SGVariant value_string_to_sgvariant(const char * line, SGVariantType type_id)
 {
 	SGVariant new_val;
 	switch (type_id) {
@@ -463,8 +493,13 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 		break;
 
 	case SGVariantType::StringList:
-		/* TODO_LATER: review this section that creates string list. */
-		new_val = SGVariant(line);
+		/* StringList layer parameters should not be handled
+		   by this function. Values of such parameters that we
+		   read from file are added as simple strings to
+		   ::string_lists[], and then saved to layer at the
+		   end of processing of a layer. If we get here, it'
+		   an error. */
+		qDebug() << SG_PREFIX_E << "Attempting to process StringList in this function is an error; param value = " << line;
 		break;
 
 	default:
@@ -544,15 +579,9 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 		Layer * parent_layer = this->stack.second;
 		Layer * layer = this->stack.first;
 
-		/* Add any string lists we've accumulated. */
-
-		for (auto iter = this->string_lists.begin(); iter != this->string_lists.end(); iter++) {
-			const param_id_t param_id = iter.key();
-			const QStringList & string_list = iter.value();
-			const SGVariant param_value(string_list);
-
-			layer->set_param_value(param_id, param_value, true);
-		}
+		/* Add to the layer any string lists we've accumulated. */
+		this->push_string_lists_to_layer(layer);
+		/* The layer is read, we don't need to store its StringList parameters. */
 		this->string_lists.clear();
 
 		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->name << this->stack.second->name;
@@ -571,6 +600,27 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 		this->stack.pop();
 	}
 
+	return;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-07
+*/
+void ReadParser::push_string_lists_to_layer(Layer * layer)
+{
+	for (auto iter = this->string_lists.begin(); iter != this->string_lists.end(); iter++) {
+		const param_id_t param_id = iter.key();
+		const QStringList & string_list = iter.value();
+		const SGVariant param_value(string_list);
+
+		qDebug() << SG_PREFIX_I << "Saving StringList to layer" << layer->name << ":";
+		qDebug() << string_list;
+
+		layer->set_param_value(param_id, param_value, true);
+	}
 	return;
 }
 
@@ -621,7 +671,7 @@ void ReadParser::handle_layer_data_begin(const QString & dirpath)
 
 
 
-void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
+void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 {
 	/* The layer, for which we will set parameters. */
 	Layer * layer = this->stack.first;
@@ -639,57 +689,68 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 		}
 	}
 
-	if (name_len == 4 && strncasecmp(line, "name", name_len) == 0) {
+	if (0 == name_len) {
+		this->parse_status = sg_ret::err;
+		fprintf(stderr, "WARNING: Line %zd: Invalid parameter or parameter outside of layer.\n", this->line_num);
+		return;
+	}
 
+	if (name_len == 4 && 0 == strncasecmp(line, "name", name_len)) {
+		/* Generic parameter "name" - every layer has it. */
 		layer->set_name(QString(value_start));
 
-		qDebug() << SG_PREFIX_I << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
+		/* TODO_MAYBE: why do we add layer here, when
+		   processing layer name, and not when opening tag for
+		   layer is discovered? */
+		qDebug() << SG_PREFIX_I << "Calling add_layer(), parent layer =" << parent_layer->name << ", child (this) layer = " << layer->name;
 		parent_layer->add_layer(layer, false);
 
-	} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
+	} else if (name_len == 7 && 0 == strncasecmp(line, "visible", name_len)) {
+		/* Generic parameter "visible" - every layer has it. */
 		layer->set_visible(TEST_BOOLEAN(value_start));
 
-	} else if (name_len != 0) { /* Some other parameter. */
-
-		bool parameter_found = false;
-
-		/* Go though layer params. If len == name_len && starts_with jazz, set it. */
-		/* Also got to check for name and visible. */
-
+	} else { /* Some layer-type-specific parameter. */
 		if (!this->param_specs) {
 			this->parse_status = sg_ret::err;
 			fprintf(stderr, "WARNING: Line %zd: No options for this kind of layer\n", this->line_num);
 			return;
 		}
 
-		/* param_id is an id of parameter in layer's array of ParameterSpecification variables. */
-		for (int param_id = 0; param_id < this->param_specs_count; param_id++) {
+		bool parameter_found = false;
 
-			const ParameterSpecification * param_spec = &this->param_specs[param_id];
+		/* Iterate over layer's parameters array, find
+		   parameter whose name matches name that we have just
+		   read from file. param_id is an id of parameter in
+		   layer's array of ParameterSpecification
+		   variables. */
+		for (param_id_t param_id = 0; param_id < this->param_specs_count; param_id++) {
 
-			if (name_len != param_spec->name.length()) {
+			const ParameterSpecification & param_spec = this->param_specs[param_id];
+
+			if (0 != strncasecmp(line, param_spec.name.toUtf8().constData(), name_len)) {
 				continue;
 			}
-			if (0 != strncasecmp(line, param_spec->name.toUtf8().constData(), name_len)) {
-				continue;
-			}
 
-			if (param_spec->type_id == SGVariantType::StringList) {
+			if (param_spec.type_id == SGVariantType::StringList) {
 
-				/* Add the value to a list, possibly making a new list.
-				   This will be passed to the layer when we read an ~EndLayer. */
+				/* Append current value to list of
+				   strings, possibly making a new
+				   string list. The string list will
+				   be saved to layer later, in
+				   push_string_lists_to_layer(), after
+				   we read an ~EndLayer tag.
 
-				/* Append current value to list of strings.
 				   The list of strings is a value of layer's parameter 'param_id'.
 
 				   [] operator returns modifiable reference to existing value,
 				   or to default-constructed value. In both cases we append
 				   new value (value_start) to list of strings at key 'param_id'. */
+				qDebug() << SG_PREFIX_D << "Appending string" << value_start << "to string-list parameter" << param_spec.name;
 				this->string_lists[param_id] << QString(value_start);
 			} else {
-				const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
+				const SGVariant new_val = value_string_to_sgvariant(value_start, param_spec.type_id);
 
-				qDebug() << SG_PREFIX_D << "Setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
+				qDebug() << SG_PREFIX_D << "Setting value of parameter named" << param_spec.name << "of layer named" << layer->name << ":" << new_val;
 				layer->set_param_value(param_id, new_val, true);
 			}
 			parameter_found = true;
@@ -704,10 +765,6 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 			// this->parse_status = sg_ret::err;
 			fprintf(stderr, "WARNING: Line %zd: Unknown parameter. Line:\n%s\n", this->line_num, line);
 		}
-
-	} else {
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Invalid parameter or parameter outside of layer.\n", this->line_num);
 	}
 
 	return;
@@ -773,7 +830,7 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 			if (!read_parser.stack.first || !read_parser.stack.second) {
 				continue;
 			}
-			read_parser.handle_layer_parameters(line, line_len);
+			read_parser.handle_layer_parameter(line, line_len);
 		}
 		/* could be:
 		   [Layer Type=Bla]
