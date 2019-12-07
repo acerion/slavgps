@@ -729,12 +729,15 @@ ScreenPos ViewportPixmap::central_get_center_screen_pos(void) const
 
 
 /**
-   @reviewed-on tbd
+   @reviewed-on 2019-12-07
 */
 void ViewportPixmap::clear(void)
 {
-	/* TODO_LATER: should we also clear vpixmap and vpixmap_snapshot? */
+	/* This clears ViewportPixmap::vpixmap. */
 	this->painter.eraseRect(0, 0, this->total_width, this->total_height);
+
+	/* This clears ViewportPixmap::vpixmap_snapshot */
+	this->vpixmap_snapshot = this->vpixmap;
 }
 
 

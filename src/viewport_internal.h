@@ -56,7 +56,6 @@ namespace SlavGPS {
 
 	class Window;
 	class Layer;
-	class ViewportPixmap;
 
 
 
