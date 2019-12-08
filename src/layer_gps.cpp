@@ -74,24 +74,13 @@ using namespace SlavGPS;
 
 
 
-enum {
-	GARMIN_P = 0,
-	MAGELLAN_P,
-	DELORME_P,
-	NAVILINK_P,
-	OLD_NUM_PROTOCOLS
-};
-
-
-static WidgetEnumerationData gps_protocols_enum = {
+static WidgetStringEnumerationData gps_protocols_enum = {
 	{
-		SGLabelID("garmin",   GARMIN_P),
-		SGLabelID("magellan", MAGELLAN_P),
-		SGLabelID("delbin",   DELORME_P),
-		SGLabelID("navilink", NAVILINK_P)
+		"garmin",
+		"magellan",
+		"delbin",
+		"navilink",
 	},
-	SGVariantType::String, /* This object is a list of strings (the strings are primary unique values) with associated integers. */
-	GARMIN_P,
 	"garmin",
 };
 
@@ -111,16 +100,14 @@ static std::vector<SGLabelID> trw_names = {
 
 
 /* TODO_HARD: this list should be generated and updated automatically. */
-static WidgetEnumerationData ports_enum = {
+static WidgetStringEnumerationData ports_enum = {
 	{
-		SGLabelID("/dev/ttyS0",   1),
-		SGLabelID("/dev/ttyS1",   2),
-		SGLabelID("/dev/ttyUSB0", 3),
-		SGLabelID("/dev/ttyUSB1", 4),
-		SGLabelID("usb:",         5),
+		"/dev/ttyS0",
+		"/dev/ttyS1",
+		"/dev/ttyUSB0",
+		"/dev/ttyUSB1",
+		"usb:",
 	},
-	SGVariantType::String, /* This object is a list of strings (the strings are primary unique values) with associated integer IDs. */
-	0,
 	"/dev/ttyUSB0"
 };
 
@@ -139,15 +126,13 @@ enum {
 
 #if REALTIME_GPS_TRACKING_ENABLED
 
-static WidgetEnumerationData vehicle_position_enum = {
+static WidgetIntEnumerationData vehicle_position_enum = {
 	{
 		SGLabelID(QObject::tr("Keep vehicle at center"), (int) VehiclePosition::Centered),
 		SGLabelID(QObject::tr("Keep vehicle on screen"), (int) VehiclePosition::OnScreen),
 		SGLabelID(QObject::tr("Disable"),                (int) VehiclePosition::None)
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) VehiclePosition::OnScreen,
-	""
 };
 
 static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
@@ -192,8 +177,8 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	   gps_layer_param_specs thus to give the protocols list some
 	   initial values use a list with all items:
 	   gps_protocols_enum. */
-	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::Enumeration,   &gps_protocols_enum,        NULL,                        "" },
-	{ PARAM_PORT,                       "gps_port",                  SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("Serial Port:"),                      WidgetType::Enumeration,   &ports_enum,                NULL,                        "" },
+	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::StringEnumeration,   &gps_protocols_enum,        NULL,                        "" },
+	{ PARAM_PORT,                       "gps_port",                  SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("Serial Port:"),                      WidgetType::StringEnumeration,   &ports_enum,                NULL,                        "" },
 	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Tracks:"),                  WidgetType::CheckButton,   NULL,                       sg_variant_true,             "" },
 	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Upload Tracks:"),                    WidgetType::CheckButton,   NULL,                       sg_variant_true,             "" },
 	{ PARAM_DOWNLOAD_ROUTES,            "gps_download_routes",       SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Routes:"),                  WidgetType::CheckButton,   NULL,                       sg_variant_true,             "" },
@@ -203,7 +188,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 #if REALTIME_GPS_TRACKING_ENABLED
 	{ PARAM_REALTIME_REC,               "record_tracking",           SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Recording tracks"),                  WidgetType::CheckButton,   NULL,                       sg_variant_true,             "" },
 	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Jump to current position on start"), WidgetType::CheckButton,   NULL,                       sg_variant_false,            "" },
-	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::Enumeration,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::Enumeration,   &vehicle_position_enum,     NULL,                        "" },
+	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::Enumeration,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::IntEnumeration,   &vehicle_position_enum,     NULL,                        "" },
 	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CheckButton,   NULL,                       sg_variant_true,             QObject::tr("Display information in the statusbar on GPS updates") },
 	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::Entry,         NULL,                       gpsd_host_default,           "" },
 	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::Int,          PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::SpinBoxInt,    &gpsd_port_scale,           NULL,                        "" },
@@ -272,7 +257,7 @@ void LayerGPS::init(void)
 		/* Should be using 'label' property but use
 		   'identifier' for now thus don't need to mess around
 		   converting 'label' to 'identifier' later on. */
-		gps_protocols_enum.values.push_back(SGLabelID((*iter)->identifier, i));
+		gps_protocols_enum.values.push_back((*iter)->identifier);
 		qDebug() << SG_PREFIX_I << "New protocol:" << (*iter)->identifier;
 	}
 }
@@ -408,24 +393,10 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 	SGVariant rv;
 	switch (param_id) {
 	case PARAM_PROTOCOL:
-		{
-			int id;
-			if (gps_protocols_enum.find_id_value(this->upload.gps_protocol, id)) {
-				rv = SGVariant(id, gps_layer_param_specs[PARAM_PROTOCOL].type_id);
-			} else {
-				qDebug() << SG_PREFIX_E << "Failed to find ID for gps protocol" << this->upload.gps_protocol;
-			}
-		}
+		rv = SGVariant(this->upload.gps_protocol, gps_layer_param_specs[PARAM_PROTOCOL].type_id);
 		break;
 	case PARAM_PORT:
-		{
-			int id;
-			if (ports_enum.find_id_value(this->upload.serial_port, id)) {
-				rv = SGVariant(id, gps_layer_param_specs[PARAM_PORT].type_id);
-			} else {
-				qDebug() << SG_PREFIX_E << "Failed to find ID for serial port" << this->upload.serial_port;
-			}
-		}
+		rv = SGVariant(this->upload.serial_port, gps_layer_param_specs[PARAM_PORT].type_id);
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
 		rv = SGVariant(this->download.do_tracks);

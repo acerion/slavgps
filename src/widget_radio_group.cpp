@@ -50,10 +50,8 @@ using namespace SlavGPS;
 
 
 
-RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetEnumerationData & items, QWidget * parent_widget) : QGroupBox(parent_widget)
+RadioGroupWidget::RadioGroupWidget(const QString & title_, const WidgetIntEnumerationData & items, QWidget * parent_widget) : QGroupBox(parent_widget)
 {
-	assert(items.primary_type == SGVariantType::Int);
-
 	this->vbox = new QVBoxLayout;
 	this->group = new QButtonGroup;
 

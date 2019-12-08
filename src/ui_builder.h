@@ -84,7 +84,29 @@ namespace SlavGPS {
 		FileList,
 		DateTime,
 		DurationType,   /* SGVariantType::DurationType. */
-		Enumeration,    /* SGVariantType::Enumeration. */
+
+		/*
+		  For list of unique strings. These strings can be
+		  directly shown to user in the widget.
+		  Examples:
+		  - list of serial line devices in /dev/,
+		  - list of Routing engine names or identifiers,
+		  - list of gps device protocols.
+		*/
+		StringEnumeration,    /* Corresponding variant type: SGVariantType::String. */
+
+		/*
+		  For list of unique integers. Such integers can't be
+		  directly shown to user (because integers themselves
+		  aren't user-friendly), and have to be accompanied by
+		  user-friendly text labels.
+
+		  Examples:
+		  - list of Speed units,
+		  - list of Degrees formats,
+		  - list of shapes of Waypoint symbols.
+		*/
+		IntEnumeration,    /* Corresponding variant type: SGVariantType::Enumeration. */
 
 		Latitude,
 		Longitude,
@@ -191,43 +213,20 @@ namespace SlavGPS {
 
 
 
-	class WidgetEnumerationData {
+	/* Data type for values used to create WidgetType::IntEnumeration. */
+	class WidgetIntEnumerationData {
 	public:
-
-		/**
-		   Find string that matches given @param id
-
-		   Remember that strings may be translated
-		   (localized), so this method may have sense only for
-		   non-localizable enumerations.
-		*/
-		bool find_label_value(int id, QString & label) const;
-
-		/**
-		   @brief Find ID that matches given @param string
-
-		   Remember that strings may be translated
-		   (localized), so this method may have sense only for
-		   non-localizable enumerations.
-		*/
-		bool find_id_value(const QString & label, int & id) const;
-
 		std::vector<SGLabelID> values;
-
-		/*
-		  Primary type specifies whether this data holds list
-		  of integer enumerations with associated strings, or
-		  a list of strings with associated IDs.
-
-		  Most of time this will be the former
-		  (SGVariantType::Enumeration), and ::default_id
-		  should be used. But for e.g. gps protocols this will
-		  be the latter (SGVariantType::String), and
-		  ::default_string should be used.
-		*/
-		SGVariantType primary_type;
-
 		int default_id; /* This shall be forever 'int' type. This is not an array index, but enumeration: one of enumerations in ::values. */
+	};
+
+
+
+
+	/* Data type for values used to create WidgetType::StringEnumeration. */
+	class WidgetStringEnumerationData {
+	public:
+		std::vector<QString> values;
 		QString default_string;
 	};
 

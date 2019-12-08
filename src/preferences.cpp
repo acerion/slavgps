@@ -65,61 +65,51 @@ using namespace SlavGPS;
 
 
 
-static WidgetEnumerationData degree_format_enum = {
+static WidgetIntEnumerationData degree_format_enum = {
 	{
 		SGLabelID(QObject::tr("DDD"), (int) DegreeFormat::DDD),
 		SGLabelID(QObject::tr("DMM"), (int) DegreeFormat::DMM),
 		SGLabelID(QObject::tr("DMS"), (int) DegreeFormat::DMS),
 		SGLabelID(QObject::tr("Raw"), (int) DegreeFormat::Raw),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) DegreeFormat::DDD,
-	QString("")
 };
 
-static WidgetEnumerationData unit_distance_enum = {
+static WidgetIntEnumerationData unit_distance_enum = {
 	{
 		SGLabelID(QObject::tr("Kilometres"),     (int) DistanceUnit::Kilometres),
 		SGLabelID(QObject::tr("Miles"),          (int) DistanceUnit::Miles),
 		SGLabelID(QObject::tr("Nautical Miles"), (int) DistanceUnit::NauticalMiles),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) DistanceUnit::Kilometres,
-	""
 };
 
-static WidgetEnumerationData unit_speed_enum = {
+static WidgetIntEnumerationData unit_speed_enum = {
 	{
 		SGLabelID(QObject::tr("km/h"),  (int) SpeedUnit::KilometresPerHour),
 		SGLabelID(QObject::tr("mph"),   (int) SpeedUnit::MilesPerHour),
 		SGLabelID(QObject::tr("m/s"),   (int) SpeedUnit::MetresPerSecond),
 		SGLabelID(QObject::tr("knots"), (int) SpeedUnit::Knots)
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) SpeedUnit::KilometresPerHour,
-	""
 };
 
-static WidgetEnumerationData unit_height_enum = {
+static WidgetIntEnumerationData unit_height_enum = {
 	{
 		SGLabelID(QObject::tr("Metres"), (int) HeightUnit::Metres),
 		SGLabelID(QObject::tr("Feet"),   (int) HeightUnit::Feet),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) HeightUnit::Metres,
-	""
 };
 
 
-static WidgetEnumerationData time_ref_frame_enum = {
+static WidgetIntEnumerationData time_ref_frame_enum = {
 	{
 		SGLabelID(QObject::tr("Locale"), (int) SGTimeReference::Locale),
 		SGLabelID(QObject::tr("World"),  (int) SGTimeReference::World),
 		SGLabelID(QObject::tr("UTC"),    (int) SGTimeReference::UTC),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) SGTimeReference::Locale,
-	""
 };
 
 
@@ -133,55 +123,49 @@ static SGVariant hardcoded_latitude_fn(void) { return hardcoded_latitude_value; 
 static SGVariant hardcoded_longitude_fn(void) { return hardcoded_longitude_value; }
 
 static ParameterSpecification general_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::Enumeration,     &degree_format_enum,    NULL, "" },
-	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Distance units:"),           WidgetType::Enumeration,     &unit_distance_enum,    NULL, "" },
-	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::Enumeration,     &unit_speed_enum,       NULL, "" },
-	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::Enumeration,     &unit_height_enum,      NULL, "" },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::IntEnumeration,     &degree_format_enum,    NULL, "" },
+	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Distance units:"),           WidgetType::IntEnumeration,     &unit_distance_enum,    NULL, "" },
+	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::IntEnumeration,     &unit_speed_enum,       NULL, "" },
+	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::IntEnumeration,     &unit_height_enum,      NULL, "" },
 	{ 4, PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons", SGVariantType::Boolean,         PARAMETER_GROUP_GENERIC, QObject::tr("Use large waypoint icons:"), WidgetType::CheckButton,     NULL,                   NULL, "" },
 	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::Latitude,        PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::Latitude,        NULL,                   hardcoded_latitude_fn, "" },
 	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::Longitude,       PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::Longitude,       NULL,                   hardcoded_longitude_fn, "" },
-	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::Enumeration,     &time_ref_frame_enum,   NULL, QObject::tr("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
+	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::IntEnumeration,     &time_ref_frame_enum,   NULL, QObject::tr("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
 	{ 8,                               "",                         SGVariantType::Empty,           PARAMETER_GROUP_GENERIC, "",                                       WidgetType::None,            NULL,                   NULL, "" },
 };
 
 /* External/Export Options */
 
-static WidgetEnumerationData kml_export_unit_enum = {
+static WidgetIntEnumerationData kml_export_unit_enum = {
 	{
 		SGLabelID(QObject::tr("Metric"),   0),
 		SGLabelID(QObject::tr("Statute"),  1),
 		SGLabelID(QObject::tr("Nautical"), 2),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	0,
-	""
 };
 
-static WidgetEnumerationData gpx_export_trk_sort_enum = {
+static WidgetIntEnumerationData gpx_export_trk_sort_enum = {
 	{
 		SGLabelID(QObject::tr("Alphabetical"), 0),
 		SGLabelID(QObject::tr("Time"),         1),
 		SGLabelID(QObject::tr("Creation"),     2),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	0,
-	""
 };
 
-static WidgetEnumerationData gpx_export_wpt_symbols_enum = {
+static WidgetIntEnumerationData gpx_export_wpt_symbols_enum = {
 	{
 		SGLabelID(QObject::tr("Title Case"), 0),
 		SGLabelID(QObject::tr("Lowercase"),  1),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	0,
-	""
 };
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("KML File Export Units:"),  WidgetType::Enumeration,   &kml_export_unit_enum,        NULL, "" },
-	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Track Order:"),        WidgetType::Enumeration,   &gpx_export_trk_sort_enum,    NULL, "" },
-	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Waypoint Symbols:"),   WidgetType::Enumeration,   &gpx_export_wpt_symbols_enum, NULL, QObject::tr("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
+	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("KML File Export Units:"),  WidgetType::IntEnumeration,   &kml_export_unit_enum,        NULL, "" },
+	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Track Order:"),        WidgetType::IntEnumeration,   &gpx_export_trk_sort_enum,    NULL, "" },
+	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Waypoint Symbols:"),   WidgetType::IntEnumeration,   &gpx_export_wpt_symbols_enum, NULL, QObject::tr("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
 	{ 3,                          "",                         SGVariantType::Empty,         PARAMETER_GROUP_GENERIC,  "",                                     WidgetType::None,          NULL,                         NULL, "" }, /* Guard. */
 };
 
@@ -198,42 +182,38 @@ static ParameterSpecification io_prefs_external_gpx[] = {
 	{ 2,                          "",               SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                                     WidgetType::None,         NULL, NULL, "" }, /* Guard. */
 };
 
-static WidgetEnumerationData vik_fileref_enum = {
+static WidgetIntEnumerationData vik_fileref_enum = {
 	{
 		SGLabelID(QObject::tr("Absolute"), (int) FilePathFormat::Absolute),
 		SGLabelID(QObject::tr("Relative"), (int) FilePathFormat::Relative),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	(int) FilePathFormat::Absolute,
-	""
 };
 
 static ParameterScale<int> scale_recent_files(-1, 25, SGVariant(10, SGVariantType::Int), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
-	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::Enumeration,  &vik_fileref_enum,    NULL, QObject::tr("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
+	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::IntEnumeration,  &vik_fileref_enum,    NULL, QObject::tr("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
 	{ 1, PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name", SGVariantType::Boolean,       PARAMETER_GROUP_GENERIC, QObject::tr("Ask for Name before Track Creation:"), WidgetType::CheckButton,  NULL,                 NULL, "" },
 	{ 2, PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip",      SGVariantType::Boolean,       PARAMETER_GROUP_GENERIC, QObject::tr("Show Tooltip during Track Creation:"), WidgetType::CheckButton,  NULL,                 NULL, "" },
 	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::Int,           PARAMETER_GROUP_GENERIC, QObject::tr("The number of recent files:"),         WidgetType::SpinBoxInt,   &scale_recent_files,  NULL, QObject::tr("Only applies to new windows or on application restart. -1 means all available files.") },
 	{ 4,                                "",                          SGVariantType::Empty,         PARAMETER_GROUP_GENERIC, "",                                                 WidgetType::None,         NULL,                 NULL, "" },  /* Guard. */
 };
 
-static WidgetEnumerationData startup_method_enum = {
+static WidgetIntEnumerationData startup_method_enum = {
 	{
 		SGLabelID(QObject::tr("Home Location"),  0),
 		SGLabelID(QObject::tr("Last Location"),  1),
 		SGLabelID(QObject::tr("Specified File"), 2),
 		SGLabelID(QObject::tr("Auto Location"),  3),
 	},
-	SGVariantType::Enumeration, /* This object is a list of integer IDs with associated strings. */
 	0,
-	""
 };
 
 static ParameterSpecification startup_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_STARTUP "restore_window_state",  SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Restore Window Setup:"),    WidgetType::CheckButton,   NULL,                    NULL, QObject::tr("Restore window size and layout") },
 	{ 1, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Add a Default Map Layer:"), WidgetType::CheckButton,   NULL,                    NULL, QObject::tr("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
-	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Startup Method:"),          WidgetType::Enumeration,   &startup_method_enum,    NULL, "" },
+	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Startup Method:"),          WidgetType::IntEnumeration,   &startup_method_enum,    NULL, "" },
 	{ 3, PREFERENCES_NAMESPACE_STARTUP "startup_file",          SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Startup File:"),            WidgetType::FileSelector,  NULL,                    NULL, QObject::tr("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
 	{ 4, PREFERENCES_NAMESPACE_STARTUP "check_version",         SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Check For New Version:"),   WidgetType::CheckButton,   NULL,                    NULL, QObject::tr("Periodically check to see if a new version of Viking is available") },
 	{ 5,                               "",                      SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                      WidgetType::None,          NULL,                    NULL, "" }, /* Guard. */

@@ -52,11 +52,9 @@ using namespace SlavGPS;
 
 
 static EnginesContainer routing_engines_container;   /* Container for all registered routing engines. */
-static WidgetEnumerationData routing_engines_enum = {
+static WidgetStringEnumerationData routing_engines_enum = {
 	{
 	},
-	SGVariantType::String, /* This object is a list of strings with associated integers. Routing engines are identified by string ID rather than integer ID. */
-	0,
 	""
 };
 
@@ -64,7 +62,7 @@ static WidgetEnumerationData routing_engines_enum = {
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::Enumeration, &routing_engines_enum, NULL, "" },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::StringEnumeration, &routing_engines_enum, NULL, "" },
 };
 
 
@@ -199,8 +197,7 @@ void Routing::register_engine(RoutingEngine * engine)
 	*/
 	routing_engines_enum.values.clear();
 	for (auto iter = routing_engines_container.begin(); iter != routing_engines_container.end(); iter++) {
-		SGLabelID val(iter->first->get_name(), iter->second); /* Engine + integer ID */
-		routing_engines_enum.values.push_back(val);
+		routing_engines_enum.values.push_back(iter->first->get_name());
 	}
 }
 

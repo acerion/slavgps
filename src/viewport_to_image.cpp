@@ -215,7 +215,7 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 
 
 
-	WidgetEnumerationData file_format_items;
+	WidgetIntEnumerationData file_format_items;
 	if (save_mode == ViewportToImage::SaveMode::FileKMZ) {
 		/* Only one file format. */
 		file_format_items.values.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
@@ -224,7 +224,6 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 		file_format_items.values.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	}
 	file_format_items.default_id = (int) file_format;
-	file_format_items.primary_type = SGVariantType::Int;
 	this->output_format_radios = new RadioGroupWidget(tr("Output format"), file_format_items, this);
 
 

@@ -52,7 +52,7 @@ namespace SlavGPS {
 	class RadioGroupWidget : public QGroupBox {
 		Q_OBJECT
 	public:
-		RadioGroupWidget(const QString & title, const WidgetEnumerationData & items, QWidget * parent = NULL);
+		RadioGroupWidget(const QString & title, const WidgetIntEnumerationData & items, QWidget * parent = NULL);
 		~RadioGroupWidget();
 
 		/*
