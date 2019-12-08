@@ -218,7 +218,7 @@ int main(int argc, char ** argv)
 	LayerMap::init();
 	MapCache::init();
 	Background::init();
-	Routing::prefs_init();
+	Routing::init();
 
 	/*
 	  Second stage initialization.
@@ -286,10 +286,10 @@ int main(int argc, char ** argv)
 	ApplicationState::uninit();
 	modules_uninit();
 	ExternalTools::uninit();
-
 	Download::uninit();
-
 	TZLookup::uninit();
+	Routing::uninit();
+
 
 	/* Clean up any temporary files. */
 	Util::remove_all_in_deletion_list();

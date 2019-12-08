@@ -55,7 +55,7 @@ using namespace SlavGPS;
 
 
 /* Memory of previous selection */
-static QString g_previous_engine_id;
+static QString g_previous_engine_name; /* Name (user-friendly label) of routing engine. */
 static QString last_from_str;
 static QString last_to_str;
 
@@ -110,7 +110,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 {
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(tr("Engine:"));
-	this->engines_combo = Routing::create_engines_combo(routing_engine_supports_refine, g_previous_engine_id);
+	this->engines_combo = Routing::create_engines_combo(routing_engine_supports_refine, g_previous_engine_name);
 
 	/* From and To entries. */
 	QLabel * from_label = new QLabel(tr("From:"));
@@ -146,10 +146,10 @@ AcquireOptions * DataSourceRoutingDialog::create_acquire_options(AcquireContext 
 	const QString to = this->to_entry.text();
 
 	/* Retrieve engine. */
-	g_previous_engine_id = this->engines_combo->currentData().toString();
-	const RoutingEngine * engine = Routing::get_engine_by_id(g_previous_engine_id);
+	g_previous_engine_name = this->engines_combo->currentText();
+	const RoutingEngine * engine = Routing::get_engine_by_name(g_previous_engine_name);
 	if (nullptr == engine) {
-		qDebug() << SG_PREFIX_E << "Failed to get routing engine by id" << g_previous_engine_id;
+		qDebug() << SG_PREFIX_E << "Failed to get routing engine by id" << g_previous_engine_name;
 		return nullptr; /* FIXME: this needs to be handled in caller. */
 	}
 

@@ -50,8 +50,13 @@ using namespace SlavGPS;
 
 
 
+/*
+  Viking presents RoutingEngine::m_name in combo list, and saves
+  RoutingEngine::m_id to config file.
 
-static EnginesContainer routing_engines_container;   /* Container for all registered routing engines. */
+  Therefore routing_engines_enum should contain engine names.
+*/
+static EnginesContainer registered_routing_engines;
 static WidgetStringEnumerationData routing_engines_enum = {
 	{
 	},
@@ -68,13 +73,21 @@ static ParameterSpecification prefs[] = {
 
 
 
-/**
-   Initialize the preferences of the routing feature.
-*/
-void Routing::prefs_init(void)
+void Routing::init(void)
 {
 	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_ROUTING, QObject::tr("Routing"));
-	Preferences::register_parameter_instance(prefs[0], SGVariant("", prefs[0].type_id));
+	Preferences::register_parameter_instance(prefs[0], SGVariant(routing_engines_enum.default_string, prefs[0].type_id));
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-08
+*/
+void Routing::uninit(void)
+{
+	Routing::unregister_all_engines();
 }
 
 
@@ -86,8 +99,25 @@ void Routing::prefs_init(void)
 static EnginesContainer::iterator search_by_string_id(EnginesContainer & engines, const QString & string_id)
 {
 	for (auto iter = engines.begin(); iter != engines.end(); iter++) {
-		RoutingEngine * engine = iter->first;
+		RoutingEngine * engine = *iter;
 		if (QString(engine->get_id()) == string_id) {
+			return iter;
+		}
+	}
+	return engines.end();
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-08
+*/
+static EnginesContainer::iterator search_by_name(EnginesContainer & engines, const QString & name)
+{
+	for (auto iter = engines.begin(); iter != engines.end(); iter++) {
+		RoutingEngine * engine = *iter;
+		if (QString(engine->get_name()) == name) {
 			return iter;
 		}
 	}
@@ -103,18 +133,18 @@ static EnginesContainer::iterator search_by_string_id(EnginesContainer & engines
 EnginesContainer::iterator Routing::get_default_engine_iter(void)
 {
 	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING "default").val_string;
-	EnginesContainer::iterator iter = search_by_string_id(routing_engines_container, id);
-	if (iter != routing_engines_container.end()) {
+	EnginesContainer::iterator iter = search_by_string_id(registered_routing_engines, id);
+	if (iter != registered_routing_engines.end()) {
 		qDebug() << SG_PREFIX_E << "Can't find engine with id" << id;
 		return iter;
 	}
 
 	/* Given ID was not found, but try to fall back to first engine on a list. */
-	if (routing_engines_container.size()) {
-		return routing_engines_container.begin();
+	if (registered_routing_engines.size()) {
+		return registered_routing_engines.begin();
 	}
 
-	return routing_engines_container.end();
+	return registered_routing_engines.end();
 }
 
 
@@ -126,10 +156,10 @@ EnginesContainer::iterator Routing::get_default_engine_iter(void)
 bool Routing::get_default_engine_name(QString & engine_name)
 {
 	auto iter = Routing::get_default_engine_iter();
-	if (iter == routing_engines_container.end()) {
+	if (iter == registered_routing_engines.end()) {
 		return false;
 	} else {
-		engine_name = iter->first->get_name();
+		engine_name = (*iter)->get_name();
 		return true;
 	}
 }
@@ -141,12 +171,12 @@ bool Routing::find_route_with_default_engine(LayerTRW * trw, const LatLon & star
 {
 	/* The engine. */
 	auto iter = Routing::get_default_engine_iter();
-	if (iter == routing_engines_container.end()) {
+	if (iter == registered_routing_engines.end()) {
 		qDebug() << SG_PREFIX_N << "No routing engine found";
 		return false;
 	} else {
-		qDebug() << SG_PREFIX_N << "Will try to find route with routing engine" << iter->first->get_name();
-		return iter->first->find_route(trw, start, end);
+		qDebug() << SG_PREFIX_N << "Will try to find route with routing engine" << (*iter)->get_name();
+		return (*iter)->find_route(trw, start, end);
 	}
 }
 
@@ -158,27 +188,23 @@ bool Routing::find_route_with_default_engine(LayerTRW * trw, const LatLon & star
 */
 void Routing::register_engine(RoutingEngine * engine)
 {
-	const QString name = engine->get_name();
-	const QString string_id = engine->get_id();
+	const QString new_string_id = engine->get_id();
 
-	static int engine_integer_id = 0;
-
-	/* Check if string_id already exists in list. */
-	auto engine_iter = search_by_string_id(routing_engines_container, string_id);
-	if (engine_iter != routing_engines_container.end()) {
-		qDebug() << SG_PREFIX_I << "Routing engine" << string_id << "already exists: will update the entry";
+	/* Check if new_string_id already exists in list. */
+	auto engine_iter = search_by_string_id(registered_routing_engines, new_string_id);
+	if (engine_iter != registered_routing_engines.end()) {
+		qDebug() << SG_PREFIX_I << "Routing engine" << new_string_id << "already exists: will update the entry";
+		qDebug() << SG_PREFIX_I << "Replacing engine" << (*engine_iter)->get_name() << "with" << engine->get_name();
 
 		/* Replace old routing engine definition with new
 		   one. This may be used to replace old hardcoded
 		   definition (e.g. with old/invalid parameters) with
 		   new, updated definition from external file. */
-		delete engine_iter->first;
-		engine_iter->first = engine;
+		delete *engine_iter;
+		*engine_iter = engine;
 	} else {
-		qDebug() << SG_PREFIX_I << "Registering new engine" << string_id;
-		std::pair<RoutingEngine *, int> new_pair = std::make_pair(engine, engine_integer_id);
-		engine_integer_id++;
-		routing_engines_container.push_back(new_pair);
+		qDebug() << SG_PREFIX_I << "Registering new engine" << new_string_id;
+		registered_routing_engines.push_back(engine);
 	}
 
 	/*
@@ -191,13 +217,9 @@ void Routing::register_engine(RoutingEngine * engine)
 	  after all engines have been registered. But how to recognize
 	  that moment?
 	*/
-	/*
-	  TODO_LATER: verify that constructed list of routers is
-	  visible as a combo list in dialog.
-	*/
 	routing_engines_enum.values.clear();
-	for (auto iter = routing_engines_container.begin(); iter != routing_engines_container.end(); iter++) {
-		routing_engines_enum.values.push_back(iter->first->get_name());
+	for (auto iter = registered_routing_engines.begin(); iter != registered_routing_engines.end(); iter++) {
+		routing_engines_enum.values.push_back((*iter)->get_name());
 	}
 }
 
@@ -209,8 +231,8 @@ void Routing::register_engine(RoutingEngine * engine)
 */
 void Routing::unregister_all_engines(void)
 {
-	for (auto iter = routing_engines_container.begin(); iter != routing_engines_container.end(); iter++) {
-		delete iter->first;
+	for (auto iter = registered_routing_engines.begin(); iter != registered_routing_engines.end(); iter++) {
+		delete *iter;
 	}
 }
 
@@ -226,8 +248,8 @@ QComboBox * Routing::create_engines_combo(RoutingEnginePredicate predicate, cons
 	int current_index = -1;
 	int i = 0;
 
-	for (auto iter = routing_engines_container.begin(); iter != routing_engines_container.end(); iter++) {
-		const RoutingEngine * engine = iter->first;
+	for (auto iter = registered_routing_engines.begin(); iter != registered_routing_engines.end(); iter++) {
+		const RoutingEngine * engine = *iter;
 
 		/* Only register engine fulfilling expected behavior.
 		   No predicate means to put in combo all engines. */
@@ -252,13 +274,13 @@ QComboBox * Routing::create_engines_combo(RoutingEnginePredicate predicate, cons
 
 
 /**
-   @reviewed-on 2019-12-07
+   @reviewed-on 2019-12-08
 */
-const RoutingEngine * Routing::get_engine_by_id(const QString & string_id)
+const RoutingEngine * Routing::get_engine_by_name(const QString & name)
 {
-	EnginesContainer::iterator iter = search_by_string_id(routing_engines_container, string_id);
-	if (iter != routing_engines_container.end()) {
-		return iter->first;
+	EnginesContainer::iterator iter = search_by_name(registered_routing_engines, name);
+	if (iter != registered_routing_engines.end()) {
+		return *iter;
 	} else {
 		return nullptr;
 	}

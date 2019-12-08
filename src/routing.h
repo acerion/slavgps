@@ -25,7 +25,6 @@
 
 
 #include <vector>
-#include <utility>
 
 
 
@@ -52,21 +51,25 @@ namespace SlavGPS {
 
 
 	typedef bool (* RoutingEnginePredicate)(const RoutingEngine * engine);
-	typedef std::vector<std::pair<RoutingEngine *, int>> EnginesContainer; /* Engine + unique integer ID */
+	typedef std::vector<RoutingEngine *> EnginesContainer;
 
 
 
 	class Routing {
 	public:
+		static void init(void);
+		static void uninit(void);
+
 		/**
 		   @brief Register a new routing engine
+
+		   Ownership of @param engine is transferred to
+		   Routing module. TODO_LATER: use proper pointer type
+		   to indicate transfer of ownership.
 
 		   @engine: new routing engine to register
 		*/
 		static void register_engine(RoutingEngine * engine);
-
-		static void unregister_all_engines(void); /* TODO_LATER: this function is not called anywhere. */
-		static void prefs_init(void);
 
 		/**
 		   @brief Get the default engine's name, based on user's preferences
@@ -99,17 +102,18 @@ namespace SlavGPS {
 		static QComboBox * create_engines_combo(RoutingEnginePredicate predicate, const QString & default_engine_id);
 
 		/**
-		   @brief Get routing engine by its ID
+		   @brief Get routing engine by its name (user-friendly label)
 
-		   @param string_id - id of engine to look up
+		   @param name - name of engine to look up
 
-		   @return RoutingEngine object with given ID on success
+		   @return RoutingEngine object with given name on success
 		   @return nullptr on failure
 		*/
-		static const RoutingEngine * get_engine_by_id(const QString & string_id);
+		static const RoutingEngine * get_engine_by_name(const QString & name);
 
 	private:
 		static EnginesContainer::iterator get_default_engine_iter(void);
+		static void unregister_all_engines(void);
 	};
 
 

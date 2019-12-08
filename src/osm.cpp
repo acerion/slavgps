@@ -165,8 +165,39 @@ void OSM::init(void)
 	osrm->url_start_ll_fmt = "&loc=%s,%s";
 	osrm->url_stop_ll_fmt = "&loc=%s,%s";
 	osrm->url_via_ll_fmt = "&loc=%s,%s";
-
 	Routing::register_engine(osrm);
+
+#if 1
+	/*
+	  Test routing engine used to verify that Routing code
+	  correctly replaces one entry with another using the same
+	  "id". This can be used to overwrite hardcoded engine with
+	  newer definition coming from config file.
+
+	  Notice that this engine is using the same "id" as the engine
+	  defined above, but is using different name. It is loaded
+	  later, so it should overwrite (replace) the previous engine.
+	*/
+	RoutingEngineWeb * osrm_newer = new RoutingEngineWeb("osrm", "OSRM v21", "gpx");
+	osrm_newer->url_base = "http://router.project-osrm.org/viaroute?output=gpx";
+	osrm_newer->url_start_ll_fmt = "&loc=%s,%s";
+	osrm_newer->url_stop_ll_fmt = "&loc=%s,%s";
+	osrm_newer->url_via_ll_fmt = "&loc=%s,%s";
+	Routing::register_engine(osrm_newer);
+#endif
+
+#if 1
+	/*
+	  Test routing engine used to verify that Routing code
+	  correctly handles more than one engine type.
+	*/
+	RoutingEngineWeb * kamil_engine = new RoutingEngineWeb("kre", "KRE v1", "gpx");
+	kamil_engine->url_base = "http://router.project-osrm.org/viaroute?output=gpx";
+	kamil_engine->url_start_ll_fmt = "&loc=%s,%s";
+	kamil_engine->url_stop_ll_fmt = "&loc=%s,%s";
+	kamil_engine->url_via_ll_fmt = "&loc=%s,%s";
+	Routing::register_engine(kamil_engine);
+#endif
 }
 
 

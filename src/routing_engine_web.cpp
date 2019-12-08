@@ -314,6 +314,8 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk) const
 
 bool RoutingEngineWeb::refine_route(LayerTRW * trw, Track * trk) const
 {
+	qDebug() << SG_PREFIX_I << "Using" << this->m_name << "routing engine to refine route";
+
 	AcquireOptions babel_options(AcquireOptions::Mode::FromURL);
 	babel_options.source_url = this->get_url_for_track(trk);
 	babel_options.input_data_format = this->get_format();

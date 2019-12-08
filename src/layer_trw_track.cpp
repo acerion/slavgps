@@ -3012,7 +3012,7 @@ void Track::track_use_with_bfilter_cb(void)
 */
 void Track::refine_route_cb(void)
 {
-	static QString previous_engine_id;
+	static QString previous_engine_name;
 
 	if (this->empty()) {
 		return;
@@ -3036,7 +3036,7 @@ void Track::refine_route_cb(void)
 
 	QLabel * label = new QLabel(QObject::tr("Select routing engine:"));
 
-	QComboBox * combo = Routing::create_engines_combo(routing_engine_supports_refine, previous_engine_id);
+	QComboBox * combo = Routing::create_engines_combo(routing_engine_supports_refine, previous_engine_name);
 
 	dialog.grid->addWidget(label, 0, 0);
 	dialog.grid->addWidget(combo, 1, 0);
@@ -3046,10 +3046,10 @@ void Track::refine_route_cb(void)
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */
-		previous_engine_id = combo->currentData().toString();
-		const RoutingEngine * engine = Routing::get_engine_by_id(previous_engine_id);
+		previous_engine_name = combo->currentText();
+		const RoutingEngine * engine = Routing::get_engine_by_name(previous_engine_name);
 		if (nullptr == engine) {
-			qDebug() << SG_PREFIX_E << "Failed to get routing engine by id" << previous_engine_id;
+			qDebug() << SG_PREFIX_E << "Failed to get routing engine by id" << previous_engine_name;
 			return;
 		}
 
