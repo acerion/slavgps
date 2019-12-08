@@ -632,7 +632,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);

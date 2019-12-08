@@ -47,22 +47,20 @@ namespace SlavGPS {
 	class RoutingEngineWeb : public RoutingEngine {
 
 	public:
-		RoutingEngineWeb() {};
-		~RoutingEngineWeb();
-
+		RoutingEngineWeb(const QString & id, const QString & name, const QString & format) : RoutingEngine(id, name, format) {};
+		~RoutingEngineWeb() override {}
 
 		const DownloadOptions * get_download_options(void) const;
 
-		bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
+		QString get_url_for_coords(const LatLon & start, const LatLon & end) const;
+		QString get_url_from_directions(const QString & start, const QString & end) const override;
+		QString get_url_for_track(Track * trk) const;
 
-		QString get_url_for_coords(const LatLon & start, const LatLon & end);
-		QString get_url_from_directions(const QString & start, const QString & end);
-		QString get_url_for_track(Track * trk);
-
-		bool refine(LayerTRW * trw, Track * trk);
-
-		bool supports_refine(void);
+		bool supports_refine(void) const override;
 		bool supports_direction(void);
+
+		bool find_route(LayerTRW * trw, const LatLon & start, const LatLon & end) const override;
+		bool refine_route(LayerTRW * trw, Track * route) const override;
 
 		QString url_base; /* URL's base. The base URL of the routing engine. */
 

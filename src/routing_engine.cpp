@@ -46,20 +46,6 @@ using namespace SlavGPS;
 
 
 
-RoutingEngine::RoutingEngine()
-{
-}
-
-
-
-
-RoutingEngine::~RoutingEngine()
-{
-}
-
-
-
-
 /**
  * @trw:
  * @start: starting point
@@ -69,7 +55,7 @@ RoutingEngine::~RoutingEngine()
  *
  * Returns: indicates success or not.
  */
-bool RoutingEngine::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
+bool RoutingEngine::find_route(LayerTRW * trw, const LatLon & start, const LatLon & end) const
 {
 	return false;
 }
@@ -96,7 +82,7 @@ bool RoutingEngine::supports_direction(void)
  *
  * Returns: the computed URL.
  */
-QString RoutingEngine::get_url_from_directions(const QString & start, const QString & end)
+QString RoutingEngine::get_url_from_directions(const QString & start, const QString & end) const
 {
 	return "";
 }
@@ -116,7 +102,7 @@ QString RoutingEngine::get_url_from_directions(const QString & start, const QStr
  *
  * Returns: indicates success or not.
  */
-bool RoutingEngine::refine(LayerTRW * trw, Track * trk)
+bool RoutingEngine::refine_route(LayerTRW * trw, Track * trk) const
 {
 	return false;
 }
@@ -127,7 +113,7 @@ bool RoutingEngine::refine(LayerTRW * trw, Track * trk)
 /**
  * Returns: %true if this engine supports the refine of track.
  */
-bool RoutingEngine::supports_refine(void)
+bool RoutingEngine::supports_refine(void) const
 {
 	return false;
 }
@@ -135,7 +121,7 @@ bool RoutingEngine::supports_refine(void)
 
 
 
-bool SlavGPS::routing_engine_supports_refine(RoutingEngine * engine)
+bool SlavGPS::routing_engine_supports_refine(const RoutingEngine * engine)
 {
 	return engine->supports_refine();
 }

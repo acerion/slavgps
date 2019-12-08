@@ -1639,13 +1639,14 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 
 		/* Update UI to let user know what's going on. */
 		StatusBar * sb = trw->get_window()->get_statusbar();
-		RoutingEngine * engine = Routing::get_default_engine();
-		if (!engine) {
+
+		QString engine_name;
+		if (false == Routing::get_default_engine_name(engine_name)) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Cannot plan route without a default routing engine."));
 			return ToolStatus::Ack;
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
-			.arg(engine->get_label())
+			.arg(engine_name)
 			.arg(start.lat, 0, 'f', 3) /* ".3f" */
 			.arg(start.lon, 0, 'f', 3)
 			.arg(end.lat, 0, 'f', 3)
@@ -1659,8 +1660,8 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 		/* Update UI to say we're done. */
 
 		const QString msg2 = (find_status)
-			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine->get_label()).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
-			: QObject::tr("Error getting route from %1.").arg(engine->get_label());
+			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine_name).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
+			: QObject::tr("Error getting route from %1.").arg(engine_name);
 
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg2);
 

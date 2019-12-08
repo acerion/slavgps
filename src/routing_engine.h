@@ -53,29 +53,33 @@ namespace SlavGPS {
 
 	class RoutingEngine {
 	public:
-		RoutingEngine();
-		~RoutingEngine();
+		RoutingEngine(const QString & id, const QString & name, const QString & format) :
+			m_id(id), m_name(name), m_format(format) {}
+		virtual ~RoutingEngine() {}
 
-		virtual bool find(LayerTRW * trw, const LatLon & start, const LatLon & end);
-		virtual QString get_url_from_directions(const QString & start, const QString & end);
+		virtual QString get_url_from_directions(const QString & start, const QString & end) const;
+
+		virtual bool supports_refine(void) const;
 		virtual bool supports_direction(void);
-		virtual bool refine(LayerTRW * trw, Track * trk);
-		virtual bool supports_refine(void);
 
-		QString get_id(void) const { return this->id; }
-		QString get_label(void) const { return this->label; }
-		QString get_format(void) const { return this->format; }
+		virtual bool find_route(LayerTRW * trw, const LatLon & start, const LatLon & end) const;
+		virtual bool refine_route(LayerTRW * trw, Track * route) const;
 
-		QString id;     /* The identifier of the routing engine. */
-		QString label;  /* The label of the routing engine. */
-		QString format; /* The format of the output (see gpsbabel). */
+		const QString & get_id(void) const { return this->m_id; }
+		const QString & get_name(void) const { return this->m_name; }
+		const QString & get_format(void) const { return this->m_format; }
+
+	protected:
+		const QString m_id;      /* The unique identifier of the routing engine. */
+		const QString m_name;    /* User-facing label of the routing engine. */
+		const QString m_format;  /* The format of the output (see gpsbabel). */
 	};
 
 
 
 
 	/* RoutingEnginePredicate */
-	bool routing_engine_supports_refine(RoutingEngine * engine);
+	bool routing_engine_supports_refine(const RoutingEngine * engine);
 }
 
 

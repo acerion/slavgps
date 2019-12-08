@@ -3012,7 +3012,7 @@ void Track::track_use_with_bfilter_cb(void)
 */
 void Track::refine_route_cb(void)
 {
-	static int last_engine = 0;
+	static QString previous_engine_id;
 
 	if (this->empty()) {
 		return;
@@ -3036,8 +3036,7 @@ void Track::refine_route_cb(void)
 
 	QLabel * label = new QLabel(QObject::tr("Select routing engine:"));
 
-	QComboBox * combo = Routing::create_engines_combo(routing_engine_supports_refine);
-	combo->setCurrentIndex(last_engine);
+	QComboBox * combo = Routing::create_engines_combo(routing_engine_supports_refine, previous_engine_id);
 
 	dialog.grid->addWidget(label, 0, 0);
 	dialog.grid->addWidget(combo, 1, 0);
@@ -3047,8 +3046,12 @@ void Track::refine_route_cb(void)
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */
-		last_engine = combo->currentIndex();
-		RoutingEngine * engine = Routing::get_engine_by_index(combo, last_engine);
+		previous_engine_id = combo->currentData().toString();
+		const RoutingEngine * engine = Routing::get_engine_by_id(previous_engine_id);
+		if (nullptr == engine) {
+			qDebug() << SG_PREFIX_E << "Failed to get routing engine by id" << previous_engine_id;
+			return;
+		}
 
 
 		/* Force saving track */
@@ -3058,7 +3061,7 @@ void Track::refine_route_cb(void)
 
 		/* The job */
 		main_window->set_busy_cursor();
-		engine->refine(parent_layer, this);
+		engine->refine_route(parent_layer, this);
 		main_window->clear_busy_cursor();
 
 

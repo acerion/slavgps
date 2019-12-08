@@ -179,7 +179,7 @@ namespace SlavGPS {
 		virtual ~AcquireOptions();
 
 		LoadStatus universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
-		LoadStatus import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_from_url(LayerTRW * trw, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
 		LoadStatus import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int kill_babel_process(const QString & status);

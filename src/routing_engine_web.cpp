@@ -165,13 +165,6 @@ static void vik_routing_web_engine_get_property(void    * object,
 
 
 
-RoutingEngineWeb::~RoutingEngineWeb()
-{
-}
-
-
-
-
 const DownloadOptions * RoutingEngineWeb::get_download_options(void) const
 {
 	return &this->dl_options;
@@ -193,7 +186,7 @@ static QString substitute_latlon(const QString & fmt, const LatLon & lat_lon)
 
 
 
-QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon & end)
+QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon & end) const
 {
 	if (this->url_base.isEmpty() || this->url_start_ll_fmt.isEmpty() || this->url_stop_ll_fmt.isEmpty()) {
 		return NULL;
@@ -209,7 +202,7 @@ QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon 
 
 
 
-bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
+bool RoutingEngineWeb::find_route(LayerTRW * trw, const LatLon & start, const LatLon & end) const
 {
 	AcquireOptions babel_options(AcquireOptions::Mode::FromURL);
 	babel_options.source_url = this->get_url_for_coords(start, end);
@@ -223,7 +216,7 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 
 
 
-QString RoutingEngineWeb::get_url_from_directions(const QString & start, const QString & end)
+QString RoutingEngineWeb::get_url_from_directions(const QString & start, const QString & end) const
 {
 	if (this->url_base.isEmpty() || this->url_start_dir_fmt.isEmpty() || this->url_stop_dir_fmt.isEmpty()) {
 		return "";
@@ -262,9 +255,8 @@ bool RoutingEngineWeb::supports_direction(void)
 
 class URLParts {
 public:
-	void append_tp_coords(const Trackpoint * tp);
+	void append_tp_coords(const Trackpoint * tp, const RoutingEngineWeb * engine);
 
-	RoutingEngineWeb * engine = NULL;
 	QStringList url_parts;
 	int nb = 0;
 };
@@ -272,10 +264,10 @@ public:
 
 
 
-void URLParts::append_tp_coords(const Trackpoint * tp)
+void URLParts::append_tp_coords(const Trackpoint * tp, const RoutingEngineWeb * engine)
 {
 	/* Stringify coordinate. */
-	const QString string = substitute_latlon(this->engine->url_via_ll_fmt, tp->coord.get_lat_lon());
+	const QString string = substitute_latlon(engine->url_via_ll_fmt, tp->coord.get_lat_lon());
 
 	/* Append. */
 	this->url_parts[this->nb] = string;
@@ -285,7 +277,7 @@ void URLParts::append_tp_coords(const Trackpoint * tp)
 
 
 
-QString RoutingEngineWeb::get_url_for_track(Track * trk)
+QString RoutingEngineWeb::get_url_for_track(Track * trk) const
 {
 	if (this->url_base.isEmpty() || this->url_start_ll_fmt.isEmpty() || this->url_stop_ll_fmt.isEmpty() || this->url_via_ll_fmt.isEmpty()) {
 		return NULL;
@@ -295,13 +287,12 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 	size_t len = 1 + trk->trackpoints.size() + 1; /* Base + trackpoints + NULL. */
 
 	URLParts ctx;
-	ctx.engine = this;
 	ctx.url_parts << this->url_base;
 	ctx.nb = 1; /* First cell available (free). Zero-th cell is used for base URL. */
 
 	/* Append all trackpoints to URL. */
 	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-		ctx.append_tp_coords(*iter);
+		ctx.append_tp_coords(*iter, this);
 	}
 
 	/* Override first and last positions with associated formats. */
@@ -321,7 +312,7 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 
 
-bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
+bool RoutingEngineWeb::refine_route(LayerTRW * trw, Track * trk) const
 {
 	AcquireOptions babel_options(AcquireOptions::Mode::FromURL);
 	babel_options.source_url = this->get_url_for_track(trk);
@@ -336,7 +327,7 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 
 
 
-bool RoutingEngineWeb::supports_refine(void)
+bool RoutingEngineWeb::supports_refine(void) const
 {
 	return !this->url_via_ll_fmt.isEmpty();
 }

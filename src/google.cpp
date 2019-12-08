@@ -83,18 +83,18 @@ void Google::post_init(void)
 	/* Google no longer supports the API we used. */
 
 	if (Babel::is_available()) {
-		 RoutingEngine * engine = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
-							   "id", "google",
-							   "label", "Google",
-							   "format", "google",
-							   "url-base", "http://maps.google.com/maps?output=js&q=",
-							   "url-start-ll", "from:%s,%s",
-							   "url-stop-ll", "+to:%s,%s",
-							   "url-start-dir", "from:%s",
-							   "url-stop-dir", "+to:%s",
-							   "referer", "http://maps.google.com/",
-							   NULL);
-		 Routing::register_engine(engine);
+		RoutingEngine * engine = new RoutingEngine("google", "Google", "google");
+
+		engine->url_start_ll_fmt = "from:%s,%s",;
+		engine->url_stop_ll_fmt = "+to:%s,%s";
+		engine->url_base = "http://maps.google.com/maps?output=js&q=";
+
+		engine->url_start_dir_fmt = "from:%s";
+		engine->url_stop_dir_fmt = "+to:%s";
+
+		engine->referer = "http://maps.google.com/";
+
+		Routing::register_engine(engine);
 	 }
 #endif
 #endif

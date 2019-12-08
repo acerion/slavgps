@@ -159,11 +159,8 @@ void OSM::init(void)
 	   https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api
 	   https://github.com/Project-OSRM/osrm-backend/wiki/Server-api/d3df08ef7fc4dbe4d1960bc6df92f441e1343b82#server-api-4x
 	*/
-	RoutingEngineWeb * osrm = new RoutingEngineWeb();
+	RoutingEngineWeb * osrm = new RoutingEngineWeb("osrm", "OSRM v4", "gpx");
 	/* TODO_LATER: review and improve these assignments and format specifiers. */
-	osrm->id = "osrm";
-	osrm->label = "OSRM v4";
-	osrm->format = "gpx";
 	osrm->url_base = "http://router.project-osrm.org/viaroute?output=gpx";
 	osrm->url_start_ll_fmt = "&loc=%s,%s";
 	osrm->url_stop_ll_fmt = "&loc=%s,%s";
