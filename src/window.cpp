@@ -203,12 +203,6 @@ Window::Window()
 	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
 
-#ifdef K_FIXME_RESTORE
-	/* I think that it's no longer necessary. */
-	/* Set initial sensitivity of prev/next menu actions. */
-	this->center_changed_cb();
-#endif
-
 #endif
 	Background::add_window(this);
 
@@ -1141,10 +1135,8 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
 
 void Window::center_changed_cb(GisViewport * gisview) /* Slot. */
 {
-	qDebug() << SG_PREFIX_SLOT << "Called";
+	qDebug() << SG_PREFIX_SLOT << "Called; back available?" << gisview->back_available() << "; forward available?" << gisview->forward_available();
 
-	/* TODO_LATER: see if this comment should be implemented or not:
-	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
 	this->qa_previous_location->setEnabled(gisview->back_available());
 	this->qa_next_location->setEnabled(gisview->forward_available());
 }
@@ -1717,12 +1709,7 @@ void Window::goto_utm_cb(void)
 void Window::goto_previous_location_cb(void)
 {
 	const bool changed = this->main_gis_vp->go_back();
-
-	/* TODO_LATER: is this function call necessary? */
-	/* Recheck sensitivities of prev/next menu actions, as the
-	   center changed signal is not sent on back/forward changes
-	   (otherwise we would get stuck in an infinite loop!). */
-	this->center_changed_cb(this->main_gis_vp);
+	qDebug() << SG_PREFIX_SLOT << "Called, going back has" << (changed ? "suceeded" : "failed");
 
 	if (changed) {
 		this->main_gis_vp->request_redraw("go to previous location");
@@ -1734,14 +1721,8 @@ void Window::goto_previous_location_cb(void)
 
 void Window::goto_next_location_cb(void)
 {
-	bool changed = this->main_gis_vp->go_forward();
-
-	/* TODO_LATER: is this function call necessary? */
-	/* Recheck sensitivities of prev/next menu actions, as the
-	   center changed signal is not sent on back/forward changes
-	   (otherwise we would get stuck in an infinite loop!). */
-	this->center_changed_cb(this->main_gis_vp);
-
+	const bool changed = this->main_gis_vp->go_forward();
+	qDebug() << SG_PREFIX_SLOT << "Called, going forward has" << (changed ? "suceeded" : "failed");
 	if (changed) {
 		this->main_gis_vp->request_redraw("go to next location");
 	}

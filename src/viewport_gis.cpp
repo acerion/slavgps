@@ -856,6 +856,10 @@ bool GisViewport::go_back(void)
 	this->center_coords.current_iter--;
 	this->set_center_coord(*this->center_coords.current_iter, false);
 
+	/* Inform about center_coords.current_iter being changed. */
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting list_of_center_coords_changed() after going back";
+	emit this->list_of_center_coords_changed(this);
+
 	return true;
 }
 
@@ -880,6 +884,10 @@ bool GisViewport::go_forward(void)
 	/* This is safe because ::forward_available() returned true. */
 	this->center_coords.current_iter++;
 	this->set_center_coord(*this->center_coords.current_iter, false);
+
+	/* Inform about center_coords.current_iter being changed. */
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting list_of_center_coords_changed() after going forward";
+	emit this->list_of_center_coords_changed(this);
 
 	return true;
 }
