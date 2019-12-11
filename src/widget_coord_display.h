@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,8 +34,6 @@
 
 
 #include "coord.h"
-#include "widget_lat_lon_entry.h"
-#include "widget_utm_entry.h"
 
 
 
@@ -44,7 +43,8 @@ namespace SlavGPS {
 
 
 
-	class Coord;
+	class LatLonEntryWidget;
+	class UTMEntryWidget;
 
 
 
@@ -52,28 +52,34 @@ namespace SlavGPS {
 	class CoordDisplayWidget : public QFrame {
 		Q_OBJECT
 	public:
-		CoordDisplayWidget(QWidget * parent = NULL);
+		CoordDisplayWidget(QWidget * parent = nullptr);
 		void set_value(const Coord & coord);
 
 	private:
-		QVBoxLayout * vbox = NULL;
-		QLabel * lat_lon_label = NULL;
-		QLabel * utm_label = NULL;
+		QVBoxLayout * m_vbox = nullptr;
+		QLabel * m_lat_lon_label = nullptr;
+		QLabel * m_utm_label = nullptr;
 	};
 
 
 
 
-
-	/* This widget is not based on QFrame, because the entry
-	   widgets that are members of this class already provide
-	   frame UI. */
 	class CoordEntryWidget : public QWidget {
 		Q_OBJECT
 	public:
-		CoordEntryWidget(CoordMode coord_mode, QWidget * parent = NULL);
+		CoordEntryWidget(CoordMode coord_mode, QWidget * parent = nullptr);
 
 		/**
+		   This widget is (or at least should be) aware of
+		   program-wide coordinate mode selection made by user in UI.
+
+		   If the widget is configured to use UTM mode, but
+		   coordinate passed to ::set_value() method is in in
+		   LatLon mode, the method will return error. The
+		   error is also returned for reverse situation
+		   (LatLon mode of widget, UTM mode of method's
+		   argument.
+
 		   @param block_signal: in normal conditions the
 		   underlying widget will emit signal when a value is
 		   set. This parameter set to true may block emitting
@@ -95,6 +101,9 @@ namespace SlavGPS {
 
 		   If the widget already is in specified @param
 		   coord_mode, nothing happens.
+
+		   Use this method to change coord mode of widget when
+		   user changes coord mode in main window.
 		*/
 		sg_ret set_coord_mode(const CoordMode coord_mode);
 
@@ -107,9 +116,9 @@ namespace SlavGPS {
 		void value_changed_cb(void);
 
 	private:
-		LatLonEntryWidget * lat_lon_entry = NULL;
-		UTMEntryWidget * utm_entry = NULL;
-		QVBoxLayout * vbox = NULL;
+		LatLonEntryWidget * m_lat_lon_entry = nullptr;
+		UTMEntryWidget * m_utm_entry = nullptr;
+		QVBoxLayout * m_vbox = nullptr;
 
 		CoordMode m_coord_mode = CoordMode::Invalid; /* Initial value is invalid - widgets aren't constructed yet. */
 	};
