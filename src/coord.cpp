@@ -81,11 +81,11 @@ static double distance_safe(const Coord & coord1, const Coord & coord2)
 double Coord::distance(const Coord & coord1, const Coord & coord2)
 {
 	if (coord1.mode != CoordMode::LatLon && coord1.mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument" << (int) coord1.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument:" << coord1.mode;
 		return 0.0;
 	}
 	if (coord2.mode != CoordMode::LatLon && coord2.mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument" << (int) coord2.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument:" << coord2.mode;
 		return 0.0;
 	}
 
@@ -95,7 +95,7 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 	case CoordMode::LatLon:
 		return LatLon::get_distance(coord1.lat_lon, coord2.lat_lon);
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode:" << coord1.mode;
 		return 0.0;
 	}
 }
@@ -111,15 +111,15 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 	Distance result;
 
 	if (coord1.mode != CoordMode::LatLon && coord1.mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument" << (int) coord1.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument:" << coord1.mode;
 		return result;
 	}
 	if (coord2.mode != CoordMode::LatLon && coord2.mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument" << (int) coord2.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument:" << coord2.mode;
 		return result;
 	}
 	if (coord1.mode != coord2.mode) {
-		qDebug() << SG_PREFIX_E << "CoordMode mismatch:" << (int) coord1.mode << (int) coord2.mode;
+		qDebug() << SG_PREFIX_E << "CoordMode mismatch:" << coord1.mode << coord2.mode;
 		return result;
 	}
 
@@ -132,7 +132,7 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 		result = Distance(LatLon::get_distance(coord1.lat_lon, coord2.lat_lon), distance_unit);
 		return result;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode:" << coord1.mode;
 		return result;
 	}
 }
@@ -305,7 +305,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 		debug << "Coordinate LatLon:" << coord.lat_lon;
 		break;
 	default:
-		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << (int) coord.get_coord_mode();
+		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << coord.get_coord_mode();
 		break;
 	}
 
@@ -405,7 +405,7 @@ QString Coord::to_string(void) const
 		break;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->mode;
+		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << this->mode;
 		break;
 	}
 

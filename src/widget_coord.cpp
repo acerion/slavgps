@@ -125,7 +125,7 @@ sg_ret CoordEntryWidget::set_coord_mode(const CoordMode coord_mode)
 		break;
 	default:
 		/* Let's handle this safely by using LatLon as fallback. */
-		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode:" << coord_mode;
 		this->m_lat_lon_entry = new LatLonEntryWidget();
 		break;
 	}
@@ -174,7 +174,7 @@ sg_ret CoordEntryWidget::set_value(const Coord & coord, bool block_signal)
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord.get_coord_mode();
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode:" << coord.get_coord_mode();
 		return sg_ret::err;
 	}
 }

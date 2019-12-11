@@ -122,7 +122,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 		return 0.0;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode:" << this->coord_mode;
 		return 0.0;
 	}
 }
@@ -450,7 +450,7 @@ void GisViewport::debug_gisviewport_draw(void)
 			br += coord_br.get_utm().to_string();
 			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) this->coord_mode;
+			qDebug() << SG_PREFIX_E << "Unexpected coord mode:" << this->coord_mode;
 			break;
 		}
 		ul.replace("Zone", "\nZone"); /* Coordinate strings will get very long. Put zone + band in new line. */
@@ -1011,7 +1011,7 @@ sg_ret GisViewport::set_center_coord(const ScreenPos & pos)
 sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << this->coord_mode;
 		return sg_ret::err;
 	}
 
@@ -1051,7 +1051,7 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
-		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << this->coord_mode;
 		return sg_ret::err;
 	}
 

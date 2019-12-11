@@ -1250,7 +1250,7 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 		fits_vertically = coord.lat_lon.lat > this->coord_bottommost && coord.lat_lon.lat < this->coord_topmost;
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected viewport coordinate mode" << (int) this->vp_coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected viewport coordinate mode" << this->vp_coord_mode;
 		break;
 	}
 

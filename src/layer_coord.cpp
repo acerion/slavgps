@@ -191,7 +191,7 @@ void LayerCoord::draw_tree_item(GisViewport * gisview, bool highlight_selected, 
 		this->draw_utm(gisview);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled viewport coord mode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unhandled viewport coord mode" << mode;
 		break;
 	};
 
