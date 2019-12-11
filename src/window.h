@@ -63,11 +63,6 @@ namespace SlavGPS {
 
 
 
-	QComboBox * create_zoom_combo_all_levels(QWidget * parent);
-
-
-
-
 	enum class SGFileType;
 	class VikingScale;
 	class Layer;

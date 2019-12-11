@@ -149,7 +149,65 @@ enum WindowPan {
 
 
 
-static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString const & label, QMenu * parent);
+class ZoomLevels {
+public:
+	/**
+	 * @viking_scale: The initial scale level.
+	 */
+	static QMenu * create_zoom_submenu(const VikingScale & viking_scale, const QString & label, QMenu * parent);
+
+	static double get_selected_scale(const QAction * qa)
+	{
+		const int qa_idx = qa->data().toInt(); /* tag::zoom_actions_qa_idx */
+		qDebug() << SG_PREFIX_SLOT << "Selected new zoom" << qa->text() << "with QAction no." << qa_idx;
+		return pow(2, qa_idx - 5);
+	}
+
+	static int qa_index_from_viking_scale(const VikingScale & viking_scale)
+	{
+		int qa_idx = 5 + round(log(viking_scale.get_x()) / log(2));
+
+		/* Ensure value derived from mpp is in bounds of the menu. */
+		if (qa_idx >= (int) ZoomLevels::actions.size()) {
+			qa_idx = ZoomLevels::actions.size() - 1;
+		}
+		if (qa_idx < 0) {
+			qa_idx = 0;
+		}
+
+		return qa_idx;
+	}
+
+private:
+	static void init_once(void);
+	static std::vector<QAction *> actions;
+	static std::vector<QString> labels;
+
+};
+std::vector<QAction *> ZoomLevels::actions;
+std::vector<QString> ZoomLevels::labels = {
+	"0.031",   /* 2^-5 */
+	"0.063",   /* 2^-4 */
+	"0.125",   /* 2^-3 */
+	"0.25",    /* 2^-2 */
+	"0.5",     /* 2^-1 */
+	"1",       /* 2^0  */
+	"2",
+	"4",
+	"8",
+	"16",
+	"32",
+	"64",
+	"128",
+	"256",
+	"512",
+	"1024",
+	"2048",
+	"4096",
+	"8192",
+	"16384",
+	"32768",
+};
 
 
 
@@ -829,7 +887,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->main_gis_vp->get_viking_scale(), tr("&Zoom"), this->menu_view);
+		QMenu * zoom_submenu = ZoomLevels::create_zoom_submenu(this->main_gis_vp->get_viking_scale(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
 		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
 
@@ -2725,10 +2783,7 @@ void Window::print_cb(void)
 /* Menu View -> Zoom -> Value. */
 void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 {
-	int level = qa->data().toInt();
-	qDebug() << SG_PREFIX_SLOT << "'Zoom Changed' callback" << qa->text() << level;
-
-	double requested_scale = pow(2, level - 5); /* TODO_LATER: encapsulate? */
+	const double requested_scale = ZoomLevels::get_selected_scale(qa);
 
 	/* But has it really changed? */
 	const double current_scale = this->main_gis_vp->get_viking_scale().get_x();
@@ -2742,56 +2797,29 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 
 
 
-std::vector<QAction *> zoom_actions;
-const char * zoom_action_labels[] = {
-	"0.031",   /* 0 */
-	"0.063",   /* 1 */
-	"0.125",   /* 2 */
-	"0.25",    /* 3 */
-	"0.5",     /* 4 */
-	"1",       /* 5 */
-	"2",
-	"4",
-	"8",
-	"16",
-	"32",
-	"64",
-	"128",
-	"256",
-	"512",
-	"1024",
-	"2048",
-	"4096",
-	"8192",
-	"16384",
-	"32768",
-	NULL
-};
 
-
-
-bool create_zoom_actions(void)
+void ZoomLevels::init_once(void)
 {
-	int i = 0;
-	QAction * qa = NULL;
-	while (zoom_action_labels[i]) {
-		QString const label(zoom_action_labels[i]);
-		qa = new QAction(label, NULL);
-		qa->setData(i);
-		zoom_actions.push_back(qa);
-		i++;
+	if (ZoomLevels::actions.size()) {
+		qDebug() << SG_PREFIX_I << "Sub-module already initialized";
+		return;
+	} else {
+		qDebug() << SG_PREFIX_I << "Initializing sub-module";
 	}
 
-	return true;
+	int qa_idx = 0;
+	for (const auto & label : ZoomLevels::labels) {
+		QAction * qa = new QAction(label, NULL);
+		qa->setData(qa_idx); /* tag::zoom_actions_qa_idx */
+		ZoomLevels::actions.push_back(qa);
+		qa_idx++;
+	}
 }
 
 
 
 
-/**
- * @viking_scale: The initial scale level.
- */
-static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString const & label, QMenu * parent)
+QMenu * ZoomLevels::create_zoom_submenu(const VikingScale & viking_scale, QString const & label, QMenu * parent)
 {
 	QMenu * menu = NULL;
 	if (parent) {
@@ -2800,45 +2828,18 @@ static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString con
 		menu = new QMenu(label);
 	}
 
-	if (!zoom_actions.size()) {
-		create_zoom_actions();
-	}
+	/* Initialize ZoomLevels' internal data structure, but only
+	   once during program's entire live. */
+	ZoomLevels::init_once();
 
-	for (auto iter = zoom_actions.begin(); iter != zoom_actions.end(); iter++) {
+	for (auto iter = ZoomLevels::actions.begin(); iter != ZoomLevels::actions.end(); iter++) {
 		menu->addAction(*iter);
 	}
 
-
-
-	int active = 5 + round(log(viking_scale.get_x()) / log(2)); /* TODO_LATER: encapsulate. Inverse expression "pow(2, level - 5)" has shown up elsewhere. */
-	/* Ensure value derived from mpp is in bounds of the menu. */
-	if (active >= (int) zoom_actions.size()) {
-		active = zoom_actions.size() - 1;
-	}
-	if (active < 0) {
-		active = 0;
-	}
-	menu->setActiveAction(zoom_actions[active]);
+	const int active_qa_idx = ZoomLevels::qa_index_from_viking_scale(viking_scale);
+	menu->setActiveAction(ZoomLevels::actions[active_qa_idx]);
 
 	return menu;
-}
-
-
-
-
-QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
-{
-	QComboBox * combo = new QComboBox(parent);
-
-	int i = 0;
-	while (zoom_action_labels[i]) {
-		combo->addItem(zoom_action_labels[i]);
-		i++;
-	}
-
-	combo->setToolTip(QObject::tr("Select zoom level"));
-
-	return combo;
 }
 
 
