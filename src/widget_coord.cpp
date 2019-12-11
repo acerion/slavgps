@@ -27,7 +27,7 @@
 
 
 
-#include "widget_coord_display.h"
+#include "widget_coord.h"
 #include "widget_lat_lon_entry.h"
 #include "widget_utm_entry.h"
 

@@ -37,7 +37,7 @@
 #include "preferences.h"
 #include "thumbnails.h"
 #include "garmin_symbols.h"
-#include "widget_coord_display.h"
+#include "widget_coord.h"
 #include "widget_file_entry.h"
 #include "widget_timestamp.h"
 #include "window.h"

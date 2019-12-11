@@ -39,7 +39,7 @@
 
 #include "statusbar.h"
 #include "background.h"
-#include "widget_coord_display.h"
+#include "widget_coord.h"
 #include "widget_measurement_entry.h"
 #include "globals.h"
 

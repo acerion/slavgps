@@ -131,7 +131,7 @@ SOURCES += main.cpp \
     widget_timestamp.cpp \
     widget_utm_entry.cpp \
     widget_lat_lon_entry.cpp \
-    widget_coord_display.cpp \
+    widget_coord.cpp \
     widget_measurement_entry.cpp \
     widget_duration.cpp \
     date_time_dialog.cpp \
@@ -286,7 +286,7 @@ HEADERS += window.h \
     widget_utm_entry.h \
     widget_lat_lon_entry.h \
     widget_measurement_entry.h \
-    widget_coord_display.h \
+    widget_coord.h \
     widget_duration.h \
     date_time_dialog.h \
     dem.h \

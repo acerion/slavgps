@@ -47,7 +47,7 @@
 
 #include "widget_timestamp.h"
 #include "widget_measurement_entry.h"
-#include "widget_coord_display.h"
+#include "widget_coord.h"
 
 
 
