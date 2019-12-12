@@ -29,6 +29,7 @@
 
 
 #include "layer_trw_point_properties.h"
+#include "window.h"
 
 
 
@@ -80,6 +81,7 @@ sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * pare
 
 	this->coord_widget = new CoordEntryWidget(coord_mode);
 	this->grid->addWidget(this->coord_widget, this->widgets_row, left_col, 1, 2);
+	connect(ThisApp::get_main_window(), SIGNAL(coord_mode_changed(CoordMode)), this, SLOT(set_coord_mode(CoordMode)));
 
 	this->widgets_row++;
 
@@ -125,9 +127,10 @@ void PointPropertiesWidget::clear_widgets(void)
    Rebuild the "coordinates" widget so that it can be used to display
    either Lat/Lon or UTM coordinates.
 
-   @reviewed-on 2019-11-11
+   @reviewed-on 2019-12-11
 */
-sg_ret PointPropertiesWidget::set_coord_mode(const CoordMode coord_mode)
+sg_ret PointPropertiesWidget::set_coord_mode(CoordMode coord_mode)
 {
+	qDebug() << SG_PREFIX_SLOT << "Received change of coord mode to" << coord_mode << "in" << this->debug_id;
 	return this->coord_widget->set_coord_mode(coord_mode);
 }

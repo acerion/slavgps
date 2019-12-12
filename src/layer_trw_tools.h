@@ -73,8 +73,6 @@ namespace SlavGPS {
 
 		TpPropertiesDialog * point_properties_dialog = NULL;
 
-		sg_ret change_coord_mode(CoordMode coord_mode);
-
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
@@ -115,8 +113,6 @@ namespace SlavGPS {
 
 		SGObjectTypeID get_tool_id(void) const override;
 		static SGObjectTypeID tool_id(void);
-
-		sg_ret change_coord_mode(CoordMode coord_mode);
 
 		WpPropertiesDialog * point_properties_dialog = NULL;
 

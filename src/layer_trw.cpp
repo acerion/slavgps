@@ -3478,21 +3478,6 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 		this->tracks.change_coord_mode(dest_mode);
 		this->routes.change_coord_mode(dest_mode);
 	}
-
-
-	Window * window = this->get_window();
-	/* Some properties dialogs need to change their "coordinates"
-	   widgets. Implementation of code changing the mode ensures
-	   that the mode is changed only when current mode is
-	   different than expected. */
-	{
-		LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
-		tool->change_coord_mode(dest_mode);
-	}
-	{
-		LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
-		tool->change_coord_mode(dest_mode);
-	}
 }
 
 

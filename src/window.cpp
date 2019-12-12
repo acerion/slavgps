@@ -2850,26 +2850,52 @@ void Window::change_coord_mode_cb(QAction * qa)
 {
 	/* TODO_HARD: verify that this function changes mode in all the places that need to be updated. */
 
-	const GisViewportDrawMode drawmode = (GisViewportDrawMode) qa->data().toInt();
 	const GisViewportDrawMode old_drawmode = this->main_gis_vp->get_draw_mode();
-	qDebug() << SG_PREFIX_D << "Coordinate mode changed from" << (int) old_drawmode << "to" << qa->text() << (int) drawmode;
+	const GisViewportDrawMode new_drawmode = (GisViewportDrawMode) qa->data().toInt();
+
+	qDebug() << SG_PREFIX_D << "Coordinate mode changed from" << (int) old_drawmode << "to" << qa->text() << (int) new_drawmode;
 
 #if 0
 	if (this->only_updating_coord_mode_ui) {
 		return;
 	}
 #endif
-	if (old_drawmode == drawmode) {
+	if (new_drawmode == old_drawmode) {
 		return;
 	}
 
 
+	{
+		CoordMode new_coord_mode = CoordMode::Invalid;
+		if (new_drawmode == GisViewportDrawMode::UTM) {
+			/* Coord mode has been changed to UTM. */
+			new_coord_mode = CoordMode::UTM;
+		} else if (old_drawmode == GisViewportDrawMode::UTM) {
+			/* CoordMode has been changed from UTM. */
+			new_coord_mode = CoordMode::LatLon;
+		} else {
+			/* CoordMode stays the same (is LatLon). */
+			qDebug() << SG_PREFIX_I << "Switching from" << old_drawmode << "to" << new_drawmode << "does not change coord mode";
+		}
+		if (CoordMode::Invalid != new_coord_mode) {
+			/* Tell various widgets throughout application
+			   that they have to adjust to new coord
+			   mode. E.g. a CoordWidget int Waypoint
+			   properties dialog will have to switch from
+			   displaying LatLon to displaying UTM. */
+			qDebug() << SG_PREFIX_SIGNAL << "Will emit 'Window::coord_mode_changed()' signal, coord mode changed to" << new_coord_mode;
+			emit this->coord_mode_changed(new_coord_mode);
+		}
+	}
+
+
+
 	/* Set draw mode of viewport. */
-	this->main_gis_vp->set_draw_mode(drawmode);
+	this->main_gis_vp->set_draw_mode(new_drawmode);
 
 
 	/* Set coord mode of tree items. */
-	switch (drawmode) {
+	switch (new_drawmode) {
 	case GisViewportDrawMode::UTM:
 		this->items_tree->change_coord_mode(CoordMode::UTM);
 		break;
@@ -2879,7 +2905,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 		this->items_tree->change_coord_mode(CoordMode::LatLon);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected drawmode" << (int) drawmode;
+		qDebug() << SG_PREFIX_E << "Unexpected drawmode" << (int) new_drawmode;
 		return;
 	}
 

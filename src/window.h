@@ -165,6 +165,13 @@ namespace SlavGPS {
 
 		QAction * qa_tree_item_properties = NULL;
 
+	signals:
+		/* Coordinate mode has been changed by user in
+		   UI. Some widgets may need to update their look or
+		   behaviour. */
+		void coord_mode_changed(CoordMode new_coord_mode);
+
+
 	public slots:
 		Window * new_window_cb(void);
 

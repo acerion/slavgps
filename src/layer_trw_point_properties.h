@@ -25,21 +25,13 @@
 
 
 
-#include <list>
-#include <cstdint>
-
-
-
-
 #include <QWidget>
 #include <QDialog>
-//#include <QFormLayout>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
-//#include <QSignalMapper>
 #include <QGridLayout>
 
 
@@ -60,7 +52,7 @@ namespace SlavGPS {
 	class PointPropertiesWidget : public QWidget {
 		Q_OBJECT
 	public:
-		PointPropertiesWidget(QWidget * parent = NULL);
+		PointPropertiesWidget(QWidget * parent = nullptr);
 
 		sg_ret build_widgets(CoordMode coord_mode, QWidget * parent_widget);
 
@@ -68,24 +60,25 @@ namespace SlavGPS {
 		   presented by the widgets. */
 		void clear_widgets(void);
 
-		sg_ret set_coord_mode(const CoordMode coord_mode);
+	public slots:
+		sg_ret set_coord_mode(CoordMode coord_mode);
 
 	protected:
 		int widgets_row = 0;
 
-		QLineEdit * name_entry = NULL;
-		CoordEntryWidget * coord_widget = NULL;
-		MeasurementEntry_2<Altitude, Altitude_ll, HeightUnit> * altitude_widget = NULL;
-		TimestampWidget * timestamp_widget = NULL;
-
+		QLineEdit * name_entry = nullptr;
+		CoordEntryWidget * coord_widget = nullptr;
+		MeasurementEntry_2<Altitude, Altitude_ll, HeightUnit> * altitude_widget = nullptr;
+		TimestampWidget * timestamp_widget = nullptr;
 
 		/* Buttons will be in two rows. */
-		QDialogButtonBox * button_box_upper = NULL;
-		QDialogButtonBox * button_box_lower = NULL;
+		QDialogButtonBox * button_box_upper = nullptr;
+		QDialogButtonBox * button_box_lower = nullptr;
 
+		QGridLayout * grid = nullptr;
+		QVBoxLayout * vbox = nullptr;
 
-		QGridLayout * grid = NULL;
-		QVBoxLayout * vbox = NULL;
+		QString debug_id;
 	};
 
 

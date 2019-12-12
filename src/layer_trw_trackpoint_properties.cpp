@@ -321,6 +321,7 @@ TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 	this->set_dialog_title(tr("Trackpoint Properties"));
 	this->build_buttons(this);
 	this->build_widgets(coord_mode, this);
+	this->debug_id = "TpPropertiesDialog";
 }
 
 
