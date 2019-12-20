@@ -1875,22 +1875,17 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 
 
 
-std::list<Rect *> Track::get_rectangles(const LatLon & area_span)
+std::list<CoordRectangle> Track::get_coordinate_rectangles(const LatLon & single_rectangle_span)
 {
-	std::list<Rect *> rectangles;
+	std::list<CoordRectangle> rectangles;
 
 	bool new_map = true;
-	Coord coord_tl;
-	Coord coord_br;
 	auto iter = this->trackpoints.begin();
 	while (iter != this->trackpoints.end()) {
 		Coord * cur_coord = &(*iter)->coord;
 		if (new_map) {
-			cur_coord->get_area_coordinates(area_span, &coord_tl, &coord_br);
-			Rect * rect = new Rect;
-			rect->tl = coord_tl;
-			rect->br = coord_br;
-			rect->center = *cur_coord;
+			CoordRectangle rect;
+			cur_coord->get_coord_rectangle(single_rectangle_span, rect);
 			rectangles.push_front(rect);
 			new_map = false;
 			iter++;
@@ -1898,7 +1893,7 @@ std::list<Rect *> Track::get_rectangles(const LatLon & area_span)
 		}
 		bool found = false;
 		for (auto rect_iter = rectangles.begin(); rect_iter != rectangles.end(); rect_iter++) {
-			if (cur_coord->is_inside((*rect_iter)->tl, (*rect_iter)->br)) {
+			if (cur_coord->is_inside((*rect_iter).m_coord_tl, (*rect_iter).m_coord_br)) {
 				found = true;
 				break;
 			}
@@ -2847,34 +2842,34 @@ void Track::geotagging_track_cb(void)
 
 
 
-static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, double gradient)
+static Coord * get_next_coord(const Coord & from, const Coord & to, const LatLon & area_span, double gradient)
 {
-	if ((area_span.lon >= std::abs(to->lat_lon.lon - from->lat_lon.lon))
-	    && (area_span.lat >= std::abs(to->lat_lon.lat - from->lat_lon.lat))) {
+	if ((area_span.lon >= std::abs(to.lat_lon.lon - from.lat_lon.lon))
+	    && (area_span.lat >= std::abs(to.lat_lon.lat - from.lat_lon.lat))) {
 
 		return NULL;
 	}
 
-	Coord * coord = new Coord();
-	coord->set_coord_mode(CoordMode::LatLon);
+	Coord * result = new Coord();
+	result->set_coord_mode(CoordMode::LatLon);
 
 	if (std::abs(gradient) < 1) {
-		if (from->lat_lon.lon > to->lat_lon.lon) {
-			coord->lat_lon.lon = from->lat_lon.lon - area_span.lon;
+		if (from.lat_lon.lon > to.lat_lon.lon) {
+			result->lat_lon.lon = from.lat_lon.lon - area_span.lon;
 		} else {
-			coord->lat_lon.lon = from->lat_lon.lon + area_span.lon;
+			result->lat_lon.lon = from.lat_lon.lon + area_span.lon;
 		}
-		coord->lat_lon.lat = gradient * (coord->lat_lon.lon - from->lat_lon.lon) + from->lat_lon.lat;
+		result->lat_lon.lat = gradient * (result->lat_lon.lon - from.lat_lon.lon) + from.lat_lon.lat;
 	} else {
-		if (from->lat_lon.lat > to->lat_lon.lat) {
-			coord->lat_lon.lat = from->lat_lon.lat - area_span.lat;
+		if (from.lat_lon.lat > to.lat_lon.lat) {
+			result->lat_lon.lat = from.lat_lon.lat - area_span.lat;
 		} else {
-			coord->lat_lon.lat = from->lat_lon.lat + area_span.lat;
+			result->lat_lon.lat = from.lat_lon.lat + area_span.lat;
 		}
-		coord->lat_lon.lon = (1/gradient) * (coord->lat_lon.lat - from->lat_lon.lat) + from->lat_lon.lat;
+		result->lat_lon.lon = (1/gradient) * (result->lat_lon.lat - from.lat_lon.lat) + from.lat_lon.lat;
 	}
 
-	return coord;
+	return result;
 }
 
 
@@ -2887,7 +2882,8 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, con
 
 	Coord * next = from;
 	while (true) {
-		if ((next = get_next_coord(next, to, area_span, gradient)) == NULL) {
+		next = get_next_coord(*next, *to, area_span, gradient);
+		if (next == nullptr) {
 			break;
 		}
 		list.push_front(next);
@@ -2899,15 +2895,15 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, con
 
 
 
-static sg_ret get_download_area_span(const VikingScale & viking_scale, LatLon & span) /* kamilFIXME: viewport is unused, why? */
+static sg_ret get_single_rectangle_span(const VikingScale & viking_scale, LatLon & single_rectangle_span) /* kamilFIXME: viewport is unused, why? */
 {
 	/* TODO_LATER: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
 	const double h_at_zoom_0_125 = 0.0011;
 	const double zoom_factor = viking_scale.get_x() / 0.125;
 
-	span.lat = h_at_zoom_0_125 * zoom_factor;
-	span.lon = w_at_zoom_0_125 * zoom_factor;
+	single_rectangle_span.lat = h_at_zoom_0_125 * zoom_factor;
+	single_rectangle_span.lon = w_at_zoom_0_125 * zoom_factor;
 
 	return sg_ret::ok;
 }
@@ -2915,52 +2911,47 @@ static sg_ret get_download_area_span(const VikingScale & viking_scale, LatLon & 
 
 
 
-std::list<Rect *> Track::get_map_rectangles(const VikingScale & viking_scale)
+std::list<CoordRectangle> Track::get_coord_rectangles(const VikingScale & viking_scale)
 {
-	std::list<Rect *> rectangles; /* Rectangles to download. */
+	std::list<CoordRectangle> rectangles; /* Rectangles to download. */
 	if (this->empty()) {
 		return rectangles;
 	}
 
-	LatLon area_span;
-	if (sg_ret::ok != get_download_area_span(viking_scale, area_span)) {
+	LatLon single_rectangle_span;
+	if (sg_ret::ok != get_single_rectangle_span(viking_scale, single_rectangle_span)) {
 		return rectangles;
 	}
 
-	rectangles = this->get_rectangles(area_span);
+	rectangles = this->get_coordinate_rectangles(single_rectangle_span);
 	std::list<Coord *> fillins;
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
-	/* Seems that ATM the function get_next_coord works only for LatLon. */
+	/* Seems that ATM the function get_next_coord() works only for LatLon. */
 	if (((LayerTRW *) this->owning_layer)->get_coord_mode() == CoordMode::LatLon) {
 
 		/* Fill-ins for far apart points. */
-		std::list<Rect *>::iterator cur_rect;
-		std::list<Rect *>::iterator next_rect;
+		std::list<CoordRectangle>::iterator cur_rect;
+		std::list<CoordRectangle>::iterator next_rect;
 
 		for (cur_rect = rectangles.begin();
 		     (next_rect = std::next(cur_rect)) != rectangles.end();
 		     cur_rect++) {
 
-			if ((area_span.lon < std::abs((*cur_rect)->center.lat_lon.lon - (*next_rect)->center.lat_lon.lon))
-			    || (area_span.lat < std::abs((*cur_rect)->center.lat_lon.lat - (*next_rect)->center.lat_lon.lat))) {
+			if ((single_rectangle_span.lon < std::abs((*cur_rect).m_coord_center.lat_lon.lon - (*next_rect).m_coord_center.lat_lon.lon))
+			    || (single_rectangle_span.lat < std::abs((*cur_rect).m_coord_center.lat_lon.lat - (*next_rect).m_coord_center.lat_lon.lat))) {
 
-				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, area_span);
+				add_fillins(fillins, &(*cur_rect).m_coord_center, &(*next_rect).m_coord_center, single_rectangle_span);
 			}
 		}
 	} else {
 		qDebug() << SG_PREFIX_W << "'download map' feature works only in Mercator mode";
 	}
 
-	Coord coord_tl;
-	Coord coord_br;
 	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
 		Coord * cur_coord = *iter;
-		cur_coord->get_area_coordinates(area_span, &coord_tl, &coord_br);
-		Rect * rect = new Rect;
-		rect->tl = coord_tl;
-		rect->br = coord_br;
-		rect->center = *cur_coord;
+		CoordRectangle rect;
+		cur_coord->get_coord_rectangle(single_rectangle_span, rect);
 		rectangles.push_front(rect);
 
 		delete *iter;

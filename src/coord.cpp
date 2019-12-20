@@ -357,16 +357,18 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 
 
 
-void Coord::get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const
+void Coord::get_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const
 {
 	const LatLon center = this->get_lat_lon();
-	const LatLon distance_from_center(area_span.lat / 2, area_span.lon / 2);
+	const LatLon distance_from_center(single_rectangle_span.lat / 2, single_rectangle_span.lon / 2);
 
-	coord_tl->lat_lon = get_north_west_corner(center, distance_from_center);
-	coord_tl->mode = CoordMode::LatLon;
+	rect.m_coord_tl.lat_lon = get_north_west_corner(center, distance_from_center);
+	rect.m_coord_tl.mode = CoordMode::LatLon;
 
-	coord_br->lat_lon = get_south_east_corner(center, distance_from_center);
-	coord_br->mode = CoordMode::LatLon;
+	rect.m_coord_br.lat_lon = get_south_east_corner(center, distance_from_center);
+	rect.m_coord_br.mode = CoordMode::LatLon;
+
+	rect.m_coord_center = *this;
 }
 
 

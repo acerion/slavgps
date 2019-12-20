@@ -50,6 +50,11 @@ namespace SlavGPS {
 
 
 
+	class CoordRectangle;
+
+
+
+
 	class Coord {
 	public:
 		Coord() {};
@@ -63,9 +68,13 @@ namespace SlavGPS {
 
 		void set_coord_mode(CoordMode mode);
 
-		/* Get top-left and bottom-right coordinates of rectangle that has
-		   dimensions (width/height) specified by area_span, and is centered at this coord's center. */
-		void get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const;
+		/* Get a structure @param rect describing a rectangle
+		   around this coordinate. The @param rect is
+		   specified by top-left and bottom-right coordinates
+		   of rectangle that has span (latitude/longitude
+		   range) specified by @param single_rectangle_span,
+		   and is centered at this coord's center. */
+		void get_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const;
 
 		bool is_inside(const Coord & coord_tl, const Coord & coord_br) const;
 
@@ -92,11 +101,16 @@ namespace SlavGPS {
 
 
 
-	typedef struct _Rect {
-		Coord tl;
-		Coord br;
-		Coord center;
-	} Rect;
+	class CoordRectangle {
+	public:
+		CoordRectangle() {};
+		CoordRectangle(const Coord & coord_tl, const Coord & coord_br, const Coord & coord_center)
+			: m_coord_tl(coord_tl), m_coord_br(coord_br), m_coord_center(coord_center) {}
+
+		Coord m_coord_tl;
+		Coord m_coord_br;
+		Coord m_coord_center;
+	};
 
 
 

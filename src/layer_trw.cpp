@@ -3483,21 +3483,15 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 
 
-/* ----------- Downloading maps along tracks --------------- */
-
-void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingScale & viking_scale)
+void download_map_along_track(Track * trk, LayerMap * layer_map, const VikingScale & viking_scale)
 {
-	std::list<Rect *> rectangles_to_download = trk->get_map_rectangles(viking_scale);
+	std::list<CoordRectangle> rectangles_to_download = trk->get_coord_rectangles(viking_scale);
 	if (rectangles_to_download.empty()) {
 		return;
 	}
 
 	for (auto iter = rectangles_to_download.begin(); iter != rectangles_to_download.end(); iter++) {
-		layer_map->download_section((*iter)->tl, (*iter)->br, viking_scale);
-	}
-
-	for (auto iter = rectangles_to_download.begin(); iter != rectangles_to_download.end(); iter++) {
-		delete *iter;
+		layer_map->download_section((*iter).m_coord_tl, (*iter).m_coord_br, viking_scale);
 	}
 }
 
@@ -3573,7 +3567,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		iter++;
 	}
 
-	vik_track_download_map(track, *iter, viking_scales[selected_zoom_idx]);
+	download_map_along_track(track, *iter, viking_scales[selected_zoom_idx]);
 
 	return;
 }
