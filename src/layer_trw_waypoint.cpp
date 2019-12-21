@@ -523,9 +523,6 @@ bool Waypoint::show_properties_dialog_cb(void)
 		tool->point_properties_dialog->disconnect();
 
 		/* Make new connections to current TRW layer. */
-#if TODO_LATER
-		connect(tool->wp_properties_dialog, SIGNAL (accepted()), parent_layer, SLOT (on_wp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO_LATER: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
-#endif
 		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 	}
 
