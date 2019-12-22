@@ -2171,6 +2171,9 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 	/* TODO_LATER: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
 	this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 
+	/* Update our own tooltip in tree view. */
+	this->waypoints.update_tree_item_tooltip();
+
 
 	return sg_ret::ok;
 }
@@ -2182,6 +2185,9 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 {
 	this->attach_to_container(wp);
 	this->attach_to_tree(wp);
+
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	QObject::connect(wp, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
@@ -2214,6 +2220,9 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 
 		/* Sort now as post_read is not called on a route connected to tree. */
 		this->tree_view->sort_children(&this->routes, this->track_sort_order);
+
+		/* Update our own tooltip in tree view. */
+		this->routes.update_tree_item_tooltip();
 	} else {
 		if (!this->tracks.is_in_tree()) {
 			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.name << "under" << this->name;
@@ -2234,6 +2243,9 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 
 		/* Sort now as post_read is not called on a track connected to tree. */
 		this->tree_view->sort_children(&this->tracks, this->track_sort_order);
+
+		/* Update our own tooltip in tree view. */
+		this->tracks.update_tree_item_tooltip();
 	}
 
 	return sg_ret::ok;
@@ -2247,6 +2259,9 @@ sg_ret LayerTRW::add_track(Track * trk)
 	this->attach_to_container(trk);
 	this->attach_to_tree(trk);
 
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
+
 	QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 	return sg_ret::ok;
@@ -2259,6 +2274,9 @@ sg_ret LayerTRW::add_route(Track * trk)
 {
 	this->attach_to_container(trk);
 	this->attach_to_tree(trk);
+
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 

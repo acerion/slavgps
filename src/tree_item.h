@@ -271,6 +271,8 @@ namespace SlavGPS {
 
 		virtual TreeItemType get_tree_item_type(void) const = 0;
 
+		void update_tree_item_tooltip(void);
+
 
 	//protected:
 		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */

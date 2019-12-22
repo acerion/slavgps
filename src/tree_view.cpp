@@ -145,19 +145,23 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 
 
-void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
+void TreeView::update_tree_item_tooltip(const TreeItem & tree_item)
 {
-	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item->name;
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
+	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item.name;
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item.index.parent());
 	if (!parent_item) {
-		/* "tree_item->index" points at the top tree item. */
-		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
+		/* "tree_item.index" points at the top tree item. */
+		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item.index.row() << tree_item.index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	/* TODO_LATER: apply the tooltip to all visible columns? */
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
-	const QString tooltip = tree_item->get_tooltip();
-	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item->name;
+
+	/* Apply the tooltip only to main column with item's name.
+
+	   Perhaps in future other columns will get their own
+	   dedicated tooltips, but not now. */
+	QStandardItem * ch = parent_item->child(tree_item.index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+	const QString tooltip = tree_item.get_tooltip();
+	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item.name;
 	ch->setToolTip(tooltip);
 }
 

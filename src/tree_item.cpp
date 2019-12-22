@@ -455,3 +455,16 @@ SGObjectTypeID TreeItem::get_type_id(void) const
 	qDebug() << SG_PREFIX_W << "Returning empty object type id for object" << this->name;
 	return SGObjectTypeID(); /* Empty value for all tree item types that don't need specific value. */
 }
+
+
+
+
+void TreeItem::update_tree_item_tooltip(void)
+{
+	if (this->tree_view) {
+		this->tree_view->update_tree_item_tooltip(*this);
+	} else {
+		qDebug() << SG_PREFIX_E << "Trying to update tooltip of tree item" << this->name << "that is not connected to tree";
+	}
+	return;
+}

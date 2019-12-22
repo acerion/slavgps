@@ -669,6 +669,8 @@ sg_ret LayerTRWTracks::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trk);
 	}
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	return sg_ret::ok;
 }
@@ -1139,6 +1141,9 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
 		trw->detach_from_container((Track *) tree_item);
 		/* Detaching of tree item from tree view will be handled by QT. */
+
+		/* Update our own tooltip in tree view. */
+		trw->update_tree_item_tooltip();
 	}
 
 	/* Handle item in new location. */
@@ -1146,6 +1151,9 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 		this->attach_to_container((Track *) tree_item);
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, tree_item);
+
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
 	}
 
 	return sg_ret::ok;

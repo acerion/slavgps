@@ -97,7 +97,7 @@ namespace SlavGPS {
 		void apply_tree_item_name(const TreeItem * tree_item);
 		void apply_tree_item_icon(const TreeItem * tree_item);
 		void apply_tree_item_timestamp(const TreeItem * tree_item);
-		void apply_tree_item_tooltip(const TreeItem * tree_item);
+		void update_tree_item_tooltip(const TreeItem & tree_item);
 
 		bool get_tree_item_visibility(const TreeItem * tree_item);
 		bool get_tree_item_visibility_with_parents(const TreeItem * tree_item);

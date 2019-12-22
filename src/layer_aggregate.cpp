@@ -170,8 +170,8 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 
 		QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
-		/* Update our own tooltip. */
-		this->tree_view->apply_tree_item_tooltip(this);
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
 
 		if (!this->children->empty()) {
 			this->tree_view->expand(this->index);
@@ -226,8 +226,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 #if 0
 	if (!this->children->empty()) {
@@ -272,8 +272,8 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 
 	this->tree_view->apply_tree_item_timestamp(layer);
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 
 #if 0
@@ -657,8 +657,8 @@ void LayerAggregate::clear()
 	}
 	this->children->clear();
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 }
 
 
@@ -698,8 +698,8 @@ sg_ret LayerAggregate::detach_from_tree(Layer * layer)
 {
 	this->tree_view->detach_tree_item(layer);
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	return sg_ret::ok;
 }
@@ -732,8 +732,8 @@ bool LayerAggregate::delete_layer(Layer * layer)
 	}
 	delete layer;
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	return was_visible;
 }
@@ -963,8 +963,8 @@ sg_ret LayerAggregate::attach_children_to_tree(void)
 		this->tree_view->attach_to_tree(this, layer);
 	}
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+	/* Update our own tooltip in tree view. */
+	this->update_tree_item_tooltip();
 
 	return sg_ret::ok;
 }
