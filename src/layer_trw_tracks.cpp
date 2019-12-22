@@ -1162,31 +1162,6 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
-{
-	if (NULL == result) {
-		return sg_ret::err;
-	}
-
-	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
-		*result = false;
-		return sg_ret::ok;
-	}
-
-	auto iter = std::find(this->accepted_child_type_ids.begin(), this->accepted_child_type_ids.end(), tree_item->get_type_id());
-	if (iter != this->accepted_child_type_ids.end()) {
-		qDebug() << SG_PREFIX_I << "Accepted child type ids =" << this->accepted_child_type_ids << ", dropped item type id =" << tree_item->m_type_id;
-		*result = true;
-		return sg_ret::ok;
-	}
-
-	*result = false;
-	return sg_ret::ok;
-}
-
-
-
-
 bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 {
 	if (child_tree_item.get_type_id() != Track::type_id()

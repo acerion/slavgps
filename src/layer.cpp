@@ -511,19 +511,6 @@ sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret Layer::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
-{
-	if (NULL == result) {
-		return sg_ret::err;
-	}
-
-	*result = false;
-	return sg_ret::ok;
-}
-
-
-
-
 LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath)
 {
 	/* Value that indicates call of base class method. */
@@ -695,4 +682,14 @@ void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coo
 		gisview->set_center_coord(coord);
 		this->emit_tree_item_changed("Requesting change of center coordinate of viewport");
 	}
+}
+
+
+
+
+Layer * Layer::to_layer(void) const
+{
+	/* We are already a layer, no need to go up in hierarchy of
+	   tree items to find some layer. */
+	return (Layer *) this;
 }

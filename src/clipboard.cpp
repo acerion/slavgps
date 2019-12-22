@@ -469,8 +469,8 @@ void Clipboard::copy_selected(LayersPanel * panel)
 		   At least this is better than copying the layer data - which is even further away from what the user would be expecting... */
 		len = 0;
 	} else {
+#ifdef K
 		TreeItem * item = selected->tree_view->get_tree_item(selected->index);
-
 		switch (item->get_tree_item_type()) {
 		case TreeItemType::Sublayer:
 			type = ClipboardDataType::Sublayer;
@@ -479,9 +479,9 @@ void Clipboard::copy_selected(LayersPanel * panel)
 		case TreeItemType::Layer: {
 			int ilen = 0;
 			type = ClipboardDataType::Layer;
-#ifdef K
+
 			Layer::marshall(selected, &data, &ilen);
-#endif
+
 			len = ilen;
 			}
 			break;
@@ -489,6 +489,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 			qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
 			return;
 		}
+#endif
 	}
 #if 1
 	Pickle pickle;

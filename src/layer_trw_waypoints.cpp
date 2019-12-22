@@ -1086,32 +1086,6 @@ sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int c
 
 
 
-sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
-{
-	if (NULL == result) {
-		qDebug() << SG_PREFIX_E << "Invalid result argument";
-		return sg_ret::err;
-	}
-
-	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
-		qDebug() << SG_PREFIX_D << "Item" << tree_item->name << "is not a sublayer";
-		*result = false;
-		return sg_ret::ok;
-	}
-
-	auto iter = std::find(this->accepted_child_type_ids.begin(), this->accepted_child_type_ids.end(), tree_item->get_type_id());
-	if (iter != this->accepted_child_type_ids.end()) {
-		*result = true;
-		return sg_ret::ok;
-	}
-
-	*result = false;
-	return sg_ret::ok;
-}
-
-
-
-
 bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
 {
 	if (child_tree_item.get_type_id() != Waypoint::type_id()) {

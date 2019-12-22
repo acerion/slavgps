@@ -81,7 +81,7 @@ namespace SlavGPS {
 		sg_ret attach_children_to_tree(void);
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
-		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
+		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
 
 		void add_layer(Layer * layer, bool allow_reordering);
 		void insert_layer(Layer * layer, const Layer * sibling_layer);

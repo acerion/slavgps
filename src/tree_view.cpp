@@ -965,14 +965,11 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 	bool accepts_all = false; /* It's important to start from 'false'. */
 	for (int i = 0; i < list.size(); i++) {
 		TreeItem * tree_item = list.at(i);
-		bool accepts = false;
-		const sg_ret retv = parent_item->dropped_item_is_acceptable(tree_item, &accepts);
-		if (sg_ret::ok != retv) {
-			qDebug() << SG_PREFIX_I << "Can't drop MIME data: tree item doesn't accept child no." << i << "(error)";
-			accepts_all = false;
-			break;
+		if (nullptr == tree_item) {
+			qDebug() << SG_PREFIX_E << "Item" << i << "is NULL";
+			return false;
 		}
-		if (false == accepts) {
+		if (!parent_item->dropped_item_is_acceptable(*tree_item)) {
 			qDebug() << SG_PREFIX_I << "Can't drop MIME data: tree item doesn't accept child no." << i << "(type id mismatch)";
 			accepts_all = false;
 			break;

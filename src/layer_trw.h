@@ -142,7 +142,6 @@ namespace SlavGPS {
 		Time get_timestamp(void) const override;
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
-		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
 		LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
 		SaveStatus write_layer_data(FILE * file) const;

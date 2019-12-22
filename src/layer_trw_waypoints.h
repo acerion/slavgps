@@ -190,7 +190,6 @@ namespace SlavGPS {
 
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
-		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
 
 		bool handle_selection_in_tree(void);

@@ -147,17 +147,8 @@ QString TreeItem::get_tooltip(void) const
 
 Layer * TreeItem::to_layer(void) const
 {
-	switch (this->get_tree_item_type()) {
-	case TreeItemType::Layer:
-		return (Layer *) this;
-	case TreeItemType::Sublayer:
-		return this->owning_layer;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) this->get_tree_item_type() << this->name;
-		/* We shouldn't be returning anything, but at least
-		   try to return something that may be not NULL. */
-		return this->owning_layer;
-	}
+	/* Default behaviour for Waypoints, Tracks, Route containers and such non-Layer items. */
+	return this->owning_layer;
 }
 
 
@@ -333,14 +324,18 @@ sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret TreeItem::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+/**
+   @reviewed-on 2019-12-22
+*/
+bool TreeItem::dropped_item_is_acceptable(const TreeItem & tree_item) const
 {
-	if (NULL == result) {
-		return sg_ret::err;
+	auto iter = std::find(this->accepted_child_type_ids.begin(), this->accepted_child_type_ids.end(), tree_item.get_type_id());
+	if (iter != this->accepted_child_type_ids.end()) {
+		qDebug() << SG_PREFIX_I << "Accepted child type ids =" << this->accepted_child_type_ids << ", dropped item type id =" << tree_item.m_type_id;
+		return true;
+	} else {
+		return false;
 	}
-
-	*result = false;
-	return sg_ret::ok;
 }
 
 

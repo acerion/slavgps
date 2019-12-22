@@ -709,35 +709,35 @@ ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QM
 
 void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * event)
 {
-	/* TODO_LATER: the code in this branch visits (in one way or the
-	   other) whole tree of layers, starting with top level
+	GisViewport * main_gis_view = this->window->get_main_gis_view();
+	TreeView * tree_view = this->window->get_items_tree()->get_tree_view();
+	LayerAggregate * top_layer = this->window->get_items_tree()->get_top_layer();
+
+
+	/* TODO_LATER: the code in this function visits (in one way or
+	   the other) whole tree of layers, starting with top level
 	   aggregate layer.  Should we really visit all layers?
 	   Shouldn't we visit only selected items and its children? */
-
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
 		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handling double click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->get_main_gis_view(), this);
+		handled = top_layer->handle_select_tool_double_click(event, main_gis_view, this);
 	} else {
 		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handle single click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->get_main_gis_view(), this);
+		handled = top_layer->handle_select_tool_click(event, main_gis_view, this);
 	}
 
-	if (!handled) {
-		qDebug() << SG_PREFIX_D << this->get_tool_id() << "mouse event not handled";
-		/* Deselect & redraw screen if necessary to remove the highlight. */
 
-		TreeView * tree_view = this->window->items_tree->get_tree_view();
+	if (!handled) {
+		qDebug() << SG_PREFIX_D << this->get_tool_id() << "mouse event not handled by any layer";
+
+		/* Deselect & redraw screen if necessary to remove the
+		   highlight of selected tree item. */
 		TreeItem * selected_item = tree_view->get_selected_tree_item();
 		if (selected_item) {
-			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO_LATER: improve this condition. */
-			if (selected_item->get_tree_item_type() == TreeItemType::Sublayer
-			    || selected_item->to_layer()->m_kind == LayerKind::TRW) {
-
-				tree_view->deselect_tree_item(selected_item);
-				if (this->window->clear_highlight()) {
-					this->window->draw_tree_items(this->gisview);
-				}
+			tree_view->deselect_tree_item(selected_item);
+			if (this->window->clear_highlight()) {
+				this->window->draw_tree_items(this->gisview);
 			}
 		}
 	} else {

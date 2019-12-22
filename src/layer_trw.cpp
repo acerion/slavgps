@@ -2472,32 +2472,6 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
-{
-	if (NULL == result) {
-		return sg_ret::err;
-	}
-
-	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
-		*result = false;
-		return sg_ret::ok;
-	}
-
-	if (tree_item->get_type_id() == Track::type_id()
-	    || tree_item->get_type_id() == Route::type_id()
-	    || tree_item->get_type_id() == Waypoint::type_id()) {
-
-		*result = true;
-		return sg_ret::ok;
-	}
-
-	*result = false;
-	return sg_ret::ok;
-}
-
-
-
-
 sg_ret LayerTRW::detach_from_container(Track * trk, bool * was_visible)
 {
 	if (!trk) {
@@ -3676,6 +3650,10 @@ LayerTRW::LayerTRW() : Layer()
 	if (limit.is_valid()) {
 		this->wp_image_cache.set_capacity_megabytes(limit.u.val_int);
 	}
+
+	this->accepted_child_type_ids.push_back(Track::type_id());
+	this->accepted_child_type_ids.push_back(Route::type_id());
+	this->accepted_child_type_ids.push_back(Waypoint::type_id());
 }
 
 

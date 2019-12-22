@@ -184,7 +184,7 @@ namespace SlavGPS {
 		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
 
 		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
-		virtual sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
+		virtual bool dropped_item_is_acceptable(const TreeItem & tree_item) const;
 
 
 
@@ -234,7 +234,7 @@ namespace SlavGPS {
 		/* Get layer associated with this tree item.
 		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
 		   Return one of these. */
-		Layer * to_layer(void) const;
+		virtual Layer * to_layer(void) const;
 
 		Layer * get_owning_layer(void) const;
 		void set_owning_layer(Layer * layer);
