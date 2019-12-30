@@ -80,7 +80,7 @@ LayerTRWWaypoints::LayerTRWWaypoints()
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
 	this->name = tr("Waypoints");
-	this->menu_operation_ids = MenuOperationPaste;
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Paste);
 }
 
 
@@ -622,22 +622,13 @@ void LayerTRWWaypoints::sublayer_menu_sort(QMenu & menu)
 
 
 
+
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
-bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
+bool LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	bool rv = false;
-
-	assert (this->menu_operation_ids == MenuOperationPaste);
-
-	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
-	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
-
-
-	menu.addSeparator();
 
 
 	if (ThisApp::get_layers_panel()) {

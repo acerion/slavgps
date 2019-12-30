@@ -64,9 +64,6 @@ namespace SlavGPS {
 		Waypoint(const Waypoint& other);
 		~Waypoint();
 
-		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
-
-
 		void set_name(const QString & new_name);
 		void set_comment(const QString & new_comment);
 		void set_description(const QString & new_description);
@@ -109,7 +106,8 @@ namespace SlavGPS {
 		QString get_any_url(void) const;
 
 
-		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
+		bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu);
 		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool tree_view_context_menu);
 
 		bool handle_selection_in_tree(void);

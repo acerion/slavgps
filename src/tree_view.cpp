@@ -1056,15 +1056,12 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 	qDebug() << SG_PREFIX_I << "Target item's name =" << target_item->name;
 
 
-	if (parent_item->tree_item_type == TreeItemType::Layer) {
+	if (parent_item->is_layer()) {
 		qDebug() << SG_PREFIX_I << "Can drop on Layer";
 		return true;
-	} else if (parent_item->tree_item_type == TreeItemType::Sublayer) {
+	} else {
 		qDebug() << SG_PREFIX_I << "Can drop on Sublayer";
 		return true;
-	} else {
-		qDebug() << SG_PREFIX_E << "Wrong type of parent:" << (int) parent_item->tree_item_type;
-		return false;
 	}
 
 #endif

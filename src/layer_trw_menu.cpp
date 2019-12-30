@@ -75,7 +75,7 @@ extern bool have_geojson_export;
 
 
 
-void LayerTRW::add_menu_items(QMenu & menu)
+bool LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 
@@ -289,6 +289,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_main_gis_view(), NULL);
+
+	return true;
 }
 
 

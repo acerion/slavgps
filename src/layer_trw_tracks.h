@@ -126,9 +126,6 @@ namespace SlavGPS {
 
 		sg_ret attach_children_to_tree(void);
 
-		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
-
-
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);
 		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
@@ -174,7 +171,7 @@ namespace SlavGPS {
 
 
 
-		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
 		void sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);

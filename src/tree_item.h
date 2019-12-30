@@ -74,14 +74,6 @@ namespace SlavGPS {
 
 
 
-	enum class TreeItemType {
-		Layer,
-		Sublayer
-	};
-
-
-
-
 	enum TreeItemPropertyID {
 		ParentLayer,     /* Name of parent layer containing given tree item. */
 		TheItem,         /* Name of given tree item. */
@@ -131,17 +123,25 @@ namespace SlavGPS {
 
 
 
-	/* Which standard operations shall be present in context menu for a tree item? */
-	enum MenuOperation : uint16_t {
-		MenuOperationNone       = 0x0000,
-		MenuOperationProperties = 0x0001,
-		MenuOperationCut        = 0x0002,
-		MenuOperationCopy       = 0x0004,
-		MenuOperationPaste      = 0x0008,
-		MenuOperationDelete     = 0x0010,
-		MenuOperationNew        = 0x0020,
-		MenuOperationAll        = 0xffff,
+
+	/* Which standard operations shall be present in context menu
+	   for a tree item? */
+	enum class StandardMenuOperation {
+		Properties,
+		Cut,
+		Copy,
+		Paste,
+		Delete,
+		New,
 	};
+
+	class StandardMenuOperations : public std::list<StandardMenuOperation> {
+	public:
+		bool is_member(StandardMenuOperation op) const;
+	};
+
+
+
 
 
 
@@ -181,7 +181,11 @@ namespace SlavGPS {
 		   child that needs to be added to the tree. */
 		virtual sg_ret attach_children_to_tree(void);
 
-		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
+
+		/* First of these methods is wrapper for the other. */
+		bool menu_add_tree_item_operations(QMenu & menu, bool tree_view_context_menu);
+		virtual bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu);
+		virtual bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) { return true; }
 
 		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		virtual bool dropped_item_is_acceptable(const TreeItem & tree_item) const;
@@ -231,10 +235,19 @@ namespace SlavGPS {
 		/* Is given tree item a member of a tree? */
 		bool is_in_tree(void) const;
 
-		/* Get layer associated with this tree item.
-		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
-		   Return one of these. */
-		virtual Layer * to_layer(void) const;
+		/**
+		   @brief Is given tree item a layer?
+		*/
+		virtual bool is_layer(void) const;
+
+		/**
+		   @brief Get layer associated with this tree item
+
+		   Either the tree item itself is a layer, or a
+		   sublayer has its parent/owning layer.  Return one
+		   of these.
+		*/
+		virtual Layer * get_immediate_layer(void);
 
 		Layer * get_owning_layer(void) const;
 		void set_owning_layer(Layer * layer);
@@ -247,8 +260,8 @@ namespace SlavGPS {
 		virtual sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const;
 
 
-		MenuOperation get_menu_operation_ids(void) const;
-		void set_menu_operation_ids(MenuOperation new_value);
+		StandardMenuOperations get_menu_operation_ids(void) const;
+		void set_menu_operation_ids(StandardMenuOperations new_value);
 
 		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
 		   Return true if this condition is true.
@@ -268,8 +281,6 @@ namespace SlavGPS {
 		   @return false otherwise (e.g. because child item is already at the beginning or end of container
 		*/
 		virtual bool move_child(TreeItem & child_tree_item, bool up);
-
-		virtual TreeItemType get_tree_item_type(void) const = 0;
 
 		void update_tree_item_tooltip(void);
 
@@ -299,7 +310,7 @@ namespace SlavGPS {
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given tree item type. */
-		MenuOperation menu_operation_ids = MenuOperationAll;
+		StandardMenuOperations m_menu_operation_ids;
 
 		Time timestamp; /* Invalid by default. */
 

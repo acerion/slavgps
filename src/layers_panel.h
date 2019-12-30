@@ -84,6 +84,8 @@ namespace SlavGPS {
 		LayerAggregate * get_top_layer();
 		TreeView * get_tree_view();
 
+		void context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops);
+
 		void contextMenuEvent(QContextMenuEvent * event);
 		void keyPressEvent(QKeyEvent * event);
 
@@ -91,8 +93,8 @@ namespace SlavGPS {
 	private:
 		void context_menu_show_for_item(TreeItem * item);
 		void context_menu_show_for_new_layer();
-		void context_menu_create_standard_items(QMenu * menu, uint16_t menu_operations);
-		void context_menu_add_new_layer_submenu(QMenu * menu);
+		void context_menu_add_new_layer_submenu(QMenu & menu);
+
 
 		Layer * go_up_to_layer(const TreeItem * tree_item, LayerKind layer_kind);
 

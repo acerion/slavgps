@@ -121,9 +121,6 @@ namespace SlavGPS {
 		virtual void unmarshall_params(Pickle & pickle);
 		static Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
 
-		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Layer; }
-
-
 		static Layer * construct_layer(LayerKind layer_kind, GisViewport * gisview, bool interactive = false);
 
 		const LayerInterface & get_interface(void) const;
@@ -178,7 +175,8 @@ namespace SlavGPS {
 		/* Write layer-specific data to Vik file. */
 		virtual SaveStatus write_layer_data(FILE * file) const;
 
-		virtual void add_menu_items(QMenu & menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+
 
 		virtual bool show_properties_dialog(GisViewport * gisview);
 		virtual bool show_properties_dialog(void) override;
@@ -229,7 +227,9 @@ namespace SlavGPS {
 		void ref_layer(void);
 		void unref_layer(void);
 
-		Layer * to_layer(void) const override;
+		Layer * get_immediate_layer(void) override;
+
+		bool is_layer(void) const override;
 
 
 		/* GUI. */

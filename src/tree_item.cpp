@@ -35,6 +35,7 @@
 #include "tree_item.h"
 #include "tree_view.h"
 #include "tree_view_internal.h"
+#include "layers_panel.h"
 #include "window.h"
 
 
@@ -145,9 +146,14 @@ QString TreeItem::get_tooltip(void) const
 
 
 
-Layer * TreeItem::to_layer(void) const
+/**
+   @reviewed-on 2019-12-29
+*/
+Layer * TreeItem::get_immediate_layer(void)
 {
-	/* Default behaviour for Waypoints, Tracks, Route containers and such non-Layer items. */
+	/* Default behaviour for Waypoints, Tracks, Routes, their
+	   containers and other non-Layer items. This behaviour will
+	   be overriden for layers. */
 	return this->owning_layer;
 }
 
@@ -206,6 +212,14 @@ bool TreeItem::is_in_tree(void) const
 
 
 
+bool TreeItem::is_layer(void) const
+{
+	return false;
+}
+
+
+
+
 bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
 {
 	return (a->name < b->name);
@@ -222,17 +236,49 @@ bool TreeItem::compare_name_descending(const TreeItem * a, const TreeItem * b)
 
 
 
-MenuOperation TreeItem::get_menu_operation_ids(void) const
+StandardMenuOperations TreeItem::get_menu_operation_ids(void) const
 {
-	return this->menu_operation_ids;
+	return this->m_menu_operation_ids;
 }
 
 
 
 
-void TreeItem::set_menu_operation_ids(MenuOperation new_value)
+void TreeItem::set_menu_operation_ids(StandardMenuOperations new_value)
 {
-	this->menu_operation_ids = new_value;
+	this->m_menu_operation_ids = new_value;
+}
+
+
+
+
+bool TreeItem::menu_add_tree_item_operations(QMenu & menu, bool tree_view_context_menu)
+{
+	/* First add standard operations. */
+	StandardMenuOperations ops = this->get_menu_operation_ids();
+	if (tree_view_context_menu) {
+		ops.push_back(StandardMenuOperation::New);
+	}
+	if (ops.size() > 0) {
+		this->menu_add_standard_operations(menu, ops, tree_view_context_menu);
+		menu.addSeparator();
+	}
+
+
+	/* Now add type-specific operations below */
+	this->menu_add_type_specific_operations(menu, tree_view_context_menu);
+
+	return true;
+}
+
+
+
+
+bool TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
+{
+	LayersPanel * layers_panel = ThisApp::get_layers_panel();
+	layers_panel->context_menu_add_standard_operations(menu, ops);
+	return true;
 }
 
 
@@ -462,4 +508,13 @@ void TreeItem::update_tree_item_tooltip(void)
 		qDebug() << SG_PREFIX_E << "Trying to update tooltip of tree item" << this->name << "that is not connected to tree";
 	}
 	return;
+}
+
+
+
+
+bool StandardMenuOperations::is_member(StandardMenuOperation op) const
+{
+	auto iter = std::find(this->begin(), this->end(), op);
+	return iter != this->end();
 }

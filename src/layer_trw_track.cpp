@@ -289,7 +289,10 @@ Track::Track(bool is_route)
 
 	this->has_properties_dialog = true;
 
-	this->menu_operation_ids = (MenuOperation) (MenuOperationCut | MenuOperationCopy | MenuOperationDelete);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Properties);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Cut);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Copy);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Delete);
 }
 
 
@@ -2187,7 +2190,50 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
+bool Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	QAction * qa = NULL;
+
+	if (ops.is_member(StandardMenuOperation::Properties)) {
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+		if (this->props_dialog) {
+			/* A properties dialog window is already opened.
+			   Don't give possibility to open a duplicate properties dialog window. */
+			qa->setEnabled(false);
+		}
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
+	}
+
+	if (ops.is_member(StandardMenuOperation::Cut)) {
+		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+	}
+
+	if (ops.is_member(StandardMenuOperation::Copy)) {
+		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+	}
+
+	if (ops.is_member(StandardMenuOperation::Delete)) {
+		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
+		qa->setData((unsigned int) this->get_uid());
+		if (this->is_track()) {
+			connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_track_cb()));
+		} else {
+			connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_route_cb()));
+		}
+	}
+
+	menu.addSeparator();
+
+	return true;
+}
+
+
+
+
+bool Track::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	bool rv = false;
@@ -2195,15 +2241,6 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	rv = true;
-	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	if (this->props_dialog) {
-		/* A properties dialog window is already opened.
-		   Don't give possibility to open a duplicate properties dialog window. */
-		qa->setEnabled(false);
-	}
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
-
-
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("P&rofile"));
 	if (this->profile_dialog) {
@@ -2217,28 +2254,6 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	qa = menu.addAction(tr("&Statistics"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (statistics_dialog_cb()));
 
-
-	/* Common "Edit" items. */
-	{
-		assert (this->menu_operation_ids == (MenuOperationCut | MenuOperationCopy | MenuOperationDelete));
-
-		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
-
-		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
-
-		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
-		qa->setData((unsigned int) this->get_uid());
-		if (this->is_track()) {
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_track_cb()));
-		} else {
-			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_route_cb()));
-		}
-	}
-
-
-	menu.addSeparator();
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));

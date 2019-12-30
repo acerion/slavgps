@@ -69,41 +69,10 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 	}
 
 	QMenu menu;
-
-	switch (item->get_tree_item_type()) {
-	case TreeItemType::Layer: {
-
-		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->m_type_id << item->name;
-
-		/* We don't want a parent layer here. We want item
-		   cast to layer if the item is layer, or item's
-		   parent layer otherwise. */
-		Layer * layer = item->to_layer();
-
-		/* "New layer -> layer types" submenu. */
-		MenuOperation ops = layer->get_menu_operation_ids();
-		ops = (MenuOperation) (ops | MenuOperationNew);
-		//this->context_menu_add_standard_items(&menu, ops);
-
-		/* Layer-type-specific menu items. */
-		layer->add_menu_items(menu);
-		}
-		break;
-
-	case TreeItemType::Sublayer:
-		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->m_type_id << item->name;
-
-		if (!item->add_context_menu_items(menu, true)) {
-			return;
-		}
-		/* TODO_LATER: specific things for different types. */
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
+	qDebug() << SG_PREFIX_I << "Menu for tree item" << item->m_type_id << item->name;
+	if (!item->menu_add_tree_item_operations(menu, true)) {
 		return;
 	}
-
 	menu.exec(QPoint(cursor_position.x(), cursor_position.y()));
 
 	return;

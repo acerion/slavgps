@@ -191,29 +191,29 @@ void LayersPanel::keyPressEvent(QKeyEvent * ev)
 
    \return freshly created menu with specified items
 */
-void LayersPanel::context_menu_create_standard_items(QMenu * menu, uint16_t menu_operations)
+void LayersPanel::context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops)
 {
-	if (menu_operations & MenuOperationProperties) {
-		menu->addAction(this->window->qa_tree_item_properties);
+	if (ops.is_member(StandardMenuOperation::Properties)) {
+		menu.addAction(this->window->qa_tree_item_properties);
 	}
 
-	if (menu_operations & MenuOperationCut) {
-		menu->addAction(this->qa_layer_cut);
+	if (ops.is_member(StandardMenuOperation::Cut)) {
+		menu.addAction(this->qa_layer_cut);
 	}
 
-	if (menu_operations & MenuOperationCopy) {
-		menu->addAction(this->qa_layer_copy);
+	if (ops.is_member(StandardMenuOperation::Copy)) {
+		menu.addAction(this->qa_layer_copy);
 	}
 
-	if (menu_operations & MenuOperationPaste) {
-		menu->addAction(this->qa_layer_paste);
+	if (ops.is_member(StandardMenuOperation::Paste)) {
+		menu.addAction(this->qa_layer_paste);
 	}
 
-	if (menu_operations & MenuOperationDelete) {
-		menu->addAction(this->qa_layer_remove);
+	if (ops.is_member(StandardMenuOperation::Delete)) {
+		menu.addAction(this->qa_layer_remove);
 	}
 
-	if (menu_operations & MenuOperationNew) {
+	if (ops.is_member(StandardMenuOperation::New)) {
 		this->context_menu_add_new_layer_submenu(menu);
 	}
 }
@@ -221,10 +221,10 @@ void LayersPanel::context_menu_create_standard_items(QMenu * menu, uint16_t menu
 
 
 
-void LayersPanel::context_menu_add_new_layer_submenu(QMenu * menu)
+void LayersPanel::context_menu_add_new_layer_submenu(QMenu & menu)
 {
-	QMenu * layers_submenu = new QMenu(tr("New Layer"), menu);
-	menu->addMenu(layers_submenu);
+	QMenu * layers_submenu = new QMenu(tr("New Layer"), &menu);
+	menu.addMenu(layers_submenu);
 	this->window->new_layers_submenu_add_actions(layers_submenu);
 }
 
@@ -237,39 +237,11 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		qDebug() << SG_PREFIX_E << "Show context menu for item: NULL item";
 		return;
 	}
-
+	qDebug() << SG_PREFIX_I << "Context menu event: menu for" << item->m_type_id << item->name;
 	QMenu menu;
-
-	switch (item->get_tree_item_type()) {
-	case TreeItemType::Layer: {
-
-		qDebug() << SG_PREFIX_I << "Context menu event: menu for layer" << item->m_type_id << item->name;
-
-		Layer * layer = item->to_layer();
-
-		/* "New layer -> layer kinds" submenu. */
-		MenuOperation ops = layer->get_menu_operation_ids();
-		ops = (MenuOperation) (ops | MenuOperationNew);
-		this->context_menu_create_standard_items(&menu, ops);
-
-		/* Layer-type-specific menu items. */
-		layer->add_menu_items(menu);
-		}
-		break;
-	case TreeItemType::Sublayer:
-		qDebug() << SG_PREFIX_I << "Context menu event: menu for sublayer" << item->m_type_id << item->name;
-
-		if (!item->add_context_menu_items(menu, true)) {
-			return;
-		}
-		/* TODO_LATER: specific things for different types. */
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
+	if (!item->menu_add_tree_item_operations(menu, true)) {
 		return;
 	}
-
 	menu.exec(QCursor::pos());
 
 	return;
@@ -282,8 +254,12 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 void LayersPanel::context_menu_show_for_new_layer(void)
 {
 	QMenu menu(this);
+
 	/* Put only "New" item in the context menu. */
-	this->context_menu_create_standard_items(&menu, MenuOperationNew);
+	StandardMenuOperations ops;
+	ops.push_back(StandardMenuOperation::New);
+
+	this->context_menu_add_standard_operations(menu, ops);
 	menu.exec(QCursor::pos());
 }
 
@@ -321,7 +297,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	/* If selected item is layer, then the layer itself is
 	   returned here. Otherwise, parent/owning layer of selected
 	   sublayer is returned. */
-	Layer * selected_layer = selected_item->to_layer();
+	Layer * selected_layer = selected_item->get_immediate_layer();
 	assert (selected_layer->tree_view);
 	assert (selected_layer->index.isValid());
 	TreeIndex selected_layer_index = selected_layer->index;
@@ -434,8 +410,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	switch (selected_item->get_tree_item_type()) {
-	case TreeItemType::Layer: {
+	if (selected_item->is_layer()) {
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
@@ -460,16 +435,9 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		} else {
 			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
-		}
-		break;
-	case TreeItemType::Sublayer: {
+	} else {
 		Layer * parent_layer = this->get_selected_layer();
 		parent_layer->cut_sublayer(selected_item);
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) selected_item->get_tree_item_type() << selected_item->name;
-		break;
 	}
 }
 
@@ -524,9 +492,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	switch (selected_item->get_tree_item_type()) {
-	case TreeItemType::Layer: {
-		Layer * layer = selected_item->to_layer();
+	if (selected_item->is_layer()) {
+		Layer * layer = selected_item->get_immediate_layer();
 
 
 		/* Get confirmation from the user. */
@@ -558,18 +525,10 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			/* We can't delete top-level aggregate layer. */
 			Dialog::info(tr("You cannot delete the %1.").arg(layer->get_name()), this->window);
 		}
-		}
-		break;
-	case TreeItemType::Sublayer: {
+	} else {
 		Layer * parent_layer = this->get_selected_layer();
 		parent_layer->delete_sublayer(selected_item);
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) selected_item->get_tree_item_type() << selected_item->name;
-		return;
 	}
-
 
 	this->activate_buttons_cb();
 }
@@ -602,7 +561,7 @@ Layer * LayersPanel::get_selected_layer()
 
 	/* If a layer is selected, return the layer itself.
 	   If a sublayer is selected, return its parent/owning layer. */
-	return selected_item->to_layer();
+	return selected_item->get_immediate_layer();
 }
 
 
@@ -773,8 +732,7 @@ Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerKind expect
 		}
 
 		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
-		if (this_item->get_tree_item_type() == TreeItemType::Layer) {
-
+		if (this_item->is_layer()) {
 			if (((Layer *) this_item)->m_kind == expected_layer_kind) {
 				return (Layer *) this_item; /* Returning matching layer. */
 			}

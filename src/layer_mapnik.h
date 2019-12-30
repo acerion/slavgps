@@ -73,7 +73,7 @@ namespace SlavGPS {
 		void post_read(GisViewport * gisview, bool from_file);
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
-		void add_menu_items(QMenu & menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 

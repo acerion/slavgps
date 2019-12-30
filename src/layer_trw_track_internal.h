@@ -159,9 +159,6 @@ namespace SlavGPS {
 		Track(const Track & from); /* Only copy properties, don't move or copy trackpoints from source track. */
 		~Track();
 
-		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
-
-
 		void set_defaults();
 		void set_name(const QString & new_name);
 		void set_comment(const QString & new_comment);
@@ -352,7 +349,9 @@ namespace SlavGPS {
 		std::list<CoordRectangle> get_coordinate_rectangles(const LatLon & single_rectangle_span);
 		//CoordMode get_coord_mode(void) const;
 
-		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu) override;
+
 		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 

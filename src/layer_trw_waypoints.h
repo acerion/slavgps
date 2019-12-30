@@ -144,9 +144,6 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
-		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
-
-
 		sg_ret attach_children_to_tree(void);
 
 
@@ -184,7 +181,7 @@ namespace SlavGPS {
 		sg_ret get_tree_items(std::list<TreeItem *> & list) const;
 
 
-		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
+		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);
 

@@ -1181,7 +1181,7 @@ void LayerGeoref::goto_center_cb(void)
 
 
 
-void LayerGeoref::add_menu_items(QMenu & menu)
+bool LayerGeoref::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * action = NULL;
 
@@ -1199,6 +1199,8 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 	action->setIcon(QIcon::fromTheme("GTK_STOCK_HARDDISK"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (export_params_cb(void)));
 	menu.addAction(action);
+
+	return true;
 }
 
 

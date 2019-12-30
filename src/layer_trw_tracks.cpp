@@ -81,7 +81,7 @@ extern SelectedTreeItems g_selected;
 void LayerTRWTracks::init_item(void)
 {
 	this->editable = false;
-	this->menu_operation_ids = MenuOperationPaste;
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Paste);
 }
 
 
@@ -805,21 +805,8 @@ void LayerTRWTracks::sublayer_menu_sort(QMenu & menu)
 
 
 
-bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
+bool LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
-	QAction * qa = NULL;
-
-
-	assert (this->menu_operation_ids == MenuOperationPaste);
-	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
-	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
-
-
-	menu.addSeparator();
-
-
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
 	} else if (this->get_type_id() == LayerTRWRoutes::type_id()) {

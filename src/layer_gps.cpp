@@ -501,7 +501,7 @@ void LayerGPS::change_coord_mode(CoordMode mode)
 
 
 
-void LayerGPS::add_menu_items(QMenu & menu)
+bool LayerGPS::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * action = NULL;
 
@@ -548,6 +548,8 @@ void LayerGPS::add_menu_items(QMenu & menu)
 	action->setIcon(QIcon::fromTheme("edit-clear"));
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_all_cb()));
 	menu.addAction(action);
+
+	return true;
 }
 
 
@@ -1842,9 +1844,9 @@ LayerGPS::LayerGPS()
 		this->trw_children[i]->set_name(trw_names[i].label);
 
 		/* No cutting or deleting of TRW sublayers. */
-		MenuOperation ops = this->trw_children[i]->get_menu_operation_ids();
-		ops = (MenuOperation) (ops & (~MenuOperationCut));
-		ops = (MenuOperation) (ops & (~MenuOperationDelete));
+		StandardMenuOperations ops = this->trw_children[i]->get_menu_operation_ids();
+		ops.remove(StandardMenuOperation::Cut);
+		ops.remove(StandardMenuOperation::Delete);
 		this->trw_children[i]->set_menu_operation_ids(ops);
 	}
 }

@@ -1897,7 +1897,7 @@ void LayerMap::flush_cb(void)
 
 
 
-void LayerMap::add_menu_items(QMenu & menu)
+bool LayerMap::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 
@@ -1935,6 +1935,8 @@ void LayerMap::add_menu_items(QMenu & menu)
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (flush_cb(void)));
 		menu.addAction(qa);
 	}
+
+	return true;
 }
 
 

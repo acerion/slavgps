@@ -93,7 +93,7 @@ namespace SlavGPS {
 
 		void update_status_bar_on_redraw();
 
-		void handle_selection_of_tree_item(const TreeItem & tree_item);
+		void handle_selection_of_tree_item(TreeItem & tree_item);
 
 		GisViewport * get_main_gis_view(void);
 		LayersPanel * get_items_tree(void);

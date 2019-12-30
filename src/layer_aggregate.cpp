@@ -292,7 +292,7 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 {
 	/* We are in aggregate layer, so the child must be a layer as well. */
-	if (child_tree_item.get_tree_item_type() != TreeItemType::Layer) {
+	if (!child_tree_item.is_layer()) {
 		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.name;
 		return false;
 	}
@@ -301,7 +301,7 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 		return false;
 	}
 
-	Layer * layer = child_tree_item.to_layer();
+	Layer * layer = child_tree_item.get_immediate_layer();
 
 	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(*this->children, layer, up);
@@ -577,7 +577,7 @@ void LayerAggregate::analyse_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::add_menu_items(QMenu & menu)
+bool LayerAggregate::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	menu.addSeparator();
@@ -628,6 +628,8 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (search_date_cb()));
 		qa->setToolTip(tr("Find the first item with a specified date"));
 	}
+
+	return true;
 }
 
 
@@ -675,7 +677,7 @@ void LayerAggregate::clear()
 sg_ret LayerAggregate::detach_from_container(Layer * layer, bool * was_visible)
 {
 	assert (layer->is_in_tree());
-	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
+	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer));
 
 	if (NULL != was_visible) {
 		*was_visible = layer->is_visible();
@@ -718,7 +720,7 @@ sg_ret LayerAggregate::detach_from_tree(Layer * layer)
 bool LayerAggregate::delete_layer(Layer * layer)
 {
 	assert (layer->is_in_tree());
-	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
+	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer));
 
 	const bool was_visible = layer->is_visible();
 
@@ -1027,7 +1029,7 @@ bool LayerAggregate::dropped_item_is_acceptable(const TreeItem & tree_item) cons
 {
 	/* Aggregate layer can contain only other layers, nothing more
 	   (at least at this time). */
-	return TreeItemType::Layer == tree_item.get_tree_item_type();
+	return tree_item.is_layer();
 }
 
 

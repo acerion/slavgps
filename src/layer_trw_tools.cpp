@@ -580,7 +580,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 			QMenu menu(gisview);
 
-			track->add_context_menu_items(menu, false);
+			track->menu_add_tree_item_operations(menu, false);
 			menu.exec(QCursor::pos());
 			return true;
 		}
@@ -591,7 +591,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 		if (!wp->name.isEmpty()) {
 			QMenu menu(gisview);
 
-			wp->add_context_menu_items(menu, false);
+			wp->menu_add_tree_item_operations(menu, false);
 			menu.exec(QCursor::pos());
 			return true;
 		}
@@ -726,7 +726,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 	switch (ev->button()) {
 	case Qt::RightButton: {
 		QMenu menu;
-		newly_selected_wp->add_context_menu_items(menu, false);
+		newly_selected_wp->menu_add_tree_item_operations(menu, false);
 		menu.exec(QCursor::pos());
 		}
 		break;

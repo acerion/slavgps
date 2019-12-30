@@ -1123,10 +1123,10 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 
 
-void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
+void Window::handle_selection_of_tree_item(TreeItem & tree_item)
 {
 	/* Get either the selected layer itself, or an owner/parent of selected sublayer item. */
-	const Layer * layer = tree_item.to_layer();
+	const Layer * layer = tree_item.get_immediate_layer();
 	qDebug() << SG_PREFIX_I << "Selected layer kind" << layer->get_translated_layer_kind_string();
 	this->toolbox->activate_tools_group(layer->get_fixed_layer_kind_string());
 }

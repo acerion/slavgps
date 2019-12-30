@@ -83,7 +83,10 @@ Waypoint::Waypoint()
 
 	this->has_properties_dialog = true;
 
-	this->menu_operation_ids = (MenuOperation) (MenuOperationCut | MenuOperationCopy | MenuOperationDelete);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Properties);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Cut);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Copy);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Delete);
 }
 
 
@@ -420,33 +423,42 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
+bool Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
-	bool context_menu_in_items_tree = false;
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
+	if (ops.is_member(StandardMenuOperation::Properties)) {
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
+	}
 
-
-	/* Common "Edit" items. */
-	{
-		assert (this->menu_operation_ids == (MenuOperationCut | MenuOperationCopy | MenuOperationDelete));
-
+	if (ops.is_member(StandardMenuOperation::Cut)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+	}
 
+	if (ops.is_member(StandardMenuOperation::Copy)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+	}
 
+	if (ops.is_member(StandardMenuOperation::Delete)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
 		qa->setData((unsigned int) this->get_uid());
 		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_waypoint_cb()));
 	}
 
+	return true;
+}
 
-	menu.addSeparator();
+
+
+
+bool Waypoint::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+{
+	QAction * qa = NULL;
+	bool context_menu_in_items_tree = false;
 
 
 	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, tree_view_context_menu);

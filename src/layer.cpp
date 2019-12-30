@@ -481,6 +481,13 @@ void Layer::set_initial_parameter_values(void)
 Layer::Layer()
 {
 	strcpy(this->debug_string, "LayerKind::Max");
+
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Properties);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Cut);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Copy);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Paste);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::Delete);
+	this->m_menu_operation_ids.push_back(StandardMenuOperation::New);
 }
 
 
@@ -528,9 +535,9 @@ SaveStatus Layer::write_layer_data(FILE * file) const
 
 
 
-void Layer::add_menu_items(QMenu & menu)
+bool Layer::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
 {
-	return;
+	return true;
 }
 
 
@@ -687,9 +694,23 @@ void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coo
 
 
 
-Layer * Layer::to_layer(void) const
+/**
+   @reviewed-on 2019-12-29
+*/
+Layer * Layer::get_immediate_layer(void)
 {
 	/* We are already a layer, no need to go up in hierarchy of
-	   tree items to find some layer. */
-	return (Layer *) this;
+	   tree items to find our immediate layer. */
+	return this;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-29
+*/
+bool Layer::is_layer(void) const
+{
+	return true;
 }

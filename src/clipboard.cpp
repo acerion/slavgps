@@ -471,23 +471,14 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	} else {
 #ifdef K
 		TreeItem * item = selected->tree_view->get_tree_item(selected->index);
-		switch (item->get_tree_item_type()) {
-		case TreeItemType::Sublayer:
-			type = ClipboardDataType::Sublayer;
-			selected->copy_sublayer(item, &data, &len);
-			break;
-		case TreeItemType::Layer: {
+		if (item->is_layer()) {
 			int ilen = 0;
 			type = ClipboardDataType::Layer;
-
 			Layer::marshall(selected, &data, &ilen);
-
 			len = ilen;
-			}
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
-			return;
+		} else {
+			type = ClipboardDataType::Sublayer;
+			selected->copy_sublayer(item, &data, &len);
 		}
 #endif
 	}
