@@ -132,10 +132,8 @@ namespace SlavGPS {
 
 		void marshall(Pickle & pickle);
 
-		void cut_sublayer(TreeItem * item);
-		void copy_sublayer(TreeItem * item, Pickle & pickle);
-		bool paste_sublayer(TreeItem * item, Pickle & pickle);
-		void delete_sublayer(TreeItem * item);
+		sg_ret pickle_child_item(TreeItem * item, Pickle & pickle);
+		sg_ret unpickle_child_item(TreeItem * item, Pickle & pickle);
 
 		void change_coord_mode(CoordMode dest_mode);
 
@@ -328,12 +326,10 @@ namespace SlavGPS {
 		bool selected_wp_reset(void);
 
 
-		void delete_sublayer_common(TreeItem * item, bool confirm);
-		void copy_sublayer_common(TreeItem * item);
-		void cut_sublayer_common(TreeItem * item, bool confirm);
+		sg_ret cut_child_item(TreeItem * item) override;
+		sg_ret copy_child_item(TreeItem * item) override;
+		sg_ret delete_child_item(TreeItem * item, bool confirm) override;
 
-		sg_ret delete_track(Track * trk, bool confirm);
-		sg_ret delete_waypoint(Waypoint * wp, bool confirm);
 
 		bool handle_selection_in_tree();
 
@@ -448,10 +444,6 @@ namespace SlavGPS {
 		void delete_all_waypoints_cb(void);
 		void delete_selected_waypoints_cb(void);
 
-		void delete_track_cb(void);
-		void delete_route_cb(void);
-		void delete_waypoint_cb(void);
-
 		void waypoint_list_dialog_cb(void);
 
 
@@ -495,6 +487,9 @@ namespace SlavGPS {
 
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
+
+		sg_ret delete_track(Track * trk, bool confirm);
+		sg_ret delete_waypoint(Waypoint * wp, bool confirm);
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */

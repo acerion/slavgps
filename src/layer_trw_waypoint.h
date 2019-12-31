@@ -182,8 +182,9 @@ namespace SlavGPS {
 		void geotagging_waypoint_mtime_update_cb(void);
 #endif
 
-		void cut_sublayer_cb(void);
-		void copy_sublayer_cb(void);
+		sg_ret cut_tree_item_cb(void) override;
+		sg_ret copy_tree_item_cb(void) override;
+		sg_ret delete_tree_item_cb(void) override;
 
 	private:
 		Coord m_coord;

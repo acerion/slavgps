@@ -232,7 +232,7 @@ namespace SlavGPS {
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
 
-		void paste_sublayer_cb(void);
+		sg_ret paste_child_tree_item_cb(void) override;
 
 		void sort_order_a2z_cb(void);
 		void sort_order_z2a_cb(void);

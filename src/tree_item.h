@@ -324,6 +324,12 @@ namespace SlavGPS {
 
 	signals:
 		void tree_item_changed(const QString & tree_item_name);
+
+	public slots:
+		virtual sg_ret cut_tree_item_cb(void);
+		virtual sg_ret copy_tree_item_cb(void);
+		virtual sg_ret delete_tree_item_cb(void);
+		virtual sg_ret paste_child_tree_item_cb(void);
 	};
 
 

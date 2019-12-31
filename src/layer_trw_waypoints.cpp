@@ -824,10 +824,11 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 
 
 
-void LayerTRWWaypoints::paste_sublayer_cb(void)
+sg_ret LayerTRWWaypoints::paste_child_tree_item_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
-	Clipboard::paste(ThisApp::get_layers_panel());
+	bool dummy = false;
+	return Clipboard::paste(ThisApp::get_layers_panel(), dummy);
 }
 
 

@@ -437,7 +437,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		}
 	} else {
 		Layer * parent_layer = this->get_selected_layer();
-		parent_layer->cut_sublayer(selected_item);
+		parent_layer->cut_child_item(selected_item);
 	}
 }
 
@@ -469,7 +469,12 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 		return false;
 	}
 
-	return Clipboard::paste(this);
+	bool pasted = false;
+	if (sg_ret::ok != Clipboard::paste(this, pasted)) {
+		return false;
+	}
+
+	return pasted;
 }
 
 
@@ -527,7 +532,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	} else {
 		Layer * parent_layer = this->get_selected_layer();
-		parent_layer->delete_sublayer(selected_item);
+		/* true: confirm delete request. */
+		parent_layer->delete_child_item(selected_item, true);
 	}
 
 	this->activate_buttons_cb();

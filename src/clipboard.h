@@ -111,7 +111,12 @@ namespace SlavGPS {
 	public:
 		static void copy(ClipboardDataType type, LayerKind layer_kind, const SGObjectTypeID & type_id, Pickle & pickle, const QString & text);
 		static void copy_selected(LayersPanel * panel);
-		static bool paste(LayersPanel * panel);
+
+		/* @param pasted indicates whether pasting has been
+		   made (a tree item where pasting was made has been
+		   modified). */
+		static sg_ret paste(LayersPanel * panel, bool & pasted);
+
 		static ClipboardDataType get_current_type();
 	};
 

@@ -961,10 +961,11 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 
 
 
-void LayerTRWTracks::paste_sublayer_cb(void)
+sg_ret LayerTRWTracks::paste_child_tree_item_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
-	Clipboard::paste(ThisApp::get_layers_panel());
+	bool dummy = false;
+	return Clipboard::paste(ThisApp::get_layers_panel(), dummy);
 }
 
 

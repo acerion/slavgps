@@ -153,10 +153,17 @@ namespace SlavGPS {
 		virtual bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)       { return false; };
 		virtual bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview)                                 { return false; };
 
-		virtual void cut_sublayer(TreeItem * item) { return; };
-		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
-		virtual bool paste_sublayer(TreeItem * item, Pickle & pickle) { return false; };
-		virtual void delete_sublayer(TreeItem * item) { return; };
+
+
+		/* Top-level functions for cut/copy/paste/delete operations. */
+		virtual sg_ret cut_child_item(TreeItem * item);
+		virtual sg_ret copy_child_item(TreeItem * item);
+		virtual sg_ret delete_child_item(TreeItem * item, bool confirm);
+
+		virtual sg_ret copy_child_item(TreeItem * item, uint8_t ** data, unsigned int * len) { return sg_ret::err; }
+		virtual sg_ret unpickle_child_item(TreeItem * item, Pickle & pickle) { return sg_ret::err; }
+
+
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 

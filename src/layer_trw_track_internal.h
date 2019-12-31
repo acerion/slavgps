@@ -542,8 +542,9 @@ namespace SlavGPS {
 
 		void refine_route_cb(void);
 
-		void cut_sublayer_cb(void);
-		void copy_sublayer_cb(void);
+		sg_ret cut_tree_item_cb(void) override;
+		sg_ret copy_tree_item_cb(void) override;
+		sg_ret delete_tree_item_cb(void) override;
 
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);

@@ -626,63 +626,42 @@ std::list<TreeItem *> LayerTRW::get_waypoints_by_date(const QDate & search_date)
 
 
 
-void LayerTRW::delete_sublayer(TreeItem * sublayer)
+sg_ret LayerTRW::cut_child_item(TreeItem * item)
 {
-	if (!sublayer) {
+	if (nullptr == item) {
 		qDebug() << SG_PREFIX_W << "Argument is NULL";
-		return;
+		return sg_ret::err;
 	}
 
-	/* true: confirm delete request. */
-	this->delete_sublayer_common(sublayer, true);
+	this->copy_child_item(item);
+	/* false: don't confirm delete request. */
+	this->delete_child_item(item, false);
+
+	return sg_ret::ok;
 }
 
 
 
 
-void LayerTRW::cut_sublayer(TreeItem * sublayer)
-{
-	if (!sublayer) {
-		qDebug() << SG_PREFIX_W << "Argument is NULL";
-		return;
-	}
-
-	this->copy_sublayer_common(sublayer);
-	/* true: confirm delete request. */
-	this->cut_sublayer_common(sublayer, true);
-}
-
-
-
-
-void LayerTRW::copy_sublayer_common(TreeItem * item)
+sg_ret LayerTRW::copy_child_item(TreeItem * item)
 {
 	Pickle pickle;
-
-	this->copy_sublayer(item, pickle);
-
+	this->pickle_child_item(item, pickle);
 	if (pickle.data_size() > 0) {
 		Clipboard::copy(ClipboardDataType::Sublayer, LayerKind::TRW, item->m_type_id, pickle, item->name);
 	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
+sg_ret LayerTRW::pickle_child_item(TreeItem * item, Pickle & pickle)
 {
-	this->copy_sublayer_common(item);
-	this->delete_sublayer_common(item, confirm);
-}
-
-
-
-
-void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
-{
-	if (!item) {
+	if (nullptr == item) {
 		qDebug() << SG_PREFIX_W << "Argument is NULL";
-		return;
+		return sg_ret::err;
 	}
 
 	Pickle helper_pickle;
@@ -690,20 +669,22 @@ void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
 	if (helper_pickle.data_size() > 0) {
 		pickle.put_pickle(helper_pickle);
 	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
+sg_ret LayerTRW::unpickle_child_item(TreeItem * item, Pickle & pickle)
 {
-	if (!item) {
+	if (nullptr == item) {
 		qDebug() << SG_PREFIX_W << "Argument is NULL";
-		return false;
+		return sg_ret::err;
 	}
 
 	if (pickle.data_size() <= 0) {
-		return false;
+		return sg_ret::err;
 	}
 
 	if (item->get_type_id() == Waypoint::type_id()) {
@@ -721,7 +702,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		if (this->is_visible() && this->waypoints.is_visible() && wp->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste waypoint");
 		}
-		return true;
+		return sg_ret::ok;
 	} else if (item->get_type_id() == Track::type_id()) {
 		Track * trk = Track::unmarshall(pickle);
 
@@ -737,7 +718,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		if (this->is_visible() && this->tracks.is_visible() && trk->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste track");
 		}
-		return true;
+		return sg_ret::ok;
 	} else if (item->get_type_id() == Route::type_id()) {
 		Track * trk = Track::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
@@ -751,11 +732,11 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		if (this->is_visible() && this->routes.is_visible() && trk->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste route");
 		}
-		return true;
+		return sg_ret::ok;
 	} else {
 		qDebug() << SG_PREFIX_E << "Unhandled object type id" << item->m_type_id;
+		return sg_ret::err;
 	}
-	return false;
 }
 
 
@@ -2670,18 +2651,24 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 
 
-void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
+sg_ret LayerTRW::delete_child_item(TreeItem * item, bool confirm)
 {
+	if (nullptr == item) {
+		qDebug() << SG_PREFIX_E << "Argument is NULL";
+		return sg_ret::err;
+	}
+
 	if (item->get_type_id() == Waypoint::type_id()) {
 		Waypoint * wp = (Waypoint *) item;
-		this->delete_waypoint(wp, confirm);
+		return this->delete_waypoint(wp, confirm);
 
 	} else if (item->get_type_id() == Track::type_id()
 		   || item->get_type_id() == Route::type_id()) {
 		Track * trk = (Track *) item;
-		this->delete_track(trk, confirm);
+		return this->delete_track(trk, confirm);
 	} else {
-		qDebug() << SG_PREFIX_E << "Unexpected sublayer type" << item->m_type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected child item type" << item->m_type_id;
+		return sg_ret::err;
 	}
 }
 
@@ -3879,51 +3866,6 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 	QProcess::startDetached(program, args);
 
 	/* TODO_LATER: add handling of errors from process. */
-}
-
-
-
-
-void LayerTRW::delete_track_cb(void)
-{
-	QAction * qa = (QAction *) QObject::sender();
-	const sg_uid_t child_uid = qa->data().toUInt();
-
-	Track * trk = this->tracks.find_child_by_uid(child_uid);
-	if (trk) {
-		/* false: don't require confirmation in callbacks. */
-		this->delete_track(trk, false);
-	}
-}
-
-
-
-
-void LayerTRW::delete_route_cb(void)
-{
-	QAction * qa = (QAction *) QObject::sender();
-	const sg_uid_t child_uid = qa->data().toUInt();
-
-	Track * trk = this->routes.find_child_by_uid(child_uid);
-	if (trk) {
-		/* false: don't require confirmation in callbacks. */
-		this->delete_track(trk, false);
-	}
-}
-
-
-
-
-void LayerTRW::delete_waypoint_cb(void)
-{
-	QAction * qa = (QAction *) QObject::sender();
-	const sg_uid_t child_uid = qa->data().toUInt();
-
-	Waypoint * wp = this->waypoints.find_child_by_uid(child_uid);
-	if (wp) {
-		/* false: don't require confirmation in callbacks. */
-		this->delete_waypoint(wp, false);
-	}
 }
 
 

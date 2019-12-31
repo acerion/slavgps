@@ -714,3 +714,39 @@ bool Layer::is_layer(void) const
 {
 	return true;
 }
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret Layer::cut_child_item(TreeItem * item)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret Layer::copy_child_item(TreeItem * item)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret Layer::delete_child_item(TreeItem * item, bool confirm)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}

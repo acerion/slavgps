@@ -161,7 +161,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	} else if (vc->type == ClipboardDataType::Sublayer) {
 		Layer * selected = panel->get_selected_layer();
 		if (selected && selected->type == vc->layer_kind) {
-			selected->paste_sublayer(vc->sublayer, vc->data, vc->len);
+			selected->paste_child_item(vc->sublayer, vc->data, vc->len);
 		} else {
 			Dialog::error(tr("The clipboard contains sublayer data for %1 layers. "
 					 "You must select a layer of this type to paste the clipboard data.")
@@ -478,7 +478,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 			len = ilen;
 		} else {
 			type = ClipboardDataType::Sublayer;
-			selected->copy_sublayer(item, &data, &len);
+			selected->copy_child_item(item, &data, &len);
 		}
 #endif
 	}
@@ -529,13 +529,14 @@ void Clipboard::copy(ClipboardDataType type, LayerKind layer_kind, const SGObjec
  * To deal with multiple data types, we first request the type of data on the clipboard,
  * and handle them in the callback.
  */
-bool Clipboard::paste(LayersPanel * panel)
+sg_ret Clipboard::paste(LayersPanel * panel, bool & pasted)
 {
 #ifdef K
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 	gtk_clipboard_request_targets(c, clip_receive_targets, panel);
 #endif
-	return true;
+	pasted = true;
+	return sg_ret::ok;
 }
 
 

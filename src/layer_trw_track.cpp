@@ -2207,22 +2207,17 @@ bool Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperati
 
 	if (ops.is_member(StandardMenuOperation::Cut)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_tree_item_cb()));
 	}
 
 	if (ops.is_member(StandardMenuOperation::Copy)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_tree_item_cb()));
 	}
 
 	if (ops.is_member(StandardMenuOperation::Delete)) {
 		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
-		qa->setData((unsigned int) this->get_uid());
-		if (this->is_track()) {
-			connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_track_cb()));
-		} else {
-			connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_route_cb()));
-		}
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_tree_item_cb()));
 	}
 
 	menu.addSeparator();
@@ -3155,16 +3150,33 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointReference & other_t
 
 
 
-void Track::cut_sublayer_cb(void)
+sg_ret Track::cut_tree_item_cb(void)
 {
-	/* false: don't require confirmation in callbacks. */
-	((LayerTRW *) this->owning_layer)->cut_sublayer_common(this, false);
+	return ((LayerTRW *) this->owning_layer)->cut_child_item(this);
 }
 
-void Track::copy_sublayer_cb(void)
+
+
+
+sg_ret Track::copy_tree_item_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->copy_sublayer_common(this);
+	return ((LayerTRW *) this->owning_layer)->copy_child_item(this);
 }
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret Track::delete_tree_item_cb(void)
+{
+	/* false: don't require confirmation in callbacks. */
+	return ((LayerTRW *) this->owning_layer)->delete_child_item(this, false);
+}
+
+
+
 
 void Track::remove_last_trackpoint(void)
 {

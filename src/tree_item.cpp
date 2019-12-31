@@ -518,3 +518,51 @@ bool StandardMenuOperations::is_member(StandardMenuOperation op) const
 	auto iter = std::find(this->begin(), this->end(), op);
 	return iter != this->end();
 }
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::cut_tree_item_cb(void)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::copy_tree_item_cb(void)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::delete_tree_item_cb(void)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::paste_child_tree_item_cb(void)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}

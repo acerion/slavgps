@@ -220,7 +220,7 @@ namespace SlavGPS {
 		*/
 		void track_or_route_list_dialog_cb(void);
 
-		void paste_sublayer_cb(void);
+		sg_ret paste_child_tree_item_cb(void) override;
 
 		void sort_order_a2z_cb(void);
 		void sort_order_z2a_cb(void);

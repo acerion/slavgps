@@ -423,30 +423,29 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
+/**
+   @reviewed-on 2019-12-30
+*/
 bool Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
 {
-	QAction * qa = NULL;
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
 	if (ops.is_member(StandardMenuOperation::Properties)) {
-		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+		QAction * qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
 	}
 
 	if (ops.is_member(StandardMenuOperation::Cut)) {
-		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
+		QAction * qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_tree_item_cb()));
 	}
 
 	if (ops.is_member(StandardMenuOperation::Copy)) {
-		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
+		QAction * qa = menu.addAction(QIcon::fromTheme("edit-copy"), QObject::tr("Copy"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_tree_item_cb()));
 	}
 
 	if (ops.is_member(StandardMenuOperation::Delete)) {
-		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
-		qa->setData((unsigned int) this->get_uid());
-		QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_waypoint_cb()));
+		QAction * qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_tree_item_cb()));
 	}
 
 	return true;
@@ -804,17 +803,32 @@ void Waypoint::geotagging_waypoint_cb(void)
 
 
 
-
-
-void Waypoint::cut_sublayer_cb(void)
+sg_ret Waypoint::cut_tree_item_cb(void)
 {
-	/* false: don't require confirmation in callbacks. */
-	((LayerTRW *) this->owning_layer)->cut_sublayer_common(this, false);
+	Layer * layer = this->owning_layer;
+	return layer->cut_child_item(this);
 }
 
-void Waypoint::copy_sublayer_cb(void)
+
+
+
+sg_ret Waypoint::copy_tree_item_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->copy_sublayer_common(this);
+	Layer * layer = this->owning_layer;
+	return layer->copy_child_item(this);
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret Waypoint::delete_tree_item_cb(void)
+{
+	Layer * layer = this->owning_layer;
+	/* false: don't require confirmation in callbacks. */
+	return layer->delete_child_item(this, false);
 }
 
 
