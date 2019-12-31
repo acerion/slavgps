@@ -70,19 +70,6 @@ namespace SlavGPS {
 
 
 
-	enum class SublayerType {
-		None,
-		Tracks,
-		Waypoints,
-		Track,
-		Waypoint,
-		Routes,
-		Route
-	};
-
-
-
-
 	enum class LayerKind {
 		Aggregate = 0,
 		TRW,
@@ -99,11 +86,6 @@ namespace SlavGPS {
 
 	LayerKind& operator++(LayerKind & layer_kind);
  	QDebug operator<<(QDebug debug, const LayerKind & layer_kind);
-
-
-
-
-	typedef void (* LayerRefCB) (void * ptr, void * dead_vml);
 
 
 
