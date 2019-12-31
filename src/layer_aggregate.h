@@ -83,7 +83,7 @@ namespace SlavGPS {
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
 
-		void add_layer(Layer * layer, bool allow_reordering);
+		sg_ret add_child_item(TreeItem * item, bool allow_reordering) override;
 		void insert_layer(Layer * layer, const Layer * sibling_layer);
 
 		/* Move child item (direct/immediate child of given
@@ -92,7 +92,7 @@ namespace SlavGPS {
 		   layer's container of child items. */
 		bool move_child(TreeItem & child_tree_item, bool up) override;
 
-		bool delete_layer(Layer * layer);
+		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
 		void clear();
 
 
@@ -109,6 +109,8 @@ namespace SlavGPS {
 		void get_all_layers_of_kind(std::list<const Layer *> & layers, LayerKind layer_kind, bool include_invisible) const;
 		bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 		bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+
+		bool is_top_level_layer(void) const;
 
 		int get_child_layers_count(void) const;
 		std::list<Layer const *> get_child_layers(void) const;

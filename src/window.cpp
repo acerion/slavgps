@@ -258,7 +258,7 @@ Window::Window()
 	QObject::connect(this->main_gis_vp, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
 	QObject::connect(this->main_gis_vp, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *)));
 
-	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
+	QObject::connect(this->layers_tree, SIGNAL("delete_child_item"), this, SLOT (vik_window_clear_highlight_cb));
 
 
 #endif
@@ -2507,7 +2507,7 @@ void Window::finish_new(void)
 		LayerMap * layer = new LayerMap();
 		layer->set_name(QObject::tr("Default Map"));
 
-		this->items_tree->get_top_layer()->add_layer(layer, true);
+		this->items_tree->get_top_layer()->add_child_item(layer, true);
 
 		/* TODO_LATER: verify if this call is necessary. Maybe
 		   adding new layer has triggered re-painting

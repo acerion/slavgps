@@ -1884,6 +1884,26 @@ void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 
 
 
+sg_ret LayerGPS::cut_child_item(TreeItem * item)
+{
+	/* TODO_LATER: implement cutting of child TRW layer. */
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerGPS::delete_child_item(TreeItem * item, bool confirm_deleting)
+{
+	/* TODO_LATER: implement deleting of child TRW layer. */
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
+	return sg_ret::err;
+}
+
+
+
+
 /**
    @reviewed-on: 2019-03-22
 */

@@ -205,6 +205,9 @@ namespace SlavGPS {
 
 		void set_coord_mode(CoordMode mode);
 
+		sg_ret cut_child_item(TreeItem * item) override;
+		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
+
 		GPSTransfer download{GPSDirection::Download};
 		GPSTransfer upload{GPSDirection::Upload};
 

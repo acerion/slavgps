@@ -190,7 +190,7 @@ void AcquireWorker::finalize_after_completion(void)
 
 
 		qDebug() << SG_PREFIX_I << "New layer is non-empty, will now process the layer";
-		//this->acquire_context.top_level_layer->add_layer(this->acquire_context.target_trw, true);
+		//this->acquire_context.top_level_layer->add_child_item(this->acquire_context.target_trw, true);
 		//this->acquire_context.top_level_layer->attach_children_to_tree();
 	}
 
@@ -707,7 +707,7 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 
 #if 1
 		if (!trw->is_in_tree()) {
-			acquire_context->top_level_layer->add_layer(trw, true);
+			acquire_context->top_level_layer->add_child_item(trw, true);
 		}
 #endif
 

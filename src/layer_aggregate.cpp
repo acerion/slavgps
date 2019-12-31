@@ -182,17 +182,18 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 
 
 
-/**
- * @allow_reordering: should be set for GUI interactions,
- *                    whereas loading from a file needs strict ordering and so should be false
- */
-void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
+sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->name << "is not connected to tree";
-		return;
+		return sg_ret::err;
+	}
+	if (!item->is_layer()) {
+		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not a layer";
+		return sg_ret::err;
 	}
 
+	Layer * layer = item->get_immediate_layer();
 
 	/* By default layers go to the top. */
 	bool put_above = true;
@@ -234,6 +235,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->tree_view->expand(this->index);
 	}
 #endif
+
+	return sg_ret::ok;
 }
 
 
@@ -709,18 +712,25 @@ sg_ret LayerAggregate::detach_from_tree(Layer * layer)
 
 
 
-/**
-   @brief Delete a layer specified by \p index
-
-   This method also calls destructor of \p layer.
-
-   @return true if layer was visible before being deleted
-   @return false otherwise
-*/
-bool LayerAggregate::delete_layer(Layer * layer)
+sg_ret LayerAggregate::delete_child_item(TreeItem * item, bool confirm_deleting)
 {
-	assert (layer->is_in_tree());
-	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer));
+	if (!item->is_in_tree()) {
+		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not in tree";
+		return sg_ret::err;
+	}
+
+	/* Children of Aggregate layer can be only other layers. */
+	if (!item->is_layer()) {
+		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not a layer";
+		return sg_ret::err;
+	}
+
+	Layer * layer = item->get_immediate_layer();
+
+	if (!TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer)) {
+		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not in tree";
+		return sg_ret::err;
+	}
 
 	const bool was_visible = layer->is_visible();
 
@@ -737,7 +747,14 @@ bool LayerAggregate::delete_layer(Layer * layer)
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
 
-	return was_visible;
+#ifdef TODO_LATER
+	if (was_visible) {
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
+		this->emit_items_tree_updated_cb(parent_layer->get_name());
+	}
+#endif
+
+	return sg_ret::ok;;
 }
 
 
@@ -1074,4 +1091,12 @@ void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
+}
+
+
+
+
+bool LayerAggregate::is_top_level_layer(void) const
+{
+	return this == ThisApp::get_layers_panel()->get_top_layer();
 }

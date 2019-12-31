@@ -285,7 +285,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 		   layer to be added goes directly under top level
 		   aggregate layer. */
 		qDebug() << SG_PREFIX_I << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
-		this->toplayer->add_layer(layer, true);
+		this->toplayer->add_child_item(layer, true);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -313,7 +313,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		qDebug() << SG_PREFIX_I << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		((LayerAggregate *) selected_layer)->add_layer(layer, true);
+		selected_layer->add_child_item(layer, true);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -404,41 +404,28 @@ void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected
 void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
-	if (!selected_item) {
+	if (nullptr == selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return;
 	}
 
+
+	/* Special case for top-level Aggregate layer. */
 	if (selected_item->is_layer()) {
-		/* A layer can be owned only by Aggregate layer.
-		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
-		if (parent_layer) {
-#ifdef K_FIXME_RESTORE
-			/* Reset trigger if trigger deleted. */
-			if (TreeItem::the_same_object(this->get_selected_layer(), ThisApp::get_main_viewport()->get_trigger())) {
-				ThisApp::get_main_viewport()->set_trigger(NULL);
+		Layer * layer = selected_item->get_immediate_layer();
+		if (layer->m_kind == LayerKind::Aggregate) {
+			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
+				Dialog::info(tr("You cannot cut the Top Layer."), this->window);
+				return;
 			}
-
-			Clipboard::copy_selected(this);
-
-			if (parent_layer->m_kind == LayerKind::AGGREGATE) {
-				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
-
-				if (parent_layer->delete_layer(selected_item)) {
-					qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
-					this->emit_items_tree_updated_cb(parent_layer->get_name());
-				}
-			}
-#endif
-		} else {
-			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
-	} else {
-		Layer * parent_layer = this->get_selected_layer();
-		parent_layer->cut_child_item(selected_item);
 	}
+
+	Layer * owning_layer = selected_item->get_owning_layer();
+	owning_layer->cut_child_item(selected_item);
+
+	return;
 }
 
 
@@ -491,52 +478,28 @@ void LayersPanel::add_layer_cb(void)
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
-	if (!selected_item) {
+	if (nullptr == selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return;
 	}
 
+	/* Special case for top-level Aggregate layer. */
 	if (selected_item->is_layer()) {
 		Layer * layer = selected_item->get_immediate_layer();
-
-
-		/* Get confirmation from the user. */
-		if (!Dialog::yes_or_no(tr("Are you sure you want to delete %1?").arg(layer->get_name()), this->window)) {
-			return;
-		}
-
-		/* A layer can be owned only by Aggregate layer.
-		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
-		if (parent_layer) {
-#ifdef K_FIXME_RESTORE
-			/* Reset trigger if trigger deleted. */
-			if (TreeItem::the_same_object(this->get_selected_layer(), ThisApp::get_main_viewport()->get_trigger())) {
-				ThisApp::get_main_viewport()->set_trigger(NULL);
+		if (layer->m_kind == LayerKind::Aggregate) {
+			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
+				Dialog::info(tr("You cannot delete the Top Layer."), this->window);
+				return;
 			}
-
-			if (parent_layer->m_kind == LayerKind::AGGREGATE) {
-
-				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
-
-				if (parent_layer->delete_layer(selected_item)) {
-					qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << layer->get_name();
-					this->emit_items_tree_updated_cb(parent_layer->get_name());
-				}
-			}
-#endif
-		} else {
-			/* We can't delete top-level aggregate layer. */
-			Dialog::info(tr("You cannot delete the %1.").arg(layer->get_name()), this->window);
 		}
-	} else {
-		Layer * parent_layer = this->get_selected_layer();
-		/* true: confirm delete request. */
-		parent_layer->delete_child_item(selected_item, true);
 	}
 
-	this->activate_buttons_cb();
+	Layer * owning_layer = selected_item->get_owning_layer();
+	/* true: confirm delete request. */
+	owning_layer->delete_child_item(selected_item, true);
+
+	// TODO_LATER? this->activate_buttons_cb();
 }
 
 

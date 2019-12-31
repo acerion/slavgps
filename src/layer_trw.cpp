@@ -2136,7 +2136,7 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
-		ThisApp::get_layers_panel()->get_top_layer()->add_layer(this, true);
+		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
 	}
 
 	if (!this->waypoints.is_in_tree()) {
@@ -2182,7 +2182,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
-		ThisApp::get_layers_panel()->get_top_layer()->add_layer(this, true);
+		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
 	}
 
 	if (trk->is_route()) {
@@ -2651,7 +2651,7 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::delete_child_item(TreeItem * item, bool confirm)
+sg_ret LayerTRW::delete_child_item(TreeItem * item, bool confirm_deleting)
 {
 	if (nullptr == item) {
 		qDebug() << SG_PREFIX_E << "Argument is NULL";
@@ -2660,12 +2660,12 @@ sg_ret LayerTRW::delete_child_item(TreeItem * item, bool confirm)
 
 	if (item->get_type_id() == Waypoint::type_id()) {
 		Waypoint * wp = (Waypoint *) item;
-		return this->delete_waypoint(wp, confirm);
+		return this->delete_waypoint(wp, confirm_deleting);
 
 	} else if (item->get_type_id() == Track::type_id()
 		   || item->get_type_id() == Route::type_id()) {
 		Track * trk = (Track *) item;
-		return this->delete_track(trk, confirm);
+		return this->delete_track(trk, confirm_deleting);
 	} else {
 		qDebug() << SG_PREFIX_E << "Unexpected child item type" << item->m_type_id;
 		return sg_ret::err;

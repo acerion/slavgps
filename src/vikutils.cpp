@@ -607,7 +607,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_map_type_id(the_type_id);
 			layer->set_name(Layer::get_translated_layer_kind_string(layer->m_kind));
 
-			ThisApp::get_layers_panel()->get_top_layer()->add_layer(layer, true);
+			ThisApp::get_layers_panel()->get_top_layer()->add_child_item(layer, true);
 			layer->emit_tree_item_changed("Command Line Options - Apply");
 		}
 	}

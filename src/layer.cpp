@@ -190,22 +190,6 @@ void Layer::postconfigure_interfaces(void)
 
 
 
-void Layer::set_name(const QString & new_name)
-{
-	this->name = new_name;
-}
-
-
-
-
-const QString Layer::get_name(void) const
-{
-	return this->name;
-}
-
-
-
-
 QString Layer::get_fixed_layer_kind_string(void) const
 {
 	return this->interface->fixed_layer_kind_string;
@@ -719,6 +703,19 @@ bool Layer::is_layer(void) const
 
 
 /**
+   @reviewed-on 2019-12-31
+*/
+sg_ret Layer::add_child_item(TreeItem * item, bool allow_reordering)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+
+}
+
+
+
+
+/**
    @reviewed-on 2019-12-30
 */
 sg_ret Layer::cut_child_item(TreeItem * item)
@@ -745,7 +742,7 @@ sg_ret Layer::copy_child_item(TreeItem * item)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret Layer::delete_child_item(TreeItem * item, bool confirm)
+sg_ret Layer::delete_child_item(TreeItem * item, bool confirm_deleting)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;

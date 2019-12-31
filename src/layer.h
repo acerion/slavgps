@@ -156,9 +156,22 @@ namespace SlavGPS {
 
 
 		/* Top-level functions for cut/copy/paste/delete operations. */
+		/**
+		   @brief "paste" operation
+
+		   @param allow_reordering: should be set to true for GUI
+		   interactions, whereas loading from a file needs strict ordering and
+		   so should be false.
+		*/
+		virtual sg_ret add_child_item(TreeItem * item, bool allow_reordering);
 		virtual sg_ret cut_child_item(TreeItem * item);
 		virtual sg_ret copy_child_item(TreeItem * item);
-		virtual sg_ret delete_child_item(TreeItem * item, bool confirm);
+		/**
+		   @brief Delete a child item specified by @param item
+
+		   This method also calls destructor of @param item.
+		*/
+		virtual sg_ret delete_child_item(TreeItem * item, bool confirm_deleting);
 
 		virtual sg_ret copy_child_item(TreeItem * item, uint8_t ** data, unsigned int * len) { return sg_ret::err; }
 		virtual sg_ret unpickle_child_item(TreeItem * item, Pickle & pickle) { return sg_ret::err; }
@@ -221,10 +234,6 @@ namespace SlavGPS {
 
 
 		virtual std::list<TreeItem *> get_items_by_date(const QDate & search_date) const;
-
-
-		const QString get_name(void) const;
-		void set_name(const QString & new_name);
 
 
 		void set_initial_parameter_values(void);

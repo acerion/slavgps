@@ -171,6 +171,9 @@ namespace SlavGPS {
 		virtual void set_timestamp(const Time & value);
 		virtual void set_timestamp(time_t value);
 
+		const QString & get_name(void) const;
+		void set_name(const QString & new_name);
+
 		virtual QString get_tooltip(void) const;
 
 		/* A TreeItem object needs to implement this method if it contains (is direct

@@ -147,6 +147,28 @@ QString TreeItem::get_tooltip(void) const
 
 
 /**
+   @reviewed-on 2019-12-31
+*/
+const QString & TreeItem::get_name(void) const
+{
+	return this->name;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-31
+*/
+void TreeItem::set_name(const QString & new_name)
+{
+	this->name = new_name;
+}
+
+
+
+
+/**
    @reviewed-on 2019-12-29
 */
 Layer * TreeItem::get_immediate_layer(void)
