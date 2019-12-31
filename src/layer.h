@@ -177,7 +177,7 @@ namespace SlavGPS {
 		/* Write layer-specific data to Vik file. */
 		virtual SaveStatus write_layer_data(FILE * file) const;
 
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 
 
 		virtual bool show_properties_dialog(GisViewport * gisview);

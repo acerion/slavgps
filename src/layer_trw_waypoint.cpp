@@ -363,12 +363,12 @@ QString Waypoint::get_any_url(void) const
 
 
 
-void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool tree_view_context_menu)
+void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
 
 
-	if (tree_view_context_menu) {
+	if (in_tree_view) {
 		/* Add this menu item only if context menu is displayed for item in tree view.
 		   There is little sense in command "show this waypoint in main viewport"
 		   if context menu is already displayed in main viewport. */
@@ -418,7 +418,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 /**
    @reviewed-on 2019-12-30
 */
-bool Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
+sg_ret Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
 {
 	if (ops.is_member(StandardMenuOperation::Properties)) {
 		QAction * qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
@@ -440,23 +440,21 @@ bool Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOper
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_tree_item_cb()));
 	}
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
-bool Waypoint::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret Waypoint::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
-	bool context_menu_in_items_tree = false;
 
 
-	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, tree_view_context_menu);
+	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, in_tree_view);
 
 
 	if (ThisApp::get_layers_panel()) {
-		context_menu_in_items_tree = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
@@ -497,7 +495,7 @@ bool Waypoint::menu_add_type_specific_operations(QMenu & menu, bool tree_view_co
 	}
 
 
-	return context_menu_in_items_tree;
+	return sg_ret::ok;
 }
 
 

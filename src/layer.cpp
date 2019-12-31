@@ -519,9 +519,9 @@ SaveStatus Layer::write_layer_data(FILE * file) const
 
 
 
-bool Layer::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret Layer::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
-	return true;
+	return sg_ret::ok;
 }
 
 

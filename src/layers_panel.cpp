@@ -191,7 +191,7 @@ void LayersPanel::keyPressEvent(QKeyEvent * ev)
 
    \return freshly created menu with specified items
 */
-void LayersPanel::context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops)
+sg_ret LayersPanel::context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops)
 {
 	if (ops.is_member(StandardMenuOperation::Properties)) {
 		menu.addAction(this->window->qa_tree_item_properties);
@@ -216,6 +216,8 @@ void LayersPanel::context_menu_add_standard_operations(QMenu & menu, const Stand
 	if (ops.is_member(StandardMenuOperation::New)) {
 		this->context_menu_add_new_layer_submenu(menu);
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -226,22 +228,6 @@ void LayersPanel::context_menu_add_new_layer_submenu(QMenu & menu)
 	QMenu * layers_submenu = new QMenu(tr("New Layer"), &menu);
 	menu.addMenu(layers_submenu);
 	this->window->new_layers_submenu_add_actions(layers_submenu);
-}
-
-
-
-
-void LayersPanel::context_menu_show_for_item(TreeItem & item) // KAMIL TODO
-{
-	qDebug() << SG_PREFIX_I << "Context menu event for" << item.m_type_id << item.get_name();
-	QMenu menu;
-	if (!item.menu_add_tree_item_operations(menu, true)) {
-		return;
-	}
-	menu.exec(QCursor::pos());
-
-	return;
-
 }
 
 
@@ -656,7 +642,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		if (nullptr == item) {
 			qDebug() << SG_PREFIX_E << "Tree item is NULL";
 		} else {
-			this->context_menu_show_for_item(*item);
+			item->show_context_menu(QCursor::pos(), true);
 		}
 	} else {
 		/* We have clicked on empty space, not on tree item.  */

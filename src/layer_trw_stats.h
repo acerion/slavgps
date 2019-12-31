@@ -39,7 +39,7 @@
 
 
 
-#include "tree_item.h"
+//#include "tree_item.h"
 #include "layer_trw_track.h"
 #include "layer_trw_track_statistics.h"
 
@@ -53,6 +53,7 @@ namespace SlavGPS {
 
 	class Window;
 	class Layer;
+	class TreeItem;
 
 
 	enum class TRWStatsRow {

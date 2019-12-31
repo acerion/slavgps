@@ -181,7 +181,7 @@ namespace SlavGPS {
 		sg_ret get_tree_items(std::list<TreeItem *> & list) const;
 
 
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);
 

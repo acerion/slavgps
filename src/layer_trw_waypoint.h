@@ -105,9 +105,9 @@ namespace SlavGPS {
 		QString get_any_url(void) const;
 
 
-		bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu);
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu);
-		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool tree_view_context_menu);
+		sg_ret menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
+		void sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & menu, bool in_tree_view);
 
 		bool handle_selection_in_tree(void);
 

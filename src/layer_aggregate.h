@@ -77,7 +77,7 @@ namespace SlavGPS {
 		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		sg_ret attach_children_to_tree(void);
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);

@@ -576,25 +576,14 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 	Track * track = this->selected_track_get(); /* Track or route that is currently being selected/edited. */
 	if (track && track->is_visible()) { /* Track or Route. */
-		if (!track->get_name().isEmpty()) {
-
-			QMenu menu(gisview);
-
-			track->menu_add_tree_item_operations(menu, false);
-			menu.exec(QCursor::pos());
-			return true;
-		}
+		track->show_context_menu(QCursor::pos(), false, gisview);
+		return true;
 	}
 
 	Waypoint * wp = this->selected_wp_get(); /* Waypoint that is currently being selected/edited. */
 	if (wp && wp->is_visible()) {
-		if (!wp->get_name().isEmpty()) {
-			QMenu menu(gisview);
-
-			wp->menu_add_tree_item_operations(menu, false);
-			menu.exec(QCursor::pos());
-			return true;
-		}
+		track->show_context_menu(QCursor::pos(), false, gisview);
+		return true;
 	}
 
 	/* No Track/Route/Waypoint selected. */
@@ -724,11 +713,8 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 
 	/* Finally, a waypoint that this tool can operate on. Not too much operation, though. */
 	switch (ev->button()) {
-	case Qt::RightButton: {
-		QMenu menu;
-		newly_selected_wp->menu_add_tree_item_operations(menu, false);
-		menu.exec(QCursor::pos());
-		}
+	case Qt::RightButton:
+		newly_selected_wp->show_context_menu(QCursor::pos(), false);
 		break;
 	case Qt::LeftButton:
 		/* All that was supposed to happen on left-mouse click

@@ -31,7 +31,7 @@
 
 
 
-#include "tree_item.h"
+#include "globals.h"
 
 
 
@@ -45,7 +45,9 @@ namespace SlavGPS {
 	class Window;
 	class GisViewport;
 	class TreeView;
+	class TreeItem;
 	class Layer;
+	class StandardMenuOperations;
 	enum class LayerKind;
 	enum class CoordMode;
 
@@ -84,14 +86,13 @@ namespace SlavGPS {
 		LayerAggregate * get_top_layer();
 		TreeView * get_tree_view();
 
-		void context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops);
+		sg_ret context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops);
 
 		void contextMenuEvent(QContextMenuEvent * event);
 		void keyPressEvent(QKeyEvent * event);
 
 
 	private:
-		void context_menu_show_for_item(TreeItem & item);
 		void context_menu_show_for_new_layer();
 		void context_menu_add_new_layer_submenu(QMenu & menu);
 

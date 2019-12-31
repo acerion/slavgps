@@ -501,7 +501,7 @@ void LayerGPS::change_coord_mode(CoordMode mode)
 
 
 
-bool LayerGPS::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerGPS::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * action = NULL;
 
@@ -549,7 +549,7 @@ bool LayerGPS::menu_add_type_specific_operations(QMenu & menu, bool tree_view_co
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_all_cb()));
 	menu.addAction(action);
 
-	return true;
+	return sg_ret::ok;
 }
 
 

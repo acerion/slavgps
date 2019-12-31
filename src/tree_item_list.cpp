@@ -61,20 +61,6 @@ using namespace SlavGPS;
 
 
 
-void show_context_menu(TreeItem & item, const QPoint & cursor_position) // TODO KAMIL
-{
-	QMenu menu;
-	qDebug() << SG_PREFIX_I << "Menu for tree item" << item.m_type_id << item.get_name();
-	if (!item.menu_add_tree_item_operations(menu, true)) {
-		return;
-	}
-	menu.exec(QPoint(cursor_position.x(), cursor_position.y()));
-
-	return;
-}
-
-
-
 void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
 	if (!this->view->geometry().contains(ev->pos())) {
@@ -135,8 +121,7 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 		qDebug() << SG_PREFIX_E << "Failed to get non-NULL TreeItem from item" << child_item->text() << "at column id" << TreeItemPropertyID::TheItem;
 		return;
 	}
-
-	show_context_menu(*tree_item, QCursor::pos());
+	tree_item->show_context_menu(QCursor::pos(), false);
 
 	return;
 }

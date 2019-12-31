@@ -580,7 +580,7 @@ void LayerAggregate::analyse_cb(void) /* Slot. */
 
 
 
-bool LayerAggregate::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerAggregate::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
 	menu.addSeparator();
@@ -632,7 +632,7 @@ bool LayerAggregate::menu_add_type_specific_operations(QMenu & menu, bool tree_v
 		qa->setToolTip(tr("Find the first item with a specified date"));
 	}
 
-	return true;
+	return sg_ret::ok;
 }
 
 

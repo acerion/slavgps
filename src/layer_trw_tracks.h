@@ -171,7 +171,7 @@ namespace SlavGPS {
 
 
 
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		void sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);

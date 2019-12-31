@@ -1181,7 +1181,7 @@ void LayerGeoref::goto_center_cb(void)
 
 
 
-bool LayerGeoref::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerGeoref::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * action = NULL;
 
@@ -1200,7 +1200,7 @@ bool LayerGeoref::menu_add_type_specific_operations(QMenu & menu, bool tree_view
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (export_params_cb(void)));
 	menu.addAction(action);
 
-	return true;
+	return sg_ret::ok;
 }
 
 

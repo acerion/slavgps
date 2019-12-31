@@ -348,8 +348,8 @@ namespace SlavGPS {
 		std::list<CoordRectangle> get_coordinate_rectangles(const LatLon & single_rectangle_span);
 		//CoordMode get_coord_mode(void) const;
 
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
-		bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
+		sg_ret menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view) override;
 
 		void sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);
 		void sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMenu * upload_submenu);

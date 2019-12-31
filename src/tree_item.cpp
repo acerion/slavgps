@@ -175,7 +175,7 @@ Layer * TreeItem::get_immediate_layer(void)
 {
 	/* Default behaviour for Waypoints, Tracks, Routes, their
 	   containers and other non-Layer items. This behaviour will
-	   be overriden for layers. */
+	   be overriden for Layer class and its derived classes. */
 	return this->owning_layer;
 }
 
@@ -258,7 +258,10 @@ bool TreeItem::compare_name_descending(const TreeItem * a, const TreeItem * b)
 
 
 
-StandardMenuOperations TreeItem::get_menu_operation_ids(void) const
+/**
+   @reviewed-on 2019-12-31
+*/
+const StandardMenuOperations & TreeItem::get_menu_operation_ids(void) const
 {
 	return this->m_menu_operation_ids;
 }
@@ -266,41 +269,53 @@ StandardMenuOperations TreeItem::get_menu_operation_ids(void) const
 
 
 
-void TreeItem::set_menu_operation_ids(StandardMenuOperations new_value)
+/**
+   @reviewed-on 2019-12-31
+*/
+void TreeItem::set_menu_operation_ids(const StandardMenuOperations & ops)
 {
-	this->m_menu_operation_ids = new_value;
+	this->m_menu_operation_ids = ops;
 }
 
 
 
 
-bool TreeItem::menu_add_tree_item_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
 {
+	LayersPanel * layers_panel = ThisApp::get_layers_panel();
+	return layers_panel->context_menu_add_standard_operations(menu, ops);
+}
+
+
+
+
+sg_ret TreeItem::show_context_menu(const QPoint & position, bool in_tree_view, QWidget * parent)
+{
+	qDebug() << SG_PREFIX_I << "Context menu for" << this->m_type_id << this->get_name();
+	QMenu menu(parent);
+
+
 	/* First add standard operations. */
 	StandardMenuOperations ops = this->get_menu_operation_ids();
-	if (tree_view_context_menu) {
+	if (in_tree_view) {
 		ops.push_back(StandardMenuOperation::New);
 	}
 	if (ops.size() > 0) {
-		this->menu_add_standard_operations(menu, ops, tree_view_context_menu);
+		if (sg_ret::ok != this->menu_add_standard_operations(menu, ops, in_tree_view)) {
+			return sg_ret::err;
+		}
 		menu.addSeparator();
 	}
 
 
 	/* Now add type-specific operations below */
-	this->menu_add_type_specific_operations(menu, tree_view_context_menu);
-
-	return true;
-}
-
+	if (sg_ret::ok != this->menu_add_type_specific_operations(menu, in_tree_view)) {
+		return sg_ret::err;
+	}
 
 
-
-bool TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
-{
-	LayersPanel * layers_panel = ThisApp::get_layers_panel();
-	layers_panel->context_menu_add_standard_operations(menu, ops);
-	return true;
+	menu.exec(position);
+	return sg_ret::ok;
 }
 
 

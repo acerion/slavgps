@@ -625,14 +625,12 @@ void LayerTRWWaypoints::sublayer_menu_sort(QMenu & menu)
 
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
-bool LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
-	bool rv = false;
 
 
 	if (ThisApp::get_layers_panel()) {
-		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
@@ -662,7 +660,7 @@ bool LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, bool tre
 	}
 
 
-	return rv;
+	return sg_ret::ok;
 }
 
 

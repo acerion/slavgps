@@ -185,10 +185,15 @@ namespace SlavGPS {
 		virtual sg_ret attach_children_to_tree(void);
 
 
-		/* First of these methods is wrapper for the other. */
-		bool menu_add_tree_item_operations(QMenu & menu, bool tree_view_context_menu);
-		virtual bool menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu);
-		virtual bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) { return true; }
+		virtual sg_ret menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view);
+		virtual sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) { return sg_ret::ok; }
+
+		/**
+		   @param in_tree_view decides if context menu is
+		   shown in response to event in Tree View widget, or
+		   in other widget.
+		*/
+		sg_ret show_context_menu(const QPoint & position, bool in_tree_view, QWidget * parent = nullptr);
 
 		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		virtual bool dropped_item_is_acceptable(const TreeItem & tree_item) const;
@@ -265,8 +270,8 @@ namespace SlavGPS {
 		virtual sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const;
 
 
-		StandardMenuOperations get_menu_operation_ids(void) const;
-		void set_menu_operation_ids(StandardMenuOperations new_value);
+		const StandardMenuOperations & get_menu_operation_ids(void) const;
+		void set_menu_operation_ids(const StandardMenuOperations & ops);
 
 		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
 		   Return true if this condition is true.

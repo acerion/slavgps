@@ -1897,7 +1897,7 @@ void LayerMap::flush_cb(void)
 
 
 
-bool LayerMap::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerMap::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
 
@@ -1936,7 +1936,7 @@ bool LayerMap::menu_add_type_specific_operations(QMenu & menu, bool tree_view_co
 		menu.addAction(qa);
 	}
 
-	return true;
+	return sg_ret::ok;
 }
 
 

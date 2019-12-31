@@ -805,7 +805,7 @@ void LayerTRWTracks::sublayer_menu_sort(QMenu & menu)
 
 
 
-bool LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
@@ -821,7 +821,7 @@ bool LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, bool tree_v
 	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, external_submenu);
 
 
-	return true;
+	return sg_ret::ok;
 }
 
 

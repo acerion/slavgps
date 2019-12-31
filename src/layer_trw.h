@@ -144,7 +144,7 @@ namespace SlavGPS {
 		LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
 		SaveStatus write_layer_data(FILE * file) const;
 
-		bool menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu) override;
+		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 
 		sg_ret attach_children_to_tree(void);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);

@@ -960,7 +960,7 @@ void LayerMapnik::about_mapnik_cb(void)
 
 
 
-bool LayerMapnik::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret LayerMapnik::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * action = NULL;
 
@@ -992,7 +992,7 @@ bool LayerMapnik::menu_add_type_specific_operations(QMenu & menu, bool tree_view
 	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (about_mapnik_cb()));
 	menu.addAction(action);
 
-	return true;
+	return sg_ret::ok;
 }
 
 

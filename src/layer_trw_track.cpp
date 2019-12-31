@@ -2182,7 +2182,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-bool Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool tree_view_context_menu)
+sg_ret Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	QAction * qa = NULL;
@@ -2214,20 +2214,17 @@ bool Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperati
 
 	menu.addSeparator();
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
-bool Track::menu_add_type_specific_operations(QMenu & menu, bool tree_view_context_menu)
+sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
-	bool rv = false;
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-
-	rv = true;
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("P&rofile"));
 	if (this->profile_dialog) {
@@ -2289,7 +2286,7 @@ bool Track::menu_add_type_specific_operations(QMenu & menu, bool tree_view_conte
 
 
 	/* Only show in viewport context menu, and only when a trackpoint is selected. */
-	if (!tree_view_context_menu && 1 == this->selected_children.get_count()) {
+	if (!in_tree_view && 1 == this->selected_children.get_count()) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
@@ -2297,7 +2294,7 @@ bool Track::menu_add_type_specific_operations(QMenu & menu, bool tree_view_conte
 	}
 
 
-	return rv;
+	return sg_ret::ok;
 }
 
 
