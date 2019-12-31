@@ -545,8 +545,8 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 		this->param_specs = Layer::get_interface(layer_kind)->parameters_c;
 		this->param_specs_count = Layer::get_interface(layer_kind)->parameter_specifications.size();
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << child->get_name() << "under" << parent->get_name();
-		parent->tree_view->attach_to_tree(parent, child);
+		qDebug() << SG_PREFIX_I << "Attaching item" << child->get_name() << "to tree under" << parent->get_name();
+		child->attach_to_tree_under_parent(parent);
 
 	} else { /* Any other LayerKind::X type. */
 
@@ -561,8 +561,8 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 		   in the stack. */
 
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
-		//qDebug() << SG_PREFIX_I << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
-		//agg->tree_view->attach_to_tree(agg, layer);
+		//qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << agg->get_name();
+		//layer->attach_to_tree_under_parent(agg);
 	}
 
 	return;

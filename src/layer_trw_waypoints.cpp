@@ -552,8 +552,8 @@ sg_ret LayerTRWWaypoints::attach_children_to_tree(void)
 			continue;
 		}
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, wp);
+		qDebug() << SG_PREFIX_I << "Attaching item" << wp->get_name() << "to tree under" << this->get_name();
+		wp->attach_to_tree_under_parent(this);
 	}
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -1063,8 +1063,8 @@ sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int c
 	/* Handle item in new location. */
 	{
 		this->attach_to_container((Waypoint *) tree_item);
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, tree_item);
+		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
+		tree_item->attach_to_tree_under_parent(this);
 
 		/* Update our own tooltip in tree view. */
 		this->update_tree_item_tooltip();

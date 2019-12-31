@@ -457,7 +457,7 @@ void TreeView::deselect_tree_item(const TreeItem * tree_item)
    @return sg_ret::ok on success
    @return error value on failure
 */
-sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attach_mode, const TreeItem * sibling_tree_item)
+sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeViewAttachMode attach_mode, const TreeItem * sibling_tree_item)
 {
 	if (!parent_tree_item->index.isValid()) {
 		/* Parent index must always be valid. The only
@@ -472,22 +472,22 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 	sg_ret result = sg_ret::err;
 
 	switch (attach_mode) {
-	case TreeView::AttachMode::Front:
+	case TreeViewAttachMode::Front:
 		row = 0;
 		qDebug() << SG_PREFIX_I << "Pushing front tree item named" << tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
 		break;
 
-	case TreeView::AttachMode::Back:
+	case TreeViewAttachMode::Back:
 		row = this->tree_model->itemFromIndex(parent_tree_item->index)->rowCount();
 		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
 		break;
 
-	case TreeView::AttachMode::Before:
-	case TreeView::AttachMode::After:
+	case TreeViewAttachMode::Before:
+	case TreeViewAttachMode::After:
 		if (NULL == sibling_tree_item) {
 			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: NULL sibling";
 			result = sg_ret::err;
@@ -500,7 +500,7 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 			break;
 		}
 
-		row = sibling_tree_item->index.row() + (attach_mode == TreeView::AttachMode::Before ? 0 : 1);
+		row = sibling_tree_item->index.row() + (attach_mode == TreeViewAttachMode::Before ? 0 : 1);
 		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->get_name() << "next to sibling named" << sibling_tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;

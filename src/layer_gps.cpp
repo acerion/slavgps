@@ -581,8 +581,8 @@ sg_ret LayerGPS::attach_children_to_tree(void)
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, trw);
+		qDebug() << SG_PREFIX_I << "Attaching item" << trw->get_name() << "to tree under" << this->get_name();
+		trw->attach_to_tree_under_parent(this);
 		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
 

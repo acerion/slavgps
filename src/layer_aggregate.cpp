@@ -129,11 +129,11 @@ bool is_base_type(LayerKind layer_kind)
 void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 {
 	/* By default layers are inserted before the selected layer. */
-	TreeView::AttachMode attach_mode = TreeView::AttachMode::Before;
+	TreeViewAttachMode attach_mode = TreeViewAttachMode::Before;
 
 	/* These types are 'base' types in that you what other information on top. */
 	if (is_base_type(layer->m_kind)) {
-		attach_mode = TreeView::AttachMode::After;
+		attach_mode = TreeViewAttachMode::After;
 	}
 
 
@@ -149,7 +149,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		}
 
 		/* ::insert() inserts before given iterator. */
-		if (TreeView::AttachMode::Before == attach_mode) {
+		if (TreeViewAttachMode::Before == attach_mode) {
 			this->children->insert(sibling_iter, layer);
 		} else {
 			this->children->insert(std::next(sibling_iter), layer);
@@ -165,8 +165,8 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
+		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
+		layer->attach_to_tree_under_parent(this, attach_mode, sibling_layer);
 
 		QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
@@ -207,13 +207,13 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
+		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
+		layer->attach_to_tree_under_parent(this, TreeViewAttachMode::Front);
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, layer);
+		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
+		layer->attach_to_tree_under_parent(this);
 		this->children->push_back(layer);
 	}
 	this->tree_view->apply_tree_item_timestamp(layer);
@@ -261,8 +261,8 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 	}
 
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
-	this->tree_view->attach_to_tree(this, layer);
+	qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
+	layer->attach_to_tree_under_parent(this);
 
 
 
@@ -978,8 +978,8 @@ sg_ret LayerAggregate::attach_children_to_tree(void)
 		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, layer);
+		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
+		layer->attach_to_tree_under_parent(this);
 	}
 
 	/* Update our own tooltip in tree view. */

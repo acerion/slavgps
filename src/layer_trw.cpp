@@ -1295,8 +1295,8 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Tracks node";
 
 		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.get_name() << "under" << this->get_name();
-			this->tree_view->attach_to_tree(this, &this->tracks);
+			qDebug() << SG_PREFIX_I << "Attaching item" << this->tracks.get_name() << "to tree under" << this->get_name();
+			this->tracks.attach_to_tree_under_parent(this);
 		}
 		this->tracks.attach_children_to_tree();
 	}
@@ -1305,8 +1305,8 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Routes node";
 
 		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.get_name() << "under" << this->get_name();
-			this->tree_view->attach_to_tree(this, &this->routes);
+			qDebug() << SG_PREFIX_I << "Attaching item" << this->routes.get_name() << "to tree under" << this->get_name();
+			this->routes.attach_to_tree_under_parent(this);
 		}
 
 		this->routes.attach_children_to_tree();
@@ -1316,8 +1316,8 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Waypoints node";
 
 		if (!this->waypoints.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.get_name() << "under" << this->get_name();
-			this->tree_view->attach_to_tree(this, &this->waypoints);
+			qDebug() << SG_PREFIX_I << "Attaching item" << this->waypoints.get_name() << "to tree under" << this->get_name();
+			this->waypoints.attach_to_tree_under_parent(this);
 			qDebug() << SG_PREFIX_I;
 		}
 
@@ -2140,13 +2140,13 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 	}
 
 	if (!this->waypoints.is_in_tree()) {
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, &this->waypoints);
+		qDebug() << SG_PREFIX_I << "Attaching item" << this->waypoints.get_name() << "to tree under" << this->get_name();
+		this->waypoints.attach_to_tree_under_parent(this);
 	}
 
 
-	qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->get_name() << "under" << this->waypoints.get_name();
-	this->tree_view->attach_to_tree(&this->waypoints, wp); /* push item to the end of parent nodes. */
+	qDebug() << SG_PREFIX_I << "Attaching item" << wp->get_name() << "to tree under" << this->waypoints.get_name();
+	wp->attach_to_tree_under_parent(&this->waypoints); /* push item to the end of parent node. */
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
 	/* TODO_LATER: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
@@ -2187,14 +2187,14 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 
 	if (trk->is_route()) {
 		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.get_name() << "under" << this->get_name();
-			this->tree_view->attach_to_tree(this, &this->routes);
+			qDebug() << SG_PREFIX_I << "Attaching item" << this->routes.get_name() << "to tree under" << this->get_name();
+			this->routes.attach_to_tree_under_parent(this);
 		}
 
 		/* Now we can proceed with adding a route to Routes node. */
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->routes.get_name();
-		this->tree_view->attach_to_tree(&this->routes, trk);
+		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->routes.get_name();
+		trk->attach_to_tree_under_parent(&this->routes);
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
 		trk->update_tree_item_properties();
@@ -2206,8 +2206,8 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 		this->routes.update_tree_item_tooltip();
 	} else {
 		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.get_name() << "under" << this->get_name();
-			this->tree_view->attach_to_tree(this, &this->tracks);
+			qDebug() << SG_PREFIX_I << "Attaching item" << this->tracks.get_name() << "to tree under" << this->get_name();
+			this->tracks.attach_to_tree_under_parent(this);
 		}
 
 
@@ -2216,8 +2216,8 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 			trk->set_timestamp(tp->timestamp);
 		}
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->tracks.get_name();
-		this->tree_view->attach_to_tree(&this->tracks, trk); /* push item to the end of parent nodes. */
+		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->tracks.get_name();
+		trk->attach_to_tree_under_parent(&this->tracks); /* push item to the end of parent nodes. */
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
 		trk->update_tree_item_properties();

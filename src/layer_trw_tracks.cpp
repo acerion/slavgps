@@ -666,8 +666,8 @@ sg_ret LayerTRWTracks::attach_children_to_tree(void)
 		trk->self_assign_icon();
 		trk->self_assign_timestamp();
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, trk);
+		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->get_name();
+		trk->attach_to_tree_under_parent(this);
 	}
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -1137,8 +1137,8 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 	/* Handle item in new location. */
 	{
 		this->attach_to_container((Track *) tree_item);
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->get_name() << "under" << this->get_name();
-		this->tree_view->attach_to_tree(this, tree_item);
+		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
+		tree_item->attach_to_tree_under_parent(this);
 
 		/* Update our own tooltip in tree view. */
 		this->update_tree_item_tooltip();

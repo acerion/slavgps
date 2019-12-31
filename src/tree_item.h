@@ -65,6 +65,14 @@ namespace SlavGPS {
 	class TreeItemIdentityPredicate;
 
 
+	enum class TreeViewAttachMode {
+		Front,
+		Back,
+		Before,
+		After
+	};
+
+
 
 
 	typedef uint32_t sg_uid_t;
@@ -268,6 +276,8 @@ namespace SlavGPS {
 		/* Get tree items (direct and indirect children of the
 		   layer) of types given by @param wanted_types. */
 		virtual sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const;
+
+		virtual sg_ret attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMode attach_mode = TreeViewAttachMode::Back, const TreeItem * sibling = nullptr);
 
 
 		const StandardMenuOperations & get_menu_operation_ids(void) const;

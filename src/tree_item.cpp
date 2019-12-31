@@ -220,7 +220,7 @@ bool TreeItem::the_same_object(const TreeItem * item1, const TreeItem * item2)
 
 bool TreeItem::is_in_tree(void) const
 {
-	if (NULL == this->tree_view) {
+	if (nullptr == this->tree_view) {
 		return false;
 	}
 
@@ -522,6 +522,34 @@ sg_ret TreeItem::click_in_tree(const QString & debug)
 
 sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const
 {
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TreeItem::attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMode attach_mode, const TreeItem * sibling)
+{
+	if (!parent->is_in_tree()) {
+		qDebug() << SG_PREFIX_E << "Parent tree item" << parent->get_name() << "is not attached to tree";
+		return sg_ret::err;
+	}
+
+	/*
+	  Attach yourself to tree. Classes that have some children
+	  items (e.g. TRWLayer) will have to take care of the children
+	  on their own.
+	*/
+	if (sg_ret::ok != parent->tree_view->attach_to_tree(parent, this, attach_mode, sibling)) {
+		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+		return sg_ret::err;
+	}
+
+	if (!this->is_in_tree()) {
+		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+		return sg_ret::err;
+	}
+
 	return sg_ret::ok;
 }
 
