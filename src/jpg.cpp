@@ -139,7 +139,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview
 	wp = GeotagExif::create_waypoint_from_file(file_full_path, gisview->get_coord_mode());
 #endif
 	if (wp) {
-		if (wp->name.isEmpty()) {
+		if (wp->get_name().isEmpty()) {
 			/* GeotagExif method doesn't guarantee setting waypoints name. */
 			wp->set_name(FileUtils::get_base_name(file_full_path));
 		}

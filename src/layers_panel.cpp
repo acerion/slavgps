@@ -231,15 +231,11 @@ void LayersPanel::context_menu_add_new_layer_submenu(QMenu & menu)
 
 
 
-void LayersPanel::context_menu_show_for_item(TreeItem * item)
+void LayersPanel::context_menu_show_for_item(TreeItem & item) // KAMIL TODO
 {
-	if (!item) {
-		qDebug() << SG_PREFIX_E << "Show context menu for item: NULL item";
-		return;
-	}
-	qDebug() << SG_PREFIX_I << "Context menu event: menu for" << item->m_type_id << item->name;
+	qDebug() << SG_PREFIX_I << "Context menu event for" << item.m_type_id << item.get_name();
 	QMenu menu;
-	if (!item->menu_add_tree_item_operations(menu, true)) {
+	if (!item.menu_add_tree_item_operations(menu, true)) {
 		return;
 	}
 	menu.exec(QCursor::pos());
@@ -368,11 +364,11 @@ void LayersPanel::move_item(bool up)
 
 	this->tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
-	if (selected_item->get_parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
+	if (selected_item->get_direct_parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
 		this->tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
 
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_parent_tree_item()->name;
-		this->emit_items_tree_updated_cb(selected_item->get_parent_tree_item()->name);
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_direct_parent_tree_item()->get_name();
+		this->emit_items_tree_updated_cb(selected_item->get_direct_parent_tree_item()->get_name());
 	}
 }
 
@@ -656,10 +652,12 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		/* We have clicked on some valid item in tree view. */
 
 		qDebug() << SG_PREFIX_I << "Context menu event: valid tree view index, row =" << ind.row();
-		TreeIndex index = QPersistentModelIndex(ind);
-		TreeItem * item = this->tree_view->get_tree_item(index);
-
-		this->context_menu_show_for_item(item);
+		TreeItem * item = this->tree_view->get_tree_item(QPersistentModelIndex(ind));
+		if (nullptr == item) {
+			qDebug() << SG_PREFIX_E << "Tree item is NULL";
+		} else {
+			this->context_menu_show_for_item(*item);
+		}
 	} else {
 		/* We have clicked on empty space, not on tree item.  */
 
@@ -752,7 +750,7 @@ void LayersPanel::activate_buttons_cb(void)
 	bool is_first = false;
 	bool is_last = false;
 	if (sg_ret::ok != this->tree_view->get_position(*selected_item, is_first, is_last)) {
-		qDebug() << SG_PREFIX_E << "Failed to get position of tree item" << selected_item->name;
+		qDebug() << SG_PREFIX_E << "Failed to get position of tree item" << selected_item->get_name();
 		return;
 	}
 

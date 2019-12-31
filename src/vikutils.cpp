@@ -238,7 +238,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 		case 'N': /* Name of track. */
 			if (trk) {
-				values[i] = QObject::tr("%1Name: %2").arg(separator).arg(trk->name);
+				values[i] = QObject::tr("%1Name: %2").arg(separator).arg(trk->get_name());
 			}
 			break;
 

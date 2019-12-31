@@ -175,7 +175,7 @@ SaveStatus GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
 				     "Level1=18\n"
 				     "Zoom0=0\n"
 				     "Zoom1=1\n"
-				     "[END-IMG ID]\n\n").arg(trw->name).arg(trw->name);
+				     "[END-IMG ID]\n\n").arg(trw->get_name()).arg(trw->get_name());
 	fprintf(file, "%s", line.toUtf8().constData());
 
 	SaveStatus save_status;

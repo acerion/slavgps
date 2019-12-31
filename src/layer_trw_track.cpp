@@ -122,14 +122,6 @@ void Track::set_defaults()
 
 
 
-void Track::set_name(const QString & new_name)
-{
-	this->name = new_name;
-}
-
-
-
-
 void Track::set_comment(const QString & new_comment)
 {
 	this->comment = new_comment;
@@ -222,8 +214,8 @@ void Track::update_properties_dialog(void)
 	}
 
 	/* Update title with current name. */
-	if (!this->name.isEmpty()) {
-		this->props_dialog->setWindowTitle(tr("%1 - Track Properties").arg(this->name));
+	if (!this->get_name().isEmpty()) {
+		this->props_dialog->setWindowTitle(tr("%1 - Track Properties").arg(this->get_name()));
 	}
 }
 
@@ -257,8 +249,8 @@ void Track::update_profile_dialog(void)
 	}
 
 	/* Update title with current name. */
-	if (!this->name.isEmpty()) {
-		this->profile_dialog->setWindowTitle(tr("%1 - Track Profile").arg(this->name));
+	if (!this->get_name().isEmpty()) {
+		this->profile_dialog->setWindowTitle(tr("%1 - Track Profile").arg(this->get_name()));
 	}
 }
 
@@ -348,7 +340,7 @@ void Track::copy_properties(const Track & from)
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;
 
-	this->set_name(from.name);
+	this->set_name(from.get_name());
 	this->set_comment(from.comment);
 	this->set_description(from.description);
 	this->set_source(from.source);
@@ -1361,7 +1353,7 @@ void Track::marshall(Pickle & pickle)
 	*(unsigned int *)(byte_array->data + intp) = ntp;
 #endif
 
-	pickle.put_string(this->name);
+	pickle.put_string(this->get_name());
 	pickle.put_string(this->comment);
 	pickle.put_string(this->description);
 	pickle.put_string(this->source);
@@ -1854,7 +1846,7 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 {
 	TrackPoints::iterator iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), tp_at);
 	if (iter == this->trackpoints.end()) {
-		qDebug() << SG_PREFIX_E << "Failed to find existing trackpoint in track" << this->name << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_E << "Failed to find existing trackpoint in track" << this->get_name();
 		return;
 	}
 
@@ -2428,7 +2420,7 @@ bool Track::show_properties_dialog_cb(void)
 
 void Track::statistics_dialog_cb(void)
 {
-	if (this->name.isEmpty()) {
+	if (this->get_name().isEmpty()) {
 		return;
 	}
 
@@ -2440,7 +2432,7 @@ void Track::statistics_dialog_cb(void)
 
 void Track::profile_dialog_cb(void)
 {
-	if (this->name.isEmpty()) {
+	if (this->get_name().isEmpty()) {
 		return;
 	}
 
@@ -2565,7 +2557,7 @@ void Track::apply_dem_data_only_missing_cb(void)
 void Track::export_track_as_gpx_cb(void)
 {
 	const QString title = this->is_route() ? tr("Export Route as GPX") : tr("Export Track as GPX");
-	const QString auto_save_name = append_file_ext(this->name, SGFileType::GPX);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPX);
 
 	this->export_track(title, auto_save_name, SGFileType::GPX);
 }
@@ -2680,8 +2672,8 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	static const QString empty_string("");
 
 	/* No actual change to the name supplied. */
-	if (!this->name.isEmpty()) {
-		if (new_name == this->name) {
+	if (!this->get_name().isEmpty()) {
+		if (new_name == this->get_name()) {
 			return empty_string;
 		}
 	}
@@ -2738,7 +2730,7 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 	parent_layer->selected_track_set(this, this->selected_children.references.front()); /* But this tree item is selected (and maybe its trackpoint too). */
 
-	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
 
 	return true;
@@ -2758,13 +2750,13 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 		return;
 	}
 
-	if (1) {
+	if (1) { /* TODO_LATER: this pattern is being repeated in few other places. */
 		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
 		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
 		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
 		}
 	}
 
@@ -3109,7 +3101,7 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointReference & other_t
 
 #if 1   /* Debug code. */
 	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *(other_tp_ref.m_iter));
-	qDebug() << "Will check assertion for track" << this->name;
+	qDebug() << "Will check assertion for track" << this->get_name();
 	assert (iter != this->trackpoints.end());
 #endif
 
@@ -3242,14 +3234,14 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 	for (const TreeItemViewColumn & col : view_format.columns) {
 		switch (col.id) {
 		case TreeItemPropertyID::ParentLayer:
-			item = new QStandardItem(trw->name);
+			item = new QStandardItem(trw->get_name());
 			item->setToolTip(tooltip);
 			item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 			items << item;
 			break;
 
 		case TreeItemPropertyID::TheItem:
-			item = new QStandardItem(this->name);
+			item = new QStandardItem(this->get_name());
 			item->setToolTip(tooltip);
 			variant = QVariant::fromValue(this);
 			item->setData(variant, RoleLayerData);
@@ -3497,7 +3489,7 @@ sg_ret Track::split_at_selected_trackpoint_cb(void)
 {
 	sg_ret ret = this->split_at_trackpoint(this->selected_children.references.front());
 	if (sg_ret::ok != ret) {
-		qDebug() << SG_PREFIX_W << "Failed to split track" << this->name << "at selected trackpoint";
+		qDebug() << SG_PREFIX_W << "Failed to split track" << this->get_name() << "at selected trackpoint";
 		return ret;
 	}
 

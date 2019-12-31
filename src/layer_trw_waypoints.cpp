@@ -79,7 +79,7 @@ LayerTRWWaypoints::LayerTRWWaypoints()
 	this->accepted_child_type_ids.push_back(Waypoint::type_id());
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
-	this->name = tr("Waypoints");
+	this->set_name(tr("Waypoints"));
 	this->m_menu_operation_ids.push_back(StandardMenuOperation::Paste);
 }
 
@@ -129,8 +129,8 @@ QString LayerTRWWaypoints::get_tooltip(void) const
 Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		if ((*iter)->name.isEmpty()) {
-			if ((*iter)->name == wp_name) {
+		if ((*iter)->get_name().isEmpty()) {
+			if ((*iter)->get_name() == wp_name) {
 				return *iter;
 			}
 		}
@@ -221,8 +221,8 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 	std::list<Waypoint *> waypoints = this->get_sorted_by_name();
 
 	for (auto iter = std::next(waypoints.begin()); iter != waypoints.end(); iter++) {
-		QString const this_one = (*iter)->name;
-		QString const previous = (*(std::prev(iter)))->name;
+		QString const this_one = (*iter)->get_name();
+		QString const previous = (*(std::prev(iter)))->get_name();
 
 		if (this_one == previous) {
 			return *iter;
@@ -406,7 +406,7 @@ void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 	Waypoint * wp = this->find_waypoint_with_duplicate_name();
 	while (wp) {
 		/* Rename it. */
-		const QString uniqe_name = this->new_unique_element_name(wp->name);
+		const QString uniqe_name = this->new_unique_element_name(wp->get_name());
 		wp->set_name(uniqe_name);
 		this->tree_view->apply_tree_item_name(wp);
 
@@ -552,7 +552,7 @@ sg_ret LayerTRWWaypoints::attach_children_to_tree(void)
 			continue;
 		}
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, wp);
 	}
 	/* Update our own tooltip in tree view. */
@@ -770,7 +770,7 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
 	//parent_layer->set_statusbar_msg_info_trk(this);
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
-	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
 
 	return true;
@@ -802,11 +802,11 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 
 	if (1) {
 		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
 		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
 		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
 		}
 	}
 
@@ -815,7 +815,7 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 
 	if (this->bbox.intersects_with(viewport_bbox)) {
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->m_type_id << (*iter)->name;
+			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->m_type_id << (*iter)->get_name();
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
 	}
@@ -908,7 +908,7 @@ sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
 
 	wp->set_new_waypoint_icon();
 
-	this->name_generator.add_name(wp->name);
+	this->name_generator.add_name(wp->get_name());
 
 	return sg_ret::ok;
 }
@@ -925,7 +925,7 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	if (wp->name.isEmpty()) {
+	if (wp->get_name().isEmpty()) {
 		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
 	}
 
@@ -938,7 +938,7 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 		*was_visible = wp->is_visible();
 	}
 
-	this->name_generator.remove_name(wp->name);
+	this->name_generator.remove_name(wp->get_name());
 
 	this->children_map.erase(wp->get_uid()); /* Erase by key. */
 
@@ -946,13 +946,13 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 	TreeItemIdentityPredicate pred(wp);
 	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
 	if (iter != this->children_list.end()) {
-		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->name << "from list" << this->name;
+		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
 		this->children_list.erase(iter);
 	}
 
 #if 0   /* Old code. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		qDebug() << SG_PREFIX_I << "Will compare waypoints" << (*iter)->name << "and" << wp->name;
+		qDebug() << SG_PREFIX_I << "Will compare waypoints" << (*iter)->get_name() << "and" << wp->get_name();
 		if (TreeItem::the_same_object(*iter, wp)) {
 			this->children_list.erase(iter);
 			break;
@@ -1065,7 +1065,7 @@ sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int c
 	/* Handle item in new location. */
 	{
 		this->attach_to_container((Waypoint *) tree_item);
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, tree_item);
 
 		/* Update our own tooltip in tree view. */
@@ -1087,7 +1087,7 @@ bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
 
 	Waypoint * wp = (Waypoint *) &child_tree_item;
 
-	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
+	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(this->children_list, wp, up);
 	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
 

@@ -165,7 +165,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
 
 		QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
@@ -185,7 +185,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->get_name() << "is not connected to tree";
 		return sg_ret::err;
 	}
 	if (!item->is_layer()) {
@@ -207,12 +207,12 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, layer);
 		this->children->push_back(layer);
 	}
@@ -256,12 +256,12 @@ sg_ret LayerAggregate::attach_to_container(Layer * layer)
 sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->get_name() << "is not connected to tree";
 		return sg_ret::err;
 	}
 
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+	qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
 	this->tree_view->attach_to_tree(this, layer);
 
 
@@ -296,7 +296,7 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 {
 	/* We are in aggregate layer, so the child must be a layer as well. */
 	if (!child_tree_item.is_layer()) {
-		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.name;
+		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.get_name();
 		return false;
 	}
 	if (NULL == this->children) {
@@ -306,7 +306,7 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 
 	Layer * layer = child_tree_item.get_immediate_layer();
 
-	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
+	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(*this->children, layer, up);
 	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
 
@@ -352,7 +352,7 @@ void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_select
 			layer->draw_tree_item(gisview, false, false);
 		}
 #else
-		qDebug() << SG_PREFIX_I << "Calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->name;
+		qDebug() << SG_PREFIX_I << "Calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->get_name();
 		layer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
 #endif
 	}
@@ -479,7 +479,7 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	QString title = tr("%1: Waypoint List").arg(this->name);
+	QString title = tr("%1: Waypoint List").arg(this->get_name());
 	Waypoint::list_dialog(title, this);
 }
 
@@ -564,7 +564,7 @@ sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const std::l
 void LayerAggregate::track_and_route_list_dialog_cb(void) /* Slot. */
 {
 	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
-	const QString title = tr("%1: Tracks and Routes List").arg(this->name);
+	const QString title = tr("%1: Tracks and Routes List").arg(this->get_name());
 	Track::list_dialog(title, this, wanted_types);
 }
 
@@ -574,7 +574,7 @@ void LayerAggregate::track_and_route_list_dialog_cb(void) /* Slot. */
 void LayerAggregate::analyse_cb(void) /* Slot. */
 {
 	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
-	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
+	layer_trw_show_stats(this->get_name(), this, wanted_types, this->get_window());
 }
 
 
@@ -978,7 +978,7 @@ sg_ret LayerAggregate::attach_children_to_tree(void)
 		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, layer);
 	}
 
@@ -1084,11 +1084,11 @@ LayerAggregate::LayerAggregate()
 
 void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
+	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->is_visible()) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
 }

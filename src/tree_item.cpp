@@ -151,7 +151,7 @@ QString TreeItem::get_tooltip(void) const
 */
 const QString & TreeItem::get_name(void) const
 {
-	return this->name;
+	return this->m_name;
 }
 
 
@@ -160,9 +160,9 @@ const QString & TreeItem::get_name(void) const
 /**
    @reviewed-on 2019-12-31
 */
-void TreeItem::set_name(const QString & new_name)
+void TreeItem::set_name(const QString & name)
 {
-	this->name = new_name;
+	this->m_name = name;
 }
 
 
@@ -198,9 +198,9 @@ void TreeItem::set_owning_layer(Layer * layer)
 
 
 
-TreeItem * TreeItem::get_parent_tree_item(void) const
+TreeItem * TreeItem::get_direct_parent_tree_item(void) const
 {
-	return this->parent_tree_item;
+	return this->m_direct_parent_tree_item;
 }
 
 
@@ -244,7 +244,7 @@ bool TreeItem::is_layer(void) const
 
 bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
 {
-	return (a->name < b->name);
+	return (a->m_name < b->m_name);
 }
 
 
@@ -321,7 +321,7 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewForma
 
 		switch (col.id) {
 		case TreeItemPropertyID::TheItem:
-			item = new QStandardItem(this->name);
+			item = new QStandardItem(this->get_name());
 			item->setToolTip(tooltip);
 			item->setEditable(this->editable);
 			variant = QVariant::fromValue(this);
@@ -385,7 +385,7 @@ void TreeItem::display_debug_info(const QString & reference) const
 
 sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "here";
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "here";
 	return sg_ret::err;
 }
 
@@ -456,8 +456,8 @@ void TreeItem::emit_tree_item_changed(const QString & where)
 {
 	if (this->visible && this->tree_view) {
 		ThisApp::get_main_window()->set_redraw_trigger(this);
-		qDebug() << SG_PREFIX_SIGNAL << "Tree item" << this->name << "emits 'layer changed' signal @" << where;
-		emit this->tree_item_changed(this->name);
+		qDebug() << SG_PREFIX_SIGNAL << "Tree item" << this->m_name << "emits 'layer changed' signal @" << where;
+		emit this->tree_item_changed(this->m_name);
 	}
 }
 
@@ -473,8 +473,8 @@ void TreeItem::emit_tree_item_changed(const QString & where)
 void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 {
 	ThisApp::get_main_window()->set_redraw_trigger(this);
-	qDebug() << SG_PREFIX_SIGNAL << "TreeItem" << this->name << "emits 'changed' signal @" << where;
-	emit this->tree_item_changed(this->name);
+	qDebug() << SG_PREFIX_SIGNAL << "TreeItem" << this->m_name << "emits 'changed' signal @" << where;
+	emit this->tree_item_changed(this->m_name);
 }
 
 
@@ -484,7 +484,7 @@ sg_ret TreeItem::click_in_tree(const QString & debug)
 {
 	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index);
 	if (NULL == item) {
-		qDebug() << SG_PREFIX_E << "Failed to get qstandarditem for" << this->name;
+		qDebug() << SG_PREFIX_E << "Failed to get qstandarditem for" << this->m_name;
 		return sg_ret::err;
 	}
 
@@ -515,7 +515,7 @@ sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const std::list<SG
 
 SGObjectTypeID TreeItem::get_type_id(void) const
 {
-	qDebug() << SG_PREFIX_W << "Returning empty object type id for object" << this->name;
+	qDebug() << SG_PREFIX_W << "Returning empty object type id for object" << this->m_name;
 	return SGObjectTypeID(); /* Empty value for all tree item types that don't need specific value. */
 }
 
@@ -527,7 +527,7 @@ void TreeItem::update_tree_item_tooltip(void)
 	if (this->tree_view) {
 		this->tree_view->update_tree_item_tooltip(*this);
 	} else {
-		qDebug() << SG_PREFIX_E << "Trying to update tooltip of tree item" << this->name << "that is not connected to tree";
+		qDebug() << SG_PREFIX_E << "Trying to update tooltip of tree item" << this->m_name << "that is not connected to tree";
 	}
 	return;
 }

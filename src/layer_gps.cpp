@@ -575,13 +575,13 @@ LayerGPS::~LayerGPS()
 sg_ret LayerGPS::attach_children_to_tree(void)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "GPS Layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "GPS Layer" << this->get_name() << "is not connected to tree";
 		return sg_ret::err;
 	}
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, trw);
 		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
@@ -1872,11 +1872,11 @@ void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 {
 	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
+	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->is_visible()) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
 }

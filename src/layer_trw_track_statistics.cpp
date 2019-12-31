@@ -73,7 +73,7 @@ TrackStatistics::TrackStatistics()
 */
 void TrackStatistics::add_track(Track * trk)
 {
-	qDebug() << SG_PREFIX_I << "Adding track" << trk->name;
+	qDebug() << SG_PREFIX_I << "Adding track" << trk->get_name();
 
 	this->count++;
 

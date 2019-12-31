@@ -648,7 +648,7 @@ sg_ret LayerTRW::copy_child_item(TreeItem * item)
 	Pickle pickle;
 	this->pickle_child_item(item, pickle);
 	if (pickle.data_size() > 0) {
-		Clipboard::copy(ClipboardDataType::Sublayer, LayerKind::TRW, item->m_type_id, pickle, item->name);
+		Clipboard::copy(ClipboardDataType::Sublayer, LayerKind::TRW, item->m_type_id, pickle, item->get_name());
 	}
 
 	return sg_ret::ok;
@@ -690,7 +690,7 @@ sg_ret LayerTRW::unpickle_child_item(TreeItem * item, Pickle & pickle)
 	if (item->get_type_id() == Waypoint::type_id()) {
 		Waypoint * wp = Waypoint::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name(item->m_type_id, wp->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, wp->get_name());
 		wp->set_name(uniq_name);
 
 		this->add_waypoint(wp);
@@ -707,7 +707,7 @@ sg_ret LayerTRW::unpickle_child_item(TreeItem * item, Pickle & pickle)
 		Track * trk = Track::unmarshall(pickle);
 
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->get_name());
 		trk->set_name(uniq_name);
 
 		this->add_track(trk);
@@ -722,7 +722,7 @@ sg_ret LayerTRW::unpickle_child_item(TreeItem * item, Pickle & pickle)
 	} else if (item->get_type_id() == Route::type_id()) {
 		Track * trk = Track::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
-		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->name);
+		const QString uniq_name = this->new_unique_element_name(item->m_type_id, trk->get_name());
 		trk->set_name(uniq_name);
 
 		this->add_route(trk);
@@ -1287,7 +1287,7 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 	qDebug() << SG_PREFIX_D;
 
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "TRW Layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "TRW Layer" << this->get_name() << "is not connected to tree";
 		return sg_ret::err;
 	}
 
@@ -1295,7 +1295,7 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Tracks node";
 
 		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.name << "under" << this->name;
+			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.get_name() << "under" << this->get_name();
 			this->tree_view->attach_to_tree(this, &this->tracks);
 		}
 		this->tracks.attach_children_to_tree();
@@ -1305,7 +1305,7 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Routes node";
 
 		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.name << "under" << this->name;
+			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.get_name() << "under" << this->get_name();
 			this->tree_view->attach_to_tree(this, &this->routes);
 		}
 
@@ -1316,7 +1316,7 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Waypoints node";
 
 		if (!this->waypoints.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.name << "under" << this->name;
+			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.get_name() << "under" << this->get_name();
 			this->tree_view->attach_to_tree(this, &this->waypoints);
 			qDebug() << SG_PREFIX_I;
 		}
@@ -2135,17 +2135,17 @@ sg_ret LayerTRW::attach_to_container(Waypoint * wp)
 sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
+		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
 		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
 	}
 
 	if (!this->waypoints.is_in_tree()) {
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->waypoints.get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, &this->waypoints);
 	}
 
 
-	qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->name << "under" << this->waypoints.name;
+	qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->get_name() << "under" << this->waypoints.get_name();
 	this->tree_view->attach_to_tree(&this->waypoints, wp); /* push item to the end of parent nodes. */
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
@@ -2181,19 +2181,19 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 sg_ret LayerTRW::attach_to_tree(Track * trk)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
+		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
 		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
 	}
 
 	if (trk->is_route()) {
 		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.name << "under" << this->name;
+			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->routes.get_name() << "under" << this->get_name();
 			this->tree_view->attach_to_tree(this, &this->routes);
 		}
 
 		/* Now we can proceed with adding a route to Routes node. */
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->routes.name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->routes.get_name();
 		this->tree_view->attach_to_tree(&this->routes, trk);
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
@@ -2206,7 +2206,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 		this->routes.update_tree_item_tooltip();
 	} else {
 		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.name << "under" << this->name;
+			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.get_name() << "under" << this->get_name();
 			this->tree_view->attach_to_tree(this, &this->tracks);
 		}
 
@@ -2216,7 +2216,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 			trk->set_timestamp(tp->timestamp);
 		}
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->tracks.name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->tracks.get_name();
 		this->tree_view->attach_to_tree(&this->tracks, trk); /* push item to the end of parent nodes. */
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
@@ -2401,7 +2401,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 		} else if (tree_item->get_type_id() == Waypoint::type_id()) {
 			source_trw->detach_from_container((Waypoint *) tree_item);
 		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
 			return sg_ret::err;
 		}
 
@@ -2442,7 +2442,7 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 				source_trw->waypoints.recalculate_bbox();
 			}
 		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->name;
+			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
 			return sg_ret::err;
 		}
 	}
@@ -3173,7 +3173,7 @@ sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const std::list<SG
 void LayerTRW::tracks_stats_cb(void)
 {
 	const std::list<SGObjectTypeID> wanted_types = { Track::type_id() };
-	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
+	layer_trw_show_stats(this->get_name(), this, wanted_types, this->get_window());
 }
 
 
@@ -3185,7 +3185,7 @@ void LayerTRW::tracks_stats_cb(void)
 void LayerTRW::routes_stats_cb(void)
 {
 	const std::list<SGObjectTypeID> wanted_types = { Route::type_id() };
-	layer_trw_show_stats(this->name, this, wanted_types, this->get_window());
+	layer_trw_show_stats(this->get_name(), this, wanted_types, this->get_window());
 }
 
 
@@ -3560,7 +3560,7 @@ void LayerTRW::download_map_along_track_cb(void)
 void LayerTRW::track_and_route_list_dialog_cb(void)
 {
 	const std::list<SGObjectTypeID> wanted_types = { Track::type_id(), Route::type_id() };
-	const QString title = tr("%1: Tracks and Routes List").arg(this->name);
+	const QString title = tr("%1: Tracks and Routes List").arg(this->get_name());
 	Track::list_dialog(title, this, wanted_types);
 }
 
@@ -3572,7 +3572,7 @@ void LayerTRW::track_and_route_list_dialog_cb(void)
 */
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	const QString title = tr("%1: Waypoints List").arg(this->name);
+	const QString title = tr("%1: Waypoints List").arg(this->get_name());
 	Waypoint::list_dialog(title, this);
 }
 
@@ -3665,7 +3665,7 @@ void LayerTRW::set_coord_mode(CoordMode new_mode)
 
 bool LayerTRW::handle_selection_in_tree(void)
 {
-	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 
 	this->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
@@ -3880,7 +3880,7 @@ sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
 		if (!Dialog::yes_or_no(is_track
 				       ? tr("Are you sure you want to delete the track \"%1\"?")
 				       : tr("Are you sure you want to delete the route \"%1\"?")
-				       .arg(trk->name)), ThisApp::get_main_window()) {
+				       .arg(trk->get_name())), ThisApp::get_main_window()) {
 			return sg_ret::ok;
 		}
 	}
@@ -3912,7 +3912,7 @@ sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
 	if (confirm) {
 		/* Get confirmation from the user. */
 		/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->name)), ThisApp::get_main_window()) {
+		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->get_name())), ThisApp::get_main_window()) {
 			return sg_ret::ok;
 		}
 	}
@@ -4019,11 +4019,11 @@ bool LayerTRW::move_child(TreeItem & child_tree_item, bool up)
 /* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
 void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
+	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->is_visible()) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
 }

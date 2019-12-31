@@ -77,7 +77,7 @@ extern bool g_have_diary_program;
 
 Waypoint::Waypoint()
 {
-	this->name = tr("Waypoint");
+	this->set_name(tr("Waypoint"));
 
 	this->m_type_id = Waypoint::type_id();
 
@@ -100,7 +100,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_timestamp(wp.timestamp);
 	this->altitude = wp.altitude;
 
-	this->set_name(wp.name);
+	this->set_name(wp.get_name());
 	this->set_comment(wp.comment);
 	this->set_description(wp.description);
 	this->set_source(wp.source);
@@ -140,14 +140,6 @@ SGObjectTypeID Waypoint::type_id(void)
 	   only once for this class of objects. */
 	static SGObjectTypeID id("sg.trw.waypoint");
 	return id;
-}
-
-
-
-
-void Waypoint::set_name(const QString & new_name)
-{
-	this->name = new_name;
 }
 
 
@@ -297,7 +289,7 @@ void Waypoint::marshall(Pickle & pickle)
 	   and copies that amount of data from the waypoint to byte array. */
 	pickle.put_raw_object((char *) this, sizeof (Waypoint));
 
-	pickle.put_string(this->name);
+	pickle.put_string(this->get_name());
 	pickle.put_string(this->comment);
 	pickle.put_string(this->description);
 	pickle.put_string(this->source);
@@ -323,7 +315,7 @@ Waypoint * Waypoint::unmarshall(Pickle & pickle)
 	/* This copies the fixed sized elements (i.e. visibility, altitude, image_rect, etc...). */
 	pickle.take_object(wp);
 
-	wp->name = pickle.take_string();
+	wp->set_name(pickle.take_string());
 	wp->comment = pickle.take_string();
 	wp->description = pickle.take_string();
 	wp->source = pickle.take_string();
@@ -384,8 +376,8 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_in_viewport_cb()));
 	}
 
-	if (!this->name.isEmpty()) {
-		if (is_valid_geocache_name(this->name.toUtf8().constData())) {
+	if (!this->get_name().isEmpty()) {
+		if (is_valid_geocache_name(this->get_name().toUtf8().constData())) {
 			qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Visit Geocache Webpage"));
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_geocache_webpage_cb()));
 		}
@@ -559,7 +551,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 			tool->point_properties_dialog->dialog_data_reset();
 			return false;
 		} else {
-			qDebug() << SG_PREFIX_I << "Will fill properties dialog with waypoint" << this->name;
+			qDebug() << SG_PREFIX_I << "Will fill properties dialog with waypoint" << this->get_name();
 			tool->point_properties_dialog->dialog_data_set(this);
 			return true;
 		}
@@ -673,7 +665,7 @@ void Waypoint::show_in_viewport_cb(void)
 
 void Waypoint::open_geocache_webpage_cb(void)
 {
-	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(this->name);
+	const QString webpage = QString("http://www.geocaching.com/seek/cache_details.aspx?wp=%1").arg(this->get_name());
 	open_url(webpage);
 }
 
@@ -699,8 +691,8 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	/* No actual change to the name supplied. */
-	if (!this->name.isEmpty()) {
-		if (new_name == this->name) {
+	if (!this->get_name().isEmpty()) {
+		if (new_name == this->get_name()) {
 			return empty_string;
 		}
 	}
@@ -735,7 +727,7 @@ bool Waypoint::handle_selection_in_tree(void)
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 	parent_layer->selected_wp_set(this); /* But this tree item is selected. */
 
-	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
 
 	this->display_debug_info("At selection in tree view");
@@ -759,11 +751,11 @@ void Waypoint::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 
 	if (1) {
 		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
 		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
 		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
 		}
 	}
 
@@ -869,14 +861,14 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 		switch (col.id) {
 
 		case TreeItemPropertyID::ParentLayer:
-			item = new QStandardItem(trw->name);
+			item = new QStandardItem(trw->get_name());
 			item->setToolTip(tooltip);
 			item->setEditable(false); /* Item's properties widget is not a good place to edit its parent name. */
 			items << item;
 			break;
 
 		case TreeItemPropertyID::TheItem:
-			item = new QStandardItem(this->name);
+			item = new QStandardItem(this->get_name());
 			item->setToolTip(tooltip);
 			variant = QVariant::fromValue(this);
 			item->setData(variant, RoleLayerData);
@@ -956,11 +948,11 @@ void Waypoint::display_debug_info(const QString & reference) const
 	qDebug() << SG_PREFIX_D << "               Type ID =" << this->m_type_id;
 
 	qDebug() << SG_PREFIX_D << "               Pointer =" << (quintptr) this;
-	qDebug() << SG_PREFIX_D << "                  Name =" << this->name;
+	qDebug() << SG_PREFIX_D << "                  Name =" << this->get_name();
 	qDebug() << SG_PREFIX_D << "                   UID =" << this->uid;
 
 	qDebug() << SG_PREFIX_D << "  Parent layer pointer =" << (quintptr) parent_layer;
-	qDebug() << SG_PREFIX_D << "     Parent layer name =" << (parent_layer ? parent_layer->name : "<no parent layer>");
+	qDebug() << SG_PREFIX_D << "     Parent layer name =" << (parent_layer ? parent_layer->get_name() : "<no parent layer>");
 	//qDebug() << SG_PREFIX_D << "      Parent layer UID =" << (parent_layer ? parent_layer->uid : "<no parent layer>");
 
 	qDebug() << SG_PREFIX_D << "            Is in tree =" << this->is_in_tree();

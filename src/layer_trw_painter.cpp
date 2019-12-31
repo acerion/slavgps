@@ -324,7 +324,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	const QColor fg_color = this->get_fg_color(trk);
 	const QColor bg_color = this->get_bg_color(do_highlight);
 
-	char *ename = g_markup_escape_text(trk->name.toUtf8().constData(), -1);
+	char *ename = g_markup_escape_text(trk->get_name().toUtf8().constData(), -1);
 
 	if (trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd ||
 	    trk->draw_name_mode == TrackDrawNameMode::Centre) {
@@ -1091,14 +1091,14 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_po
 					 this->gisview->get_highlight_pen().color(),
 					 bounding_rect,
 					 Qt::AlignBottom | Qt::AlignLeft,
-					 wp->name);
+					 wp->get_name());
 	} else {
 		/* Draw waypoint's label with regular background color. */
 		this->gisview->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
 					 this->wp_label_fg_pen,
 					 label_x,
 					 label_y,
-					 wp->name);
+					 wp->get_name());
 	}
 
 	return;

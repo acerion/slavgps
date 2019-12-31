@@ -467,12 +467,12 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 				/* Couldn't create Waypoint. */
 				return;
 			}
-			if (new_wp->name.isEmpty()) {
+			if (new_wp->get_name().isEmpty()) {
 				/* GeotagExif method doesn't guarantee setting waypoints name. */
 				new_wp->set_name(file_base_name(file_full_path));
 			}
 
-			QString new_wp_name = new_wp->name;
+			QString new_wp_name = new_wp->get_name();
 
 			bool updated_existing_waypoint = false;
 
@@ -814,7 +814,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 
 	QString track_string;
 	if (dialog->wp) {
-		track_string = QObject::tr("Using waypoint: %1").arg(wp->name);
+		track_string = QObject::tr("Using waypoint: %1").arg(wp->get_name());
 
 		/* Control sensitivities. */
 		dialog->create_waypoints_l->setEnabled(false);
@@ -833,9 +833,9 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 		time_zone_l->setEnabled(false);
 		dialog->time_zone_entry->setEnabled(false);
 	} else if (dialog->trk) {
-		track_string = QObject::tr("Using track: %1").arg(trk->name);
+		track_string = QObject::tr("Using track: %1").arg(trk->get_name());
 	} else {
-		track_string = QObject::tr("Using all tracks in: %1").arg(trw->name);
+		track_string = QObject::tr("Using all tracks in: %1").arg(trw->get_name());
 	}
 
 	row = 0;

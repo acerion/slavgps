@@ -94,11 +94,11 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes)
 	if (is_routes) {
 		this->m_type_id = LayerTRWRoutes::type_id();
 		this->accepted_child_type_ids.push_back(Route::type_id());
-		this->name = tr("Routes");
+		this->set_name(tr("Routes"));
 	} else {
 		this->m_type_id = LayerTRWTracks::type_id();
 		this->accepted_child_type_ids.push_back(Track::type_id());
-		this->name = tr("Tracks");
+		this->set_name(tr("Tracks"));
 	}
 }
 
@@ -204,8 +204,8 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
-		if (trk && !trk->name.isEmpty()) {
-			if (trk->name == trk_name) {
+		if (trk && !trk->get_name().isEmpty()) {
+			if (trk->get_name() == trk_name) {
 				return trk;
 			}
 		}
@@ -387,8 +387,8 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 	bool found = false;
 	for (auto iter = std::next(tracks.begin()); iter != tracks.end(); iter++) {
-		const QString this_one = (*iter)->name;
-		const QString previous = (*(std::prev(iter)))->name;
+		const QString this_one = (*iter)->get_name();
+		const QString previous = (*(std::prev(iter)))->get_name();
 
 		if (this_one == previous) {
 			return *iter;
@@ -510,7 +510,7 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 	Track * trk = this->find_track_with_duplicate_name();
 	while (trk) {
 		/* Rename it. */
-		const QString uniq_name = this->new_unique_element_name(trk->name);
+		const QString uniq_name = this->new_unique_element_name(trk->get_name());
 		trk->set_name(uniq_name);
 
 		/* TODO_LATER: do we really need to do this? Isn't the name in tree view auto-updated? */
@@ -666,7 +666,7 @@ sg_ret LayerTRWTracks::attach_children_to_tree(void)
 		trk->self_assign_icon();
 		trk->self_assign_timestamp();
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, trk);
 	}
 	/* Update our own tooltip in tree view. */
@@ -886,11 +886,11 @@ void LayerTRWTracks::track_or_route_list_dialog_cb(void) /* Slot. */
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		/* Show each track in this tracks container. */
 		wanted_types.push_back(Track::type_id());
-		title = tr("%1: Tracks List").arg(this->owning_layer->name);
+		title = tr("%1: Tracks List").arg(this->owning_layer->get_name());
 	} else {
 		 /* Show each route in this routes container. */
 		wanted_types.push_back(Route::type_id());
-		title = tr("%1: Routes List").arg(this->owning_layer->name);
+		title = tr("%1: Routes List").arg(this->owning_layer->get_name());
 	}
 
 	Track::list_dialog(title, this->owning_layer, wanted_types);
@@ -906,7 +906,7 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
 	//parent_layer->set_statusbar_msg_info_trk(this);
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
-	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
 
 	return true;
@@ -937,11 +937,11 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 
 	if (1) {
 		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
 		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
 		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
 		}
 	}
 
@@ -1076,7 +1076,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	if (trk->name.isEmpty()) {
+	if (trk->get_name().isEmpty()) {
 		qDebug() << SG_PREFIX_W << "Track with empty name, deleting anyway";
 	}
 
@@ -1102,13 +1102,13 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 	TreeItemIdentityPredicate pred(trk);
 	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
 	if (iter != this->children_list.end()) {
-		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->name << "from list" << this->name;
+		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
 		this->children_list.erase(iter);
 	}
 
 #if 0   /* Old code. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->name << "and" << trk->name;
+		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->get_name() << "and" << trk->get_name();
 		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);
 			break;
@@ -1137,7 +1137,7 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 	/* Handle item in new location. */
 	{
 		this->attach_to_container((Track *) tree_item);
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->name << "under" << this->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->get_name() << "under" << this->get_name();
 		this->tree_view->attach_to_tree(this, tree_item);
 
 		/* Update our own tooltip in tree view. */
@@ -1160,7 +1160,7 @@ bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 
 	Track * trk = (Track *) &child_tree_item;
 
-	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
+	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(this->children_list, trk, up);
 	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
 

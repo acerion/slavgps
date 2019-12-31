@@ -90,7 +90,7 @@ void SlavGPS::track_statistics_dialog(Track * trk, Window * parent)
 
 TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
 {
-	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->name));
+	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->get_name()));
 
 	this->trk = a_trk;
 }
@@ -101,7 +101,7 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_tr
 
 TrackStatisticsDialog::TrackStatisticsDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
 {
-	this->setWindowTitle(tr("%1 - Track Statistics").arg(a_trk->name));
+	this->setWindowTitle(tr("%1 - Track Statistics").arg(a_trk->get_name()));
 
 	this->trk = a_trk;
 }

@@ -194,7 +194,7 @@ ListSelectionRow::ListSelectionRow(Track * trk)
 {
 	QStandardItem * item = NULL;
 
-	item = new QStandardItem(trk->name);
+	item = new QStandardItem(trk->get_name());
 	item->setData(QVariant::fromValue(trk), RoleLayerData);
 	item->setToolTip(trk->get_tooltip());
 	item->setEditable(false);
@@ -212,7 +212,7 @@ ListSelectionRow::ListSelectionRow(Waypoint * wp)
 {
 	QStandardItem * item = NULL;
 
-	item = new QStandardItem(wp->name);
+	item = new QStandardItem(wp->get_name());
 	item->setData(QVariant::fromValue(wp), RoleLayerData);
 	item->setToolTip(wp->get_tooltip());
 	item->setEditable(false);

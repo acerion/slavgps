@@ -195,7 +195,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	}
 	const size_t sel_tp_count = trk->get_selected_children().get_count();
 	if (1 != sel_tp_count) {
-		qDebug() << SG_PREFIX_E << "Wrong number of selected children in track" << trk->name << ":" << sel_tp_count;
+		qDebug() << SG_PREFIX_E << "Wrong number of selected children in track" << trk->get_name() << ":" << sel_tp_count;
 		return sg_ret::err;
 	}
 	const TrackpointReference & tp_ref = trk->get_selected_children().front();
@@ -208,7 +208,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	this->current_track = trk;
 
 	if (this->current_point->name.isEmpty()) {
-		this->set_dialog_title(QObject::tr("%1: Trackpoint Properties").arg(this->current_track->name));
+		this->set_dialog_title(QObject::tr("%1: Trackpoint Properties").arg(this->current_track->get_name()));
 	} else {
 		this->set_dialog_title(QObject::tr("%1: Properties").arg(this->current_point->name));
 	}
@@ -419,7 +419,7 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	if (tree_item->get_type_id() == Track::type_id()
 	    || tree_item->get_type_id() == Route::type_id()) {
 
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "matches supported type";
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->get_name() << "matches supported type";
 		Track * trk = (Track *) tree_item;
 		const size_t sel_tp_count = trk->get_selected_children().get_count();
 		if (1 == sel_tp_count) {
@@ -430,7 +430,7 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 			this->dialog_data_reset();
 		}
 	} else {
-		qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data, selected tree item" << tree_item->m_type_id << tree_item->name << "doesn't match supported type";
+		qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data, selected tree item" << tree_item->m_type_id << tree_item->get_name() << "doesn't match supported type";
 		this->dialog_data_reset();
 	}
 }

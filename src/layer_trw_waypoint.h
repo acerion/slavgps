@@ -64,7 +64,6 @@ namespace SlavGPS {
 		Waypoint(const Waypoint& other);
 		~Waypoint();
 
-		void set_name(const QString & new_name);
 		void set_comment(const QString & new_comment);
 		void set_description(const QString & new_description);
 		void set_source(const QString & new_source);

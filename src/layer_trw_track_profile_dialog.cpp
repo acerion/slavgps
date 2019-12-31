@@ -681,7 +681,7 @@ void ProfileViewBase::configure_title(void)
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, GisViewport * new_main_gisview, QWidget * parent) : QDialog(parent)
 {
-	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->name));
+	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->get_name()));
 
 	this->trw = (LayerTRW *) new_trk->get_owning_layer();
 	this->trk = new_trk;

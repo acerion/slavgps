@@ -172,7 +172,7 @@ namespace SlavGPS {
 		virtual void set_timestamp(time_t value);
 
 		const QString & get_name(void) const;
-		void set_name(const QString & new_name);
+		void set_name(const QString & name);
 
 		virtual QString get_tooltip(void) const;
 
@@ -255,8 +255,10 @@ namespace SlavGPS {
 		Layer * get_owning_layer(void) const;
 		void set_owning_layer(Layer * layer);
 
-		/* Get parent tree item. Parent tree item and owning layer may be two different tree items. */
-		TreeItem * get_parent_tree_item(void) const;
+		/* Get direct parent tree item. Direct parent tree
+		   item and owning layer may be two different tree
+		   items. */
+		TreeItem * get_direct_parent_tree_item(void) const;
 
 		/* Get tree items (direct and indirect children of the
 		   layer) of types given by @param wanted_types. */
@@ -269,7 +271,7 @@ namespace SlavGPS {
 		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
 		   Return true if this condition is true.
 		   Return false otherwise.
-		   Return false if any of the pointers is NULL. */
+		   Return false if any of the pointers is nullptr. */
 		static bool the_same_object(const TreeItem * item1, const TreeItem * item2);
 
 
@@ -290,7 +292,7 @@ namespace SlavGPS {
 
 	//protected:
 		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */
-		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
+		TreeView * tree_view = nullptr; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
 
 		bool editable = true; /* Is this item is editable? TODO_LATER: be more specific: is the data editable, or is the reference visible in the tree editable? */
 
@@ -298,7 +300,7 @@ namespace SlavGPS {
 		bool has_properties_dialog = false; /* Does this tree item has dialog, in which you can view or change *configurable* properties? */
 
 
-		QString name;
+
 		SGObjectTypeID m_type_id;
 		std::vector<SGObjectTypeID> accepted_child_type_ids;
 
@@ -307,7 +309,9 @@ namespace SlavGPS {
 		char debug_string[100] = { 0 };
 
 	protected:
-		Layer * owning_layer = NULL; /* Reference. */
+		QString m_name;
+
+		Layer * owning_layer = nullptr; /* Reference. */
 
 		sg_uid_t uid = SG_UID_INITIAL;
 
@@ -323,7 +327,7 @@ namespace SlavGPS {
 		bool visible = true;
 
 	private:
-		TreeItem * parent_tree_item = NULL; /* Direct parent, may be different than owning layer. */
+		TreeItem * m_direct_parent_tree_item = nullptr; /* Direct parent, may be different than owning layer. */
 
 	signals:
 		void tree_item_changed(const QString & tree_item_name);
@@ -361,24 +365,24 @@ namespace SlavGPS {
 		TreeItemIdentityPredicate pred(child_tree_item);
 		auto child_iter = std::find_if(children.begin(), children.end(), pred);
 		if (child_iter == children.end()) {
-			qDebug() << "EE   Move TreeItem Child algo: failed to find iterator of child item" << child_tree_item->name;
+			qDebug() << "EE   Move TreeItem Child algo: failed to find iterator of child item" << child_tree_item->get_name();
 			return false;
 		}
 
 		bool result = false;
 		if (up) {
 			if (child_iter == children.begin()) {
-				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->name << "up, already at the beginning";
+				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->get_name() << "up, already at the beginning";
 			} else {
-				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->name << "up in list of children";
+				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->get_name() << "up in list of children";
 				std::swap(*child_iter, *std::prev(child_iter));
 				result = true;
 			}
 		} else {
 			if (std::next(child_iter) == children.end()) {
-				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->name << "down, already at the end";
+				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->get_name() << "down, already at the end";
 			} else {
-				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->name << "down in list of children";
+				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->get_name() << "down in list of children";
 				std::swap(*child_iter, *std::next(child_iter));
 				result = true;
 			}

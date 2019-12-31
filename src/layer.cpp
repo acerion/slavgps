@@ -310,7 +310,7 @@ void Layer::marshall_params(Pickle & pickle)
 {
 	/* Store the internal properties first. TODO_LATER: why we put these members here, in "marshall params"? */
 	pickle.put_raw_object((char *) &this->visible, sizeof (this->visible));
-	pickle.put_string(this->name);
+	pickle.put_string(this->get_name());
 
 	/* Now the actual parameters. */
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
@@ -495,7 +495,7 @@ QString Layer::get_tooltip(void) const
 
 sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into this Layer";
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "into this Layer";
 	return sg_ret::err;
 }
 

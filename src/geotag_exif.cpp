@@ -285,7 +285,7 @@ Waypoint * GeotagExif::create_waypoint_from_file(const QString & file_full_path,
 			/* Now create Waypoint with acquired information. */
 			wp = new Waypoint(Coord(tmp_lat_lon, coord_mode));
 			wp->altitude = alti;
-			wp->name = geotag_get_exif_name(exif_data);
+			wp->set_name(geotag_get_exif_name(exif_data));
 			wp->comment = geotag_get_exif_comment(exif_data);
 			wp->set_image_full_path(file_full_path);
 		}

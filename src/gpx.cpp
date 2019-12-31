@@ -843,10 +843,10 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->is_visible() ? "" : " hidden=\"hidden\"");
 
 	/* Sanity clause. */
-	if (wp->name.isEmpty()) {
+	if (wp->get_name().isEmpty()) {
 		fprintf(file, "  <name>%s</name>\n", "waypoint"); /* TODO_MAYBE: localize? */
 	} else {
-		fprintf(file, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
+		fprintf(file, "  <name>%s</name>\n", entitize(wp->get_name()).toUtf8().constData());
 	}
 
 	if (wp->altitude.is_valid()) {
@@ -1012,10 +1012,10 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 
 	QString tmp;
 	/* Sanity clause. */
-	if (trk->name.isEmpty()) {
+	if (trk->get_name().isEmpty()) {
 		tmp = "track"; /* TODO_MAYBE: localize? */
 	} else {
-		tmp = entitize(trk->name);
+		tmp = entitize(trk->get_name());
 	}
 
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
@@ -1094,7 +1094,7 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 {
 	Waypoint * a = (Waypoint *) x;
 	Waypoint * b = (Waypoint *) y;
-	return strcmp(a->name.toUtf8().constData(), b->name.toUtf8().constData());
+	return strcmp(a->get_name().toUtf8().constData(), b->get_name().toUtf8().constData());
 }
 
 
@@ -1288,7 +1288,7 @@ GPXImporter::GPXImporter(LayerTRW * new_trw)
 	this->unnamed_tracks = 1;
 	this->unnamed_routes = 1;
 
-	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->name << "created";
+	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->get_name() << "created";
 }
 
 
@@ -1298,7 +1298,7 @@ GPXImporter::~GPXImporter()
 {
 	XML_ParserFree(this->parser);
 
-	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->name << "deleted," << this->n_bytes << "bytes processed";
+	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->get_name() << "deleted," << this->n_bytes << "bytes processed";
 }
 
 

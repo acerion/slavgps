@@ -415,7 +415,7 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 		return false;
 	}
 
-	qDebug() << SG_PREFIX_I << wp_search.closest_wp->name << "waypoint clicked";
+	qDebug() << SG_PREFIX_I << wp_search.closest_wp->get_name() << "waypoint clicked";
 
 
 	/* Be sure to execute this section before setting currently
@@ -453,7 +453,7 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 		return false;
 	}
 	const bool is_routes = tracks_or_routes.get_type_id() == LayerTRWRoutes::type_id();
-	qDebug() << SG_PREFIX_I << "Clicked trackpoint in" << (is_routes ? "route" : "track") << tp_search.closest_track->name;
+	qDebug() << SG_PREFIX_I << "Clicked trackpoint in" << (is_routes ? "route" : "track") << tp_search.closest_track->get_name();
 
 
 	/* Be sure to execute this section before setting currently
@@ -576,7 +576,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 	Track * track = this->selected_track_get(); /* Track or route that is currently being selected/edited. */
 	if (track && track->is_visible()) { /* Track or Route. */
-		if (!track->name.isEmpty()) {
+		if (!track->get_name().isEmpty()) {
 
 			QMenu menu(gisview);
 
@@ -588,7 +588,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 
 	Waypoint * wp = this->selected_wp_get(); /* Waypoint that is currently being selected/edited. */
 	if (wp && wp->is_visible()) {
-		if (!wp->name.isEmpty()) {
+		if (!wp->get_name().isEmpty()) {
 			QMenu menu(gisview);
 
 			wp->menu_add_tree_item_operations(menu, false);

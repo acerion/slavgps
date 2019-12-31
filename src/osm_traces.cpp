@@ -455,7 +455,7 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 	QLabel * name_label = new QLabel(QObject::tr("File's name:"), &dialog);
 	QLineEdit * name_entry = new QLineEdit(&dialog);
-	const QString name = trk ? trk->name : trw->get_name();
+	const QString name = trk ? trk->get_name() : trw->get_name();
 
 	name_entry->setText(name);
 	name_entry->setToolTip(QObject::tr("The name of the file on OSM\n"

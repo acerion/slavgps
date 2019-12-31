@@ -446,7 +446,7 @@ Track * GPSPointParser::create_track(LayerTRW * trw)
 	}
 
 	trk->set_visible(this->line_visible);
-	trk->name = this->line_name;
+	trk->set_name(this->line_name);
 
 	if (this->line_comment) {
 		trk->set_comment(QString(this->line_comment));
@@ -750,12 +750,12 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			continue;
 		}
 
-		if (wp->name.isEmpty()) { /* TODO_LATER: will this condition ever be true? */
+		if (wp->get_name().isEmpty()) { /* TODO_LATER: will this condition ever be true? */
 			continue;
 		}
 
 		const LatLon lat_lon = wp->get_coord().get_lat_lon();
-		char * tmp_name = slashdup(wp->name);
+		char * tmp_name = slashdup(wp->get_name());
 		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);
 
@@ -889,11 +889,11 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 			continue;
 		}
 
-		if (trk->name.isEmpty()) { /* TODO_LATER: will this condition ever be true? */
+		if (trk->get_name().isEmpty()) { /* TODO_LATER: will this condition ever be true? */
 			continue;
 		}
 
-		char * tmp_name = slashdup(trk->name);
+		char * tmp_name = slashdup(trk->get_name());
 		fprintf(file, "type=\"%s\" name=\"%s\"", trk->is_route() ? "route" : "track", tmp_name);
 		free(tmp_name);
 

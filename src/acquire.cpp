@@ -426,7 +426,7 @@ QMenu * Acquire::create_bfilter_layer_track_menu(QWidget * parent)
 	} else {
 		g_acquire_context->target_trk = bfilter_track;
 
-		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->name);
+		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->get_name());
 		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack, parent);
 	}
 }

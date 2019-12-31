@@ -198,17 +198,17 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 
 	this->current_point = wp;
 
-	if (this->current_point->name.isEmpty()) {
+	if (this->current_point->get_name().isEmpty()) {
 		this->set_dialog_title(tr("Waypoint Properties"));
 	} else {
-		this->set_dialog_title(tr("%1 Properties").arg(this->current_point->name));
+		this->set_dialog_title(tr("%1 Properties").arg(this->current_point->get_name()));
 	}
 
 	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
 	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
 
-	this->name_entry->setText(this->current_point->name);
+	this->name_entry->setText(this->current_point->get_name());
 	this->coord_widget->set_value(this->current_point->get_coord()); /* TODO_LATER: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
 	this->timestamp_widget->set_timestamp(this->current_point->get_timestamp(), this->current_point->get_coord());
 	this->altitude_widget->set_value_iu(this->current_point->altitude);
@@ -576,10 +576,10 @@ void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
 	if (tree_item->m_type_id == Waypoint::type_id()) {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "matches supported type";
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->get_name() << "matches supported type";
 		this->dialog_data_set((Waypoint *) tree_item);
 	} else {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->m_type_id << tree_item->get_name() << "doesn't match supported type, will now reset trackpoint dialog data";
 		this->dialog_data_reset();
 	}
 }

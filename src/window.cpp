@@ -3134,7 +3134,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		const Layer * layer = *iter;
-		QString file_full_path = full_dir_path + QDir::separator() + layer->name + extension;
+		QString file_full_path = full_dir_path + QDir::separator() + layer->get_name() + extension;
 
 		/* Some protection in attempting to write too many same named files.
 		   As this will get horribly slow... */
@@ -3143,7 +3143,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 		while (ii < 5000) {
 			if (0 == access(file_full_path.toUtf8().constData(), F_OK)) {
 				/* Try rename. */
-				file_full_path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->name).arg(ii, 3, 10, QChar('0')).arg(extension);
+				file_full_path = QString("%1%2%3#%4%5").arg(full_dir_path).arg(QDir::separator()).arg(layer->get_name()).arg(ii, 3, 10, QChar('0')).arg(extension);
 			} else {
 				safe = true;
 				break;

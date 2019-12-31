@@ -154,12 +154,12 @@ LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext *
 			continue;
 		}
 
-		if (wp->name.isEmpty()) {
+		if (wp->get_name().isEmpty()) {
 			/* GeotagExif method doesn't guarantee setting waypoints name. */
 			wp->set_name(file_base_name(file_full_path));
 		}
 
-		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->name << "to layer" << trw->get_name();
+		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->get_name() << "to layer" << trw->get_name();
 		trw->add_waypoint(wp);
 	}
 

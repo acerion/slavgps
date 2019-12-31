@@ -217,7 +217,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 static void write_layer_params_and_data(FILE * file, const Layer * layer)
 {
-	fprintf(file, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
+	fprintf(file, "name=%s\n", layer->get_name().isEmpty() ? "" : layer->get_name().toUtf8().constData());
 	if (!layer->is_visible()) {
 		fprintf(file, "visible=f\n");
 	}
@@ -545,7 +545,7 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 		this->param_specs = Layer::get_interface(layer_kind)->parameters_c;
 		this->param_specs_count = Layer::get_interface(layer_kind)->parameter_specifications.size();
 
-		qDebug() << SG_PREFIX_I << "Attaching to tree item" << child->name << "under" << parent->name;
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << child->get_name() << "under" << parent->get_name();
 		parent->tree_view->attach_to_tree(parent, child);
 
 	} else { /* Any other LayerKind::X type. */
@@ -584,7 +584,7 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 		/* The layer is read, we don't need to store its StringList parameters. */
 		this->string_lists.clear();
 
-		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->name << this->stack.second->name;
+		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->get_name() << this->stack.second->get_name();
 
 		if (layer && parent_layer) {
 			if (parent_layer->m_kind == LayerKind::Aggregate) {
@@ -616,7 +616,7 @@ void ReadParser::push_string_lists_to_layer(Layer * layer)
 		const QStringList & string_list = iter.value();
 		const SGVariant param_value(string_list);
 
-		qDebug() << SG_PREFIX_I << "Saving StringList to layer" << layer->name << ":";
+		qDebug() << SG_PREFIX_I << "Saving StringList to layer" << layer->get_name() << ":";
 		qDebug() << string_list;
 
 		layer->set_param_value(param_id, param_value, true);
@@ -634,11 +634,11 @@ void ReadParser::handle_layer_data_begin(const QString & dirpath)
 	const LayerDataReadStatus read_status = layer->read_layer_data(*this->file, dirpath);
 	switch (read_status) {
 	case LayerDataReadStatus::Error:
-		qDebug() << SG_PREFIX_E << "LayerData for layer named" << layer->name << "read unsuccessfully";
+		qDebug() << SG_PREFIX_E << "LayerData for layer named" << layer->get_name() << "read unsuccessfully";
 		this->parse_status = sg_ret::err;
 		break;
 	case LayerDataReadStatus::Success:
-		qDebug() << SG_PREFIX_D << "LayerData for layer named" << layer->name << "read successfully";
+		qDebug() << SG_PREFIX_D << "LayerData for layer named" << layer->get_name() << "read successfully";
 		/* Success, pass. */
 		break;
 	case LayerDataReadStatus::Unrecognized:
@@ -702,7 +702,7 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 		/* TODO_MAYBE: why do we add layer here, when
 		   processing layer name, and not when opening tag for
 		   layer is discovered? */
-		qDebug() << SG_PREFIX_I << "Calling add_child_item(), parent layer =" << parent_layer->name << ", child (this) layer = " << layer->name;
+		qDebug() << SG_PREFIX_I << "Calling add_child_item(), parent layer =" << parent_layer->get_name() << ", child (this) layer = " << layer->get_name();
 		parent_layer->add_child_item(layer, false);
 
 	} else if (name_len == 7 && 0 == strncasecmp(line, "visible", name_len)) {
@@ -750,7 +750,7 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 			} else {
 				const SGVariant new_val = value_string_to_sgvariant(value_start, param_spec.type_id);
 
-				qDebug() << SG_PREFIX_D << "Setting value of parameter named" << param_spec.name << "of layer named" << layer->name << ":" << new_val;
+				qDebug() << SG_PREFIX_D << "Setting value of parameter named" << param_spec.name << "of layer named" << layer->get_name() << ":" << new_val;
 				layer->set_param_value(param_id, new_val, true);
 			}
 			parameter_found = true;

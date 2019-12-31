@@ -147,7 +147,7 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 void TreeView::update_tree_item_tooltip(const TreeItem & tree_item)
 {
-	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item.name;
+	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item.get_name();
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item.index.parent());
 	if (!parent_item) {
 		/* "tree_item.index" points at the top tree item. */
@@ -161,7 +161,7 @@ void TreeView::update_tree_item_tooltip(const TreeItem & tree_item)
 	   dedicated tooltips, but not now. */
 	QStandardItem * ch = parent_item->child(tree_item.index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	const QString tooltip = tree_item.get_tooltip();
-	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item.name;
+	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item.get_name();
 	ch->setToolTip(tooltip);
 }
 
@@ -176,7 +176,7 @@ void TreeView::tree_item_selected_cb(void) /* Slot. */
 	if (!selected_item) {
 		return;
 	}
-	qDebug() << SG_PREFIX_I << "Selected tree item" << selected_item->name;
+	qDebug() << SG_PREFIX_I << "Selected tree item" << selected_item->get_name();
 
 	Window * main_window = ThisApp::get_main_window();
 
@@ -191,8 +191,8 @@ void TreeView::tree_item_selected_cb(void) /* Slot. */
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->name;
-		ThisApp::get_layers_panel()->emit_items_tree_updated_cb(selected_item->name);
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_name();
+		ThisApp::get_layers_panel()->emit_items_tree_updated_cb(selected_item->get_name());
 	}
 }
 
@@ -270,8 +270,8 @@ TreeItem * TreeView::get_selected_tree_item(void) const
 void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
-	tree_item->tree_view = NULL;
-	tree_item->parent_tree_item = NULL;
+	tree_item->tree_view = nullptr;
+	tree_item->m_direct_parent_tree_item = nullptr;
 }
 
 
@@ -295,7 +295,7 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_E << "Invalid item index";
 		return;
 	}
-	qDebug() << SG_PREFIX_I << "Setting icon for tree item" << tree_item->name;
+	qDebug() << SG_PREFIX_I << "Setting icon for tree item" << tree_item->get_name();
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -320,7 +320,7 @@ void TreeView::apply_tree_item_name(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_E << "Invalid item index";
 		return;
 	}
-	this->tree_model->itemFromIndex(tree_item->index)->setText(tree_item->name);
+	this->tree_model->itemFromIndex(tree_item->index)->setText(tree_item->get_name());
 }
 
 
@@ -474,14 +474,14 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 	switch (attach_mode) {
 	case TreeView::AttachMode::Front:
 		row = 0;
-		qDebug() << SG_PREFIX_I << "Pushing front tree item named" << tree_item->name << "into row" << row;
+		qDebug() << SG_PREFIX_I << "Pushing front tree item named" << tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
 		break;
 
 	case TreeView::AttachMode::Back:
 		row = this->tree_model->itemFromIndex(parent_tree_item->index)->rowCount();
-		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->name << "into row" << row;
+		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
 		break;
@@ -489,19 +489,19 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 	case TreeView::AttachMode::Before:
 	case TreeView::AttachMode::After:
 		if (NULL == sibling_tree_item) {
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->name << "next to sibling: NULL sibling";
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: NULL sibling";
 			result = sg_ret::err;
 			break;
 		}
 
 		if (!sibling_tree_item->index.isValid()) {
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->name << "next to sibling: invalid sibling";
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: invalid sibling";
 			result = sg_ret::err;
 			break;
 		}
 
 		row = sibling_tree_item->index.row() + (attach_mode == TreeView::AttachMode::Before ? 0 : 1);
-		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->name << "next to sibling named" << sibling_tree_item->name << "into row" << row;
+		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->get_name() << "next to sibling named" << sibling_tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
 		break;
@@ -514,7 +514,7 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 
 
 	if (sg_ret::ok != result) {
-		qDebug() << SG_PREFIX_E << "Failed to attach child" << tree_item->name << "under parent" << parent_tree_item->name << "with mode" << (int) attach_mode << "into row" << row;
+		qDebug() << SG_PREFIX_E << "Failed to attach child" << tree_item->get_name() << "under parent" << parent_tree_item->get_name() << "with mode" << (int) attach_mode << "into row" << row;
 		return sg_ret::err;
 	}
 
@@ -646,9 +646,9 @@ void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrde
 sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeItem * tree_item, int row)
 {
 	if (new_parent_tree_item) {
-		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "under parent tree item" << new_parent_tree_item->name;
+		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->get_name() << "under parent tree item" << new_parent_tree_item->get_name();
 	} else {
-		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "on top of tree";
+		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->get_name() << "on top of tree";
 	}
 
 	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
@@ -662,7 +662,7 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 
 	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->tree_view = this;
-	tree_item->parent_tree_item = new_parent_tree_item;
+	tree_item->m_direct_parent_tree_item = new_parent_tree_item;
 
 	/* Some tree items may have been created in other thread
 	   (e.g. during acquire process). Signal connections for such
@@ -796,10 +796,10 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		if (item->text().isEmpty()) {
 			qDebug() << SG_PREFIX_W << "Edited item in column Name: new name is empty, ignoring the change";
 			/* We have to undo the action of setting empty text label. */
-			item->setText(tree_item->name);
+			item->setText(tree_item->get_name());
 		} else {
 			qDebug() << SG_PREFIX_I << "Edited item in column Name: new name is" << item->text();
-			tree_item->name = item->text();
+			tree_item->set_name(item->text());
 		}
 
 		break;
@@ -856,7 +856,7 @@ sg_ret TreeView::get_position(const TreeItem & item, bool & is_first, bool & is_
 
 	/* Item may be first and last at the same time if it doesn't have any siblings. */
 
-	qDebug() << SG_PREFIX_I << item.name << "row =" << row << ", n_rows =" << n_rows << ", is_first =" << is_first << ", is_last =" << is_last;
+	qDebug() << SG_PREFIX_I << item.get_name() << "row =" << row << ", n_rows =" << n_rows << ", is_first =" << is_first << ", is_last =" << is_last;
 
 	return sg_ret::ok;
 }
@@ -894,7 +894,7 @@ QList<TreeItem *> get_tree_items(const QMimeData * mime_data)
 	for (quint32 i = 0; i < n_items; i++) {
 		TreeItem * tree_item = NULL;
 		data_stream >> tree_item;
-		qDebug() << SG_PREFIX_I << "Dragged item's name =" << tree_item->name;
+		qDebug() << SG_PREFIX_I << "Dragged item's name =" << tree_item->get_name();
 		result.push_back(tree_item);
 	}
 
@@ -959,7 +959,7 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 
 
 
-	qDebug() << SG_PREFIX_I << "Row =" << row << "col =" << column << "parent's name =" << parent_item->name;
+	qDebug() << SG_PREFIX_I << "Row =" << row << "col =" << column << "parent's name =" << parent_item->get_name();
 	QList<TreeItem *> list = get_tree_items(mime_data);
 
 	bool accepts_all = false; /* It's important to start from 'false'. */
@@ -1020,22 +1020,22 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 
 	if (row == -1 && column == -1) {
 		/* Drop onto an item: push back to end of item's list of children. */
-		qDebug() << SG_PREFIX_I << "Dropping items at the end of parent item" << parent_item->name;
+		qDebug() << SG_PREFIX_I << "Dropping items at the end of parent item" << parent_item->get_name();
 
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
-			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->name << "at the end of parent item" << parent_item->name;
+			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "at the end of parent item" << parent_item->get_name();
 			parent_item->drag_drop_request(tree_item, row, column);
 		}
 
 		return true;
 	} else {
 		/* Drop between some items: insert at position specified by row. */
-		qDebug() << SG_PREFIX_I << "Dropping items as siblings with parent item" << parent_item->name;
+		qDebug() << SG_PREFIX_I << "Dropping items as siblings with parent item" << parent_item->get_name();
 
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
-			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->name << "as sibling with parent item" << parent_item->name;
+			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "as sibling with parent item" << parent_item->get_name();
 			parent_item->drag_drop_request(tree_item, row, column);
 		}
 		return true;
@@ -1095,7 +1095,7 @@ QMimeData * TreeModel::mimeData(const QModelIndexList & indexes) const
 			continue;
 		}
 
-		qDebug() << SG_PREFIX_I << "Pushing to list item with name =" << tree_item->name;
+		qDebug() << SG_PREFIX_I << "Pushing to list item with name =" << tree_item->get_name();
 		list.push_back(tree_item);
 	}
 
