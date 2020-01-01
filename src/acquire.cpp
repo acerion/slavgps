@@ -86,8 +86,8 @@ AcquireWorker::AcquireWorker(DataSource * new_data_source, const AcquireContext 
 
 	this->acquire_context.window               = new_acquire_context.window;
 	this->acquire_context.gisview              = new_acquire_context.gisview;
-	this->acquire_context.top_level_layer      = new_acquire_context.top_level_layer;
-	this->acquire_context.selected_layer       = new_acquire_context.selected_layer;
+	this->acquire_context.m_parent_layer       = new_acquire_context.m_parent_layer;
+	this->acquire_context.m_existing_trw_layer = new_acquire_context.m_existing_trw_layer;
 	this->acquire_context.target_trw           = new_acquire_context.target_trw;
 	this->acquire_context.target_trk           = new_acquire_context.target_trk;
 	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
@@ -105,7 +105,7 @@ AcquireWorker::~AcquireWorker()
 
 
 
-void AcquireWorker::configure_target_layer(DataSourceMode mode)
+sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 {
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
@@ -114,14 +114,15 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 		this->acquire_context.target_trw_allocated = true;
 		break;
 
-	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->acquire_context.selected_layer;
-		if (selected_layer && selected_layer->m_kind == LayerKind::TRW) {
-			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+	case DataSourceMode::AddToLayer:
+		if (this->acquire_context.m_existing_trw_layer) {
+			/* Don't create new layer, acquire data into
+			   existing TRW layer. */
+			this->acquire_context.target_trw = this->acquire_context.m_existing_trw_layer;
 			this->acquire_context.target_trw_allocated = false;
 		} else {
-			/* TODO_LATER: now what? */
-		}
+			qDebug() << SG_PREFIX_E << "Mode is 'AddToLayer' but existing layer is NULL";
+			return sg_ret::err;
 		}
 		break;
 
@@ -129,15 +130,15 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 		/* NOOP */
 		break;
 
-	case DataSourceMode::ManualLayerManagement: {
-		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		this->acquire_context.target_trw_allocated = false;
-		Layer * selected_layer = this->acquire_context.selected_layer;
-		if (selected_layer && selected_layer->m_kind == LayerKind::TRW) {
-			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+	case DataSourceMode::ManualLayerManagement:
+		/* Don't create in acquire - as datasource will
+		   perform the necessary actions. */
+		if (this->acquire_context.m_existing_trw_layer) {
+			this->acquire_context.target_trw = this->acquire_context.m_existing_trw_layer;
+			this->acquire_context.target_trw_allocated = false;
 		} else {
-			/* TODO_LATER: now what? */
-		}
+			qDebug() << SG_PREFIX_E << "Mode is 'ManualLayerManagement' but existing layer is NULL";
+			return sg_ret::err;
 		}
 		break;
 	default:
@@ -153,6 +154,8 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 	}
 
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+
+	return sg_ret::ok;
 }
 
 
@@ -161,7 +164,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 /* Call the function when acquire process has been completed without
    termination or errors. */
-void AcquireWorker::finalize_after_completion(void)
+void AcquireWorker::finalize_after_success(void)
 {
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
@@ -207,12 +210,12 @@ void AcquireWorker::finalize_after_completion(void)
 
 /* Call the function when acquire process has been terminated - either
    because of errors or because user cancelled it. */
-void AcquireWorker::finalize_after_termination(void)
+void AcquireWorker::finalize_after_failure(void)
 {
 	qDebug() << SG_PREFIX_I;
 
 	if (this->acquire_context.target_trw_allocated) {
-		this->acquire_context.target_trw->unref_layer();
+		delete this->acquire_context.target_trw;
 	}
 
 	return;
@@ -239,13 +242,13 @@ void AcquireWorker::run(void)
 
 	if (LoadStatus::Code::Success == acquire_result) {
 		qDebug() << SG_PREFIX_I << "Acquire process ended with success";
-		this->finalize_after_completion();
+		this->finalize_after_success();
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will now signal successful completion of acquire";
 		emit this->completed_with_success();
 	} else {
 		qDebug() << SG_PREFIX_W << "Acquire process ended with error" << acquire_result;
-		this->finalize_after_termination();
+		this->finalize_after_failure();
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will now signal unsuccessful completion of acquire";
 		emit this->completed_with_failure();
@@ -301,7 +304,10 @@ void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode,
 	if (sg_ret::ok != worker->build_progress_dialog()) {
 		return;
 	}
-	worker->configure_target_layer(mode);
+	if (sg_ret::ok != worker->configure_target_layer(mode)) {
+		Dialog::error(QObject::tr("Failed to prepare acquiring of data"), nullptr); /* TODO_LATER: test that this dialog appears correctly. */
+		return;
+	}
 	sleep(1);
 
 	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
@@ -517,14 +523,14 @@ sg_ret Acquire::register_bfilter(DataSource * bfilter)
 
 
 
-void Acquire::set_context(Window * new_window, GisViewport * new_gisview, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
+void Acquire::set_context(Window * new_window, GisViewport * new_gisview, Layer * parent_layer, LayerTRW * existing_trw_layer)
 {
 	qDebug() << SG_PREFIX_I;
 
 	g_acquire_context->window = new_window;
 	g_acquire_context->gisview = new_gisview;
-	g_acquire_context->top_level_layer = new_top_level_layer;
-	g_acquire_context->selected_layer = new_selected_layer;
+	g_acquire_context->m_parent_layer = parent_layer;
+	g_acquire_context->m_existing_trw_layer = existing_trw_layer;
 }
 
 
@@ -703,11 +709,9 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 {
 	if (this->babel_process) {
 
-#if 1
 		if (!trw->is_in_tree()) {
-			acquire_context->top_level_layer->add_child_item(trw, true);
+			acquire_context->m_parent_layer->add_child_item(trw, true);
 		}
-#endif
 
 
 		BabelProcess * importer = new BabelProcess();

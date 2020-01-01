@@ -34,6 +34,8 @@
 
 
 
+#include "layer.h"
+#include "layer_aggregate.h"
 #include "window.h"
 #include "layers_panel.h"
 #include "datasource.h"
@@ -192,6 +194,25 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 							       gisview,
 							       this);
 
-	AcquireContext acquire_context(gisview->get_window(), gisview, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
-	Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
+
+	Layer * parent = nullptr;
+	Layer * existing_layer = ThisApp::get_layers_panel()->get_selected_layer();
+	if (existing_layer) {
+		parent = existing_layer->get_owning_layer(); /* Maybe Aggregate layer, or maybe GPS layer. */
+	} else {
+		parent = ThisApp::get_layers_panel()->get_top_layer();
+	}
+
+	switch (existing_layer->m_kind) {
+	case LayerKind::TRW:
+		if (parent->m_kind == LayerKind::Aggregate || parent->m_kind == LayerKind::GPS) {
+			AcquireContext acquire_context(gisview->get_window(), gisview, parent, (LayerTRW *) existing_layer);
+			Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
+		}
+		break;
+	default:
+		/* Not an error, we just don't support acquiring to
+		   non-TRW layers. */
+		break;
+	}
 }

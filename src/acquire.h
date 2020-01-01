@@ -83,19 +83,19 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireContext();
-		AcquireContext(Window * new_window, GisViewport * new_gisview, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
-			: window(new_window), gisview(new_gisview), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
+		AcquireContext(Window * new_window, GisViewport * new_gisview, Layer * parent_layer, LayerTRW * existing_trw_layer)
+			: window(new_window), gisview(new_gisview), m_parent_layer(parent_layer), m_existing_trw_layer(existing_trw_layer) {};
 
 		void print_debug(const char * function, int line) const;
 
-		Window * window = NULL;
-		GisViewport * gisview = NULL;
-		LayerAggregate * top_level_layer = NULL;
-		Layer * selected_layer = NULL;
+		Window * window = nullptr;
+		GisViewport * gisview = nullptr;
+		Layer * m_parent_layer = nullptr; /* Maybe Aggregate layer, or maybe GPS layer. */
+		LayerTRW * m_existing_trw_layer = nullptr;
 
 
-		LayerTRW * target_trw = NULL;
-		Track * target_trk = NULL;
+		LayerTRW * target_trw = nullptr;
+		Track * target_trk = nullptr;
 
 		/* Whether a target trw layer has been freshly
 		   created, or it already existed in tree view. */
@@ -115,10 +115,10 @@ namespace SlavGPS {
 		AcquireWorker(DataSource * data_source, const AcquireContext & acquire_context);
 		~AcquireWorker();
 		void run(); /* Re-implementation of QRunnable::run(). */
-		void configure_target_layer(DataSourceMode mode);
+		sg_ret configure_target_layer(DataSourceMode mode);
 
-		void finalize_after_completion(void);
-		void finalize_after_termination(void);
+		void finalize_after_success(void);
+		void finalize_after_failure(void);
 
 		sg_ret build_progress_dialog(void);
 
@@ -150,7 +150,7 @@ namespace SlavGPS {
 
 
 		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
-		static void set_context(Window * window, GisViewport * gisview, LayerAggregate * top_level_layer, Layer * selected_layer);
+		static void set_context(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 
 		static QMenu * create_bfilter_layer_menu(QWidget * parent);

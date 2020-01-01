@@ -264,7 +264,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 
-	Acquire::set_context(this->get_window(), ThisApp::get_main_gis_view(), ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
+	Acquire::set_context(this->get_window(), ThisApp::get_main_gis_view(), (Layer *) ThisApp::get_layers_panel()->get_top_layer(), (LayerTRW *) ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::set_target(this, NULL);
 
 

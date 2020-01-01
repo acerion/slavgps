@@ -134,7 +134,7 @@ DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_titl
 
 	this->window_title = new_window_title;
 	this->layer_title = new_layer_title;
-	//this->mode = DataSourceMode::AddToLayer;
+	//this->mode = DataSourceMode::AddToLayer; /* TODO_LATER: restore? investigate? */
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */

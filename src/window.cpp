@@ -2603,7 +2603,7 @@ void Window::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	AcquireContext acquire_context(this, this->main_gis_vp, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
+	AcquireContext acquire_context(this, this->main_gis_vp, this->items_tree->get_top_layer(), (LayerTRW *) this->items_tree->get_selected_layer());
 	Acquire::acquire_from_source(data_source, mode, acquire_context);
 }
 

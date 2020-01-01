@@ -1933,8 +1933,8 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 
 		Acquire::set_context(ThisApp::get_main_window(),
 				     ThisApp::get_main_gis_view(),
-				     ThisApp::get_layers_panel()->get_top_layer(),
-				     ThisApp::get_layers_panel()->get_selected_layer());
+				     (Layer *) ThisApp::get_layers_panel()->get_top_layer(),
+				     (LayerTRW *) ThisApp::get_layers_panel()->get_selected_layer());
 		Acquire::set_target(parent_layer_, this);
 		QMenu * submenu = Acquire::create_bfilter_track_menu(&menu);
 		if (submenu) {
