@@ -39,7 +39,7 @@
 
 
 
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "window.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"

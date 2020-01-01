@@ -36,7 +36,7 @@
 
 
 #include "datasource_file.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "babel.h"
 #include "gpx.h"
 #include "babel_dialog.h"

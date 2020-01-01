@@ -29,7 +29,7 @@
 
 
 #include "datasource_url.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "babel.h"
 #include "application_state.h"
 #include "util.h"

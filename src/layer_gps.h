@@ -57,7 +57,7 @@
 #include "layer_interface.h"
 #include "variant.h"
 #include "dialog.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 
 
 

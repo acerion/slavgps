@@ -37,7 +37,7 @@
 #include "datasource_routing.h"
 #include "babel.h"
 #include "gpx.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "routing.h"
 #include "util.h"
 

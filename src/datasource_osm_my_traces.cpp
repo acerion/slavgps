@@ -46,7 +46,7 @@
 #include "layers_panel.h"
 #include "viewport_internal.h"
 #include "gpx.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "osm_traces.h"
 #include "datasource_gps.h"
 #include "bbox.h"

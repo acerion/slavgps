@@ -31,7 +31,7 @@
 #include "datasource.h"
 #include "dialog.h"
 #include "globals.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "gpx.h"
 #include "util.h"
 #include "widget_list_selection.h"

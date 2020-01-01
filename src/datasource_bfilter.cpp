@@ -34,7 +34,7 @@
 #include "datasource_bfilter.h"
 #include "babel.h"
 #include "gpx.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "application_state.h"
 #include "preferences.h"
 #include "util.h"

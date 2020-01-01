@@ -28,7 +28,7 @@
 
 
 
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "window.h"
 #include "layer.h"
 #include "layer_defaults.h"

@@ -36,7 +36,7 @@
 #include "viewport_internal.h"
 #include "babel.h"
 #include "gpx.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "util.h"
 #include "dialog.h"
 

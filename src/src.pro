@@ -13,7 +13,7 @@ SOURCES += main.cpp \
     mem_cache.cpp \
     tree_item_list.cpp \
     ruler.cpp \
-    acquire.cpp \
+    layer_trw_import.cpp \
     window.cpp \
     datasource.cpp \
     datasource_babel.cpp \
@@ -310,7 +310,7 @@ HEADERS += window.h \
     application_state.h \
     statusbar.h \
     modules.h \
-    acquire.h \
+    layer_trw_import.h \
     babel.h \
     babel_dialog.h \
     variant.h \

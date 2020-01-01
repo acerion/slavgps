@@ -43,7 +43,7 @@
 #include "layer_trw_track_internal.h"
 #include "layer_trw_menu.h"
 #include "preferences.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 

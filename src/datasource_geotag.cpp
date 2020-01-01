@@ -27,7 +27,7 @@
 
 
 #include "datasource.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "geotag_exif.h"
 #include "file_utils.h"
 #include "util.h"

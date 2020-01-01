@@ -28,7 +28,7 @@
 
 
 #include "viewport_internal.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "geonames_search.h"
 #include "util.h"
 #include "datasource_wikipedia.h"
@@ -174,7 +174,7 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 int DataSourceWikipedia::run_config_dialog(AcquireContext * acquire_context)
 {
-	/* Fake acquire options, needed by current implementation of acquire.cpp. */
+	/* Fake acquire options, needed by current implementation of layer_trw_import.cpp. */
 	this->acquire_options = new AcquireOptions;
 
 	return QDialog::Accepted;

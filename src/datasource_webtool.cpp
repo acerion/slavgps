@@ -34,7 +34,7 @@
 #include "viewport_internal.h"
 #include "datasource_webtool.h"
 #include "webtool_query.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "map_utils.h"
 #include "dialog.h"
 #include "util.h"

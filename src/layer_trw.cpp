@@ -86,7 +86,7 @@
 #include "gpx.h"
 #include "dem_cache.h"
 #include "babel.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 #include "ui_util.h"

@@ -64,7 +64,7 @@
 #include "preferences.h"
 #include "viewport_internal.h"
 #include "file.h"
-#include "acquire.h"
+#include "layer_trw_import.h"
 #include "tree_item_list.h"
 #include "astro.h"
 #include "toolbox.h"
