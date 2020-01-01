@@ -124,7 +124,7 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
-		sg_ret attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void) override;
 
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);

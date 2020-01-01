@@ -303,8 +303,9 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 		Layer * child_layer = Layer::unmarshall(pickle, gisview);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
-			/* NB no need to attach signal update handler here
-			   as this will always be performed later on in LayerGPS::attach_children_to_tree(). */
+			/* No need to attach signal update handler
+			   here as this will always be performed later
+			   on in LayerGPS::attach_children_to_tree(). */
 		}
 	}
 

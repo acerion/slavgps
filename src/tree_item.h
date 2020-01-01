@@ -184,12 +184,17 @@ namespace SlavGPS {
 
 		virtual QString get_tooltip(void) const;
 
-		/* A TreeItem object needs to implement this method if it contains (is direct
-		   parent of) any items/children that need to be added to application's tree
-		   of items.
+		/* A TreeItem object needs to implement this method if
+		   it contains (is direct parent of) any
+		   items/children that need to be added to
+		   application's tree of items.
 
-		   This method should call attach_to_tree() on any such
-		   child that needs to be added to the tree. */
+		   This method should call
+		   attach_to_tree_under_parent() on any such child
+		   that needs to be added to the tree.
+
+		   TODO_LATER: this should be a protected method.
+		*/
 		virtual sg_ret attach_children_to_tree(void);
 
 

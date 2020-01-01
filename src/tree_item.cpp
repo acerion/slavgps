@@ -424,14 +424,6 @@ bool TreeItem::dropped_item_is_acceptable(const TreeItem & tree_item) const
 
 
 
-sg_ret TreeItem::attach_children_to_tree(void)
-{
-	return sg_ret::ok;
-}
-
-
-
-
 Time TreeItem::get_timestamp(void) const
 {
 	return this->timestamp; /* Returned value may be invalid. */
@@ -535,21 +527,25 @@ sg_ret TreeItem::attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMo
 		return sg_ret::err;
 	}
 
-	/*
-	  Attach yourself to tree. Classes that have some children
-	  items (e.g. TRWLayer) will have to take care of the children
-	  on their own.
-	*/
+	/* Attach yourself to tree first. */
 	if (sg_ret::ok != parent->tree_view->attach_to_tree(parent, this, attach_mode, sibling)) {
 		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
 		return sg_ret::err;
 	}
-
-	if (!this->is_in_tree()) {
+	if (!this->is_in_tree()) { /* After calling tree_view->attach_to_tree(), this condition should be true. */
 		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
 		return sg_ret::err;
 	}
 
+	/* Attach child items. */
+	return this->attach_children_to_tree();
+}
+
+
+
+
+sg_ret TreeItem::attach_children_to_tree(void)
+{
 	return sg_ret::ok;
 }
 

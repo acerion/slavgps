@@ -218,13 +218,6 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 	}
 	this->tree_view->apply_tree_item_timestamp(layer);
 
-
-
-	if (layer->m_kind == LayerKind::GPS) {
-		/* TODO_LATER: move this in some reasonable place. Putting it here is just a workaround. */
-		layer->attach_children_to_tree();
-	}
-
 	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 	/* Update our own tooltip in tree view. */
@@ -263,11 +256,6 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 	qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
 	layer->attach_to_tree_under_parent(this);
-
-
-
-	/* Make sure that attached item's children have proper parent. */
-	layer->attach_children_to_tree();
 
 
 	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));

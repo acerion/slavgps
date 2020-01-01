@@ -71,14 +71,12 @@ namespace SlavGPS {
 		~LayerAggregate();
 
 
-		/* Layer interface methods. */
-
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
-		sg_ret attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void) override;
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;

@@ -188,13 +188,12 @@ namespace SlavGPS {
 		static void init(void);
 
 
-		/* Layer interface methods. */
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
-		sg_ret attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void) override;
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 

@@ -588,7 +588,6 @@ void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 
 		if (layer && parent_layer) {
 			if (parent_layer->m_kind == LayerKind::Aggregate) {
-				//layer->attach_children_to_tree();
 				layer->post_read(gisview, true);
 			} else if (parent_layer->m_kind == LayerKind::GPS) {
 				/* TODO_MAYBE: anything else needs to be done here? */

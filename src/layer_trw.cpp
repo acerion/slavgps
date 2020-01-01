@@ -1276,7 +1276,6 @@ void LayerTRW::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 	}
 
 	return;
-
 }
 
 
@@ -1292,36 +1291,18 @@ sg_ret LayerTRW::attach_children_to_tree(void)
 	}
 
 	if (this->tracks.size() > 0) {
-		qDebug() << SG_PREFIX_D << "Handling Tracks node";
-
-		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching item" << this->tracks.get_name() << "to tree under" << this->get_name();
-			this->tracks.attach_to_tree_under_parent(this);
-		}
-		this->tracks.attach_children_to_tree();
+		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
+		this->tracks.attach_to_tree_under_parent(this);
 	}
 
 	if (this->routes.size() > 0) {
-		qDebug() << SG_PREFIX_D << "Handling Routes node";
-
-		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching item" << this->routes.get_name() << "to tree under" << this->get_name();
-			this->routes.attach_to_tree_under_parent(this);
-		}
-
-		this->routes.attach_children_to_tree();
+		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
+		this->routes.attach_to_tree_under_parent(this);
 	}
 
 	if (this->waypoints.size() > 0) {
-		qDebug() << SG_PREFIX_D << "Handling Waypoints node";
-
-		if (!this->waypoints.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching item" << this->waypoints.get_name() << "to tree under" << this->get_name();
-			this->waypoints.attach_to_tree_under_parent(this);
-			qDebug() << SG_PREFIX_I;
-		}
-
-		this->waypoints.attach_children_to_tree();
+		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
+		this->waypoints.attach_to_tree_under_parent(this);
 	}
 
 	this->generate_missing_thumbnails();
