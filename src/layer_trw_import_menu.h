@@ -1,7 +1,9 @@
 /*
- * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
+ * SlavGPS -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_EXTERNAL_DATASOURCES_H
-#define _SG_EXTERNAL_DATASOURCES_H
+#ifndef _SG_LAYER_TRW_IMPORT_MENU_H_
+#define _SG_LAYER_TRW_IMPORT_MENU_H_
 
 
 
@@ -29,7 +31,7 @@
 
 
 
-#include "external_tool.h"
+#include "globals.h"
 
 
 
@@ -39,11 +41,16 @@ namespace SlavGPS {
 
 
 
-	class ExternalToolDataSource {
+	class LayerTRW;
+	class Window;
+
+
+
+
+	class LayerTRWImportMenu {
 	public:
-		static void register_tool(ExternalTool * ext_tool);
-		static void unregister_all(void);
-		static void add_menu_items(QMenu & menu, GisViewport * gisview);
+		static sg_ret add_import_submenu(QMenu & submenu, LayerTRW * trw);
+		static sg_ret add_import_submenu(QMenu & submenu, Window * window);
 	};
 
 
@@ -54,4 +61,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_EXTERNAL_DATASOURCES_H */
+#endif /* #ifndef _SG_LAYER_TRW_IMPORT_MENU_H_ */

@@ -14,6 +14,7 @@ SOURCES += main.cpp \
     tree_item_list.cpp \
     ruler.cpp \
     layer_trw_import.cpp \
+    layer_trw_import_menu.cpp \
     window.cpp \
     datasource.cpp \
     datasource_babel.cpp \
@@ -311,6 +312,7 @@ HEADERS += window.h \
     statusbar.h \
     modules.h \
     layer_trw_import.h \
+    layer_trw_import_menu.h \
     babel.h \
     babel_dialog.h \
     variant.h \

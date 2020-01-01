@@ -66,7 +66,7 @@ void ExternalToolDataSource::unregister_all()
 /**
    Add to any menu. Mostly for allowing to assign for TrackWaypoint layer menus.
 */
-void ExternalToolDataSource::add_menu_items(QMenu * menu, GisViewport * gisview)
+void ExternalToolDataSource::add_menu_items(QMenu & menu, GisViewport * gisview)
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
 		ExternalTool * ext_tool = *iter;
@@ -75,6 +75,6 @@ void ExternalToolDataSource::add_menu_items(QMenu * menu, GisViewport * gisview)
 		ext_tool->set_viewport(gisview);
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
-		menu->addAction(qa);
+		menu.addAction(qa);
 	}
 }

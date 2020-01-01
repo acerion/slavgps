@@ -36,16 +36,17 @@
 
 
 
-#include "window.h"
-#include "layers_panel.h"
-#include "util.h"
-#include "layer_trw.h"
-#include "layer_trw_track_internal.h"
-#include "layer_trw_menu.h"
-#include "preferences.h"
-#include "layer_trw_import.h"
-#include "external_tools.h"
 #include "external_tool_datasources.h"
+#include "external_tools.h"
+#include "layer_trw.h"
+#include "layer_trw_import.h"
+#include "layer_trw_import_menu.h"
+#include "layer_trw_menu.h"
+#include "layer_trw_track_internal.h"
+#include "layers_panel.h"
+#include "preferences.h"
+#include "util.h"
+#include "window.h"
 
 
 
@@ -176,54 +177,8 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 
-	{
-		QMenu * acquire_submenu = menu.addMenu(QIcon::fromTheme("go-down"), tr("&Acquire"));
-
-		qa = acquire_submenu->addAction(tr("From &GPS..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gps_cb()));
-
-		/* FIXME: only add menu when at least a routing engine has support for Directions. */
-		qa = acquire_submenu->addAction(tr("From &Directions..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_routing_cb()));
-
-		qa = acquire_submenu->addAction(tr("From &OSM Traces..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_cb()));
-
-		qa = acquire_submenu->addAction(tr("From &My OSM Traces..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_my_traces_cb()));
-
-		qa = acquire_submenu->addAction(tr("From &URL..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_url_cb()));
-
-#ifdef VIK_CONFIG_GEONAMES
-		{
-			QMenu * wikipedia_submenu = acquire_submenu->addMenu(QIcon::fromTheme("list-add"), tr("From &Wikipedia Waypoints"));
-
-			qa = wikipedia_submenu->addAction(QIcon::fromTheme("zoom-fit-best"), tr("Within &Layer Bounds"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_waypoints_layer_cb()));
-
-			qa = wikipedia_submenu->addAction(QIcon::fromTheme("zoom-original"), tr("Within &Current View"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_waypoints_viewport_cb()));
-		}
-#endif
-
-
-#ifdef VIK_CONFIG_GEOCACHES
-		qa = acquire_submenu->addAction(tr("From Geo&caching..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geocache_cb()));
-#endif
-
-#ifdef VIK_CONFIG_GEOTAG
-		qa = acquire_submenu->addAction(tr("From Geotagged &Images..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geotagged_images_cb()));
-#endif
-
-		qa = acquire_submenu->addAction(tr("From &File (With GPSBabel)..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
-		qa->setToolTip(tr("From &File (With GPSBabel)..."));
-
-		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window()->get_main_gis_view());
-	}
+	QMenu * import_submenu = menu.addMenu(QObject::tr("&Import"));
+	LayerTRWImportMenu::add_import_submenu(*import_submenu, this);
 
 
 

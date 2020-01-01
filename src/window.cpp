@@ -57,6 +57,7 @@
 #include "layers_panel.h"
 #include "toolbox.h"
 #include "layer_trw.h"
+#include "layer_trw_import_menu.h"
 #include "layer_aggregate.h"
 #include "layer_map.h"
 #include "ui_builder.h"
@@ -482,64 +483,8 @@ void Window::create_actions(void)
 		this->menu_file->addSeparator();
 
 
-		this->submenu_file_acquire = this->menu_file->addMenu(tr("A&cquire"));
-
-		{
-			qa = this->submenu_file_acquire->addAction(tr("From &GPS..."));
-			qa->setToolTip(tr("Transfer data from a GPS device"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gps_cb(void)));
-
-			qa = this->submenu_file_acquire->addAction(tr("From &File (With GPSBabel)..."));
-			qa->setToolTip(tr("Import File With GPSBabel..."));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
-
-			qa = this->submenu_file_acquire->addAction(tr("&Directions..."));
-			qa->setToolTip(tr("Get driving directions"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_routing_cb(void)));
-
-			qa = this->submenu_file_acquire->addAction(tr("Import Geo&JSON File..."));
-			qa->setToolTip(tr("Import GeoJSON file"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geojson_cb(void)));
-
-			qa = this->submenu_file_acquire->addAction(tr("&OSM Traces..."));
-			qa->setToolTip(tr("Get traces from OpenStreetMap"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_cb(void)));
-
-			qa = this->submenu_file_acquire->addAction(tr("&My OSM Traces..."));
-			qa->setToolTip(tr("Get Your Own Traces from OpenStreetMap"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_my_osm_cb(void)));
-
-#ifdef VIK_CONFIG_GEONAMES
-			qa = this->submenu_file_acquire->addAction(tr("From &Wikipedia Waypoints"));
-			qa->setToolTip(tr("Create waypoints from Wikipedia items in the current view"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_wikipedia_cb(void)));
-#endif
-
-
-#ifdef VIK_CONFIG_GEOCACHES
-			qa = this->submenu_file_acquire->addAction(tr("Geo&caches..."));
-			qa->setToolTip(tr("Get Geocaches from geocaching.com"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gc_cb(void)));
-#endif
-
-#ifdef VIK_CONFIG_GEOTAG
-			qa = this->submenu_file_acquire->addAction(tr("From Geotagged &Images..."));
-			qa->setToolTip(tr("Create waypoints from geotagged images"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geotag_cb(void)));
-#endif
-
-			qa = this->submenu_file_acquire->addAction(tr("From &URL..."));
-			qa->setToolTip(tr("Get a file from URL"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_url_cb(void)));
-
-#ifdef HAVE_ZIP_H
-			qa = this->submenu_file_acquire->addAction(tr("Import KMZ &Map File..."));
-			qa->setToolTip(tr("Import a KMZ file"));
-			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
-#endif
-
-			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this->main_gis_vp);
-		}
+		this->submenu_file_acquire = this->menu_file->addMenu(QIcon::fromTheme("go-down"), QObject::tr("&Import"));
+		LayerTRWImportMenu::add_import_submenu(*this->submenu_file_acquire, this);
 
 
 		QMenu * submenu_file_export = this->menu_file->addMenu(tr("&Export All"));
