@@ -457,7 +457,7 @@ BFilterPolygon::BFilterPolygon()
 	this->window_title = QObject::tr("Waypoints Inside This");
 	this->layer_title = QObject::tr("Polygonized Layer");
 	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayerTrack;
+	this->input_type = DataSourceInputType::TRWLayerWithTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
 }
@@ -538,7 +538,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 	this->window_title = QObject::tr("Waypoints Outside This");
 	this->layer_title = QObject::tr("Polygonzied Layer");
 	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayerTrack;
+	this->input_type = DataSourceInputType::TRWLayerWithTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
 }

@@ -101,9 +101,6 @@ namespace SlavGPS {
 		/* Whether a target trw layer has been freshly
 		   created, or it already existed in tree view. */
 		bool target_trw_allocated = false;
-
-	public slots:
-		void filter_trwlayer_cb(void);
 	};
 
 
@@ -222,7 +219,7 @@ namespace SlavGPS {
 		/* Add 'filter' entries to context menu for TRW track. */
 		sg_ret add_babel_filters_for_track_submenu(QMenu & submenu);
 
-		int create_babel_filter_menu(QMenu & menu, DataSourceInputType filter_type);
+		sg_ret add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type);
 
 
 	public slots:
@@ -263,6 +260,7 @@ namespace SlavGPS {
 		void import_into_existing_layer_from_file_cb();
 
 
+		void apply_babel_filter_cb(void);
 
 	private:
 		Window * m_window = nullptr;

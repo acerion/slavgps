@@ -1925,8 +1925,8 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("Use with &Filter"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_filter_cb()));
 
-	QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Filter"));
-	parent_layer_->layer_trw_importer->add_babel_filters_for_track_submenu(*goto_submenu);
+	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Filter"));
+	parent_layer_->layer_trw_importer->add_babel_filters_for_track_submenu(*filter_submenu);
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = menu.addAction(tr("Geotag &Images..."));
@@ -2209,7 +2209,18 @@ sg_ret Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOpera
 sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	{
+		LayerTRW * parent_trw = (LayerTRW *) this->get_owning_layer();
+		Layer * parent_layer = parent_trw->get_owning_layer();
+
+		delete parent_trw->layer_trw_importer;
+		parent_trw->layer_trw_importer = new LayerTRWImporter(parent_trw->get_window(),
+								      ThisApp::get_main_gis_view(),
+								      parent_layer,
+								      parent_trw,
+								      this);
+	}
 
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("P&rofile"));
@@ -2972,12 +2983,10 @@ void Track::google_route_webpage_cb(void)
 
 
 
-#ifndef WINDOWS
 void Track::track_use_with_babel_filter_cb(void)
 {
 	Acquire::set_babel_filter_track(this);
 }
-#endif
 
 
 

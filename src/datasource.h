@@ -56,8 +56,7 @@ namespace SlavGPS {
 	enum class DataSourceInputType {
 		None = 0,
 		TRWLayer,
-		Track,
-		TRWLayerTrack
+		TRWLayerWithTrack /* For some babel filters. */
 	};
 
 

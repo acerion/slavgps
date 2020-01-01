@@ -78,9 +78,15 @@ extern bool have_geojson_export;
 sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
-	if (nullptr == this->layer_trw_importer) {
+
+	{
 		Layer * parent_layer = this->get_owning_layer();
-		this->layer_trw_importer = new LayerTRWImporter(this->get_window(), ThisApp::get_main_gis_view(), parent_layer);
+
+		delete this->layer_trw_importer;
+		this->layer_trw_importer = new LayerTRWImporter(this->get_window(),
+								ThisApp::get_main_gis_view(),
+								parent_layer,  /* Aggregate layer or GPS layer. */
+								this);         /* Target TRW layer, to which import will occur. */
 	}
 
 

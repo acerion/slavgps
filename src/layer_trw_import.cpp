@@ -347,7 +347,7 @@ AcquireContext::AcquireContext()
 
 
 
-void AcquireContext::filter_trwlayer_cb(void)
+void LayerTRWImporter::apply_babel_filter_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 
@@ -357,11 +357,18 @@ void AcquireContext::filter_trwlayer_cb(void)
 
 	auto iter = g_babel_filters.find(filter_id);
 	if (iter == g_babel_filters.end()) {
-		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << filter_id;
+		qDebug() << SG_PREFIX_E << "Can't find babel filter with id" << filter_id;
 		return;
 	}
 
-	Acquire::acquire_from_source(iter->second, iter->second->mode, *g_acquire_context);
+	AcquireContext acquire_context;
+	acquire_context.window               = this->m_window;
+	acquire_context.gisview              = this->m_gisview;
+	acquire_context.m_parent_layer       = this->m_parent_layer;
+	acquire_context.m_existing_trw_layer = this->m_existing_trw;
+	acquire_context.target_trk           = this->m_babel_filter_trk;
+
+	Acquire::acquire_from_source(iter->second, iter->second->mode, acquire_context);
 
 	return;
 }
@@ -429,6 +436,7 @@ sg_ret Acquire::register_babel_filter(DataSource * bfilter)
 		return sg_ret::err;
 	}
 
+	qDebug() << SG_PREFIX_I << "Registering babel filter type id" << bfilter->get_source_id();
 	g_babel_filters.insert({ bfilter->get_source_id(), bfilter });
 
 	return sg_ret::err;
