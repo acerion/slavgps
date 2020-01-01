@@ -1757,30 +1757,6 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 
 
 
-void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
-{
-	GisViewport * gisview = ThisApp::get_main_gis_view();
-
-	Geonames::create_wikipedia_waypoints(this, gisview->get_bbox(), this->get_window());
-	this->waypoints.recalculate_bbox();
-
-	this->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
-}
-
-
-
-
-void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
-{
-	Geonames::create_wikipedia_waypoints(this, this->get_bbox(), this->get_window());
-	this->waypoints.recalculate_bbox();
-
-	this->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
-}
-
-
-
-
 #ifdef VIK_CONFIG_GEOTAG
 void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
@@ -1793,107 +1769,10 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 
 
-/* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
-void LayerTRW::acquire_handler(DataSource * data_source)
+sg_ret LayerTRW::import_into_this_item(DataSource * data_source)
 {
-	this->get_window()->acquire_handler(data_source);
-}
-
-
-
-
-/*
- * Acquire into this TRW Layer straight from GPS Device.
- */
-void LayerTRW::acquire_from_gps_cb(void)
-{
-	this->acquire_handler(new DataSourceGPS());
-}
-
-
-
-
-/*
- * Acquire into this TRW Layer from Directions.
- */
-void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceRouting());
-}
-
-
-
-
-/*
- * Acquire into this TRW Layer from an entered URL.
- */
-void LayerTRW::acquire_from_url_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceURL());
-}
-
-
-
-
-/*
- * Acquire into this TRW Layer from OSM.
- */
-void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceOSMTraces());
-}
-
-
-
-
-/**
- * Acquire into this TRW Layer from OSM for 'My' Traces.
- */
-void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceOSMMyTraces());
-}
-
-
-
-
-#ifdef VIK_CONFIG_GEOCACHES
-/*
- * Acquire into this TRW Layer from Geocaching.com
- */
-void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
-}
-#endif
-
-
-
-
-#ifdef VIK_CONFIG_GEOTAG
-/*
- * Acquire into this TRW Layer from images.
- */
-void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceGeoTag());
-
-	/* Re-generate thumbnails as they may have changed.
-	   TODO_MAYBE: move this somewhere else, where we are sure that the acquisition has been completed? */
-	this->has_missing_thumbnails = true;
-	this->generate_missing_thumbnails();
-}
-#endif
-
-
-
-
-/*
- * Acquire into this TRW Layer from any GPS Babel supported file.
- */
-void LayerTRW::acquire_from_file_cb(void) /* Slot. */
-{
-	this->acquire_handler(new DataSourceFile());
+	LayerTRWImporter importer(this->get_window(), this->get_window()->get_main_gis_view(), this);
+	return importer.import_into_existing_layer(data_source);
 }
 
 
@@ -3630,6 +3509,7 @@ LayerTRW::LayerTRW() : Layer()
 LayerTRW::~LayerTRW()
 {
 	delete this->painter;
+	delete this->layer_trw_importer;
 }
 
 

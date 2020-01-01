@@ -177,8 +177,11 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 
-	QMenu * import_submenu = menu.addMenu(QObject::tr("&Import"));
-	LayerTRWImportMenu::add_import_submenu(*import_submenu, this);
+	QMenu * import_submenu = menu.addMenu(QIcon::fromTheme("go-down"), QObject::tr("&Import into this layer"));
+	if (nullptr == this->layer_trw_importer) {
+		this->layer_trw_importer = new LayerTRWImporter(this->get_window(), ThisApp::get_main_gis_view(), this);
+	}
+	this->layer_trw_importer->add_import_into_existing_layer_submenu(*import_submenu);
 
 
 

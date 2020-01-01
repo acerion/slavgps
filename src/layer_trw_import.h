@@ -1,8 +1,9 @@
 /*
- * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
+ * SlavGPS -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_ACQUIRE_H_
-#define _SG_ACQUIRE_H_
+#ifndef _SG_LAYER_TRW_IMPORT_H_
+#define _SG_LAYER_TRW_IMPORT_H_
 
 
 
@@ -149,7 +150,7 @@ namespace SlavGPS {
 		};
 
 
-		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
+		static sg_ret acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
 		static void set_context(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 
@@ -195,9 +196,74 @@ namespace SlavGPS {
 
 
 
+	class LayerTRWImporter : public QObject {
+		Q_OBJECT
+	public:
+		/**
+		   @param existing_trw needs to be specified in places
+		   that want to import into existing TRW layer.
+		*/
+		LayerTRWImporter(Window * window, GisViewport * gisview, LayerTRW * existing_trw = nullptr)
+			: m_window(window), m_gisview(gisview), m_existing_trw(existing_trw) {}
+
+		sg_ret import_into_new_layer(DataSource * data_source, Layer * parent_layer);
+		sg_ret import_into_existing_layer(DataSource * data_source);
+
+		sg_ret add_import_into_new_layer_submenu(QMenu & submenu);
+		sg_ret add_import_into_existing_layer_submenu(QMenu & submenu);
+
+
+	public slots:
+		void import_into_new_layer_from_gps_cb(void);
+		void import_into_new_layer_from_file_cb(void);
+		void import_into_new_layer_from_geojson_cb(void);
+		void import_into_new_layer_from_routing_cb(void);
+		void import_into_new_layer_from_osm_cb(void);
+		void import_into_new_layer_from_my_osm_cb(void);
+#ifdef VIK_CONFIG_GEOCACHES
+		void import_into_new_layer_from_gc_cb(void);
+#endif
+#ifdef VIK_CONFIG_GEOTAG
+		void import_into_new_layer_from_geotag_cb(void);
+#endif
+#ifdef VIK_CONFIG_GEONAMES
+		void import_into_new_layer_from_wikipedia_cb(void);
+#endif
+		void import_into_new_layer_from_url_cb(void);
+
+
+
+		void import_into_existing_layer_from_gps_cb(void);
+		void import_into_existing_layer_from_routing_cb(void);
+		void import_into_existing_layer_from_osm_cb(void);
+		void import_into_existing_layer_from_osm_my_traces_cb(void);
+		void import_into_existing_layer_from_url_cb(void);
+
+		void import_into_existing_layer_from_wikipedia_waypoints_viewport_cb(void);
+		void import_into_existing_layer_from_wikipedia_waypoints_layer_cb(void);
+
+#ifdef VIK_CONFIG_GEOCACHES
+		void import_into_existing_layer_from_geocache_cb(void);
+#endif
+#ifdef VIK_CONFIG_GEOTAG
+		void import_into_existing_layer_from_geotagged_images_cb(void);
+#endif
+		void import_into_existing_layer_from_file_cb();
+
+
+
+	private:
+		Window * m_window = nullptr;
+		GisViewport * m_gisview = nullptr;
+		LayerTRW * m_existing_trw = nullptr;
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 
 
 
-#endif /* #ifndef _SG_ACQUIRE_H_ */
+#endif /* #ifndef _SG_LAYER_TRW_IMPORT_H_ */

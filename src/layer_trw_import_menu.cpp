@@ -42,54 +42,60 @@ using namespace SlavGPS;
 
 
 
-sg_ret LayerTRWImportMenu::add_import_submenu(QMenu & submenu, LayerTRW * trw)
+sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 {
+	if (nullptr == this->m_existing_trw) {
+		qDebug() << SG_PREFIX_E << "Trying to add submenu items when existing TRW is not set";
+		return sg_ret::err;
+	}
+
+
 	QAction * qa = nullptr;
 
 	qa = submenu.addAction(QObject::tr("From &GPS..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_gps_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_gps_cb()));
 
 	/* FIXME: only add menu when at least a routing engine has support for Directions. */
 	qa = submenu.addAction(QObject::tr("From &Directions..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_routing_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_routing_cb()));
 
 	qa = submenu.addAction(QObject::tr("From &OSM Traces..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_osm_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_osm_cb()));
 
 	qa = submenu.addAction(QObject::tr("From &My OSM Traces..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_osm_my_traces_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_osm_my_traces_cb()));
 
 	qa = submenu.addAction(QObject::tr("From &URL..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_url_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_url_cb()));
 
 #ifdef VIK_CONFIG_GEONAMES
 	{
 		QMenu * wikipedia_submenu = submenu.addMenu(QIcon::fromTheme("list-add"), QObject::tr("From &Wikipedia Waypoints"));
 
 		qa = wikipedia_submenu->addAction(QIcon::fromTheme("zoom-fit-best"), QObject::tr("Within &Layer Bounds"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_wikipedia_waypoints_layer_cb()));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_wikipedia_waypoints_layer_cb()));
 
 		qa = wikipedia_submenu->addAction(QIcon::fromTheme("zoom-original"), QObject::tr("Within &Current View"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_wikipedia_waypoints_viewport_cb()));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_wikipedia_waypoints_viewport_cb()));
 	}
 #endif
 
 
 #ifdef VIK_CONFIG_GEOCACHES
 	qa = submenu.addAction(QObject::tr("From Geo&caching..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_geocache_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_geocache_cb()));
 #endif
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = submenu.addAction(QObject::tr("From Geotagged &Images..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_geotagged_images_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_geotagged_images_cb()));
 #endif
 
 	qa = submenu.addAction(QObject::tr("From &File (With GPSBabel)..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), trw, SLOT (acquire_from_file_cb()));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_file_cb()));
 	qa->setToolTip(QObject::tr("From &File (With GPSBabel)..."));
 
-	ExternalToolDataSource::add_menu_items(submenu, trw->get_window()->get_main_gis_view());
+	ExternalToolDataSource::add_menu_items(submenu, this->m_existing_trw->get_window()->get_main_gis_view());
 
 	return sg_ret::ok;
 }
@@ -98,65 +104,59 @@ sg_ret LayerTRWImportMenu::add_import_submenu(QMenu & submenu, LayerTRW * trw)
 
 
 
-sg_ret LayerTRWImportMenu::add_import_submenu(QMenu & submenu, Window * window)
+sg_ret LayerTRWImporter::add_import_into_new_layer_submenu(QMenu & submenu)
 {
 	QAction * qa = nullptr;
 
 
 	qa = submenu.addAction(QObject::tr("From &GPS..."));
 	qa->setToolTip(QObject::tr("Transfer data from a GPS device"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_gps_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_gps_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("From &File (With GPSBabel)..."));
 	qa->setToolTip(QObject::tr("Import File With GPSBabel..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_file_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_file_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("&Directions..."));
 	qa->setToolTip(QObject::tr("Get driving directions"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_routing_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_routing_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("Import Geo&JSON File..."));
 	qa->setToolTip(QObject::tr("Import GeoJSON file"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_geojson_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_geojson_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("&OSM Traces..."));
 	qa->setToolTip(QObject::tr("Get traces from OpenStreetMap"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_osm_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_osm_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("&My OSM Traces..."));
 	qa->setToolTip(QObject::tr("Get Your Own Traces from OpenStreetMap"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_my_osm_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_my_osm_cb(void)));
 
 #ifdef VIK_CONFIG_GEONAMES
 	qa = submenu.addAction(QObject::tr("From &Wikipedia Waypoints"));
 	qa->setToolTip(QObject::tr("Create waypoints from Wikipedia items in the current view"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_wikipedia_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_wikipedia_cb(void)));
 #endif
 
 
 #ifdef VIK_CONFIG_GEOCACHES
 	qa = submenu.addAction(QObject::tr("Geo&caches..."));
 	qa->setToolTip(QObject::tr("Get Geocaches from geocaching.com"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_gc_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_gc_cb(void)));
 #endif
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = submenu.addAction(QObject::tr("From Geotagged &Images..."));
 	qa->setToolTip(QObject::tr("Create waypoints from geotagged images"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_geotag_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_geotag_cb(void)));
 #endif
 
 	qa = submenu.addAction(QObject::tr("From &URL..."));
 	qa->setToolTip(QObject::tr("Get a file from URL"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (acquire_from_url_cb(void)));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_url_cb(void)));
 
-#ifdef HAVE_ZIP_H
-	qa = submenu.addAction(QObject::tr("Import KMZ &Map File..."));
-	qa->setToolTip(QObject::tr("Import a KMZ file"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), window, SLOT (import_kmz_file_cb(void)));
-#endif
-
-	ExternalToolDataSource::add_menu_items(submenu, window->get_main_gis_view());
+	ExternalToolDataSource::add_menu_items(submenu, this->m_gisview);
 
 	return sg_ret::ok;
 }

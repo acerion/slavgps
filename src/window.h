@@ -38,12 +38,13 @@
 
 
 
-#include "measurements.h"
-#include "viewport.h"
+#include "file.h"
+#include "layer_trw_import.h"
 #include "layer_trw_track.h"
 #include "layer_trw_waypoints.h"
 #include "layer_trw_tracks.h"
-#include "file.h"
+#include "measurements.h"
+#include "viewport.h"
 
 
 
@@ -230,34 +231,6 @@ namespace SlavGPS {
 
 		void show_centers_cb();
 
-
-
-		/* General handler of acquire requests.
-		   Called by all acquire_from_X_cb() with specific data source. */
-		void acquire_handler(DataSource * data_source);
-
-		void acquire_from_gps_cb(void);
-		void acquire_from_file_cb(void);
-		void acquire_from_geojson_cb(void);
-		void acquire_from_routing_cb(void);
-		void acquire_from_osm_cb(void);
-		void acquire_from_my_osm_cb(void);
-
-#ifdef VIK_CONFIG_GEOCACHES
-		void acquire_from_gc_cb(void);
-#endif
-
-#ifdef VIK_CONFIG_GEOTAG
-		void acquire_from_geotag_cb(void);
-#endif
-
-#ifdef VIK_CONFIG_GEONAMES
-		void acquire_from_wikipedia_cb(void);
-#endif
-
-		void acquire_from_url_cb(void);
-
-
 		void draw_viewport_to_image_file_cb(void);
 		void draw_viewport_to_image_dir_cb(void);
 #ifdef HAVE_ZIP_H
@@ -371,6 +344,11 @@ namespace SlavGPS {
 		QString current_document_full_path;
 
 		LoadStatus file_load_status = LoadStatus::Code::ReadFailure; /* AKA none. */
+
+		/* For importing of track/route/waypoint data into new
+		   TRW layer (a layer that will be created during the
+		   import). */
+		LayerTRWImporter * layer_trw_importer = nullptr;
 
 		/* Tool management state. */
 		LayerKind tool_layer_kind;

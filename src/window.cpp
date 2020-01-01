@@ -227,6 +227,7 @@ Window::Window()
 
 
 	this->create_layout();
+	this->layer_trw_importer = new LayerTRWImporter(this, this->main_gis_vp);
 	this->create_actions();
 	this->toolbox = new Toolbox(this);
 	this->create_ui();
@@ -375,6 +376,7 @@ Window::~Window()
 	window_list.remove(this);
 	delete this->main_gis_vp;
 	delete this->items_tree;
+	delete this->layer_trw_importer;
 }
 
 
@@ -484,7 +486,14 @@ void Window::create_actions(void)
 
 
 		this->submenu_file_acquire = this->menu_file->addMenu(QIcon::fromTheme("go-down"), QObject::tr("&Import"));
-		LayerTRWImportMenu::add_import_submenu(*this->submenu_file_acquire, this);
+		this->layer_trw_importer->add_import_into_new_layer_submenu(*this->submenu_file_acquire);
+
+
+#ifdef HAVE_ZIP_H /* TODO_LATER: does this belong to Window or to TRWLayerImporter? */
+		qa = this->submenu_file_acquire->addAction(QObject::tr("Import KMZ &Map File..."));
+		qa->setToolTip(QObject::tr("Import a KMZ file"));
+		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
+#endif
 
 
 		QMenu * submenu_file_export = this->menu_file->addMenu(tr("&Export All"));
@@ -2535,111 +2544,6 @@ void Window::help_help_cb(void)
 void Window::help_about_cb(void) /* Slot. */
 {
 	Dialog::about(this);
-}
-
-
-
-
-void Window::acquire_handler(DataSource * data_source)
-{
-	/* Override mode. */
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AutoLayerManagement) {
-		mode = DataSourceMode::CreateNewLayer;
-	}
-
-	AcquireContext acquire_context(this, this->main_gis_vp, this->items_tree->get_top_layer(), (LayerTRW *) this->items_tree->get_selected_layer());
-	Acquire::acquire_from_source(data_source, mode, acquire_context);
-}
-
-
-
-
-void Window::acquire_from_gps_cb(void)
-{
-	this->acquire_handler(new DataSourceGPS());
-}
-
-
-
-
-void Window::acquire_from_file_cb(void)
-{
-	this->acquire_handler(new DataSourceFile());
-}
-
-
-
-
-void Window::acquire_from_geojson_cb(void)
-{
-	this->acquire_handler(new DataSourceGeoJSON());
-}
-
-
-
-
-void Window::acquire_from_routing_cb(void)
-{
-	this->acquire_handler(new DataSourceRouting());
-}
-
-
-
-
-void Window::acquire_from_osm_cb(void)
-{
-	this->acquire_handler(new DataSourceOSMTraces());
-}
-
-
-
-
-void Window::acquire_from_my_osm_cb(void)
-{
-	this->acquire_handler(new DataSourceOSMMyTraces());
-}
-
-
-
-
-#ifdef VIK_CONFIG_GEOCACHES
-void Window::acquire_from_gc_cb(void)
-{
-	if (!DataSourceGeoCache::have_programs()) {
-		return;
-	}
-
-	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
-}
-#endif
-
-
-
-
-#ifdef VIK_CONFIG_GEOTAG
-void Window::acquire_from_geotag_cb(void)
-{
-	this->acquire_handler(new DataSourceGeoTag());
-}
-#endif
-
-
-
-
-#ifdef VIK_CONFIG_GEONAMES
-void Window::acquire_from_wikipedia_cb(void)
-{
-	this->acquire_handler(new DataSourceWikipedia());
-}
-#endif
-
-
-
-
-void Window::acquire_from_url_cb(void)
-{
-	this->acquire_handler(new DataSourceURL());
 }
 
 

@@ -67,6 +67,7 @@ namespace SlavGPS {
 	class WaypointSearch;
 	class TpPropertiesDialog;
 	class DataSource;
+	class LayerTRWImporter;
 	enum class TreeViewSortOrder;
 	enum class LayerDataReadStatus;
 	enum class SGFileType;
@@ -280,9 +281,10 @@ namespace SlavGPS {
 		void sort_all();
 
 
-		/* General handler of acquire requests.
-		   Called by all acquire_from_X_cb() with specific data source. */
-		void acquire_handler(DataSource * data_source);
+		/* General handler of 'import into this layer'
+		   requests.  Called by all import_from_X_cb() with
+		   specific data source. */
+		sg_ret import_into_this_item(DataSource * data_source);
 
 
 		void set_coord_mode(CoordMode mode);
@@ -365,6 +367,9 @@ namespace SlavGPS {
 		TRWMetadata * metadata = NULL;
 
 
+		/* For importing of track/route/waypoint data into this
+		   TRW layer. */
+		LayerTRWImporter * layer_trw_importer = nullptr;
 
 		LayerTRWPainter * painter = NULL;
 
@@ -417,22 +422,6 @@ namespace SlavGPS {
 		void geotag_images_cb(void);
 #endif
 
-		void acquire_from_gps_cb(void);
-		void acquire_from_routing_cb(void);
-		void acquire_from_osm_cb(void);
-		void acquire_from_osm_my_traces_cb(void);
-		void acquire_from_url_cb(void);
-
-		void acquire_from_wikipedia_waypoints_viewport_cb(void);
-		void acquire_from_wikipedia_waypoints_layer_cb(void);
-
-#ifdef VIK_CONFIG_GEOCACHES
-		void acquire_from_geocache_cb(void);
-#endif
-#ifdef VIK_CONFIG_GEOTAG
-		void acquire_from_geotagged_images_cb(void);
-#endif
-		void acquire_from_file_cb();
 
 		void upload_to_gps_cb(void);
 		void upload_to_osm_traces_cb(void);

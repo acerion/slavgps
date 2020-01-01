@@ -39,6 +39,7 @@
 
 
 
+#include "geonames_search.h"
 #include "layer_trw_import.h"
 #include "window.h"
 #include "viewport_internal.h"
@@ -61,7 +62,7 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "Acquire"
+#define SG_MODULE "LayerTRW Import"
 
 
 
@@ -289,11 +290,11 @@ sg_ret AcquireWorker::build_progress_dialog(void)
 
 
 
-void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context)
+sg_ret Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context)
 {
 	if (QDialog::Accepted != data_source->run_config_dialog(&acquire_context)) {
 		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
-		return;
+		return sg_ret::ok;
 	}
 
 	acquire_context.print_debug(__FUNCTION__, __LINE__);
@@ -302,11 +303,11 @@ void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode,
 
 	AcquireWorker * worker = new AcquireWorker(data_source, acquire_context); /* FIXME: worker needs to be deleted. */
 	if (sg_ret::ok != worker->build_progress_dialog()) {
-		return;
+		return sg_ret::err;
 	}
 	if (sg_ret::ok != worker->configure_target_layer(mode)) {
 		Dialog::error(QObject::tr("Failed to prepare acquiring of data"), nullptr); /* TODO_LATER: test that this dialog appears correctly. */
-		return;
+		return sg_ret::err;
 	}
 	sleep(1);
 
@@ -333,7 +334,7 @@ void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode,
 	QThreadPool::globalInstance()->start(worker); /* Worker will auto-delete itself. */
 	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	return;
+	return sg_ret::ok;
 }
 
 
@@ -758,4 +759,248 @@ void AcquireContext::print_debug(const char * function, int line) const
 	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->target_trw << function << line;
 	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->gisview << function << line;
 	qDebug() << SG_PREFIX_I << "@@@@@@";
+}
+
+
+
+
+sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
+{
+	if (nullptr == this->m_existing_trw) {
+		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but existing TRW is not set";
+		return sg_ret::err;
+	}
+	Layer * parent = this->m_existing_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
+
+	AcquireContext acquire_context(this->m_window, this->m_gisview, parent, this->m_existing_trw);
+	return Acquire::acquire_from_source(data_source, DataSourceMode::AddToLayer, acquire_context);
+}
+
+
+
+sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent)
+{
+	AcquireContext acquire_context(this->m_window, this->m_gisview, parent, nullptr);
+	return Acquire::acquire_from_source(data_source, DataSourceMode::CreateNewLayer, acquire_context);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceGPS(), parent_layer);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceFile(), parent_layer);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceGeoJSON(), parent_layer);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceRouting(), parent_layer);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceOSMTraces(), parent_layer);
+}
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceOSMMyTraces(), parent_layer);
+}
+
+
+
+
+#ifdef VIK_CONFIG_GEOCACHES
+void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
+{
+	if (!DataSourceGeoCache::have_programs()) {
+		return;
+	}
+
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()), parent_layer);
+}
+#endif
+
+
+
+
+#ifdef VIK_CONFIG_GEOTAG
+void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceGeoTag(), parent_layer);
+}
+#endif
+
+
+
+
+#ifdef VIK_CONFIG_GEONAMES
+void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceWikipedia(), parent_layer);
+}
+#endif
+
+
+
+
+void LayerTRWImporter::import_into_new_layer_from_url_cb(void)
+{
+	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	this->import_into_new_layer(new DataSourceURL(), parent_layer);
+}
+
+
+
+
+/*
+ * Import into existing TRW Layer straight from GPS Device.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_gps_cb(void)
+{
+	this->import_into_existing_layer(new DataSourceGPS());
+}
+
+
+
+
+/*
+ * Import into existing TRW Layer from Directions.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_routing_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceRouting());
+}
+
+
+
+
+/*
+ * Import into existing TRW Layer from an entered URL.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_url_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceURL());
+}
+
+
+
+
+/*
+ * Import into existing TRW Layer from OSM.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_osm_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceOSMTraces());
+}
+
+
+
+
+/**
+ * Import into existing TRW Layer from OSM for 'My' Traces.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_osm_my_traces_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceOSMMyTraces());
+}
+
+
+
+
+#ifdef VIK_CONFIG_GEOCACHES
+/*
+ * Import into existing TRW Layer from Geocaching.com
+ */
+void LayerTRWImporter::import_into_existing_layer_from_geocache_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
+}
+#endif
+
+
+
+
+#ifdef VIK_CONFIG_GEOTAG
+/*
+ * Import into existing TRW Layer from images.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_geotagged_images_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceGeoTag());
+
+#ifdef K_TODO_LATER /* Re-implement/re-enable. */
+	/* Re-generate thumbnails as they may have changed.
+	   TODO_MAYBE: move this somewhere else, where we are sure that the acquisition has been completed? */
+	this->has_missing_thumbnails = true;
+	this->generate_missing_thumbnails();
+#endif
+}
+#endif
+
+
+
+
+/*
+ * Import into existing TRW Layer from any GPS Babel supported file.
+ */
+void LayerTRWImporter::import_into_existing_layer_from_file_cb(void) /* Slot. */
+{
+	this->import_into_existing_layer(new DataSourceFile());
+}
+
+
+
+
+void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
+{
+	Geonames::create_wikipedia_waypoints(this->m_existing_trw, this->m_gisview->get_bbox(), this->m_window);
+
+	this->m_existing_trw->waypoints.recalculate_bbox();
+	this->m_existing_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
+}
+
+
+
+
+void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
+{
+	Geonames::create_wikipedia_waypoints(this->m_existing_trw, this->m_existing_trw->get_bbox(), this->m_window);
+
+	this->m_existing_trw->waypoints.recalculate_bbox();
+	this->m_existing_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }
