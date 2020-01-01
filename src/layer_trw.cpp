@@ -1769,15 +1769,6 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::import_into_this_item(DataSource * data_source)
-{
-	LayerTRWImporter importer(this->get_window(), this->get_window()->get_main_gis_view(), this);
-	return importer.import_into_existing_layer(data_source);
-}
-
-
-
-
 /**
  * If data->tree is defined that this will upload just that track.
  */

@@ -312,7 +312,6 @@ HEADERS += window.h \
     statusbar.h \
     modules.h \
     layer_trw_import.h \
-    layer_trw_import_menu.h \
     babel.h \
     babel_dialog.h \
     variant.h \

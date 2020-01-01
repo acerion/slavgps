@@ -40,7 +40,6 @@
 #include "external_tools.h"
 #include "layer_trw.h"
 #include "layer_trw_import.h"
-#include "layer_trw_import_menu.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_track_internal.h"
 #include "layers_panel.h"
@@ -79,6 +78,11 @@ extern bool have_geojson_export;
 sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 {
 	QAction * qa = NULL;
+	if (nullptr == this->layer_trw_importer) {
+		Layer * parent_layer = this->get_owning_layer();
+		this->layer_trw_importer = new LayerTRWImporter(this->get_window(), ThisApp::get_main_gis_view(), parent_layer);
+	}
+
 
 	menu.addSeparator();
 
@@ -178,9 +182,6 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 	QMenu * import_submenu = menu.addMenu(QIcon::fromTheme("go-down"), QObject::tr("&Import into this layer"));
-	if (nullptr == this->layer_trw_importer) {
-		this->layer_trw_importer = new LayerTRWImporter(this->get_window(), ThisApp::get_main_gis_view(), this);
-	}
 	this->layer_trw_importer->add_import_into_existing_layer_submenu(*import_submenu);
 
 
@@ -221,20 +222,9 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 
+	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("TODO - icon"), QObject::tr("&Filter"));
+	this->layer_trw_importer->add_babel_filters_for_layer_submenu(*filter_submenu);
 
-	Acquire::set_context(this->get_window(), ThisApp::get_main_gis_view(), (Layer *) ThisApp::get_layers_panel()->get_top_layer(), (LayerTRW *) ThisApp::get_layers_panel()->get_selected_layer());
-	Acquire::set_target(this, NULL);
-
-
-	QMenu * submenu = Acquire::create_bfilter_layer_menu(&menu);
-	if (submenu) {
-		menu.addMenu(submenu);
-	}
-
-	submenu = Acquire::create_bfilter_layer_track_menu(&menu);
-	if (submenu) {
-		menu.addMenu(submenu);
-	}
 
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks and Routes List..."));

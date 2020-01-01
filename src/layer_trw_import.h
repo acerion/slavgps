@@ -154,15 +154,12 @@ namespace SlavGPS {
 		static void set_context(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 
-		static QMenu * create_bfilter_layer_menu(QWidget * parent);
-		static QMenu * create_bfilter_layer_track_menu(QWidget * parent);
-		static QMenu * create_bfilter_track_menu(QWidget * parent);
+		static QMenu * create_babel_filter_track_menu(QWidget * parent);
 
-		static void set_bfilter_track(Track * trk);
+		static void set_babel_filter_track(Track * trk);
 
 	private:
-		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type, QWidget * parent);
-		static sg_ret register_bfilter(DataSource * bfilter);
+		static sg_ret register_babel_filter(DataSource * bfilter);
 	};
 
 
@@ -199,18 +196,33 @@ namespace SlavGPS {
 	class LayerTRWImporter : public QObject {
 		Q_OBJECT
 	public:
-		/**
-		   @param existing_trw needs to be specified in places
-		   that want to import into existing TRW layer.
-		*/
-		LayerTRWImporter(Window * window, GisViewport * gisview, LayerTRW * existing_trw = nullptr)
-			: m_window(window), m_gisview(gisview), m_existing_trw(existing_trw) {}
+		/* For importing into new TRW layer. The new TRW layer
+		   will be created under given @param parent_layer. */
+		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer);
+
+		/* For importing into existing TRW layer. Parent layer
+		   of the existing TRW layer is specified with @param
+		   parent_layer. */
+		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw);
+
+		/* For places that do Babel filtering. Parent layer of
+		   the existing TRW layer is specified with @param
+		   parent_layer. Track used for filtering is specified
+		   with @param babel_filter_track. */
+		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw, Track * babel_filter_trk);
 
 		sg_ret import_into_new_layer(DataSource * data_source, Layer * parent_layer);
 		sg_ret import_into_existing_layer(DataSource * data_source);
 
 		sg_ret add_import_into_new_layer_submenu(QMenu & submenu);
 		sg_ret add_import_into_existing_layer_submenu(QMenu & submenu);
+
+		/* Add 'filter' entries to context menu for TRW layer. */
+		sg_ret add_babel_filters_for_layer_submenu(QMenu & submenu);
+		/* Add 'filter' entries to context menu for TRW track. */
+		sg_ret add_babel_filters_for_track_submenu(QMenu & submenu);
+
+		int create_babel_filter_menu(QMenu & menu, DataSourceInputType filter_type);
 
 
 	public slots:
@@ -255,7 +267,9 @@ namespace SlavGPS {
 	private:
 		Window * m_window = nullptr;
 		GisViewport * m_gisview = nullptr;
+		Layer * m_parent_layer = nullptr;
 		LayerTRW * m_existing_trw = nullptr;
+		Track * m_babel_filter_trk = nullptr;
 	};
 
 

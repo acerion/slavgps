@@ -1922,25 +1922,11 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
 
-	/* Currently filter with functions all use shellcommands and thus don't work in Windows. */
-#ifndef WINDOWS
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("Use with &Filter"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_filter_cb()));
-#endif
 
-	/* ATM This function is only available via the layers panel, due to needing a panel. */
-	if (ThisApp::get_layers_panel()) {
-
-		Acquire::set_context(ThisApp::get_main_window(),
-				     ThisApp::get_main_gis_view(),
-				     (Layer *) ThisApp::get_layers_panel()->get_top_layer(),
-				     (LayerTRW *) ThisApp::get_layers_panel()->get_selected_layer());
-		Acquire::set_target(parent_layer_, this);
-		QMenu * submenu = Acquire::create_bfilter_track_menu(&menu);
-		if (submenu) {
-			menu.addMenu(submenu);
-		}
-	}
+	QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Filter"));
+	parent_layer_->layer_trw_importer->add_babel_filters_for_track_submenu(*goto_submenu);
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = menu.addAction(tr("Geotag &Images..."));
@@ -2987,9 +2973,9 @@ void Track::google_route_webpage_cb(void)
 
 
 #ifndef WINDOWS
-void Track::track_use_with_bfilter_cb(void)
+void Track::track_use_with_babel_filter_cb(void)
 {
-	Acquire::set_bfilter_track(this);
+	Acquire::set_babel_filter_track(this);
 }
 #endif
 

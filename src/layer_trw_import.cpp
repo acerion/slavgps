@@ -72,9 +72,9 @@ extern Babel babel;
 
 
 
-static std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_bfilters;
-static Track * bfilter_track = NULL;
-static AcquireContext * g_acquire_context = NULL;
+std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
+Track * g_babel_filter_track = NULL;
+AcquireContext * g_acquire_context = NULL;
 
 
 
@@ -351,12 +351,12 @@ void AcquireContext::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 
-	QVariant property = qa->property("property_bfilter_id");
+	QVariant property = qa->property("property_babel_filter_id");
 	const SGObjectTypeID filter_id = property.value<SGObjectTypeID>();
-	qDebug() << SG_PREFIX_I << "Callback called for bfilter" << filter_id;
+	qDebug() << SG_PREFIX_I << "Callback called for babel filter" << filter_id;
 
-	auto iter = g_bfilters.find(filter_id);
-	if (iter == g_bfilters.end()) {
+	auto iter = g_babel_filters.find(filter_id);
+	if (iter == g_babel_filters.end()) {
 		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << filter_id;
 		return;
 	}
@@ -369,100 +369,16 @@ void AcquireContext::filter_trwlayer_cb(void)
 
 
 
-QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type, QWidget * parent)
-{
-	QMenu * menu = NULL;
-
-	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
-		const SGObjectTypeID filter_id = iter->first;
-		DataSource * filter = iter->second;
-
-		if (filter->input_type != input_type) {
-			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu" << menu_label << ", type not matched";
-			continue;
-		}
-		qDebug() << SG_PREFIX_I << "Adding filter" << filter->window_title << "to menu" << menu_label;
-
-		if (!menu) { /* Do this just once, but return NULL if no filters. */
-			menu = new QMenu(menu_label, parent);
-		}
-
-		QAction * action = new QAction(filter->window_title, g_acquire_context);
-
-		/* The property will be used later to lookup a bfilter. */
-		QVariant property;
-		property.setValue(filter_id);
-		action->setProperty("property_bfilter_id", property);
-
-		QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
-		menu->addAction(action);
-	}
-
-	return menu;
-}
-
-
-
-
-/**
-   @brief Create a "Filter" sub menu intended for rightclicking on a TRW layer
-
-   @return NULL if no filters are available for a TRW layer
-   @return new menu otherwise
-*/
-QMenu * Acquire::create_bfilter_layer_menu(QWidget * parent)
-{
-	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::TRWLayer, parent);
-}
-
-
-
-
-/**
-   @brief Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter with Track "TRACKNAME"..."
-
-   @return NULL if no filters or no filter track has been set
-   @return menu otherwise
-*/
-QMenu * Acquire::create_bfilter_layer_track_menu(QWidget * parent)
-{
-	if (bfilter_track == NULL) {
-		return NULL;
-	} else {
-		g_acquire_context->target_trk = bfilter_track;
-
-		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->get_name());
-		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack, parent);
-	}
-}
-
-
-
-
-/**
-   @brief Create a "Filter" sub menu intended for rightclicking on a TRW track
-
-   @return NULL if no filters are available for a TRW track
-   @return new menu otherwise
-*/
-QMenu * Acquire::create_bfilter_track_menu(QWidget * parent)
-{
-	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::Track, parent);
-}
-
-
-
-
 /**
  * Sets application-wide track to use with filter. references the track.
  */
-void Acquire::set_bfilter_track(Track * trk)
+void Acquire::set_babel_filter_track(Track * trk)
 {
-	if (bfilter_track) {
-		bfilter_track->free();
+	if (g_babel_filter_track) {
+		g_babel_filter_track->free();
 	}
 
-	bfilter_track = trk;
+	g_babel_filter_track = trk;
 	trk->ref();
 }
 
@@ -471,18 +387,15 @@ void Acquire::set_bfilter_track(Track * trk)
 
 void Acquire::init(void)
 {
-	DataSource * filter = NULL;
-
-
 	/*** Input is LayerTRW. ***/
-	Acquire::register_bfilter(new BFilterSimplify());
-	Acquire::register_bfilter(new BFilterCompress());
-	Acquire::register_bfilter(new BFilterDuplicates());
-	Acquire::register_bfilter(new BFilterManual());
+	Acquire::register_babel_filter(new BFilterSimplify());
+	Acquire::register_babel_filter(new BFilterCompress());
+	Acquire::register_babel_filter(new BFilterDuplicates());
+	Acquire::register_babel_filter(new BFilterManual());
 
 	/*** Input is a Track and a LayerTRW. ***/
-	Acquire::register_bfilter(new BFilterPolygon());
-	Acquire::register_bfilter(new BFilterExcludePolygon());
+	Acquire::register_babel_filter(new BFilterPolygon());
+	Acquire::register_babel_filter(new BFilterExcludePolygon());
 
 
 	g_acquire_context = new AcquireContext();
@@ -495,7 +408,7 @@ void Acquire::uninit(void)
 {
 	delete g_acquire_context;
 
-	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
+	for (auto iter = g_babel_filters.begin(); iter != g_babel_filters.end(); iter++) {
 		delete iter->second;
 	}
 }
@@ -503,20 +416,20 @@ void Acquire::uninit(void)
 
 
 
-sg_ret Acquire::register_bfilter(DataSource * bfilter)
+sg_ret Acquire::register_babel_filter(DataSource * bfilter)
 {
 	if (bfilter->get_source_id().is_empty()) {
 		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
 		return sg_ret::err;
 	}
 
-	auto iter = g_bfilters.find(bfilter->get_source_id());
-	if (iter != g_bfilters.end()) {
+	auto iter = g_babel_filters.find(bfilter->get_source_id());
+	if (iter != g_babel_filters.end()) {
 		qDebug() << SG_PREFIX_E << "Duplicate bfilter with type id" << bfilter->get_source_id();
 		return sg_ret::err;
 	}
 
-	g_bfilters.insert({ bfilter->get_source_id(), bfilter });
+	g_babel_filters.insert({ bfilter->get_source_id(), bfilter });
 
 	return sg_ret::err;
 }
@@ -764,23 +677,77 @@ void AcquireContext::print_debug(const char * function, int line) const
 
 
 
+LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer)
+{
+	/* Some tests to avoid mixing of function arguments. */
+	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
+		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
+	}
+
+	this->m_window = window;
+	this->m_gisview = gisview;
+	this->m_parent_layer = parent_layer;
+}
+
+
+
+
+LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw)
+{
+	/* Some tests to avoid mixing of function arguments. */
+	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
+		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
+	}
+	if (LayerKind::TRW != existing_trw->m_kind) {
+		qDebug() << SG_PREFIX_E << "'existing trw' layer has wrong kind" << existing_trw->m_kind;
+	}
+
+	this->m_window = window;
+	this->m_gisview = gisview;
+	this->m_parent_layer = parent_layer;
+	this->m_existing_trw = existing_trw;
+}
+
+
+
+
+LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw, Track * babel_filter_trk)
+{
+	/* Some tests to avoid mixing of function arguments. */
+	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
+		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
+	}
+	if (LayerKind::TRW != existing_trw->m_kind) {
+		qDebug() << SG_PREFIX_E << "'existing trw' layer has wrong kind" << existing_trw->m_kind;
+	}
+
+	this->m_window = window;
+	this->m_gisview = gisview;
+	this->m_parent_layer = parent_layer;
+	this->m_existing_trw = existing_trw;
+	this->m_babel_filter_trk = babel_filter_trk;
+}
+
+
+
 sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 {
 	if (nullptr == this->m_existing_trw) {
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but existing TRW is not set";
 		return sg_ret::err;
 	}
-	Layer * parent = this->m_existing_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
+	Layer * parent_layer = this->m_existing_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
 
-	AcquireContext acquire_context(this->m_window, this->m_gisview, parent, this->m_existing_trw);
+	AcquireContext acquire_context(this->m_window, this->m_gisview, parent_layer, this->m_existing_trw);
 	return Acquire::acquire_from_source(data_source, DataSourceMode::AddToLayer, acquire_context);
 }
 
 
 
-sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent)
+
+sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent_layer)
 {
-	AcquireContext acquire_context(this->m_window, this->m_gisview, parent, nullptr);
+	AcquireContext acquire_context(this->m_window, this->m_gisview, parent_layer, nullptr);
 	return Acquire::acquire_from_source(data_source, DataSourceMode::CreateNewLayer, acquire_context);
 }
 

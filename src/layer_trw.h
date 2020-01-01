@@ -281,12 +281,6 @@ namespace SlavGPS {
 		void sort_all();
 
 
-		/* General handler of 'import into this layer'
-		   requests.  Called by all import_from_X_cb() with
-		   specific data source. */
-		sg_ret import_into_this_item(DataSource * data_source);
-
-
 		void set_coord_mode(CoordMode mode);
 		CoordMode get_coord_mode(void) const;
 

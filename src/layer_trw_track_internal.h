@@ -531,7 +531,7 @@ namespace SlavGPS {
 #endif
 
 #ifndef WINDOWS
-		void track_use_with_bfilter_cb(void);
+		void track_use_with_babel_filter_cb(void);
 #endif
 
 		void split_by_timestamp_cb(void);

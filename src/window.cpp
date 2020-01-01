@@ -57,7 +57,6 @@
 #include "layers_panel.h"
 #include "toolbox.h"
 #include "layer_trw.h"
-#include "layer_trw_import_menu.h"
 #include "layer_aggregate.h"
 #include "layer_map.h"
 #include "ui_builder.h"
@@ -227,7 +226,7 @@ Window::Window()
 
 
 	this->create_layout();
-	this->layer_trw_importer = new LayerTRWImporter(this, this->main_gis_vp);
+	this->layer_trw_importer = new LayerTRWImporter(this, this->main_gis_vp, this->items_tree->get_top_layer());
 	this->create_actions();
 	this->toolbox = new Toolbox(this);
 	this->create_ui();
