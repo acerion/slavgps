@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013-2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,8 +73,6 @@ extern Babel babel;
 
 
 
-std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
-Track * g_babel_filter_track = NULL;
 AcquireContext * g_acquire_context = NULL;
 
 
@@ -82,17 +81,7 @@ AcquireContext * g_acquire_context = NULL;
 AcquireWorker::AcquireWorker(DataSource * new_data_source, const AcquireContext & new_acquire_context)
 {
 	this->data_source = new_data_source;
-
-
-
-	this->acquire_context.window               = new_acquire_context.window;
-	this->acquire_context.gisview              = new_acquire_context.gisview;
-	this->acquire_context.m_parent_layer       = new_acquire_context.m_parent_layer;
-	this->acquire_context.m_existing_trw_layer = new_acquire_context.m_existing_trw_layer;
-	this->acquire_context.target_trw           = new_acquire_context.target_trw;
-	this->acquire_context.target_trk           = new_acquire_context.target_trk;
-	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
-
+	this->acquire_context = new_acquire_context;
 }
 
 
@@ -112,19 +101,17 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
-		this->acquire_context.target_trw_allocated = true;
+		this->acquire_context.m_trw_allocated = true;
 		break;
 
 	case DataSourceMode::AddToLayer:
-		if (this->acquire_context.m_existing_trw_layer) {
-			/* Don't create new layer, acquire data into
-			   existing TRW layer. */
-			this->acquire_context.target_trw = this->acquire_context.m_existing_trw_layer;
-			this->acquire_context.target_trw_allocated = false;
-		} else {
+		if (nullptr == this->acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Mode is 'AddToLayer' but existing layer is NULL";
 			return sg_ret::err;
 		}
+		/* Don't create new layer, acquire data into existing
+		   TRW layer. */
+		this->acquire_context.m_trw_allocated = false;
 		break;
 
 	case DataSourceMode::AutoLayerManagement:
@@ -134,10 +121,7 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 	case DataSourceMode::ManualLayerManagement:
 		/* Don't create in acquire - as datasource will
 		   perform the necessary actions. */
-		if (this->acquire_context.m_existing_trw_layer) {
-			this->acquire_context.target_trw = this->acquire_context.m_existing_trw_layer;
-			this->acquire_context.target_trw_allocated = false;
-		} else {
+		if (nullptr == this->acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Mode is 'ManualLayerManagement' but existing layer is NULL";
 			return sg_ret::err;
 		}
@@ -148,10 +132,10 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 	};
 
 
-	if (this->acquire_context.target_trw_allocated) {
-		this->acquire_context.target_trw = new LayerTRW();
-		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.gisview->get_coord_mode());
-		this->acquire_context.target_trw->set_name(this->data_source->layer_title);
+	if (this->acquire_context.m_trw_allocated) {
+		this->acquire_context.m_trw = new LayerTRW();
+		this->acquire_context.m_trw->set_coord_mode(this->acquire_context.m_gisview->get_coord_mode());
+		this->acquire_context.m_trw->set_name(this->data_source->layer_title);
 	}
 
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
@@ -169,26 +153,26 @@ void AcquireWorker::finalize_after_success(void)
 {
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (this->acquire_context.target_trw_allocated) {
+	if (this->acquire_context.m_trw_allocated) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
-		if (NULL == this->acquire_context.target_trw) {
+		if (nullptr == this->acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
 			return;
 		}
 
-		if (this->acquire_context.target_trw->is_empty()) {
+		if (this->acquire_context.m_trw->is_empty()) {
 			/* Acquire process ended without errors, but
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			if (this->acquire_context.target_trw->is_in_tree()) {
+			if (this->acquire_context.m_trw->is_in_tree()) {
 				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
 			}
 
 			qDebug() << SG_PREFIX_I << "Will now delete target trw";
-			delete this->acquire_context.target_trw;
-			this->acquire_context.target_trw = NULL;
+			delete this->acquire_context.m_trw;
+			this->acquire_context.m_trw = nullptr;
 			return;
 		}
 
@@ -197,11 +181,11 @@ void AcquireWorker::finalize_after_success(void)
 	}
 
 
-	this->acquire_context.target_trw->attach_children_to_tree();
-	this->acquire_context.target_trw->post_read(this->acquire_context.gisview, true);
+	this->acquire_context.m_trw->attach_children_to_tree();
+	this->acquire_context.m_trw->post_read(this->acquire_context.m_gisview, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->data_source && this->data_source->autoview) {
-		this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.gisview);
+		this->acquire_context.m_trw->move_viewport_to_show_all(this->acquire_context.m_gisview);
 		// this->acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
@@ -215,8 +199,8 @@ void AcquireWorker::finalize_after_failure(void)
 {
 	qDebug() << SG_PREFIX_I;
 
-	if (this->acquire_context.target_trw_allocated) {
-		delete this->acquire_context.target_trw;
+	if (this->acquire_context.m_trw_allocated) {
+		delete this->acquire_context.m_trw;
 	}
 
 	return;
@@ -235,7 +219,7 @@ void AcquireWorker::run(void)
 
 
 	this->acquire_is_running = true;
-	const LoadStatus acquire_result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, &this->acquire_context, this->progress_dialog);
+	const LoadStatus acquire_result = this->data_source->acquire_into_layer(this->acquire_context.m_trw, &this->acquire_context, this->progress_dialog);
 	this->acquire_is_running = false;
 
 
@@ -347,46 +331,20 @@ AcquireContext::AcquireContext()
 
 
 
-void LayerTRWImporter::apply_babel_filter_cb(void)
+AcquireContext & AcquireContext::operator=(const AcquireContext & rhs)
 {
-	QAction * qa = (QAction *) QObject::sender();
-
-	QVariant property = qa->property("property_babel_filter_id");
-	const SGObjectTypeID filter_id = property.value<SGObjectTypeID>();
-	qDebug() << SG_PREFIX_I << "Callback called for babel filter" << filter_id;
-
-	auto iter = g_babel_filters.find(filter_id);
-	if (iter == g_babel_filters.end()) {
-		qDebug() << SG_PREFIX_E << "Can't find babel filter with id" << filter_id;
-		return;
+	if (this == &rhs) {
+		return *this;
 	}
 
-	AcquireContext acquire_context;
-	acquire_context.window               = this->m_window;
-	acquire_context.gisview              = this->m_gisview;
-	acquire_context.m_parent_layer       = this->m_parent_layer;
-	acquire_context.m_existing_trw_layer = this->m_existing_trw;
-	acquire_context.target_trk           = this->m_babel_filter_trk;
+	this->m_window        = rhs.m_window;
+	this->m_gisview       = rhs.m_gisview;
+	this->m_parent_layer  = rhs.m_parent_layer;
+	this->m_trw           = rhs.m_trw;
+	this->m_trk           = rhs.m_trk;
+	this->m_trw_allocated = rhs.m_trw_allocated;
 
-	Acquire::acquire_from_source(iter->second, iter->second->mode, acquire_context);
-
-	return;
-}
-
-
-
-
-/**
- * Sets application-wide track to use with filter. references the track.
- */
-void Acquire::set_babel_filter_track(Track * trk)
-{
-	if (g_babel_filter_track) {
-		g_babel_filter_track->free();
-	}
-
-	g_babel_filter_track = trk;
-	trk->ref();
+	return *this;
 }
 
 
@@ -394,17 +352,6 @@ void Acquire::set_babel_filter_track(Track * trk)
 
 void Acquire::init(void)
 {
-	/*** Input is LayerTRW. ***/
-	Acquire::register_babel_filter(new BFilterSimplify());
-	Acquire::register_babel_filter(new BFilterCompress());
-	Acquire::register_babel_filter(new BFilterDuplicates());
-	Acquire::register_babel_filter(new BFilterManual());
-
-	/*** Input is a Track and a LayerTRW. ***/
-	Acquire::register_babel_filter(new BFilterPolygon());
-	Acquire::register_babel_filter(new BFilterExcludePolygon());
-
-
 	g_acquire_context = new AcquireContext();
 }
 
@@ -414,32 +361,6 @@ void Acquire::init(void)
 void Acquire::uninit(void)
 {
 	delete g_acquire_context;
-
-	for (auto iter = g_babel_filters.begin(); iter != g_babel_filters.end(); iter++) {
-		delete iter->second;
-	}
-}
-
-
-
-
-sg_ret Acquire::register_babel_filter(DataSource * bfilter)
-{
-	if (bfilter->get_source_id().is_empty()) {
-		qDebug() << SG_PREFIX_E << "bfilter with empty type id";
-		return sg_ret::err;
-	}
-
-	auto iter = g_babel_filters.find(bfilter->get_source_id());
-	if (iter != g_babel_filters.end()) {
-		qDebug() << SG_PREFIX_E << "Duplicate bfilter with type id" << bfilter->get_source_id();
-		return sg_ret::err;
-	}
-
-	qDebug() << SG_PREFIX_I << "Registering babel filter type id" << bfilter->get_source_id();
-	g_babel_filters.insert({ bfilter->get_source_id(), bfilter });
-
-	return sg_ret::err;
 }
 
 
@@ -449,10 +370,10 @@ void Acquire::set_context(Window * new_window, GisViewport * new_gisview, Layer 
 {
 	qDebug() << SG_PREFIX_I;
 
-	g_acquire_context->window = new_window;
-	g_acquire_context->gisview = new_gisview;
+	g_acquire_context->m_window = new_window;
+	g_acquire_context->m_gisview = new_gisview;
 	g_acquire_context->m_parent_layer = parent_layer;
-	g_acquire_context->m_existing_trw_layer = existing_trw_layer;
+	g_acquire_context->m_trw = existing_trw_layer;
 }
 
 
@@ -462,8 +383,8 @@ void Acquire::set_target(LayerTRW * trw, Track * trk)
 {
 	qDebug() << SG_PREFIX_I;
 
-	g_acquire_context->target_trw = trw;
-	g_acquire_context->target_trk = trk;
+	g_acquire_context->m_trw = trw;
+	g_acquire_context->m_trk = trk;
 }
 
 
@@ -677,8 +598,8 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 void AcquireContext::print_debug(const char * function, int line) const
 {
 	qDebug() << SG_PREFIX_I << "@@@@@@";
-	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->target_trw << function << line;
-	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->gisview << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->m_trw << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->m_gisview << function << line;
 	qDebug() << SG_PREFIX_I << "@@@@@@";
 }
 
@@ -687,14 +608,14 @@ void AcquireContext::print_debug(const char * function, int line) const
 
 LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer)
 {
-	/* Some tests to avoid mixing of function arguments. */
+	/* Some tests to detect mixing of function arguments. */
 	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
 		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
 	}
 
-	this->m_window = window;
-	this->m_gisview = gisview;
-	this->m_parent_layer = parent_layer;
+	this->ctx.m_window = window;
+	this->ctx.m_gisview = gisview;
+	this->ctx.m_parent_layer = parent_layer;
 }
 
 
@@ -702,7 +623,7 @@ LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer
 
 LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw)
 {
-	/* Some tests to avoid mixing of function arguments. */
+	/* Some tests to detect mixing of function arguments. */
 	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
 		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
 	}
@@ -710,43 +631,25 @@ LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer
 		qDebug() << SG_PREFIX_E << "'existing trw' layer has wrong kind" << existing_trw->m_kind;
 	}
 
-	this->m_window = window;
-	this->m_gisview = gisview;
-	this->m_parent_layer = parent_layer;
-	this->m_existing_trw = existing_trw;
+	this->ctx.m_window = window;
+	this->ctx.m_gisview = gisview;
+	this->ctx.m_parent_layer = parent_layer;
+	this->ctx.m_trw = existing_trw;
 }
 
-
-
-
-LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw, Track * babel_filter_trk)
-{
-	/* Some tests to avoid mixing of function arguments. */
-	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
-		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
-	}
-	if (LayerKind::TRW != existing_trw->m_kind) {
-		qDebug() << SG_PREFIX_E << "'existing trw' layer has wrong kind" << existing_trw->m_kind;
-	}
-
-	this->m_window = window;
-	this->m_gisview = gisview;
-	this->m_parent_layer = parent_layer;
-	this->m_existing_trw = existing_trw;
-	this->m_babel_filter_trk = babel_filter_trk;
-}
 
 
 
 sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 {
-	if (nullptr == this->m_existing_trw) {
+	if (nullptr == this->ctx.m_trw) {
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but existing TRW is not set";
 		return sg_ret::err;
 	}
-	Layer * parent_layer = this->m_existing_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
+	Layer * parent_layer = this->ctx.m_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
 
-	AcquireContext acquire_context(this->m_window, this->m_gisview, parent_layer, this->m_existing_trw);
+	AcquireContext acquire_context;
+	acquire_context = this->ctx;
 	return Acquire::acquire_from_source(data_source, DataSourceMode::AddToLayer, acquire_context);
 }
 
@@ -755,7 +658,8 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 
 sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent_layer)
 {
-	AcquireContext acquire_context(this->m_window, this->m_gisview, parent_layer, nullptr);
+	AcquireContext acquire_context;
+	acquire_context = this->ctx;
 	return Acquire::acquire_from_source(data_source, DataSourceMode::CreateNewLayer, acquire_context);
 }
 
@@ -764,7 +668,7 @@ sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer *
 
 void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceGPS(), parent_layer);
 }
 
@@ -773,7 +677,7 @@ void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceFile(), parent_layer);
 }
 
@@ -782,7 +686,7 @@ void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceGeoJSON(), parent_layer);
 }
 
@@ -791,7 +695,7 @@ void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceRouting(), parent_layer);
 }
 
@@ -800,7 +704,7 @@ void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceOSMTraces(), parent_layer);
 }
 
@@ -809,7 +713,7 @@ void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceOSMMyTraces(), parent_layer);
 }
 
@@ -823,7 +727,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 		return;
 	}
 
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()), parent_layer);
 }
 #endif
@@ -834,7 +738,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceGeoTag(), parent_layer);
 }
 #endif
@@ -845,7 +749,7 @@ void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceWikipedia(), parent_layer);
 }
 #endif
@@ -855,7 +759,7 @@ void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_url_cb(void)
 {
-	Layer * parent_layer = this->m_window->items_tree->get_top_layer();
+	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
 	this->import_into_new_layer(new DataSourceURL(), parent_layer);
 }
 
@@ -963,10 +867,10 @@ void LayerTRWImporter::import_into_existing_layer_from_file_cb(void) /* Slot. */
 
 void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	Geonames::create_wikipedia_waypoints(this->m_existing_trw, this->m_gisview->get_bbox(), this->m_window);
+	Geonames::create_wikipedia_waypoints(this->ctx.m_trw, this->ctx.m_gisview->get_bbox(), this->ctx.m_window);
 
-	this->m_existing_trw->waypoints.recalculate_bbox();
-	this->m_existing_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
+	this->ctx.m_trw->waypoints.recalculate_bbox();
+	this->ctx.m_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }
 
 
@@ -974,8 +878,8 @@ void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewp
 
 void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	Geonames::create_wikipedia_waypoints(this->m_existing_trw, this->m_existing_trw->get_bbox(), this->m_window);
+	Geonames::create_wikipedia_waypoints(this->ctx.m_trw, this->ctx.m_trw->get_bbox(), this->ctx.m_window);
 
-	this->m_existing_trw->waypoints.recalculate_bbox();
-	this->m_existing_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
+	this->ctx.m_trw->waypoints.recalculate_bbox();
+	this->ctx.m_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }

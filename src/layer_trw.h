@@ -68,6 +68,7 @@ namespace SlavGPS {
 	class TpPropertiesDialog;
 	class DataSource;
 	class LayerTRWImporter;
+	class LayerTRWBabelFilter;
 	enum class TreeViewSortOrder;
 	enum class LayerDataReadStatus;
 	enum class SGFileType;
@@ -364,6 +365,9 @@ namespace SlavGPS {
 		/* For importing of track/route/waypoint data into this
 		   TRW layer. */
 		LayerTRWImporter * layer_trw_importer = nullptr;
+
+		/* For filtering functionality provided by gpsbabel. */
+		LayerTRWBabelFilter * layer_trw_filter = nullptr;
 
 		LayerTRWPainter * painter = NULL;
 

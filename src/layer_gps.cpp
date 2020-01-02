@@ -1020,7 +1020,7 @@ void GPSSession::run(void)
 		importer->set_input("", this->transfer.serial_port); /* TODO_LATER: type of input? */
 
 		acquire_context.m_parent_layer = this->trw->get_owning_layer();
-		acquire_context.target_trw = this->trw;
+		acquire_context.m_trw = this->trw;
 		importer->set_acquire_context(&acquire_context);
 		importer->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
@@ -1031,8 +1031,8 @@ void GPSSession::run(void)
 		exporter->set_output("", this->transfer.serial_port); /* TODO_LATER: type of output? */
 
 		acquire_context.m_parent_layer = this->trw->get_owning_layer();
-		acquire_context.target_trw = this->trw;
-		acquire_context.target_trk = this->trk;
+		acquire_context.m_trw = this->trw;
+		acquire_context.m_trk = this->trk;
 		exporter->set_acquire_context(&acquire_context);
 		exporter->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 

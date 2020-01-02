@@ -28,6 +28,7 @@
 
 
 
+#include "layer_trw_babel_filter.h"
 #include "layer_trw_import.h"
 #include "window.h"
 #include "layer.h"
@@ -242,6 +243,7 @@ int main(int argc, char ** argv)
 
 
 	Acquire::init();
+	LayerTRWBabelFilter::init();
 
 	/* Ask for confirmation of default settings on first run. */
 	SGUtils::set_auto_features_on_first_run();
@@ -289,6 +291,7 @@ int main(int argc, char ** argv)
 	Download::uninit();
 	TZLookup::uninit();
 	Routing::uninit();
+	LayerTRWBabelFilter::uninit();
 
 
 	/* Clean up any temporary files. */

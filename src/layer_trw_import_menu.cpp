@@ -42,8 +42,6 @@ using namespace SlavGPS;
 
 
 
-extern std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
-extern Track * g_babel_filter_track;
 extern AcquireContext * g_acquire_context;
 
 
@@ -51,7 +49,7 @@ extern AcquireContext * g_acquire_context;
 
 sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 {
-	if (nullptr == this->m_existing_trw) {
+	if (nullptr == this->ctx.m_trw) {
 		qDebug() << SG_PREFIX_E << "Trying to add submenu items when existing TRW is not set";
 		return sg_ret::err;
 	}
@@ -102,7 +100,7 @@ sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_file_cb()));
 	qa->setToolTip(QObject::tr("From &File (With GPSBabel)..."));
 
-	ExternalToolDataSource::add_menu_items(submenu, this->m_existing_trw->get_window()->get_main_gis_view());
+	ExternalToolDataSource::add_menu_items(submenu, this->ctx.m_trw->get_window()->get_main_gis_view());
 
 	return sg_ret::ok;
 }
@@ -163,81 +161,7 @@ sg_ret LayerTRWImporter::add_import_into_new_layer_submenu(QMenu & submenu)
 	qa->setToolTip(QObject::tr("Get a file from URL"));
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_url_cb(void)));
 
-	ExternalToolDataSource::add_menu_items(submenu, this->m_gisview);
+	ExternalToolDataSource::add_menu_items(submenu, this->ctx.m_gisview);
 
 	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRWImporter::add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type)
-{
-	for (auto iter = g_babel_filters.begin(); iter != g_babel_filters.end(); iter++) {
-		const SGObjectTypeID filter_id = iter->first;
-		DataSource * filter = iter->second;
-
-		if (filter->input_type != filter_type) {
-			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu, type not matched";
-			continue;
-		}
-		qDebug() << SG_PREFIX_I << "Adding filter" << filter->window_title << "to menu";
-
-		QAction * action = new QAction(filter->window_title);
-
-		/* The property will be used later to lookup a bfilter. */
-		QVariant property;
-		property.setValue(filter_id);
-		action->setProperty("property_babel_filter_id", property);
-
-		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (apply_babel_filter_cb(void)));
-		menu.addAction(action);
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRWImporter::add_babel_filters_for_layer_submenu(QMenu & submenu)
-{
-	Acquire::set_context(this->m_window, this->m_gisview, this->m_parent_layer, this->m_existing_trw);
-	Acquire::set_target(this->m_existing_trw, nullptr);
-
-	this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayer);
-
-	g_acquire_context->target_trk = g_babel_filter_track;
-	if (nullptr == g_babel_filter_track) {
-		/* Build empty submenu to suggest to user that it's
-		   possible to select a track and do filtering with
-		   the track. TODO_LATER: make the item inactive. */
-		const QString menu_label = QObject::tr("Filter with selected track");
-		submenu.addMenu(menu_label);
-	} else {
-		/* Create a sub menu intended for rightclicking on a
-		   TRWLayer's menu called "Filter with Track
-		   "TRACKNAME"..." */
-		const QString menu_label = QObject::tr("Filter with %1").arg(g_babel_filter_track->get_name());
-		QMenu * filter_with_submenu = submenu.addMenu(menu_label);
-		if (sg_ret::ok != this->add_babel_filters_to_submenu(*filter_with_submenu, DataSourceInputType::TRWLayerWithTrack)) {
-			return sg_ret::err;
-		}
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
-/**
-   @brief Create a "Filter" sub menu intended for rightclicking on a TRW track
-*/
-sg_ret LayerTRWImporter::add_babel_filters_for_track_submenu(QMenu & submenu)
-{
-	Acquire::set_context(this->m_window, this->m_gisview, this->m_parent_layer, this->m_existing_trw);
-	Acquire::set_target(this->m_existing_trw, this->m_babel_filter_trk);
-
-	return this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayerWithTrack);
 }

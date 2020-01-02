@@ -53,8 +53,8 @@ LoadStatus DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext * 
 	qDebug() << SG_PREFIX_I;
 
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->gisview;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->m_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->m_gisview;
 
 	const LoadStatus result = this->acquire_options->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);
 

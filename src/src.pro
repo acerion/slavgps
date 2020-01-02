@@ -13,6 +13,8 @@ SOURCES += main.cpp \
     mem_cache.cpp \
     tree_item_list.cpp \
     ruler.cpp \
+    layer_trw_babel_filter.cpp \
+    layer_trw_babel_filter_menu.cpp \
     layer_trw_import.cpp \
     layer_trw_import_menu.cpp \
     window.cpp \
@@ -311,6 +313,7 @@ HEADERS += window.h \
     application_state.h \
     statusbar.h \
     modules.h \
+    layer_trw_babel_filter.h \
     layer_trw_import.h \
     babel.h \
     babel_dialog.h \

@@ -50,7 +50,6 @@ namespace SlavGPS {
 	class GisViewport;
 	class Window;
 	class LayerTRW;
-	class LayerAggregate;
 	class Track;
 	class DataSource;
 	class AcquireWorker;
@@ -84,24 +83,24 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireContext();
-		AcquireContext(Window * new_window, GisViewport * new_gisview, Layer * parent_layer, LayerTRW * existing_trw_layer)
-			: window(new_window), gisview(new_gisview), m_parent_layer(parent_layer), m_existing_trw_layer(existing_trw_layer) {};
+		AcquireContext(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw, Track * trk)
+			: m_window(window), m_gisview(gisview), m_parent_layer(parent_layer), m_trw(trw), m_trk(trk) {};
 
 		void print_debug(const char * function, int line) const;
 
-		Window * window = nullptr;
-		GisViewport * gisview = nullptr;
-		Layer * m_parent_layer = nullptr; /* Maybe Aggregate layer, or maybe GPS layer. */
-		LayerTRW * m_existing_trw_layer = nullptr;
+		AcquireContext & operator=(const AcquireContext & rhs);
 
-
-		LayerTRW * target_trw = nullptr;
-		Track * target_trk = nullptr;
+		Window * m_window = nullptr;
+		GisViewport * m_gisview = nullptr;
+		Layer * m_parent_layer = nullptr; /* Parent layer of TRW layer. It may be Aggregate layer or GPS layer. */
+		LayerTRW * m_trw = nullptr;
+		Track * m_trk = nullptr;
 
 		/* Whether a target trw layer has been freshly
 		   created, or it already existed in tree view. */
-		bool target_trw_allocated = false;
+		bool m_trw_allocated = false;
 	};
+
 
 
 
@@ -150,13 +149,6 @@ namespace SlavGPS {
 		static sg_ret acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
 		static void set_context(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
-
-		static QMenu * create_babel_filter_track_menu(QWidget * parent);
-
-		static void set_babel_filter_track(Track * trk);
-
-	private:
-		static sg_ret register_babel_filter(DataSource * bfilter);
 	};
 
 
@@ -200,13 +192,7 @@ namespace SlavGPS {
 		/* For importing into existing TRW layer. Parent layer
 		   of the existing TRW layer is specified with @param
 		   parent_layer. */
-		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw);
-
-		/* For places that do Babel filtering. Parent layer of
-		   the existing TRW layer is specified with @param
-		   parent_layer. Track used for filtering is specified
-		   with @param babel_filter_track. */
-		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw, Track * babel_filter_trk);
+		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw);
 
 		sg_ret import_into_new_layer(DataSource * data_source, Layer * parent_layer);
 		sg_ret import_into_existing_layer(DataSource * data_source);
@@ -214,13 +200,7 @@ namespace SlavGPS {
 		sg_ret add_import_into_new_layer_submenu(QMenu & submenu);
 		sg_ret add_import_into_existing_layer_submenu(QMenu & submenu);
 
-		/* Add 'filter' entries to context menu for TRW layer. */
-		sg_ret add_babel_filters_for_layer_submenu(QMenu & submenu);
-		/* Add 'filter' entries to context menu for TRW track. */
-		sg_ret add_babel_filters_for_track_submenu(QMenu & submenu);
-
-		sg_ret add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type);
-
+		AcquireContext ctx;
 
 	public slots:
 		void import_into_new_layer_from_gps_cb(void);
@@ -258,16 +238,6 @@ namespace SlavGPS {
 		void import_into_existing_layer_from_geotagged_images_cb(void);
 #endif
 		void import_into_existing_layer_from_file_cb();
-
-
-		void apply_babel_filter_cb(void);
-
-	private:
-		Window * m_window = nullptr;
-		GisViewport * m_gisview = nullptr;
-		Layer * m_parent_layer = nullptr;
-		LayerTRW * m_existing_trw = nullptr;
-		Track * m_babel_filter_trk = nullptr;
 	};
 
 

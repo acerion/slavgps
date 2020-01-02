@@ -39,6 +39,7 @@
 #include "external_tool_datasources.h"
 #include "external_tools.h"
 #include "layer_trw.h"
+#include "layer_trw_babel_filter.h"
 #include "layer_trw_import.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_track_internal.h"
@@ -229,7 +230,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 
 
 	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("TODO - icon"), QObject::tr("&Filter"));
-	this->layer_trw_importer->add_babel_filters_for_layer_submenu(*filter_submenu);
+	this->layer_trw_filter->add_babel_filters_for_layer_submenu(*filter_submenu); /* TODO: where do we create this object? */
 
 
 

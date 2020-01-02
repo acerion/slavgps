@@ -206,7 +206,7 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 	switch (existing_layer->m_kind) {
 	case LayerKind::TRW:
 		if (parent->m_kind == LayerKind::Aggregate || parent->m_kind == LayerKind::GPS) {
-			AcquireContext acquire_context(gisview->get_window(), gisview, parent, (LayerTRW *) existing_layer);
+			AcquireContext acquire_context(gisview->get_window(), gisview, parent, (LayerTRW *) existing_layer, nullptr);
 			Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
 		}
 		break;

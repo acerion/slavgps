@@ -46,15 +46,19 @@
 #include "util.h"
 #include "osm_traces.h"
 #include "layer_aggregate.h"
+
+#include "layer_trw.h"
+#include "layer_trw_babel_filter.h"
+#include "layer_trw_geotag.h"
+#include "layer_trw_import.h"
+#include "layer_trw_menu.h"
+#include "layer_trw_painter.h"
+#include "layer_trw_tools.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_profile_dialog.h"
 #include "layer_trw_track_properties_dialog.h"
 #include "layer_trw_trackpoint_properties.h"
-#include "layer_trw_menu.h"
-#include "layer_trw.h"
-#include "layer_trw_painter.h"
-#include "layer_trw_geotag.h"
-#include "layer_trw_tools.h"
+
 #include "window.h"
 #include "dialog.h"
 #include "layers_panel.h"
@@ -64,7 +68,6 @@
 #include "preferences.h"
 #include "viewport_internal.h"
 #include "file.h"
-#include "layer_trw_import.h"
 #include "tree_item_list.h"
 #include "astro.h"
 #include "toolbox.h"
@@ -1926,7 +1929,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_filter_cb()));
 
 	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Filter"));
-	parent_layer_->layer_trw_importer->add_babel_filters_for_track_submenu(*filter_submenu);
+	parent_layer_->layer_trw_filter->add_babel_filters_for_track_submenu(*filter_submenu);
 
 #ifdef VIK_CONFIG_GEOTAG
 	qa = menu.addAction(tr("Geotag &Images..."));
@@ -2214,12 +2217,12 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 		LayerTRW * parent_trw = (LayerTRW *) this->get_owning_layer();
 		Layer * parent_layer = parent_trw->get_owning_layer();
 
-		delete parent_trw->layer_trw_importer;
-		parent_trw->layer_trw_importer = new LayerTRWImporter(parent_trw->get_window(),
-								      ThisApp::get_main_gis_view(),
-								      parent_layer,
-								      parent_trw,
-								      this);
+		delete parent_trw->layer_trw_filter;
+		parent_trw->layer_trw_filter = new LayerTRWBabelFilter(parent_trw->get_window(),
+								       ThisApp::get_main_gis_view(),
+								       parent_layer,
+								       parent_trw,
+								       this);
 	}
 
 
@@ -2985,7 +2988,7 @@ void Track::google_route_webpage_cb(void)
 
 void Track::track_use_with_babel_filter_cb(void)
 {
-	Acquire::set_babel_filter_track(this);
+	LayerTRWBabelFilter::set_babel_filter_track(this);
 }
 
 
