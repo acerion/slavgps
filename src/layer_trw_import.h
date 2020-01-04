@@ -98,7 +98,7 @@ namespace SlavGPS {
 
 		/* Whether a target trw layer has been freshly
 		   created, or it already existed in tree view. */
-		bool m_trw_allocated = false;
+		bool m_trw_is_allocated = false;
 	};
 
 
@@ -122,8 +122,8 @@ namespace SlavGPS {
 		AcquireContext acquire_context;
 
 		bool acquire_is_running = false;
-		DataSource * data_source = NULL;
-		AcquireProgressDialog * progress_dialog = NULL;
+		DataSource * data_source = nullptr;
+		AcquireProgressDialog * progress_dialog = nullptr;
 
 	signals:
 		void report_status(int status);
@@ -147,8 +147,7 @@ namespace SlavGPS {
 
 
 		static sg_ret acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
-		static void set_context(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * existing_trw_layer);
-		static void set_target(LayerTRW * trw, Track * trk);
+
 	};
 
 
@@ -176,7 +175,7 @@ namespace SlavGPS {
 		QString shell_command;     /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
 		AcquireOptions::Mode mode;
 
-		BabelProcess * babel_process = NULL;
+		BabelProcess * babel_process = nullptr;
 	};
 
 

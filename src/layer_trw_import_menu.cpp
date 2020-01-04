@@ -42,11 +42,6 @@ using namespace SlavGPS;
 
 
 
-extern AcquireContext * g_acquire_context;
-
-
-
-
 sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 {
 	if (nullptr == this->ctx.m_trw) {

@@ -24,7 +24,6 @@
 
 
 
-//#include "external_tool_datasources.h"
 #include "layer_trw.h"
 #include "layer_trw_babel_filter.h"
 #include "layer_trw_track_internal.h"
@@ -45,7 +44,7 @@ using namespace SlavGPS;
 
 extern std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
 extern Track * g_babel_filter_track;
-extern AcquireContext * g_acquire_context_b;
+
 
 
 
@@ -80,12 +79,9 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_to_submenu(QMenu & menu, DataSourc
 
 sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 {
-	Acquire::set_context(this->ctx.m_window, this->ctx.m_gisview, this->ctx.m_parent_layer, this->ctx.m_trw);
-	Acquire::set_target(this->ctx.m_trw, nullptr);
-
 	this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayer);
 
-	g_acquire_context_b->m_trk = g_babel_filter_track;
+	this->ctx.m_trk = g_babel_filter_track;
 	if (nullptr == g_babel_filter_track) {
 		/* Build empty submenu to suggest to user that it's
 		   possible to select a track and do filtering with
@@ -114,8 +110,5 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 */
 sg_ret LayerTRWBabelFilter::add_babel_filters_for_track_submenu(QMenu & submenu)
 {
-	Acquire::set_context(this->ctx.m_window, this->ctx.m_gisview, this->ctx.m_parent_layer, this->ctx.m_trw);
-	Acquire::set_target(this->ctx.m_trw, this->ctx.m_trk);
-
 	return this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayerWithTrack);
 }

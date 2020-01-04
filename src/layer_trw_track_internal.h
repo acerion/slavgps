@@ -530,9 +530,8 @@ namespace SlavGPS {
 		void google_route_webpage_cb(void);
 #endif
 
-#ifndef WINDOWS
-		void track_use_with_babel_filter_cb(void);
-#endif
+		/* Select a track to be used with gpsbabel filter. */
+		void use_with_babel_filter_cb(void);
 
 		void split_by_timestamp_cb(void);
 		void split_by_n_points_cb(void);

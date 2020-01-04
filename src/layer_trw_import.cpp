@@ -23,37 +23,26 @@
 
 
 
-#include <cassert>
-#include <vector>
-#include <map>
-
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-
-
-
 #include <QRunnable>
 #include <QThreadPool>
 
 
 
 
-#include "geonames_search.h"
-#include "layer_trw_import.h"
-#include "window.h"
-#include "viewport_internal.h"
-#include "layers_panel.h"
 #include "babel.h"
-#include "gpx.h"
+#include "datasources.h"
 #include "dialog.h"
-#include "util.h"
+#include "gpx.h"
+#include "geonames_search.h"
 #include "layer_aggregate.h"
 #include "layer_trw.h"
+#include "layer_trw_import.h"
 #include "layer_trw_track_internal.h"
-#include "datasources.h"
+#include "layers_panel.h"
+#include "util.h"
+#include "viewport_internal.h"
 #include "widget_list_selection.h"
+#include "window.h"
 
 
 
@@ -69,11 +58,6 @@ using namespace SlavGPS;
 
 
 extern Babel babel;
-
-
-
-
-AcquireContext * g_acquire_context = NULL;
 
 
 
@@ -101,7 +85,7 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
-		this->acquire_context.m_trw_allocated = true;
+		this->acquire_context.m_trw_is_allocated = true;
 		break;
 
 	case DataSourceMode::AddToLayer:
@@ -111,7 +95,7 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 		}
 		/* Don't create new layer, acquire data into existing
 		   TRW layer. */
-		this->acquire_context.m_trw_allocated = false;
+		this->acquire_context.m_trw_is_allocated = false;
 		break;
 
 	case DataSourceMode::AutoLayerManagement:
@@ -132,7 +116,7 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
 	};
 
 
-	if (this->acquire_context.m_trw_allocated) {
+	if (this->acquire_context.m_trw_is_allocated) {
 		this->acquire_context.m_trw = new LayerTRW();
 		this->acquire_context.m_trw->set_coord_mode(this->acquire_context.m_gisview->get_coord_mode());
 		this->acquire_context.m_trw->set_name(this->data_source->layer_title);
@@ -153,7 +137,7 @@ void AcquireWorker::finalize_after_success(void)
 {
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (this->acquire_context.m_trw_allocated) {
+	if (this->acquire_context.m_trw_is_allocated) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
 		if (nullptr == this->acquire_context.m_trw) {
@@ -199,7 +183,7 @@ void AcquireWorker::finalize_after_failure(void)
 {
 	qDebug() << SG_PREFIX_I;
 
-	if (this->acquire_context.m_trw_allocated) {
+	if (this->acquire_context.m_trw_is_allocated) {
 		delete this->acquire_context.m_trw;
 	}
 
@@ -252,7 +236,7 @@ sg_ret AcquireWorker::build_progress_dialog(void)
 	/* The dialog has Qt::WA_DeleteOnClose flag set. */
 	this->progress_dialog = this->data_source->create_progress_dialog(QObject::tr("Acquiring"));
 
-	if (false && NULL == this->data_source->acquire_options) {
+	if (nullptr == this->data_source->acquire_options) {
 		/* This shouldn't happen... */
 		qDebug() << SG_PREFIX_E << "Acquire options are NULL";
 
@@ -290,7 +274,7 @@ sg_ret Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mod
 		return sg_ret::err;
 	}
 	if (sg_ret::ok != worker->configure_target_layer(mode)) {
-		Dialog::error(QObject::tr("Failed to prepare acquiring of data"), nullptr); /* TODO_LATER: test that this dialog appears correctly. */
+		Dialog::error(QObject::tr("Failed to prepare importing of data"), nullptr);
 		return sg_ret::err;
 	}
 	sleep(1);
@@ -337,12 +321,12 @@ AcquireContext & AcquireContext::operator=(const AcquireContext & rhs)
 		return *this;
 	}
 
-	this->m_window        = rhs.m_window;
-	this->m_gisview       = rhs.m_gisview;
-	this->m_parent_layer  = rhs.m_parent_layer;
-	this->m_trw           = rhs.m_trw;
-	this->m_trk           = rhs.m_trk;
-	this->m_trw_allocated = rhs.m_trw_allocated;
+	this->m_window           = rhs.m_window;
+	this->m_gisview          = rhs.m_gisview;
+	this->m_parent_layer     = rhs.m_parent_layer;
+	this->m_trw              = rhs.m_trw;
+	this->m_trk              = rhs.m_trk;
+	this->m_trw_is_allocated = rhs.m_trw_is_allocated;
 
 	return *this;
 }
@@ -352,7 +336,6 @@ AcquireContext & AcquireContext::operator=(const AcquireContext & rhs)
 
 void Acquire::init(void)
 {
-	g_acquire_context = new AcquireContext();
 }
 
 
@@ -360,31 +343,6 @@ void Acquire::init(void)
 
 void Acquire::uninit(void)
 {
-	delete g_acquire_context;
-}
-
-
-
-
-void Acquire::set_context(Window * new_window, GisViewport * new_gisview, Layer * parent_layer, LayerTRW * existing_trw_layer)
-{
-	qDebug() << SG_PREFIX_I;
-
-	g_acquire_context->m_window = new_window;
-	g_acquire_context->m_gisview = new_gisview;
-	g_acquire_context->m_parent_layer = parent_layer;
-	g_acquire_context->m_trw = existing_trw_layer;
-}
-
-
-
-
-void Acquire::set_target(LayerTRW * trw, Track * trk)
-{
-	qDebug() << SG_PREFIX_I;
-
-	g_acquire_context->m_trw = trw;
-	g_acquire_context->m_trk = trk;
 }
 
 
@@ -401,7 +359,7 @@ AcquireOptions::~AcquireOptions()
 {
 	if (this->babel_process) {
 		delete this->babel_process;
-		this->babel_process = NULL;
+		this->babel_process = nullptr;
 	}
 }
 
@@ -414,7 +372,6 @@ AcquireOptions::~AcquireOptions()
  * @input_file_type:
  * @cb:	Optional callback function.
  * @cb_data: Passed along to cb
- * @not_used: Must use NULL
  *
  * Runs the input command in a shell (bash) and optionally uses GPSBabel to convert from input_file_type.
  * If input_file_type is %NULL, doesn't use GPSBabel. Input must be GPX (or Geocaching *.loc)
@@ -668,8 +625,7 @@ sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer *
 
 void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceGPS(), parent_layer);
+	this->import_into_new_layer(new DataSourceGPS(), this->ctx.m_parent_layer);
 }
 
 
@@ -677,8 +633,7 @@ void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceFile(), parent_layer);
+	this->import_into_new_layer(new DataSourceFile(), this->ctx.m_parent_layer);
 }
 
 
@@ -686,8 +641,7 @@ void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceGeoJSON(), parent_layer);
+	this->import_into_new_layer(new DataSourceGeoJSON(), this->ctx.m_parent_layer);
 }
 
 
@@ -695,8 +649,7 @@ void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceRouting(), parent_layer);
+	this->import_into_new_layer(new DataSourceRouting(), this->ctx.m_parent_layer);
 }
 
 
@@ -704,8 +657,7 @@ void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceOSMTraces(), parent_layer);
+	this->import_into_new_layer(new DataSourceOSMTraces(), this->ctx.m_parent_layer);
 }
 
 
@@ -713,8 +665,7 @@ void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceOSMMyTraces(), parent_layer);
+	this->import_into_new_layer(new DataSourceOSMMyTraces(), this->ctx.m_parent_layer);
 }
 
 
@@ -727,8 +678,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 		return;
 	}
 
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()), parent_layer);
+	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()), this->ctx.m_parent_layer);
 }
 #endif
 
@@ -738,8 +688,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceGeoTag(), parent_layer);
+	this->import_into_new_layer(new DataSourceGeoTag(), this->ctx.m_parent_layer);
 }
 #endif
 
@@ -749,8 +698,7 @@ void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceWikipedia(), parent_layer);
+	this->import_into_new_layer(new DataSourceWikipedia(), this->ctx.m_parent_layer);
 }
 #endif
 
@@ -759,8 +707,7 @@ void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_url_cb(void)
 {
-	Layer * parent_layer = this->ctx.m_window->items_tree->get_top_layer();
-	this->import_into_new_layer(new DataSourceURL(), parent_layer);
+	this->import_into_new_layer(new DataSourceURL(), this->ctx.m_parent_layer);
 }
 
 

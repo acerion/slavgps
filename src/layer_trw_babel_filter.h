@@ -32,7 +32,6 @@
 
 
 
-//#include "ui_builder.h"
 #include "datasource.h"
 #include "layer_trw_import.h"
 
@@ -59,7 +58,12 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw, Track * trk);
+		/*
+		  Notice that we don't pass a 'filter with this track'
+		  track through constructor. Such track should be
+		  registered with ::set_babel_filter_track().
+		*/
+		LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw);
 
 		/* Add 'filter' entries to context menu for TRW layer. */
 		sg_ret add_babel_filters_for_layer_submenu(QMenu & submenu);
@@ -68,6 +72,10 @@ namespace SlavGPS {
 
 		sg_ret add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type);
 
+		/**
+		   Sets application-wide track to use with gpsbabel
+		   filter.
+		*/
 		static void set_babel_filter_track(Track * trk);
 
 		AcquireContext ctx;

@@ -23,37 +23,27 @@
 
 
 
-#include <cassert>
-#include <vector>
-#include <map>
-
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-
-
-
 #include <QRunnable>
 #include <QThreadPool>
 
 
 
 
-#include "geonames_search.h"
-#include "layer_trw_babel_filter.h"
-#include "window.h"
-#include "viewport_internal.h"
-#include "layers_panel.h"
 #include "babel.h"
-#include "gpx.h"
+#include "datasources.h"
 #include "dialog.h"
-#include "util.h"
+#include "geonames_search.h"
+#include "gpx.h"
 #include "layer_aggregate.h"
 #include "layer_trw.h"
+#include "layer_trw_babel_filter.h"
 #include "layer_trw_track_internal.h"
-#include "datasources.h"
+#include "layers_panel.h"
+#include "util.h"
+#include "viewport_internal.h"
 #include "widget_list_selection.h"
+#include "window.h"
+
 
 
 
@@ -75,12 +65,11 @@ extern Babel babel;
 
 std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
 Track * g_babel_filter_track = nullptr;
-AcquireContext * g_acquire_context_b = nullptr;
 
 
 
 
-LayerTRWBabelFilter::LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw, Track * trk)
+LayerTRWBabelFilter::LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw)
 {
 	/* Some tests to detect mixing of function arguments. */
 	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
@@ -94,7 +83,6 @@ LayerTRWBabelFilter::LayerTRWBabelFilter(Window * window, GisViewport * gisview,
 	this->ctx.m_gisview = gisview;
 	this->ctx.m_parent_layer = parent_layer;
 	this->ctx.m_trw = trw;
-	this->ctx.m_trk = trk;
 }
 
 
@@ -124,11 +112,12 @@ void LayerTRWBabelFilter::apply_babel_filter_cb(void)
 
 
 
-/**
- * Sets application-wide track to use with filter. references the track.
- */
 void LayerTRWBabelFilter::set_babel_filter_track(Track * trk)
 {
+	/*
+	  TODO_LATER g_babel_filter_track will have to be un-set when
+	  the track is deleted.
+	*/
 	if (g_babel_filter_track) {
 		g_babel_filter_track->free();
 	}
@@ -151,9 +140,6 @@ void LayerTRWBabelFilter::init(void)
 	/*** Input is a Track and a LayerTRW. ***/
 	LayerTRWBabelFilter::register_babel_filter(new BFilterPolygon());
 	LayerTRWBabelFilter::register_babel_filter(new BFilterExcludePolygon());
-
-
-	g_acquire_context_b = new AcquireContext();
 }
 
 
@@ -161,8 +147,6 @@ void LayerTRWBabelFilter::init(void)
 
 void LayerTRWBabelFilter::uninit(void)
 {
-	delete g_acquire_context_b;
-
 	for (auto iter = g_babel_filters.begin(); iter != g_babel_filters.end(); iter++) {
 		delete iter->second;
 	}

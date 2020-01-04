@@ -1926,7 +1926,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("Use with &Filter"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_filter_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (use_with_babel_filter_cb()));
 
 	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), tr("&Filter"));
 	parent_layer_->layer_trw_filter->add_babel_filters_for_track_submenu(*filter_submenu);
@@ -2221,8 +2221,7 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 		parent_trw->layer_trw_filter = new LayerTRWBabelFilter(parent_trw->get_window(),
 								       ThisApp::get_main_gis_view(),
 								       parent_layer,
-								       parent_trw,
-								       this);
+								       parent_trw);
 	}
 
 
@@ -2986,7 +2985,7 @@ void Track::google_route_webpage_cb(void)
 
 
 
-void Track::track_use_with_babel_filter_cb(void)
+void Track::use_with_babel_filter_cb(void)
 {
 	LayerTRWBabelFilter::set_babel_filter_track(this);
 }
