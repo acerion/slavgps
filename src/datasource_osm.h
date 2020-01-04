@@ -45,16 +45,13 @@ namespace SlavGPS {
 
 	class DataSourceOSMTraces : public DataSourceBabel {
 	public:
-		DataSourceOSMTraces() {};
-		DataSourceOSMTraces(GisViewport * gisview);
+		DataSourceOSMTraces();
 		~DataSourceOSMTraces() {};
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
-
-		GisViewport * gisview = NULL;
 	};
 
 
@@ -63,17 +60,16 @@ namespace SlavGPS {
 	class DataSourceOSMTracesDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOSMTracesDialog(const QString & window_title, GisViewport * gisview);
+		DataSourceOSMTracesDialog(const QString & window_title);
 		~DataSourceOSMTracesDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 	public slots:
 		void accept_cb(void);
 
 	private:
 		QSpinBox spin_box;
-		GisViewport * gisview = NULL;
 	};
 
 

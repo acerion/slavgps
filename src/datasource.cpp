@@ -53,8 +53,8 @@ using namespace SlavGPS;
 
 DataSource::~DataSource()
 {
-	delete this->acquire_options;
-	delete this->download_options;
+	delete this->m_acquire_options;
+	delete this->m_download_options;
 }
 
 
@@ -62,7 +62,7 @@ DataSource::~DataSource()
 
 AcquireProgressDialog * DataSource::create_progress_dialog(const QString & title)
 {
-	AcquireProgressDialog * dialog = new AcquireProgressDialog(title, this->keep_dialog_open);
+	AcquireProgressDialog * dialog = new AcquireProgressDialog(title, this->m_keep_dialog_open_after_success);
 	dialog->set_headline(QObject::tr("Importing data..."));
 	dialog->setMinimumWidth(300);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -73,13 +73,13 @@ AcquireProgressDialog * DataSource::create_progress_dialog(const QString & title
 
 
 
-AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, bool keep_open, QWidget * parent) : BasicDialog(parent)
+AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, bool keep_open_after_success, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(window_title);
 
 	this->headline = new QLabel(QObject::tr("Working..."));
 	this->current_status = new QLabel("");
-	this->keep_dialog_open = keep_open;
+	this->m_keep_dialog_open_after_success = keep_open_after_success;
 
 	this->grid->addWidget(this->headline, 0, 0);
 	this->grid->addWidget(this->current_status, 1, 0);
@@ -130,7 +130,7 @@ void AcquireProgressDialog::handle_acquire_completed_with_success_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Handling signal about successful completion of acquire";
 
-	if (this->keep_dialog_open) {
+	if (this->m_keep_dialog_open_after_success) {
 		this->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
 		this->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 	} else {

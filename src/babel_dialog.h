@@ -51,10 +51,10 @@ namespace SlavGPS {
 
 
 
-	class BabelDialog : public BasicDialog {
+	class BabelDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		BabelDialog(const QString & window_title, QWidget * parent = NULL);
+		BabelDialog(const QString & window_title, QWidget * parent_widget = nullptr);
 		~BabelDialog();
 
 		void build_ui(const BabelMode * mode = NULL);

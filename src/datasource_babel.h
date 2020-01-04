@@ -44,11 +44,9 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel();
 
-		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) override;
+		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) override;
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status);
-
-		virtual int run_config_dialog(AcquireContext * acquire_context) { return QDialog::Rejected; };
 
 		virtual SGObjectTypeID get_source_id(void) const override = 0;
 	};

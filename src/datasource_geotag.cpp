@@ -68,12 +68,11 @@ static QString g_last_filter;
 
 DataSourceGeoTag::DataSourceGeoTag()
 {
-	this->window_title = QObject::tr("Create Waypoints from Geotagged Images");
-	this->layer_title = QObject::tr("Geotagged Images");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	this->m_window_title = QObject::tr("Create Waypoints from Geotagged Images");
+	this->m_layer_title = QObject::tr("Geotagged Images");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
 }
 
 
@@ -94,9 +93,9 @@ SGObjectTypeID DataSourceGeoTag::source_id(void)
 
 
 
-int DataSourceGeoTag::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceGeoTag::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceGeoTagDialog config_dialog(this->window_title);
+	DataSourceGeoTagDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -140,17 +139,17 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
    In prinicple this loading should be quite fast and so don't need to
    have any progress monitoring.
 */
-LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
 
 		qDebug() << SG_PREFIX_I << "Trying to acquire waypoints from" << file_full_path;
 
-		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context->m_gisview->get_coord_mode());
+		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context.m_gisview->get_coord_mode());
 		if (!wp) {
 			qDebug() << SG_PREFIX_W << "Failed to create waypoint from file" << file_full_path;
-			acquire_context->m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
+			acquire_context.m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
 			continue;
 		}
 

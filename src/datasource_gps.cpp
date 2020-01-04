@@ -79,12 +79,11 @@ static int find_initial_device_index(void);
 
 DataSourceGPS::DataSourceGPS()
 {
-	this->window_title = QObject::tr("Acquire from GPS");
-	this->layer_title = QObject::tr("Acquired from GPS");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("Acquire from GPS");
+	this->m_layer_title = QObject::tr("Acquired from GPS");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -165,7 +164,7 @@ QString DataSourceGPSDialog::get_serial_port(void)
 
 
 
-AcquireOptions * DataSourceGPSDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceGPSDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	gps_acquire_in_progress = true;
 
@@ -344,19 +343,19 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 
 
 
-int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceGPS::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and
 	   checked - hence second argument to constructor is
 	   "true". */
 	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
-	DataSourceGPSDialog config_dialog(this->window_title, xfer, true, NULL);
+	DataSourceGPSDialog config_dialog(this->m_window_title, xfer, true, NULL);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 
 		this->device_path = config_dialog.serial_port_combo->currentText();
 

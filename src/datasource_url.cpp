@@ -68,12 +68,11 @@ static int find_initial_file_type_index(void);
 
 DataSourceURL::DataSourceURL()
 {
-	this->window_title = QObject::tr("Acquire data from URL");
-	this->layer_title = QObject::tr("From URL");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("Acquire data from URL");
+	this->m_layer_title = QObject::tr("From URL");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -94,18 +93,18 @@ SGObjectTypeID DataSourceURL::source_id(void)
 
 
 
-int DataSourceURL::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceURL::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceURLDialog config_dialog(this->window_title);
+	DataSourceURLDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
 
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_download_options = new DownloadOptions; /* With default values. */
 		/* Support .zip + bzip2 files directly. */
-		this->download_options->convert_file = a_try_decompress_file;
-		this->download_options->follow_location = 5;
+		this->m_download_options->convert_file = a_try_decompress_file;
+		this->m_download_options->follow_location = 5;
 	}
 
 	return answer;
@@ -150,7 +149,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-AcquireOptions * DataSourceURLDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceURLDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 

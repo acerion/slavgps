@@ -66,16 +66,13 @@ static int g_last_page_number = 0;
 
 
 
-DataSourceOSMTraces::DataSourceOSMTraces(GisViewport * new_gisview)
+DataSourceOSMTraces::DataSourceOSMTraces()
 {
-	this->gisview = new_gisview;
-
-	this->window_title = QObject::tr("OSM traces");
-	this->layer_title = QObject::tr("OSM traces");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true;  /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("OSM traces");
+	this->m_layer_title = QObject::tr("OSM traces");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -96,14 +93,14 @@ SGObjectTypeID DataSourceOSMTraces::source_id(void)
 
 
 
-int DataSourceOSMTraces::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceOSMTracesDialog config_dialog(this->window_title, this->gisview);
+	DataSourceOSMTracesDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -112,11 +109,11 @@ int DataSourceOSMTraces::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
-	const LatLonBBoxStrings bbox_strings = this->gisview->get_bbox().values_to_c_strings();
+	const LatLonBBoxStrings bbox_strings = acquire_context.m_gisview->get_bbox().values_to_c_strings();
 
 	/* Retrieve the specified page number. */
 	const int page = this->spin_box.value();
@@ -133,7 +130,7 @@ AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContex
 
 
 
-DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title)
+DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	/* Page selector. */
 	QLabel * label = new QLabel(tr("Page Number:"));
@@ -147,8 +144,6 @@ DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_titl
 	this->grid->addWidget(&this->spin_box, 0, 1);
 
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMTracesDialog::accept_cb);
-
-	this->gisview = new_gisview;
 }
 
 

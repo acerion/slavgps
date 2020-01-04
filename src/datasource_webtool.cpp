@@ -86,7 +86,7 @@ DataSourceOnlineServiceDialog::DataSourceOnlineServiceDialog(const QString & win
 
 
 
-AcquireOptions * DataSourceOnlineServiceDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceOnlineServiceDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	if (this->online_service->tool_needs_user_string()) {
 		this->online_service->user_string = this->input_field.text();
@@ -132,13 +132,12 @@ DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_titl
 	this->gisview = new_gisview;
 	this->online_service = new_online_service;
 
-	this->window_title = new_window_title;
-	this->layer_title = new_layer_title;
-	//this->mode = DataSourceMode::AddToLayer; /* TODO_LATER: restore? investigate? */
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = new_window_title;
+	this->m_layer_title = new_layer_title;
+	//this->m_layer_mode = TargetLayerMode::AddToLayer; /* TODO_LATER: restore? investigate? */
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -159,11 +158,11 @@ SGObjectTypeID DataSourceOnlineService::source_id(void)
 
 
 
-int DataSourceOnlineService::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceOnlineService::run_config_dialog(AcquireContext & acquire_context)
 {
 	int answer;
 
-	DataSourceOnlineServiceDialog config_dialog(this->window_title, this->gisview, this->online_service);
+	DataSourceOnlineServiceDialog config_dialog(this->m_window_title, this->gisview, this->online_service);
 	if (this->online_service->tool_needs_user_string()) {
 		answer = config_dialog.exec();
 	} else {
@@ -176,9 +175,9 @@ int DataSourceOnlineService::run_config_dialog(AcquireContext * acquire_context)
 	}
 
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
-		this->download_options->follow_location = 1; /* http -> https */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
+		this->m_download_options->follow_location = 1; /* http -> https */
 	}
 
 	return answer;

@@ -47,7 +47,7 @@ namespace SlavGPS {
 		DataSourceURL();
 		~DataSourceURL() {};
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -62,7 +62,7 @@ namespace SlavGPS {
 		DataSourceURLDialog(const QString & window_title);
 		~DataSourceURLDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 	private:
 		QLineEdit url_input;

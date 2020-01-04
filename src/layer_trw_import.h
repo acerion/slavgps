@@ -112,18 +112,18 @@ namespace SlavGPS {
 		AcquireWorker(DataSource * data_source, const AcquireContext & acquire_context);
 		~AcquireWorker();
 		void run(); /* Re-implementation of QRunnable::run(). */
-		sg_ret configure_target_layer(DataSourceMode mode);
+		sg_ret configure_target_layer(TargetLayerMode layer_mode);
 
 		void finalize_after_success(void);
 		void finalize_after_failure(void);
 
 		sg_ret build_progress_dialog(void);
 
-		AcquireContext acquire_context;
+		AcquireContext m_acquire_context;
 
-		bool acquire_is_running = false;
-		DataSource * data_source = nullptr;
-		AcquireProgressDialog * progress_dialog = nullptr;
+		bool m_acquire_is_running = false;
+		DataSource * m_data_source = nullptr;
+		AcquireProgressDialog * m_progress_dialog = nullptr;
 
 	signals:
 		void report_status(int status);
@@ -137,17 +137,7 @@ namespace SlavGPS {
 
 	class Acquire {
 	public:
-		static void init(void);
-		static void uninit(void);
-
-		enum {
-			Success,
-			Failure
-		};
-
-
-		static sg_ret acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
-
+		static sg_ret acquire_from_source(DataSource * data_source, TargetLayerMode layer_mode, AcquireContext & acquire_context);
 	};
 
 
@@ -160,13 +150,13 @@ namespace SlavGPS {
 			FromShellCommand
 		};
 
-		AcquireOptions();
+		AcquireOptions() {};
 		AcquireOptions(AcquireOptions::Mode new_mode) : mode(new_mode) { };
 		virtual ~AcquireOptions();
 
-		LoadStatus universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 		LoadStatus import_from_url(LayerTRW * trw, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
-		LoadStatus import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int kill_babel_process(const QString & status);
 

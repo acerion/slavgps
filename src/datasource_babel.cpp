@@ -48,15 +48,14 @@ using namespace SlavGPS;
 
 
 
-LoadStatus DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I;
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->m_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->m_gisview;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
 
-	const LoadStatus result = this->acquire_options->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);
+	const LoadStatus result = this->m_acquire_options->universal_import_fn(trw, this->m_download_options, acquire_context, progr_dialog);
 
 
 	return result;
@@ -67,8 +66,8 @@ LoadStatus DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext * 
 
 int DataSourceBabel::kill(const QString & status)
 {
-	if (this->acquire_options) {
-		return this->acquire_options->kill_babel_process(status);
+	if (this->m_acquire_options) {
+		return this->m_acquire_options->kill_babel_process(status);
 	} else {
 		return -4;
 	}

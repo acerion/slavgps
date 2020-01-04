@@ -58,12 +58,11 @@ using namespace SlavGPS;
 
 DataSourceFile::DataSourceFile()
 {
-	this->window_title = QObject::tr("Import file with GPSBabel");
-	this->layer_title = QObject::tr("Imported file");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("Import file with GPSBabel");
+	this->m_layer_title = QObject::tr("Imported file");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -84,14 +83,14 @@ SGObjectTypeID DataSourceFile::source_id(void)
 
 
 
-int DataSourceFile::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceFile::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceFileDialog config_dialog("");
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -100,7 +99,7 @@ int DataSourceFile::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-DataSourceFileDialog::DataSourceFileDialog(const QString & title) : BabelDialog(title)
+DataSourceFileDialog::DataSourceFileDialog(const QString & title, QWidget * parent_widget) : BabelDialog(title, parent_widget)
 {
 	this->build_ui();
 
@@ -119,7 +118,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	/* Generate the process options. */
 	AcquireOptions * acquire_options = new AcquireOptions();

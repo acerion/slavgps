@@ -46,11 +46,23 @@ namespace SlavGPS {
 
 
 
-	class BFilterSimplify : public DataSourceBabel {
+	class DataSourceBabelFilter : public DataSourceBabel {
+	public:
+		enum class Type {
+			TRWLayer,
+			TRWLayerWithTrack
+		};
+		DataSourceBabelFilter::Type m_filter_type;
+	};
+
+
+
+
+	class BFilterSimplify : public DataSourceBabelFilter {
 	public:
 		BFilterSimplify();
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -59,7 +71,7 @@ namespace SlavGPS {
 	class BFilterSimplifyDialog : public DataSourceDialog {
 	public:
 		BFilterSimplifyDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		QSpinBox * spin = NULL;
 	};
@@ -67,11 +79,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterCompress : public DataSourceBabel {
+	class BFilterCompress : public DataSourceBabelFilter {
 	public:
 		BFilterCompress();
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -80,7 +92,7 @@ namespace SlavGPS {
 	class BFilterCompressDialog : public DataSourceDialog {
 	public:
 		BFilterCompressDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		QDoubleSpinBox * spin = NULL;
 	};
@@ -88,11 +100,11 @@ namespace SlavGPS {
 
 
 
-	class BFilterDuplicates : public DataSourceBabel {
+	class BFilterDuplicates : public DataSourceBabelFilter {
 	public:
 		BFilterDuplicates();
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -101,17 +113,17 @@ namespace SlavGPS {
 	class BFilterDuplicatesDialog : public DataSourceDialog {
 	public:
 		BFilterDuplicatesDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 	};
 
 
 
 
-	class BFilterManual : public DataSourceBabel {
+	class BFilterManual : public DataSourceBabelFilter {
 	public:
 		BFilterManual();
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -120,7 +132,7 @@ namespace SlavGPS {
 	class BFilterManualDialog : public DataSourceDialog {
 	public:
 		BFilterManualDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		QLineEdit * entry = NULL;
 	};
@@ -128,10 +140,10 @@ namespace SlavGPS {
 
 
 
-	class BFilterPolygon : public DataSourceBabel {
+	class BFilterPolygon : public DataSourceBabelFilter {
 	public:
 		BFilterPolygon();
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -140,17 +152,16 @@ namespace SlavGPS {
 	class BFilterPolygonDialog : public DataSourceDialog {
 	public:
 		BFilterPolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 	};
 
 
 
 
-	class BFilterExcludePolygon : public DataSourceBabel {
+	class BFilterExcludePolygon : public DataSourceBabelFilter {
 	public:
 		BFilterExcludePolygon();
-		int run_config_dialog(AcquireContext * acquire_context);
-
+		int run_config_dialog(AcquireContext & acquire_context) override;
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
 	};
@@ -158,7 +169,7 @@ namespace SlavGPS {
 	class BFilterExcludePolygonDialog : public DataSourceDialog {
 	public:
 		BFilterExcludePolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 	};
 
 

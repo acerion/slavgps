@@ -46,7 +46,7 @@ namespace SlavGPS {
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 	};
 
 
@@ -55,10 +55,10 @@ namespace SlavGPS {
 	class DataSourceFileDialog : public BabelDialog {
 		Q_OBJECT
 	public:
-		DataSourceFileDialog(const QString & title);
+		DataSourceFileDialog(const QString & title, QWidget * parent_widget = nullptr);
 		~DataSourceFileDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 	public slots:
 		void accept_cb(void);

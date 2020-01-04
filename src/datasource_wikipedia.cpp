@@ -53,16 +53,11 @@ using namespace SlavGPS;
 
 DataSourceWikipedia::DataSourceWikipedia()
 {
-	qDebug() << SG_PREFIX_I;
-
-	this->window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
-	this->layer_title = QObject::tr("Wikipedia Waypoints");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = false;
-	this->keep_dialog_open = false; /* false = don't keep dialog open after success. Not even using the dialog. */
-
-	qDebug() << SG_PREFIX_I;
+	this->m_window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
+	this->m_layer_title = QObject::tr("Wikipedia Waypoints");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = false;
+	this->m_keep_dialog_open_after_success = false;
 
 
 	this->list_selection_widget = new ListSelectionWidget(ListSelectionMode::SingleItem, NULL);
@@ -121,20 +116,19 @@ SGObjectTypeID DataSourceWikipedia::source_id(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (!trw) {
 		qDebug() << SG_PREFIX_E << "Missing TRW layer";
 		return LoadStatus::Code::InternalError;
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->m_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->m_gisview;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
 
 
 	qDebug() << "---- will generate all geonames list";
-	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context->m_gisview->get_bbox(), progr_dialog);
+	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context.m_gisview->get_bbox(), progr_dialog);
 	if (0 == all_geonames.size()) {
 		/* Not an error situation. Info for user has been displayed in progr_dialog. */
 		return LoadStatus::Code::Success;
@@ -152,17 +146,15 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->m_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->m_gisview;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
 
 		const Geoname * geoname = *iter;
 		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
 		trw->add_waypoint(wp);
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->m_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->m_gisview;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
 	}
 
 	return LoadStatus::Code::Success;
@@ -172,10 +164,10 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 
 
-int DataSourceWikipedia::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceWikipedia::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* Fake acquire options, needed by current implementation of layer_trw_import.cpp. */
-	this->acquire_options = new AcquireOptions;
+	this->m_acquire_options = new AcquireOptions;
 
 	return QDialog::Accepted;
 }

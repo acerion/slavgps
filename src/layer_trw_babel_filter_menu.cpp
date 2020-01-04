@@ -42,25 +42,25 @@ using namespace SlavGPS;
 
 
 
-extern std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
+extern std::map<SGObjectTypeID, DataSourceBabelFilter *, SGObjectTypeID::compare> g_babel_filters;
 extern Track * g_babel_filter_track;
 
 
 
 
-sg_ret LayerTRWBabelFilter::add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type)
+sg_ret LayerTRWBabelFilter::add_babel_filters_to_submenu(QMenu & menu, DataSourceBabelFilter::Type filter_type)
 {
 	for (auto iter = g_babel_filters.begin(); iter != g_babel_filters.end(); iter++) {
 		const SGObjectTypeID filter_id = iter->first;
-		DataSource * filter = iter->second;
+		DataSourceBabelFilter * filter = iter->second;
 
-		if (filter->input_type != filter_type) {
-			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu, type not matched";
+		if (filter->m_filter_type != filter_type) {
+			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->m_window_title << "to menu, type not matched";
 			continue;
 		}
-		qDebug() << SG_PREFIX_I << "Adding filter" << filter->window_title << "to menu";
+		qDebug() << SG_PREFIX_I << "Adding filter" << filter->m_window_title << "to menu";
 
-		QAction * action = new QAction(filter->window_title);
+		QAction * action = new QAction(filter->m_window_title);
 
 		/* The property will be used later to lookup a bfilter. */
 		QVariant property;
@@ -79,7 +79,7 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_to_submenu(QMenu & menu, DataSourc
 
 sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 {
-	this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayer);
+	this->add_babel_filters_to_submenu(submenu, DataSourceBabelFilter::Type::TRWLayer);
 
 	this->ctx.m_trk = g_babel_filter_track;
 	if (nullptr == g_babel_filter_track) {
@@ -94,7 +94,7 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 		   "TRACKNAME"..." */
 		const QString menu_label = QObject::tr("Filter with %1").arg(g_babel_filter_track->get_name());
 		QMenu * filter_with_submenu = submenu.addMenu(menu_label);
-		if (sg_ret::ok != this->add_babel_filters_to_submenu(*filter_with_submenu, DataSourceInputType::TRWLayerWithTrack)) {
+		if (sg_ret::ok != this->add_babel_filters_to_submenu(*filter_with_submenu, DataSourceBabelFilter::Type::TRWLayerWithTrack)) {
 			return sg_ret::err;
 		}
 	}
@@ -110,5 +110,5 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 */
 sg_ret LayerTRWBabelFilter::add_babel_filters_for_track_submenu(QMenu & submenu)
 {
-	return this->add_babel_filters_to_submenu(submenu, DataSourceInputType::TRWLayerWithTrack);
+	return this->add_babel_filters_to_submenu(submenu, DataSourceBabelFilter::Type::TRWLayerWithTrack);
 }

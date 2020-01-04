@@ -235,10 +235,8 @@ void BabelDialog::get_write_mode(BabelMode & mode)
 
 
 
-
-BabelDialog::BabelDialog(const QString & window_title, QWidget * parent_) : BasicDialog(parent_)
+BabelDialog::BabelDialog(const QString & window_title, QWidget * parent_widget) : DataSourceDialog(window_title, parent_widget)
 {
-	this->setWindowTitle(window_title);
 }
 
 

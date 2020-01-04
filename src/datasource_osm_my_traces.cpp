@@ -75,12 +75,11 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * new_gisview)
 {
 	this->gisview = new_gisview;
 
-	this->window_title = QObject::tr("OSM My Traces");
-	this->layer_title = QObject::tr("OSM My Traces");
-	this->mode = DataSourceMode::ManualLayerManagement; /* We'll do this ourselves. */
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("OSM My Traces");
+	this->m_layer_title = QObject::tr("OSM My Traces");
+	this->m_layer_mode = TargetLayerMode::ManualLayerManagement; /* We'll do this ourselves. */
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -115,9 +114,9 @@ SGObjectTypeID DataSourceOSMMyTraces::source_id(void)
 
 
 
-int DataSourceOSMMyTraces::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceOSMMyTracesDialog config_dialog(this->window_title, this->gisview);
+	DataSourceOSMMyTracesDialog config_dialog(this->m_window_title, this->gisview);
 
 	/* Keep reference to viewport. */
 	config_dialog.gisview = this->gisview;
@@ -138,8 +137,8 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext * acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -147,7 +146,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMMyTracesDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceOSMMyTracesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
@@ -571,7 +570,7 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
@@ -621,7 +620,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 #endif
 
-	std::list<GPXMetaData *> * selected = select_from_list(acquire_context->m_window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.m_window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
 #ifdef FIXME_RESTORE
 	/* If non thread - show program is 'doing something...' */
@@ -649,7 +648,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 			if (create_new_layer) {
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
-				target_layer->set_coord_mode(acquire_context->m_gisview->get_coord_mode());
+				target_layer->set_coord_mode(acquire_context.m_gisview->get_coord_mode());
 				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
@@ -663,25 +662,25 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
-				this->acquire_options->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
+				this->m_acquire_options->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
-				convert_result = this->acquire_options->import_from_url(target_layer, &local_dl_options, NULL);
+				convert_result = this->m_acquire_options->import_from_url(target_layer, &local_dl_options, NULL);
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 				got_something = got_something || (LoadStatus::Code::Success == convert_result);
 				if (LoadStatus::Code::Success != convert_result) {
 					/* Report errors to the status bar. */
-					acquire_context->m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->acquire_options->source_url));
+					acquire_context.m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->m_acquire_options->source_url));
 				}
 			}
 
 			if (LoadStatus::Code::Success == convert_result) {
 				/* Can use the layer. */
-				acquire_context->m_parent_layer->add_child_item(target_layer, true);
+				acquire_context.m_parent_layer->add_child_item(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquire_context->m_gisview, true);
-				target_layer->move_viewport_to_show_all(acquire_context->m_gisview);
+				target_layer->post_read(acquire_context.m_gisview, true);
+				target_layer->move_viewport_to_show_all(acquire_context.m_gisview);
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {

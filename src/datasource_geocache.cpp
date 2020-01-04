@@ -71,12 +71,11 @@ DataSourceGeoCache::DataSourceGeoCache(GisViewport * new_gisview)
 {
 	this->gisview = new_gisview;
 
-	this->window_title = QObject::tr("Download Geocaches");
-	this->layer_title = QObject::tr("Geocaching.com Caches");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;         /* true = automatically update the display - otherwise we won't see the geocache waypoints! */
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("Download Geocaches");
+	this->m_layer_title = QObject::tr("Geocaching.com Caches");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;         /* true = automatically update the display - otherwise we won't see the geocache waypoints! */
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -190,14 +189,14 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 
 
-int DataSourceGeoCache::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceGeoCache::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceGeoCacheDialog config_dialog(this->window_title, this->gisview);
+	DataSourceGeoCacheDialog config_dialog(this->m_window_title, this->gisview);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -258,7 +257,7 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 
 
 
-AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "username").val_string);
 	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "password").val_string);

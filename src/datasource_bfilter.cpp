@@ -67,12 +67,12 @@ static SGVariant bfilter_simplify_params_defaults[] = { SGVariant(simplify_defau
 
 BFilterSimplify::BFilterSimplify()
 {
-	this->window_title = QObject::tr("Simplify All Tracks...");
-	this->layer_title = QObject::tr("Simplified Tracks");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayer;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Simplify All Tracks...");
+	this->m_layer_title = QObject::tr("Simplified Tracks");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayer;
 
 	if (!bfilter_simplify_default_set) {
 		int32_t tmp;
@@ -103,14 +103,14 @@ SGObjectTypeID BFilterSimplify::source_id(void)
 
 
 
-int BFilterSimplify::run_config_dialog(AcquireContext * acquire_context)
+int BFilterSimplify::run_config_dialog(AcquireContext & acquire_context)
 {
-	BFilterSimplifyDialog config_dialog(this->window_title);
+	BFilterSimplifyDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -137,11 +137,11 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 
 
-AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
 
-	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
@@ -178,12 +178,12 @@ static SGVariant bfilter_compress_params_defaults[] = { SGVariant(0.001) };
 
 BFilterCompress::BFilterCompress()
 {
-	this->window_title = QObject::tr("Compress Tracks...");
-	this->layer_title = QObject::tr("Compressed Tracks");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayer;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Compress Tracks...");
+	this->m_layer_title = QObject::tr("Compressed Tracks");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayer;
 
 	if (!bfilter_compress_default_set) {
 		double tmp;
@@ -214,14 +214,14 @@ SGObjectTypeID BFilterCompress::source_id(void)
 
 
 
-int BFilterCompress::run_config_dialog(AcquireContext * acquire_context)
+int BFilterCompress::run_config_dialog(AcquireContext & acquire_context)
 {
-	BFilterCompressDialog config_dialog(this->window_title);
+	BFilterCompressDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -252,10 +252,10 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 
 
 /* http://www.gpsbabel.org/htmldoc-development/filter_simplify.html */
-AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
-	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
@@ -293,12 +293,12 @@ AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext * 
 
 BFilterDuplicates::BFilterDuplicates()
 {
-	this->window_title = QObject::tr("Remove Duplicate Waypoints");
-	this->layer_title = QObject::tr("Remove Duplicate Waypoints");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayer;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Remove Duplicate Waypoints");
+	this->m_layer_title = QObject::tr("Remove Duplicate Waypoints");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayer;
 }
 
 
@@ -319,14 +319,14 @@ SGObjectTypeID BFilterDuplicates::source_id(void)
 
 
 
-int BFilterDuplicates::run_config_dialog(AcquireContext * acquire_context)
+int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 {
-	BFilterDuplicatesDialog config_dialog(this->window_title);
+	BFilterDuplicatesDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -335,10 +335,10 @@ int BFilterDuplicates::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
-	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
@@ -369,12 +369,12 @@ static SGVariant bfilter_manual_params_defaults[] = { SGVariant("") };
 
 BFilterManual::BFilterManual()
 {
-	this->window_title = QObject::tr("Manual filter");
-	this->layer_title = QObject::tr("Manual filter");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayer;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Manual filter");
+	this->m_layer_title = QObject::tr("Manual filter");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayer;
 }
 
 
@@ -395,14 +395,14 @@ SGObjectTypeID BFilterManual::source_id(void)
 
 
 
-int BFilterManual::run_config_dialog(AcquireContext * acquire_context)
+int BFilterManual::run_config_dialog(AcquireContext & acquire_context)
 {
-	BFilterManualDialog config_dialog(this->window_title);
+	BFilterManualDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -423,10 +423,10 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 
 
-AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
-	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
@@ -454,12 +454,12 @@ AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext * ac
 
 BFilterPolygon::BFilterPolygon()
 {
-	this->window_title = QObject::tr("Waypoints Inside This");
-	this->layer_title = QObject::tr("Polygonized Layer");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayerWithTrack;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Waypoints Inside This");
+	this->m_layer_title = QObject::tr("Polygonized Layer");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayerWithTrack;
 }
 
 
@@ -480,13 +480,13 @@ SGObjectTypeID BFilterPolygon::source_id(void)
 
 
 
-int BFilterPolygon::run_config_dialog(AcquireContext * acquire_context)
+int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
-	BFilterPolygonDialog config_dialog(this->window_title);
+	BFilterPolygonDialog config_dialog(this->m_window_title);
 
-	this->acquire_options = config_dialog.create_acquire_options(acquire_context);
+	this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
 
 	return QDialog::Accepted;
 }
@@ -494,18 +494,18 @@ int BFilterPolygon::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
 	SaveStatus save_status;
 
-	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 		return NULL;
 	}
-	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->m_trk, NULL);
+	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.m_trk, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 		return NULL;
@@ -535,12 +535,12 @@ AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext * a
 
 BFilterExcludePolygon::BFilterExcludePolygon()
 {
-	this->window_title = QObject::tr("Waypoints Outside This");
-	this->layer_title = QObject::tr("Polygonzied Layer");
-	this->mode = DataSourceMode::CreateNewLayer;
-	this->input_type = DataSourceInputType::TRWLayerWithTrack;
-	this->autoview = true;
-	this->keep_dialog_open = false;
+	this->m_window_title = QObject::tr("Waypoints Outside This");
+	this->m_layer_title = QObject::tr("Polygonzied Layer");
+	this->m_layer_mode = TargetLayerMode::CreateNewLayer;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
+	this->m_filter_type = DataSourceBabelFilter::Type::TRWLayerWithTrack;
 }
 
 
@@ -561,13 +561,13 @@ SGObjectTypeID BFilterExcludePolygon::source_id(void)
 
 
 
-int BFilterExcludePolygon::run_config_dialog(AcquireContext * acquire_context)
+int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
-	BFilterExcludePolygonDialog config_dialog(this->window_title);
+	BFilterExcludePolygonDialog config_dialog(this->m_window_title);
 
-	this->acquire_options = config_dialog.create_acquire_options(acquire_context);
+	this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
 
 	return QDialog::Accepted;
 }
@@ -575,17 +575,17 @@ int BFilterExcludePolygon::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
 	SaveStatus save_status;
 
-	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->m_trw, NULL);
+	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.m_trw, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 	}
-	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->m_trk, NULL);
+	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.m_trk, NULL);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 	}

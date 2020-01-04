@@ -32,7 +32,7 @@
 
 
 
-#include "datasource.h"
+#include "datasource_bfilter.h"
 #include "layer_trw_import.h"
 
 
@@ -70,7 +70,7 @@ namespace SlavGPS {
 		/* Add 'filter' entries to context menu for TRW track. */
 		sg_ret add_babel_filters_for_track_submenu(QMenu & submenu);
 
-		sg_ret add_babel_filters_to_submenu(QMenu & menu, DataSourceInputType filter_type);
+		sg_ret add_babel_filters_to_submenu(QMenu & menu, DataSourceBabelFilter::Type filter_type);
 
 		/**
 		   Sets application-wide track to use with gpsbabel
@@ -84,7 +84,7 @@ namespace SlavGPS {
 		void apply_babel_filter_cb(void);
 
 	private:
-		static sg_ret register_babel_filter(DataSource * bfilter);
+		static sg_ret register_babel_filter(DataSourceBabelFilter * bfilter);
 	};
 
 

@@ -1021,7 +1021,7 @@ void GPSSession::run(void)
 
 		acquire_context.m_parent_layer = this->trw->get_owning_layer();
 		acquire_context.m_trw = this->trw;
-		importer->set_acquire_context(&acquire_context);
+		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
 		save_status = (sg_ret::ok == importer->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
@@ -1033,7 +1033,7 @@ void GPSSession::run(void)
 		acquire_context.m_parent_layer = this->trw->get_owning_layer();
 		acquire_context.m_trw = this->trw;
 		acquire_context.m_trk = this->trk;
-		exporter->set_acquire_context(&acquire_context);
+		exporter->set_acquire_context(acquire_context);
 		exporter->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
 		save_status = exporter->export_through_gpx(this->trw, this->trk);

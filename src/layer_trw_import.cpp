@@ -62,10 +62,10 @@ extern Babel babel;
 
 
 
-AcquireWorker::AcquireWorker(DataSource * new_data_source, const AcquireContext & new_acquire_context)
+AcquireWorker::AcquireWorker(DataSource * data_source, const AcquireContext & acquire_context)
 {
-	this->data_source = new_data_source;
-	this->acquire_context = new_acquire_context;
+	this->m_data_source = data_source;
+	this->m_acquire_context = acquire_context;
 }
 
 
@@ -79,50 +79,50 @@ AcquireWorker::~AcquireWorker()
 
 
 
-sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
+sg_ret AcquireWorker::configure_target_layer(TargetLayerMode mode)
 {
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	switch (mode) {
-	case DataSourceMode::CreateNewLayer:
-		this->acquire_context.m_trw_is_allocated = true;
+	case TargetLayerMode::CreateNewLayer:
+		this->m_acquire_context.m_trw_is_allocated = true;
 		break;
 
-	case DataSourceMode::AddToLayer:
-		if (nullptr == this->acquire_context.m_trw) {
+	case TargetLayerMode::AddToLayer:
+		if (nullptr == this->m_acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Mode is 'AddToLayer' but existing layer is NULL";
 			return sg_ret::err;
 		}
 		/* Don't create new layer, acquire data into existing
 		   TRW layer. */
-		this->acquire_context.m_trw_is_allocated = false;
+		this->m_acquire_context.m_trw_is_allocated = false;
 		break;
 
-	case DataSourceMode::AutoLayerManagement:
+	case TargetLayerMode::AutoLayerManagement:
 		/* NOOP */
 		break;
 
-	case DataSourceMode::ManualLayerManagement:
+	case TargetLayerMode::ManualLayerManagement:
 		/* Don't create in acquire - as datasource will
 		   perform the necessary actions. */
-		if (nullptr == this->acquire_context.m_trw) {
+		if (nullptr == this->m_acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Mode is 'ManualLayerManagement' but existing layer is NULL";
 			return sg_ret::err;
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected DataSourceMode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unexpected TargetLayerMode" << (int) mode;
 		break;
 	};
 
 
-	if (this->acquire_context.m_trw_is_allocated) {
-		this->acquire_context.m_trw = new LayerTRW();
-		this->acquire_context.m_trw->set_coord_mode(this->acquire_context.m_gisview->get_coord_mode());
-		this->acquire_context.m_trw->set_name(this->data_source->layer_title);
+	if (this->m_acquire_context.m_trw_is_allocated) {
+		this->m_acquire_context.m_trw = new LayerTRW();
+		this->m_acquire_context.m_trw->set_coord_mode(this->m_acquire_context.m_gisview->get_coord_mode());
+		this->m_acquire_context.m_trw->set_name(this->m_data_source->m_layer_title);
 	}
 
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	return sg_ret::ok;
 }
@@ -135,28 +135,28 @@ sg_ret AcquireWorker::configure_target_layer(DataSourceMode mode)
    termination or errors. */
 void AcquireWorker::finalize_after_success(void)
 {
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (this->acquire_context.m_trw_is_allocated) {
+	if (this->m_acquire_context.m_trw_is_allocated) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
-		if (nullptr == this->acquire_context.m_trw) {
+		if (nullptr == this->m_acquire_context.m_trw) {
 			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
 			return;
 		}
 
-		if (this->acquire_context.m_trw->is_empty()) {
+		if (this->m_acquire_context.m_trw->is_empty()) {
 			/* Acquire process ended without errors, but
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			if (this->acquire_context.m_trw->is_in_tree()) {
+			if (this->m_acquire_context.m_trw->is_in_tree()) {
 				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
 			}
 
 			qDebug() << SG_PREFIX_I << "Will now delete target trw";
-			delete this->acquire_context.m_trw;
-			this->acquire_context.m_trw = nullptr;
+			delete this->m_acquire_context.m_trw;
+			this->m_acquire_context.m_trw = nullptr;
 			return;
 		}
 
@@ -165,12 +165,12 @@ void AcquireWorker::finalize_after_success(void)
 	}
 
 
-	this->acquire_context.m_trw->attach_children_to_tree();
-	this->acquire_context.m_trw->post_read(this->acquire_context.m_gisview, true);
+	this->m_acquire_context.m_trw->attach_children_to_tree();
+	this->m_acquire_context.m_trw->post_read(this->m_acquire_context.m_gisview, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
-	if (this->data_source && this->data_source->autoview) {
-		this->acquire_context.m_trw->move_viewport_to_show_all(this->acquire_context.m_gisview);
-		// this->acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
+	if (this->m_data_source && this->m_data_source->m_autoview) {
+		this->m_acquire_context.m_trw->move_viewport_to_show_all(this->m_acquire_context.m_gisview);
+		// this->m_acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
 
@@ -183,8 +183,8 @@ void AcquireWorker::finalize_after_failure(void)
 {
 	qDebug() << SG_PREFIX_I;
 
-	if (this->acquire_context.m_trw_is_allocated) {
-		delete this->acquire_context.m_trw;
+	if (this->m_acquire_context.m_trw_is_allocated) {
+		delete this->m_acquire_context.m_trw;
 	}
 
 	return;
@@ -197,17 +197,17 @@ void AcquireWorker::finalize_after_failure(void)
 /* Re-implementation of QRunnable::run() */
 void AcquireWorker::run(void)
 {
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 	sleep(1); /* Time for progress dialog to open and block main UI thread. */
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 
-	this->acquire_is_running = true;
-	const LoadStatus acquire_result = this->data_source->acquire_into_layer(this->acquire_context.m_trw, &this->acquire_context, this->progress_dialog);
-	this->acquire_is_running = false;
+	this->m_acquire_is_running = true;
+	const LoadStatus acquire_result = this->m_data_source->acquire_into_layer(this->m_acquire_context.m_trw, this->m_acquire_context, this->m_progress_dialog);
+	this->m_acquire_is_running = false;
 
 
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	if (LoadStatus::Code::Success == acquire_result) {
 		qDebug() << SG_PREFIX_I << "Acquire process ended with success";
@@ -223,9 +223,9 @@ void AcquireWorker::run(void)
 		emit this->completed_with_failure();
 	}
 
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	this->data_source->on_complete();
+	this->m_data_source->on_complete();
 }
 
 
@@ -234,23 +234,23 @@ void AcquireWorker::run(void)
 sg_ret AcquireWorker::build_progress_dialog(void)
 {
 	/* The dialog has Qt::WA_DeleteOnClose flag set. */
-	this->progress_dialog = this->data_source->create_progress_dialog(QObject::tr("Acquiring"));
+	this->m_progress_dialog = this->m_data_source->create_progress_dialog(QObject::tr("Acquiring"));
 
-	if (nullptr == this->data_source->acquire_options) {
+	if (nullptr == this->m_data_source->m_acquire_options) {
 		/* This shouldn't happen... */
 		qDebug() << SG_PREFIX_E << "Acquire options are NULL";
 
-		this->progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-		this->progress_dialog->exec(); /* FIXME: improve handling of invalid process options. */
-		delete this->progress_dialog;
+		this->m_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+		this->m_progress_dialog->exec(); /* FIXME: improve handling of invalid process options. */
+		delete this->m_progress_dialog;
 
 		return sg_ret::err;
 	}
 
-	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	connect(this, SIGNAL (completed_with_success(void)), this->progress_dialog, SLOT (handle_acquire_completed_with_success_cb(void)));
-	connect(this, SIGNAL (completed_with_failure(void)), this->progress_dialog, SLOT (handle_acquire_completed_with_failure_cb(void)));
+	connect(this, SIGNAL (completed_with_success(void)), this->m_progress_dialog, SLOT (handle_acquire_completed_with_success_cb(void)));
+	connect(this, SIGNAL (completed_with_failure(void)), this->m_progress_dialog, SLOT (handle_acquire_completed_with_failure_cb(void)));
 
 	return sg_ret::ok;
 }
@@ -258,9 +258,9 @@ sg_ret AcquireWorker::build_progress_dialog(void)
 
 
 
-sg_ret Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context)
+sg_ret Acquire::acquire_from_source(DataSource * data_source, TargetLayerMode mode, AcquireContext & acquire_context)
 {
-	if (QDialog::Accepted != data_source->run_config_dialog(&acquire_context)) {
+	if (QDialog::Accepted != data_source->run_config_dialog(acquire_context)) {
 		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
 		return sg_ret::ok;
 	}
@@ -279,7 +279,7 @@ sg_ret Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mod
 	}
 	sleep(1);
 
-	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	worker->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 
 	/* Start the acquire task in a background thread and then
@@ -290,17 +290,17 @@ sg_ret Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mod
 	   Until a background acquire thread is in progress, its
 	   progress window must be in foreground. */
 
-	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	worker->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (worker->progress_dialog) {
-		worker->progress_dialog->setModal(true);
+	if (worker->m_progress_dialog) {
+		worker->m_progress_dialog->setModal(true);
 		/* Return immediately, go to starting a worker thread. */
-		worker->progress_dialog->show();
+		worker->m_progress_dialog->show();
 	}
 
-	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	worker->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 	QThreadPool::globalInstance()->start(worker); /* Worker will auto-delete itself. */
-	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	worker->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	return sg_ret::ok;
 }
@@ -334,33 +334,10 @@ AcquireContext & AcquireContext::operator=(const AcquireContext & rhs)
 
 
 
-void Acquire::init(void)
-{
-}
-
-
-
-
-void Acquire::uninit(void)
-{
-}
-
-
-
-
-AcquireOptions::AcquireOptions()
-{
-}
-
-
-
-
 AcquireOptions::~AcquireOptions()
 {
-	if (this->babel_process) {
-		delete this->babel_process;
-		this->babel_process = nullptr;
-	}
+	delete this->babel_process;
+	this->babel_process = nullptr;
 }
 
 
@@ -379,7 +356,7 @@ AcquireOptions::~AcquireOptions()
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-LoadStatus AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -505,12 +482,12 @@ LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions
  *
  * Returns: %true on success.
  */
-LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 
 		if (!trw->is_in_tree()) {
-			acquire_context->m_parent_layer->add_child_item(trw, true);
+			acquire_context.m_parent_layer->add_child_item(trw, true);
 		}
 
 
@@ -605,9 +582,7 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 	}
 	Layer * parent_layer = this->ctx.m_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
 
-	AcquireContext acquire_context;
-	acquire_context = this->ctx;
-	return Acquire::acquire_from_source(data_source, DataSourceMode::AddToLayer, acquire_context);
+	return Acquire::acquire_from_source(data_source, TargetLayerMode::AddToLayer, this->ctx);
 }
 
 
@@ -615,9 +590,7 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 
 sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent_layer)
 {
-	AcquireContext acquire_context;
-	acquire_context = this->ctx;
-	return Acquire::acquire_from_source(data_source, DataSourceMode::CreateNewLayer, acquire_context);
+	return Acquire::acquire_from_source(data_source, TargetLayerMode::CreateNewLayer, this->ctx);
 }
 
 

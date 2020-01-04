@@ -52,7 +52,7 @@ namespace SlavGPS {
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 	};
 
 
@@ -64,7 +64,7 @@ namespace SlavGPS {
 		DataSourceRoutingDialog(const QString & window_title);
 		~DataSourceRoutingDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		QComboBox * engines_combo;
 		QLineEdit from_entry;

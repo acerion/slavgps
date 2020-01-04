@@ -242,7 +242,6 @@ int main(int argc, char ** argv)
 	QResource::registerResource("icons.rcc");
 
 
-	Acquire::init();
 	LayerTRWBabelFilter::init();
 
 	/* Ask for confirmation of default settings on first run. */

@@ -64,12 +64,11 @@ static QString last_to_str;
 
 DataSourceRouting::DataSourceRouting()
 {
-	this->window_title = QObject::tr("Directions");
-	this->layer_title = QObject::tr("Directions");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = true; /* true = keep dialog open after success. */
+	this->m_window_title = QObject::tr("Directions");
+	this->m_layer_title = QObject::tr("Directions");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = true;
 }
 
 
@@ -90,14 +89,14 @@ SGObjectTypeID DataSourceRouting::source_id(void)
 
 
 
-int DataSourceRouting::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceRouting::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceRoutingDialog config_dialog(this->window_title);
+	DataSourceRoutingDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
-		this->download_options = new DownloadOptions; /* With default values. */
+		this->m_acquire_options = config_dialog.create_acquire_options(acquire_context);
+		this->m_download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -139,7 +138,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 
 
-AcquireOptions * DataSourceRoutingDialog::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceRoutingDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();

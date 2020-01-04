@@ -58,7 +58,7 @@ namespace SlavGPS {
 		static void init(void);
 		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -75,7 +75,7 @@ namespace SlavGPS {
 		DataSourceGeoCacheDialog(const QString & window_title, GisViewport * gisview);
 		~DataSourceGeoCacheDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		bool circle_is_onscreen(const ScreenPos & circle_center);
 

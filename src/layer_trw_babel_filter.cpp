@@ -63,7 +63,7 @@ extern Babel babel;
 
 
 
-std::map<SGObjectTypeID, DataSource *, SGObjectTypeID::compare> g_babel_filters;
+std::map<SGObjectTypeID, DataSourceBabelFilter *, SGObjectTypeID::compare> g_babel_filters;
 Track * g_babel_filter_track = nullptr;
 
 
@@ -104,7 +104,7 @@ void LayerTRWBabelFilter::apply_babel_filter_cb(void)
 
 	AcquireContext acquire_context;
 	acquire_context = this->ctx;
-	Acquire::acquire_from_source(iter->second, iter->second->mode, acquire_context);
+	Acquire::acquire_from_source(iter->second, iter->second->m_layer_mode, acquire_context);
 
 	return;
 }
@@ -155,7 +155,7 @@ void LayerTRWBabelFilter::uninit(void)
 
 
 
-sg_ret LayerTRWBabelFilter::register_babel_filter(DataSource * bfilter)
+sg_ret LayerTRWBabelFilter::register_babel_filter(DataSourceBabelFilter * bfilter)
 {
 	if (bfilter->get_source_id().is_empty()) {
 		qDebug() << SG_PREFIX_E << "bfilter with empty type id";

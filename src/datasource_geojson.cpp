@@ -59,12 +59,11 @@ static QString g_last_filter;
 
 DataSourceGeoJSON::DataSourceGeoJSON()
 {
-	this->window_title = QObject::tr("Acquire from GeoJSON");
-	this->layer_title = QObject::tr("GeoJSON");
-	this->mode = DataSourceMode::AutoLayerManagement;
-	this->input_type = DataSourceInputType::None;
-	this->autoview = true;
-	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
+	this->m_window_title = QObject::tr("Acquire from GeoJSON");
+	this->m_layer_title = QObject::tr("GeoJSON");
+	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
+	this->m_autoview = true;
+	this->m_keep_dialog_open_after_success = false;
 }
 
 
@@ -85,9 +84,9 @@ SGObjectTypeID DataSourceGeoJSON::source_id(void)
 
 
 
-int DataSourceGeoJSON::run_config_dialog(AcquireContext * acquire_context)
+int DataSourceGeoJSON::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceGeoJSONDialog config_dialog(this->window_title);
+	DataSourceGeoJSONDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -130,7 +129,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-LoadStatus DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	/* Process selected files. */
 	for (int i = 0; i < this->selected_files.size(); i++) {
@@ -139,11 +138,11 @@ LoadStatus DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext 
 		const QString gpx_filename = geojson_import_to_gpx(file_full_path);
 		if (!gpx_filename.isEmpty()) {
 			/* Important that this process is run in the main thread. */
-			acquire_context->m_window->open_file(gpx_filename, false);
+			acquire_context.m_window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquire_context->m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to import from: %1").arg(file_full_path));
+			acquire_context.m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 

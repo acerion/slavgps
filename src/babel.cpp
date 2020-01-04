@@ -471,9 +471,9 @@ BabelProcess::BabelProcess()
 
 
 
-void BabelProcess::set_acquire_context(AcquireContext * new_acquire_context)
+void BabelProcess::set_acquire_context(AcquireContext & acquire_context)
 {
-	this->acquire_context = new_acquire_context;
+	this->m_acquire_context = acquire_context;
 }
 
 

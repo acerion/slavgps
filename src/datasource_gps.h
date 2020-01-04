@@ -56,7 +56,7 @@ namespace SlavGPS {
 		DataSourceGPS();
 		~DataSourceGPS() {};
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -82,7 +82,7 @@ namespace SlavGPS {
 		DataSourceGPSDialog(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
 		~DataSourceGPSDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		void save_transfer_options(void);
 
@@ -115,8 +115,6 @@ namespace SlavGPS {
 	public:
 		DatasourceGPSProgress(const QString & window_title, QWidget * parent = NULL);
 		~DatasourceGPSProgress();
-
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context) { return NULL; };
 
 	private slots:
 

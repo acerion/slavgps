@@ -55,7 +55,7 @@ namespace SlavGPS {
 	public:
 		DataSourceOnlineService() {};
 		DataSourceOnlineService(const QString & window_title, const QString & layer_title, GisViewport * gisview, OnlineService_query * online_service);
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		void cleanup(void * data);
 
@@ -78,7 +78,7 @@ namespace SlavGPS {
 		/* Get data from online data source */
 		DataSourceOnlineServiceDialog(const QString & window_title, GisViewport * gisview, OnlineService_query * new_online_service);
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		OnlineService_query * online_service = NULL;
 		GisViewport * gisview = NULL;

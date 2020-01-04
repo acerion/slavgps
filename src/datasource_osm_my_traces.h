@@ -59,9 +59,9 @@ namespace SlavGPS {
 		DataSourceOSMMyTraces(GisViewport * gisview);
 		~DataSourceOSMMyTraces() {};
 
-		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) override;
+		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) override;
 
-		int run_config_dialog(AcquireContext * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context) override;
 
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
@@ -76,7 +76,7 @@ namespace SlavGPS {
 	public:
 		DataSourceOSMMyTracesDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title) { this->gisview = new_gisview; };
 
-		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
 		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 
