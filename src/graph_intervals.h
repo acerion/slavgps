@@ -62,7 +62,7 @@ namespace SlavGPS {
 	template <class T>
 	const T & GraphIntervals<T>::get_interval(const T & min, const T & max, int n_intervals)
 	{
-		const T interval_upper_limit = (max - min) / n_intervals;
+		const auto interval_upper_limit = (max - min) / n_intervals; /* TODO_LATER: replace 'auto' with proper type. */
 		qDebug() << "II  " << __func__ << "min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
 
 		/* Range (min, max) for which we want to calculate

@@ -71,7 +71,6 @@ namespace SlavGPS {
 
    @return a string of the time according to the time display property
 */
-template<>
 QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
 {
 	QString result;
@@ -126,7 +125,6 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
 
    @return a string of the time according to the time display property
 */
-template<>
 QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
 {
 	QString result;
@@ -177,8 +175,8 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const 
 
 
 
-template<>
-TimeUnit Time::get_user_unit(void)
+template <>
+TimeUnit Measurement<Time_ll, TimeUnit>::get_user_unit(void)
 {
 	return TimeUnit::Seconds;
 }
@@ -186,7 +184,6 @@ TimeUnit Time::get_user_unit(void)
 
 
 
-template<>
 QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 {
 	QString result;
@@ -203,16 +200,25 @@ QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 
 
 template<>
-QString Time::to_string(void) const
+QString Measurement<Time_ll, TimeUnit>::to_string(void) const
 {
-	return this->to_timestamp_string();
+	QString result;
+	if (this->is_valid()) {
+		/* TODO_LATER: this can't be hardcoded 'local time'. */
+		Qt::TimeSpec time_spec = Qt::LocalTime;
+		/* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
+	} else {
+		result = QObject::tr("No Data");
+	}
+	return result;
 }
 
 
 
 
 template<>
-bool Time::is_zero(void) const
+bool Measurement<Time_ll, TimeUnit>::is_zero(void) const
 {
 	if (!this->m_valid) {
 		return true;
@@ -224,7 +230,7 @@ bool Time::is_zero(void) const
 
 
 template<>
-TimeUnit Time::get_internal_unit(void)
+TimeUnit Measurement<Time_ll, TimeUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_TIME;
 }
@@ -232,7 +238,6 @@ TimeUnit Time::get_internal_unit(void)
 
 
 
-template<>
 sg_ret Time::set_timestamp_from_string(const QString & str)
 {
 	this->m_ll_value = (Time_ll) str.toULong(&this->m_valid);
@@ -246,7 +251,6 @@ sg_ret Time::set_timestamp_from_string(const QString & str)
 
 
 
-template<>
 sg_ret Time::set_timestamp_from_char_string(const char * str)
 {
 	if (NULL == str) {
@@ -262,7 +266,7 @@ sg_ret Time::set_timestamp_from_char_string(const char * str)
 
 
 template<>
-bool Time::ll_value_is_valid(Time_ll value)
+bool Measurement<Time_ll, TimeUnit>::ll_value_is_valid(Time_ll value)
 {
 	return true; /* TODO_LATER: improve for Time_ll data type. */
 }
@@ -271,7 +275,7 @@ bool Time::ll_value_is_valid(Time_ll value)
 
 
 template<>
-const QString Time::value_to_string_for_file(int precision) const
+const QString Measurement<Time_ll, TimeUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -294,7 +298,6 @@ bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
 
 
 
-template<>
 QString Time::strftime_utc(const char * format) const
 {
 	char timestamp_string[32] = { 0 };
@@ -307,7 +310,6 @@ QString Time::strftime_utc(const char * format) const
 
 
 
-template<>
 QString Time::strftime_local(const char * format) const
 {
 	char timestamp_string[32] = { 0 };
@@ -320,7 +322,6 @@ QString Time::strftime_local(const char * format) const
 
 
 
-template<>
 QString Time::get_time_string(Qt::DateFormat format) const
 {
 	QDateTime date_time;
@@ -341,7 +342,7 @@ QString Time::get_time_string(Qt::DateFormat format) const
    @reviewed-on 2019-11-27
 */
 template<>
-QString Duration::to_string(void) const
+QString Measurement<Duration_ll, DurationUnit>::to_string(void) const
 {
 	QString result;
 
@@ -369,7 +370,7 @@ QString Duration::to_string(void) const
 
 
 template<>
-const QString Duration::value_to_string_for_file(int precision) const
+const QString Measurement<Duration_ll, DurationUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -381,7 +382,6 @@ const QString Duration::value_to_string_for_file(int precision) const
 
 
 
-template<>
 sg_ret Duration::set_duration_from_string(const QString & str)
 {
 	this->m_ll_value = str.toLong(&this->m_valid); /* Duration_ll is signed. */
@@ -396,7 +396,6 @@ sg_ret Duration::set_duration_from_string(const QString & str)
 
 
 
-template<>
 sg_ret Duration::set_duration_from_char_string(const char * str)
 {
 	if (NULL == str) {
@@ -412,7 +411,7 @@ sg_ret Duration::set_duration_from_char_string(const char * str)
 
 
 template<>
-bool Duration::is_zero(void) const
+bool Measurement<Duration_ll, DurationUnit>::is_zero(void) const
 {
 	if (!this->m_valid) {
 		return true;
@@ -424,7 +423,7 @@ bool Duration::is_zero(void) const
 
 
 template<>
-bool Duration::ll_value_is_valid(Time_ll value)
+bool Measurement<Duration_ll, DurationUnit>::ll_value_is_valid(Time_ll value)
 {
 	return true; /* TODO_LATER: improve for Duration_ll data type. */
 }
@@ -433,7 +432,7 @@ bool Duration::ll_value_is_valid(Time_ll value)
 
 
 template<>
-DurationUnit Duration::get_internal_unit(void)
+DurationUnit Measurement<Duration_ll, DurationUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_DURATION;
 }
@@ -442,7 +441,7 @@ DurationUnit Duration::get_internal_unit(void)
 
 
 template<>
-Duration_ll Duration::convert_to_unit(Duration_ll value, DurationUnit from, DurationUnit to)
+Duration_ll Measurement<Duration_ll, DurationUnit>::convert_to_unit(Duration_ll value, DurationUnit from, DurationUnit to)
 {
 	Duration_ll result = 0; /* TODO_LATER: this should be some form of NAN. */
 
@@ -523,7 +522,7 @@ Duration_ll Duration::convert_to_unit(Duration_ll value, DurationUnit from, Dura
 
 
 template<>
-Duration Duration::convert_to_unit(DurationUnit target_unit) const
+Measurement<Duration_ll, DurationUnit> Measurement<Duration_ll, DurationUnit>::convert_to_unit(DurationUnit target_unit) const
 {
 	Duration result;
 	result.m_ll_value = Duration::convert_to_unit(this->m_ll_value, this->get_unit(), target_unit);
@@ -535,12 +534,7 @@ Duration Duration::convert_to_unit(DurationUnit target_unit) const
 
 
 
-
-
-
-
-template<>
-Duration Time::get_abs_duration(const Time & later, const Time & earlier)
+Duration Duration::get_abs_duration(const Time & later, const Time & earlier)
 {
 	Duration result;
 	if (later.m_unit != earlier.m_unit) {
@@ -571,7 +565,7 @@ Duration Time::get_abs_duration(const Time & later, const Time & earlier)
 
 
 template<>
-Time_ll Time::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
+Time_ll Measurement<Time_ll, TimeUnit>::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
 {
 	return value; /* There is only one Time unit, so the conversion is simple. */
 }
@@ -580,7 +574,7 @@ Time_ll Time::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
 
 
 template<>
-Time Time::convert_to_unit(TimeUnit target_unit) const
+Measurement<Time_ll, TimeUnit> Measurement<Time_ll, TimeUnit>::convert_to_unit(TimeUnit target_unit) const
 {
 	return *this; /* There is only one Time unit, so the conversion is simple. */
 }
@@ -592,7 +586,7 @@ Time Time::convert_to_unit(TimeUnit target_unit) const
 
 
 template<>
-bool Gradient::ll_value_is_valid(Gradient_ll value)
+bool Measurement<Gradient_ll, GradientUnit>::ll_value_is_valid(Gradient_ll value)
 {
 	return !std::isnan(value);
 }
@@ -601,7 +595,7 @@ bool Gradient::ll_value_is_valid(Gradient_ll value)
 
 
 template<>
-GradientUnit Gradient::get_user_unit(void)
+GradientUnit Measurement<Gradient_ll, GradientUnit>::get_user_unit(void)
 {
 	return GradientUnit::Percents;
 }
@@ -610,7 +604,7 @@ GradientUnit Gradient::get_user_unit(void)
 
 
 template<>
-QString Gradient::ll_value_to_string(Gradient_ll value, GradientUnit unit)
+QString Measurement<Gradient_ll, GradientUnit>::ll_value_to_string(Gradient_ll value, GradientUnit unit)
 {
 	QString result;
 	if (!Gradient::ll_value_is_valid(value)) {
@@ -636,7 +630,7 @@ QString Gradient::ll_value_to_string(Gradient_ll value, GradientUnit unit)
 
 
 template<>
-QString Gradient::to_string(void) const
+QString Measurement<Gradient_ll, GradientUnit>::to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -651,7 +645,7 @@ QString Gradient::to_string(void) const
 
 
 template<>
-GradientUnit Gradient::get_internal_unit(void)
+GradientUnit Measurement<Gradient_ll, GradientUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT;
 }
@@ -660,7 +654,7 @@ GradientUnit Gradient::get_internal_unit(void)
 
 
 template<>
-QString Gradient::get_unit_string(GradientUnit unit)
+QString Measurement<Gradient_ll, GradientUnit>::get_unit_string(GradientUnit unit)
 {
 	QString result;
 
@@ -680,7 +674,7 @@ QString Gradient::get_unit_string(GradientUnit unit)
 
 
 template<>
-const QString Gradient::value_to_string(void) const
+const QString Measurement<Gradient_ll, GradientUnit>::value_to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -696,7 +690,7 @@ const QString Gradient::value_to_string(void) const
 
 
 template<>
-const QString Gradient::value_to_string_for_file(int precision) const
+const QString Measurement<Gradient_ll, GradientUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -709,7 +703,7 @@ const QString Gradient::value_to_string_for_file(int precision) const
 
 
 template<>
-bool Gradient::is_zero(void) const
+bool Measurement<Gradient_ll, GradientUnit>::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
 	if (!this->m_valid) {
@@ -722,7 +716,7 @@ bool Gradient::is_zero(void) const
 
 
 template<>
-Gradient_ll Gradient::convert_to_unit(Gradient_ll value, GradientUnit from, GradientUnit to)
+Gradient_ll Measurement<Gradient_ll, GradientUnit>::convert_to_unit(Gradient_ll value, GradientUnit from, GradientUnit to)
 {
 	return value; /* There is only one Gradient unit, so the conversion is simple. */
 }
@@ -731,7 +725,7 @@ Gradient_ll Gradient::convert_to_unit(Gradient_ll value, GradientUnit from, Grad
 
 
 template<>
-Gradient Gradient::convert_to_unit(GradientUnit target_unit) const
+Measurement<Gradient_ll, GradientUnit> Measurement<Gradient_ll, GradientUnit>::convert_to_unit(GradientUnit target_unit) const
 {
 	return *this; /* There is only one Gradient unit, so the conversion is simple. */
 }
@@ -743,7 +737,7 @@ Gradient Gradient::convert_to_unit(GradientUnit target_unit) const
 
 
 template<>
-bool Speed::ll_value_is_valid(Speed_ll value)
+bool Measurement<Speed_ll, SpeedUnit>::ll_value_is_valid(Speed_ll value)
 {
 	return !std::isnan(value);
 }
@@ -752,7 +746,7 @@ bool Speed::ll_value_is_valid(Speed_ll value)
 
 
 template<>
-SpeedUnit Speed::get_internal_unit(void)
+SpeedUnit Measurement<Speed_ll, SpeedUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_SPEED;
 }
@@ -761,7 +755,7 @@ SpeedUnit Speed::get_internal_unit(void)
 
 
 template<>
-SpeedUnit Speed::get_user_unit(void)
+SpeedUnit Measurement<Speed_ll, SpeedUnit>::get_user_unit(void)
 {
 	return Preferences::get_unit_speed();
 }
@@ -770,7 +764,7 @@ SpeedUnit Speed::get_user_unit(void)
 
 
 template<>
-QString Speed::to_string(void) const
+QString Measurement<Speed_ll, SpeedUnit>::to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -804,7 +798,7 @@ QString Speed::to_string(void) const
 
 
 template<>
-QString Speed::ll_value_to_string(Speed_ll value, SpeedUnit unit)
+QString Measurement<Speed_ll, SpeedUnit>::ll_value_to_string(Speed_ll value, SpeedUnit unit)
 {
 	QString result;
 	if (!Speed::ll_value_is_valid(value)) {
@@ -839,7 +833,7 @@ QString Speed::ll_value_to_string(Speed_ll value, SpeedUnit unit)
 
 
 template<>
-QString Speed::to_nice_string(void) const
+QString Measurement<Speed_ll, SpeedUnit>::to_nice_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -876,7 +870,7 @@ QString Speed::to_nice_string(void) const
 
 
 template<>
-Speed_ll Speed::convert_to_unit(Speed_ll value, SpeedUnit from, SpeedUnit to)
+Speed_ll Measurement<Speed_ll, SpeedUnit>::convert_to_unit(Speed_ll value, SpeedUnit from, SpeedUnit to)
 {
 	Speed_ll result = NAN;
 
@@ -922,7 +916,7 @@ Speed_ll Speed::convert_to_unit(Speed_ll value, SpeedUnit from, SpeedUnit to)
 
 
 template<>
-Speed Speed::convert_to_unit(SpeedUnit target_unit) const
+Measurement<Speed_ll, SpeedUnit> Measurement<Speed_ll, SpeedUnit>::convert_to_unit(SpeedUnit target_unit) const
 {
 	Speed result;
 	result.m_ll_value = Speed::convert_to_unit(this->m_ll_value, this->m_unit, target_unit);
@@ -935,7 +929,7 @@ Speed Speed::convert_to_unit(SpeedUnit target_unit) const
 
 
 template<>
-QString Speed::get_unit_string(SpeedUnit speed_unit)
+QString Measurement<Speed_ll, SpeedUnit>::get_unit_string(SpeedUnit speed_unit)
 {
 	QString result;
 
@@ -964,7 +958,7 @@ QString Speed::get_unit_string(SpeedUnit speed_unit)
 
 
 template<>
-QString Speed::get_unit_full_string(SpeedUnit unit)
+QString Measurement<Speed_ll, SpeedUnit>::get_unit_full_string(SpeedUnit unit)
 {
 	QString result;
 
@@ -994,7 +988,7 @@ QString Speed::get_unit_full_string(SpeedUnit unit)
 
 
 template<>
-const QString Speed::value_to_string(void) const
+const QString Measurement<Speed_ll, SpeedUnit>::value_to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -1010,7 +1004,7 @@ const QString Speed::value_to_string(void) const
 
 
 template<>
-const QString Speed::value_to_string_for_file(int precision) const
+const QString Measurement<Speed_ll, SpeedUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -1023,7 +1017,7 @@ const QString Speed::value_to_string_for_file(int precision) const
 
 
 template<>
-bool Speed::is_zero(void) const
+bool Measurement<Speed_ll, SpeedUnit>::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
 	if (!this->m_valid) {
@@ -1035,8 +1029,7 @@ bool Speed::is_zero(void) const
 
 
 
-template<>
-sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Duration & duration)
+sg_ret Speed::make_speed(const Distance & distance, const Duration & duration)
 {
 	if (distance.get_unit() != DistanceUnit::Meters) {
 		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) distance.get_unit();
@@ -1057,8 +1050,7 @@ sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance
 
 
 
-template<>
-sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, const Duration & duration)
+sg_ret Speed::make_speed(const Altitude & altitude, const Duration & duration)
 {
 	if (altitude.get_unit() != HeightUnit::Metres) {
 		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << (int) altitude.get_unit();
@@ -1084,7 +1076,7 @@ sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, 
 
 
 template<>
-bool Altitude::ll_value_is_valid(Altitude_ll value)
+bool Measurement<Altitude_ll, HeightUnit>::ll_value_is_valid(Altitude_ll value)
 {
 	return !std::isnan(value);
 }
@@ -1093,7 +1085,7 @@ bool Altitude::ll_value_is_valid(Altitude_ll value)
 
 
 template<>
-HeightUnit Altitude::get_internal_unit(void)
+HeightUnit Measurement<Altitude_ll, HeightUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT;
 }
@@ -1102,7 +1094,7 @@ HeightUnit Altitude::get_internal_unit(void)
 
 
 template<>
-HeightUnit Altitude::get_user_unit(void)
+HeightUnit Measurement<Altitude_ll, HeightUnit>::get_user_unit(void)
 {
 	return Preferences::get_unit_height();
 }
@@ -1111,7 +1103,7 @@ HeightUnit Altitude::get_user_unit(void)
 
 
 template<>
-QString Altitude::to_string(void) const
+QString Measurement<Altitude_ll, HeightUnit>::to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -1138,7 +1130,7 @@ QString Altitude::to_string(void) const
 
 
 template<>
-QString Altitude::ll_value_to_string(Altitude_ll value, HeightUnit unit)
+QString Measurement<Altitude_ll, HeightUnit>::ll_value_to_string(Altitude_ll value, HeightUnit unit)
 {
 	QString result;
 	if (!Altitude::ll_value_is_valid(value)) {
@@ -1167,7 +1159,7 @@ QString Altitude::ll_value_to_string(Altitude_ll value, HeightUnit unit)
 
 
 template<>
-Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
+Altitude_ll Measurement<Altitude_ll, HeightUnit>::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
 {
 	Altitude_ll result = NAN;
 
@@ -1214,7 +1206,7 @@ Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, Height
 
 
 template<>
-Altitude Altitude::convert_to_unit(HeightUnit target_unit) const
+Measurement<Altitude_ll, HeightUnit> Measurement<Altitude_ll, HeightUnit>::convert_to_unit(HeightUnit target_unit) const
 {
 	Altitude result;
 	result.m_ll_value = Altitude::convert_to_unit(this->m_ll_value, this->m_unit, target_unit);
@@ -1228,7 +1220,7 @@ Altitude Altitude::convert_to_unit(HeightUnit target_unit) const
 
 #if 0
 template<>
-sg_ret Altitude::set_from_string(const char * str)
+sg_ret Measurement<Altitude_ll, HeightUnit>::set_from_string(const char * str)
 {
 	if (NULL == str) {
 		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of altitude from NULL string";
@@ -1243,7 +1235,7 @@ sg_ret Altitude::set_from_string(const char * str)
 
 
 template<>
-sg_ret Altitude::set_from_string(const QString & str)
+sg_ret Measurement<Altitude_ll, HeightUnit>::set_from_string(const QString & str)
 {
 	this->m_ll_value = SGUtils::c_to_double(str);
 	this->m_valid = !std::isnan(this->m_ll_value);
@@ -1257,7 +1249,7 @@ sg_ret Altitude::set_from_string(const QString & str)
 
 
 template<>
-QString Altitude::get_unit_full_string(HeightUnit height_unit)
+QString Measurement<Altitude_ll, HeightUnit>::get_unit_full_string(HeightUnit height_unit)
 {
 	QString result;
 
@@ -1281,7 +1273,7 @@ QString Altitude::get_unit_full_string(HeightUnit height_unit)
 
 
 template<>
-Altitude_ll Altitude::floor(void) const
+Altitude_ll Measurement<Altitude_ll, HeightUnit>::floor(void) const
 {
 	if (!this->m_valid) {
 		return INT_MIN;
@@ -1293,7 +1285,7 @@ Altitude_ll Altitude::floor(void) const
 
 
 template<>
-QString Altitude::to_nice_string(void) const
+QString Measurement<Altitude_ll, HeightUnit>::to_nice_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -1323,7 +1315,7 @@ QString Altitude::to_nice_string(void) const
 
 
 template<>
-const QString Altitude::value_to_string(void) const
+const QString Measurement<Altitude_ll, HeightUnit>::value_to_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -1339,7 +1331,7 @@ const QString Altitude::value_to_string(void) const
 
 
 template<>
-const QString Altitude::value_to_string_for_file(int precision) const
+const QString Measurement<Altitude_ll, HeightUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -1352,7 +1344,7 @@ const QString Altitude::value_to_string_for_file(int precision) const
 
 
 template<>
-bool Altitude::is_zero(void) const
+bool Measurement<Altitude_ll, HeightUnit>::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
 	if (!this->m_valid) {
@@ -1369,7 +1361,7 @@ bool Altitude::is_zero(void) const
 
 
 template<>
-bool Angle::ll_value_is_valid(Angle_ll value)
+bool Measurement<Angle_ll, AngleUnit>::ll_value_is_valid(Angle_ll value)
 {
 	return !std::isnan(value);
 }
@@ -1378,7 +1370,7 @@ bool Angle::ll_value_is_valid(Angle_ll value)
 
 
 template<>
-QString Angle::to_string(int precision) const
+QString Measurement<Angle_ll, AngleUnit>::to_string(int precision) const
 {
 	if (this->is_valid()) {
 		return QObject::tr("%1%2").arg(RAD2DEG(this->m_ll_value), 5, 'f', precision, '0').arg(DEGREE_SYMBOL);
@@ -1390,7 +1382,6 @@ QString Angle::to_string(int precision) const
 
 
 
-template<>
 Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
 {
 	/*
@@ -1441,7 +1432,6 @@ Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
 
 
 
-template<>
 void Angle::normalize(void)
 {
 	if (!this->is_valid()) {
@@ -1462,7 +1452,7 @@ void Angle::normalize(void)
 
 
 template<>
-QString Angle::to_string(void) const
+QString Measurement<Angle_ll, AngleUnit>::to_string(void) const
 {
 	QString result;
 
@@ -1491,7 +1481,7 @@ QString Angle::to_string(void) const
 
 
 template<>
-const QString Angle::value_to_string_for_file(int precision) const
+const QString Measurement<Angle_ll, AngleUnit>::value_to_string_for_file(int precision) const
 {
 	QString result;
 	if (this->m_valid) {
@@ -1504,7 +1494,7 @@ const QString Angle::value_to_string_for_file(int precision) const
 
 
 template<>
-bool Angle::is_zero(void) const
+bool Measurement<Angle_ll, AngleUnit>::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
 	if (!this->m_valid) {
@@ -1521,7 +1511,7 @@ bool Angle::is_zero(void) const
 
 
 template<>
-bool Distance::ll_value_is_valid(Distance_ll value)
+bool Measurement<Distance_ll, DistanceUnit>::ll_value_is_valid(Distance_ll value)
 {
 	return !std::isnan(value);
 }
@@ -1530,7 +1520,7 @@ bool Distance::ll_value_is_valid(Distance_ll value)
 
 
 template<>
-DistanceUnit Distance::get_internal_unit(void)
+DistanceUnit Measurement<Distance_ll, DistanceUnit>::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_DISTANCE;
 }
@@ -1539,7 +1529,7 @@ DistanceUnit Distance::get_internal_unit(void)
 
 
 template<>
-DistanceUnit Distance::get_user_unit(void)
+DistanceUnit Measurement<Distance_ll, DistanceUnit>::get_user_unit(void)
 {
 	return Preferences::get_unit_distance();
 }
@@ -1548,7 +1538,7 @@ DistanceUnit Distance::get_user_unit(void)
 
 
 template<>
-Distance_ll Distance::convert_to_unit(Distance_ll input, DistanceUnit from, DistanceUnit to)
+Distance_ll Measurement<Distance_ll, DistanceUnit>::convert_to_unit(Distance_ll input, DistanceUnit from, DistanceUnit to)
 {
 	Distance_ll result = NAN;
 
@@ -1654,7 +1644,7 @@ Distance_ll Distance::convert_to_unit(Distance_ll input, DistanceUnit from, Dist
 
 
 template<>
-Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
+Measurement<Distance_ll, DistanceUnit> Measurement<Distance_ll, DistanceUnit>::convert_to_unit(DistanceUnit target_distance_unit) const
 {
 	Distance result;
 	result.m_ll_value = Distance::convert_to_unit(this->m_ll_value, this->m_unit, target_distance_unit);
@@ -1667,7 +1657,7 @@ Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 
 
 template<>
-QString Distance::to_nice_string(void) const
+QString Measurement<Distance_ll, DistanceUnit>::to_nice_string(void) const
 {
 	QString result;
 	if (!this->m_valid) {
@@ -1716,7 +1706,7 @@ QString Distance::to_nice_string(void) const
 
 
 template<>
-QString Distance::ll_value_to_string(Distance_ll value, DistanceUnit unit)
+QString Measurement<Distance_ll, DistanceUnit>::ll_value_to_string(Distance_ll value, DistanceUnit unit)
 {
 	QString result;
 	if (std::isnan(value)) {
@@ -1753,7 +1743,7 @@ QString Distance::ll_value_to_string(Distance_ll value, DistanceUnit unit)
 
 
 template<>
-QString Distance::to_string(void) const
+QString Measurement<Distance_ll, DistanceUnit>::to_string(void) const
 {
 	QString result;
 
@@ -1791,7 +1781,7 @@ QString Distance::to_string(void) const
 
 
 template<>
-QString Distance::get_unit_full_string(DistanceUnit distance_unit)
+QString Measurement<Distance_ll, DistanceUnit>::get_unit_full_string(DistanceUnit distance_unit)
 {
 	QString result;
 
@@ -1817,8 +1807,8 @@ QString Distance::get_unit_full_string(DistanceUnit distance_unit)
 
 
 
-template<>
-bool Distance::is_zero(void) const
+template <>
+bool Measurement<Distance_ll, DistanceUnit>::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
 	if (!this->m_valid) {

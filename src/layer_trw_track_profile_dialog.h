@@ -541,7 +541,7 @@ namespace SlavGPS {
 
 		/* This is not exactly the same range as this->y_visible_range_uu
 		   calculated below. TODO: ensure that y_min and y_max are valid. */
-		const Ty y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min;
+		const auto y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min; /* TODO_LATER: replace 'auto' with proper type. */
 
 		switch (this->graph_2d->y_domain) {
 

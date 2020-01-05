@@ -841,7 +841,7 @@ Duration Track::get_duration(bool segment_gaps) const
 			// Simple duration
 			Trackpoint * tp_last = this->get_tp_last();
 			if (tp_last->timestamp.is_valid()) {
-				duration = Time::get_abs_duration(tp_last->timestamp, this->get_tp_first()->timestamp);
+				duration = Duration::get_abs_duration(tp_last->timestamp, this->get_tp_first()->timestamp);
 			}
 		} else {
 			/* Total within segments. */
@@ -850,7 +850,7 @@ Duration Track::get_duration(bool segment_gaps) const
 				    && (*std::prev(iter))->timestamp.is_valid()
 				    && !(*iter)->newsegment) {
 
-					duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+					duration += Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 				}
 			}
 		}
@@ -874,7 +874,7 @@ Duration Track::get_duration(void) const
 		return result;
 	}
 
-	const Duration duration = Time::get_abs_duration(ts_end, ts_begin);
+	const Duration duration = Duration::get_abs_duration(ts_end, ts_begin);
 	if (!duration.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Invalid duration";
 		return result;
@@ -910,7 +910,7 @@ Speed Track::get_average_speed(void) const
 		    && !(*iter)->newsegment) {
 
 			distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			duration += Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 		}
 	}
 
@@ -950,10 +950,10 @@ Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) 
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			const Duration timestamp_diff = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			const Duration timestamp_diff = Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			if (timestamp_diff < track_min_stop_duration) {
 				distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-				duration += Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+				duration += Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			}
 		}
 	}
@@ -984,7 +984,7 @@ sg_ret Track::calculate_max_speed(void)
 		    && !(*iter)->newsegment) {
 
 			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			const Duration duration = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			const Duration duration = Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			Speed speed;
 			speed.make_speed(distance, duration);
 
@@ -1161,7 +1161,7 @@ Trackpoint * Track::get_tp_by_max_speed() const
 		    && !(*iter)->newsegment) {
 
 			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
-			const Duration duration = Time::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			const Duration duration = Duration::get_abs_duration((*iter)->timestamp, (*std::prev(iter))->timestamp);
 
 			if (sg_ret::ok != speed.make_speed(distance, duration)) {
 				continue;
@@ -3904,7 +3904,7 @@ Speed Track::get_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
 	}
 
 	const Distance distance_diff = Coord::distance_2(tp_prev->coord, tp->coord);
-	const Duration duration = Time::get_abs_duration(tp_prev->timestamp, tp->timestamp);
+	const Duration duration = Duration::get_abs_duration(tp_prev->timestamp, tp->timestamp);
 	result.make_speed(distance_diff, duration);
 
 	return result;
@@ -3930,6 +3930,6 @@ Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
 		result = Duration(0, DurationUnit::Seconds); /* Since we deal with GPS trackpoints, let's use seconds. */
 		return result;
 	}
-	result = Time::get_abs_duration(tp_prev->timestamp, tp->timestamp);
+	result = Duration::get_abs_duration(tp_prev->timestamp, tp->timestamp);
 	return result;
 }

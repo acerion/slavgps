@@ -533,7 +533,7 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 			/* Build value for presentation in user
 			   interface - convert from internal unit
 			   (meters) into current user's unit. */
-			rv = this->max_elev.convert_to_unit(Preferences::get_unit_height());
+			rv = SGVariant(this->max_elev.convert_to_unit(Preferences::get_unit_height()));
 		}
 		qDebug() << SG_PREFIX_I << "Read max elev from layer:" << this->max_elev;
 		break;

@@ -120,7 +120,7 @@ void TrackStatistics::add_track(Track * trk)
 			this->end_time = ts_last;
 		}
 
-		this->sum_of_durations += Time::get_abs_duration(ts_last, ts_first);
+		this->sum_of_durations += Duration::get_abs_duration(ts_last, ts_first);
 	}
 }
 

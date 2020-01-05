@@ -224,7 +224,7 @@ void Track::split_by_timestamp_cb(void)
 
 		for (; iter != this->trackpoints.end(); iter++) {
 			const Time this_timestamp = (*iter)->timestamp;
-			const Duration timestamp_delta = Time::get_abs_duration(this_timestamp, prev_timestamp);
+			const Duration timestamp_delta = Duration::get_abs_duration(this_timestamp, prev_timestamp);
 
 			/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
 

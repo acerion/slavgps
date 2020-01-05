@@ -333,7 +333,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		row++;
 
 
-		const Duration total_duration_s = Time::get_abs_duration(ts2, ts1);
+		const Duration total_duration_s = Duration::get_abs_duration(ts2, ts1);
 		const Duration segments_duration_s = this->trk->get_duration(false);
 		const QString result = tr("%1 total - %2 in segments")
 			.arg(total_duration_s.to_string())

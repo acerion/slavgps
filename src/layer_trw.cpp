@@ -1372,7 +1372,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 			/* Keep track of total time.
 			   There maybe gaps within a track (eg segments)
 			   but this should be generally good enough for a simple indicator. */
-			result.duration += Time::get_abs_duration(ts_last, ts_first);
+			result.duration += Duration::get_abs_duration(ts_last, ts_first);
 		}
 	}
 

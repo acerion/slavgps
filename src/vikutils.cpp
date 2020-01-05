@@ -291,7 +291,7 @@ Speed get_climb_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
 	/* Work out from previous trackpoint altitudes and time difference.
 	   Speed can be negative if going downhill. */
 	const Altitude altitude = (tp->altitude - tp_prev->altitude);
-	const Duration duration = Time::get_abs_duration(tp->timestamp, tp_prev->timestamp);
+	const Duration duration = Duration::get_abs_duration(tp->timestamp, tp_prev->timestamp);
 	result.make_speed(altitude, duration);
 
 	return result;

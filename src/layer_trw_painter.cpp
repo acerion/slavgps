@@ -193,7 +193,7 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 	}
 
 	const Distance distance = Coord::distance_2(tp1->coord, tp2->coord);
-	const Duration duration = Time::get_abs_duration(tp1->timestamp, tp2->timestamp);
+	const Duration duration = Duration::get_abs_duration(tp1->timestamp, tp2->timestamp);
 	Speed speed;
 	speed.make_speed(distance, duration);
 	if (speed < low_speed) {
@@ -632,7 +632,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && !do_highlight
 			    && std::next(iter) != trk->trackpoints.end()) {
 
-				const Duration timestamp_diff = Time::get_abs_duration((*std::next(iter))->timestamp, (*iter)->timestamp);
+				const Duration timestamp_diff = Duration::get_abs_duration((*std::next(iter))->timestamp, (*iter)->timestamp);
 				if (timestamp_diff > this->track_min_stop_duration) {
 					const int stop_radius = (6 * tp_size) / 2;
 					this->gisview->fill_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen].color(),
