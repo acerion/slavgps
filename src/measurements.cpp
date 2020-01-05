@@ -570,6 +570,23 @@ Duration Time::get_abs_duration(const Time & later, const Time & earlier)
 
 
 
+template<>
+Time_ll Time::convert_to_unit(Time_ll value, TimeUnit from, TimeUnit to)
+{
+	return value; /* There is only one Time unit, so the conversion is simple. */
+}
+
+
+
+
+template<>
+Time Time::convert_to_unit(TimeUnit target_unit) const
+{
+	return *this; /* There is only one Time unit, so the conversion is simple. */
+}
+
+
+
 
 
 
@@ -701,6 +718,23 @@ bool Gradient::is_zero(void) const
 	return std::abs(this->m_ll_value) < epsilon;
 }
 
+
+
+
+template<>
+Gradient_ll Gradient::convert_to_unit(Gradient_ll value, GradientUnit from, GradientUnit to)
+{
+	return value; /* There is only one Gradient unit, so the conversion is simple. */
+}
+
+
+
+
+template<>
+Gradient Gradient::convert_to_unit(GradientUnit target_unit) const
+{
+	return *this; /* There is only one Gradient unit, so the conversion is simple. */
+}
 
 
 

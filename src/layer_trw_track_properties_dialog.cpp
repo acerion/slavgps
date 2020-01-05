@@ -270,8 +270,8 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	QString elevation_range;
-	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes_ii;
-	altitudes_ii.make_track_data_altitude_over_distance(this->trk);
+	TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> altitudes_ii;
+	altitudes_ii.make_track_data_x_over_y(this->trk);
 	if (altitudes_ii.y_min.is_valid()) {
 		const HeightUnit height_unit = Preferences::get_unit_height();
 		elevation_range = tr("%1 - %2")

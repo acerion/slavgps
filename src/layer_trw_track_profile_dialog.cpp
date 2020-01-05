@@ -1003,12 +1003,12 @@ ProfileViewBase::~ProfileViewBase()
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Altitude, Altitude_ll>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Speed, Speed_ll>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Distance, Distance_ll>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Speed, Speed_ll>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
-ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog) {}
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog) {}
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog) {}
 
 
 
@@ -1019,9 +1019,9 @@ namespace SlavGPS {
 
 
 template <>
-sg_ret ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_altitude_over_distance(trk);
+	return this->initial_track_data.make_track_data_x_over_y(trk);
 }
 
 
@@ -1029,43 +1029,43 @@ sg_ret ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::generate_initi
 
 
 template <>
-sg_ret ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_gradient_over_distance(trk);
+	return this->initial_track_data.make_track_data_x_over_y(trk);
 }
 
 
 
 template <>
-sg_ret ProfileView<Distance, Distance_ll, Speed, Speed_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_speed_over_distance(trk);
-}
-
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll, Speed, Speed_ll>::generate_initial_track_data(Track * trk)
-{
-	return this->initial_track_data.make_track_data_speed_over_time(trk);
+	return this->initial_track_data.make_track_data_x_over_y(trk);
 }
 
 
 
 
 template <>
-sg_ret ProfileView<Time, Time_ll, Distance, Distance_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_distance_over_time(trk);
+	return this->initial_track_data.make_track_data_x_over_y(trk);
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::generate_initial_track_data(Track * trk)
+{
+	return this->initial_track_data.make_track_data_x_over_y(trk);
 }
 
 
 
 template <>
-sg_ret ProfileView<Time, Time_ll, Altitude, Altitude_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_altitude_over_time(trk);
+	return this->initial_track_data.make_track_data_x_over_y(trk);
 }
 
 
