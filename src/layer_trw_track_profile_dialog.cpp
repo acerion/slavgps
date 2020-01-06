@@ -649,32 +649,6 @@ const QString & ProfileViewBase::get_title(void) const
 
 
 
-void ProfileViewBase::configure_title(void)
-{
-	if (this->y_domain == GisViewportDomain::ElevationDomain && this->x_domain == GisViewportDomain::DistanceDomain) {
-		this->title = QObject::tr("Elevation over distance");
-
-	} else if (this->y_domain == GisViewportDomain::GradientDomain && this->x_domain == GisViewportDomain::DistanceDomain) {
-		this->title = QObject::tr("Gradient over distance");
-
-	} else if (this->y_domain == GisViewportDomain::SpeedDomain && this->x_domain == GisViewportDomain::TimeDomain) {
-		this->title = QObject::tr("Speed over time");
-
-	} else if (this->y_domain == GisViewportDomain::DistanceDomain && this->x_domain == GisViewportDomain::TimeDomain) {
-		this->title = QObject::tr("Distance over time");
-
-	} else if (this->y_domain == GisViewportDomain::ElevationDomain && this->x_domain == GisViewportDomain::TimeDomain) {
-		this->title = QObject::tr("Elevation over time");
-
-	} else if (this->y_domain == GisViewportDomain::SpeedDomain && this->x_domain == GisViewportDomain::DistanceDomain) {
-		this->title = QObject::tr("Speed over distance");
-
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->x_domain << (int) this->y_domain;
-	}
-
-	return;
-}
 
 
 
@@ -729,11 +703,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 			continue;
 		}
 
-		view->configure_title();
-		view->create_graph_2d();
-		view->create_widgets_layout();
-		view->configure_labels();
-		view->configure_controls();
 
 		this->tabs->addTab(view->widget, view->get_title());
 
@@ -783,64 +752,56 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 
 
 
-void ProfileViewBase::configure_labels(void)
+
+void ProfileViewBase::configure_labels_x_distance()
 {
-	switch (this->graph_2d->x_domain) {
-	case GisViewportDomain::DistanceDomain:
-		this->labels.x_label = new QLabel(QObject::tr("Distance From Start:"));
-		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+	this->labels.x_label = new QLabel(QObject::tr("Distance From Start:"));
+	this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
-		/* Additional absolute timestamp to provide more information in UI. */
-		this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
-		this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+	/* Additional absolute timestamp to provide more information in UI. */
+	this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
+	this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
-		break;
+void ProfileViewBase::configure_labels_x_time()
+{
+	this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
+	this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
-	case GisViewportDomain::TimeDomain:
-		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
-		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
-
-		/* Additional absolute timestamp to provide more information in UI. */
-		this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
-		this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
-
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->graph_2d->x_domain;
-		break;
-	}
+	/* Additional absolute timestamp to provide more information in UI. */
+	this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
+	this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
 
-	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::ElevationDomain:
-		this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+void ProfileViewBase::configure_labels_y_altitude()
+{
+	this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
+	this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
-		break;
+void ProfileViewBase::configure_labels_y_gradient()
+{
+	this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
+	this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
-	case GisViewportDomain::GradientDomain:
-		this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+void ProfileViewBase::configure_labels_y_speed()
+{
+	this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
+	this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
-		break;
-
-	case GisViewportDomain::SpeedDomain:
-		this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
-
-		break;
-
-	case GisViewportDomain::DistanceDomain:
-		this->labels.y_label = new QLabel(QObject::tr("Distance From Start:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
-
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		break;
-	}
+void ProfileViewBase::configure_labels_y_distance()
+{
+	this->labels.y_label = new QLabel(QObject::tr("Distance From Start:"));
+	this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+}
 
 
+
+void ProfileViewBase::configure_labels_post(void)
+{
 	/* Use spacer item in last column to bring first two columns
 	   (with parameter's name and parameter's value) close
 	   together. */
@@ -977,10 +938,6 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 	this->widget->setProperty(MY_WIDGET_PROPERTY, QVariant::fromValue((qulonglong) this));
 	this->dialog = new_dialog;
 
-	if (!ProfileViewBase::domains_are_supported(new_x_domain, new_y_domain)) {
-		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) new_x_domain << (int) new_y_domain;
-	}
-
 	this->main_pen.setColor("lightsteelblue");
 	this->main_pen.setWidth(1);
 
@@ -990,6 +947,10 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 
 	this->x_domain = new_x_domain;
 	this->y_domain = new_y_domain;
+
+	this->create_graph_2d();
+	this->create_widgets_layout();
+	this->configure_controls();
 }
 
 
@@ -1003,102 +964,47 @@ ProfileViewBase::~ProfileViewBase()
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
-ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog) {}
-
-
-
-
-namespace SlavGPS {
-
-
-
-
-template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::generate_initial_track_data(Track * trk)
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
+	this->title = QObject::tr("Elevation over time");
+	this->configure_labels_x_time();
+	this->configure_labels_y_altitude();
+	this->configure_labels_post();
 }
-
-
-
-
-
-template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>::generate_initial_track_data(Track * trk)
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
+	this->title = QObject::tr("Speed over time");
+	this->configure_labels_x_time();
+	this->configure_labels_y_speed();
+	this->configure_labels_post();
 }
-
-
-
-template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>::generate_initial_track_data(Track * trk)
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
+	this->title = QObject::tr("Distance over time");
+	this->configure_labels_x_time();
+	this->configure_labels_y_distance();
+	this->configure_labels_post();
 }
-
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::generate_initial_track_data(Track * trk)
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
+	this->title = QObject::tr("Speed over distance");
+	this->configure_labels_x_distance();
+	this->configure_labels_y_speed();
+	this->configure_labels_post();
 }
-
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::generate_initial_track_data(Track * trk)
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
+	this->title = QObject::tr("Elevation over distance");
+	this->configure_labels_x_distance();
+	this->configure_labels_y_altitude();
+	this->configure_labels_post();
 }
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::generate_initial_track_data(Track * trk)
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog)
 {
-	return this->initial_track_data.make_track_data_x_over_y(trk);
-}
-
-
-}
-
-
-
-
-bool ProfileViewBase::domains_are_supported(GisViewportDomain x_domain, GisViewportDomain y_domain)
-{
-	switch (x_domain) {
-	case GisViewportDomain::DistanceDomain:
-		switch (y_domain) {
-		case GisViewportDomain::ElevationDomain:
-		case GisViewportDomain::GradientDomain:
-		case GisViewportDomain::SpeedDomain:
-			return true;
-		default:
-			return false;
-		}
-	case GisViewportDomain::TimeDomain:
-		switch (y_domain) {
-		case GisViewportDomain::SpeedDomain:
-		case GisViewportDomain::DistanceDomain:
-		case GisViewportDomain::ElevationDomain:
-			return true;
-
-		default:
-			return false;
-		}
-	default:
-		return false;
-	}
+	this->title = QObject::tr("Gradient over distance");
+	this->configure_labels_x_distance();
+	this->configure_labels_y_gradient();
+	this->configure_labels_post();
 }
 
 
@@ -1122,11 +1028,7 @@ int ProfileViewBase::get_central_n_rows(void) const
 
 Graph2D::Graph2D(int left, int right, int top, int bottom, QWidget * parent) : ViewportPixmap(left, right, top, bottom, parent)
 {
-	this->height_unit = Preferences::get_unit_height();
-	this->distance_unit = Preferences::get_unit_distance();
-	this->speed_unit = Preferences::get_unit_speed();
 
-	this->setMouseTracking(true); /* Without this the ::mouseMoveEvent() method won't be called. */
 }
 
 
@@ -1213,22 +1115,6 @@ void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 	emit this->button_released(this, ev);
 	ev->accept();
-}
-
-
-
-
-int Graph2D::central_get_n_columns(void) const
-{
-	return this->central_get_rightmost_pixel() - this->central_get_leftmost_pixel() + 1;
-}
-
-
-
-
-int Graph2D::central_get_n_rows(void) const
-{
-	return this->central_get_bottommost_pixel() - this->central_get_topmost_pixel() + 1;
 }
 
 

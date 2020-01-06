@@ -122,6 +122,11 @@ namespace SlavGPS {
 		int total_get_width(void) const;
 		int total_get_height(void) const;
 
+		/* How many rows/columns are there to draw? Useful for
+		   2D graph. */
+		int central_get_n_columns(void) const;
+		int central_get_n_rows(void) const;
+
 		int central_get_width(void) const;
 		int central_get_height(void) const;
 		int left_get_width(void) const;

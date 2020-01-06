@@ -142,9 +142,6 @@ namespace SlavGPS {
 
 		void central_draw_simple_crosshair(const Crosshair2D & crosshair);
 
-		/* How many rows/columns are there to draw? */
-		int central_get_n_columns(void) const;
-		int central_get_n_rows(void) const;
 
 		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
 		void mouseMoveEvent(QMouseEvent * event);
@@ -153,9 +150,6 @@ namespace SlavGPS {
 		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
 		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
-		HeightUnit height_unit;
-		DistanceUnit distance_unit;
-		SpeedUnit speed_unit;
 
 		/* Calculated on every resize event. Having cached
 		   values saves a minimal amount of time when we move
@@ -249,19 +243,22 @@ namespace SlavGPS {
 
 		virtual sg_ret generate_initial_track_data_wrapper(Track * trk) = 0;
 
-		virtual void configure_controls(void) = 0;
+		virtual void configure_controls(void) {};
 
 
 		virtual void save_settings(void) {};
 
-		void configure_labels(void);
+		void configure_labels_x_distance(void);
+		void configure_labels_x_time(void);
+		void configure_labels_y_altitude(void);
+		void configure_labels_y_gradient(void);
+		void configure_labels_y_speed(void);
+		void configure_labels_y_distance(void);
+		void configure_labels_post(void);
+
 		void create_widgets_layout(void);
 
 
-		/* Check whether given combination of x/y domains is supported by ProfileView. */
-		static bool domains_are_supported(GisViewportDomain x_domain, GisViewportDomain y_domain);
-
-		void configure_title(void);
 		const QString & get_title(void) const;
 
 		void create_graph_2d(void);
@@ -319,13 +316,11 @@ namespace SlavGPS {
 		QCheckBox * show_gps_speed_cb = NULL;
 		QCheckBox * show_dem_cb = NULL;
 
-	private:
-		virtual sg_ret generate_initial_track_data(Track * trk) = 0;
+		QString title;
 
+	private:
 		virtual sg_ret update_x_labels(const TPInfo & tp_info) = 0;
 		virtual sg_ret update_y_labels(const TPInfo & tp_info) = 0;
-
-		QString title;
 	};
 
 
@@ -442,8 +437,6 @@ namespace SlavGPS {
 		*/
 		sg_ret regenerate_track_data_to_draw(Track * trk);
 
-		sg_ret generate_initial_track_data(Track * trk) override;
-
 		sg_ret update_x_labels(const TPInfo & tp_info) override;
 		sg_ret update_y_labels(const TPInfo & tp_info) override;
 	};
@@ -456,19 +449,18 @@ namespace SlavGPS {
 	{
 		this->track_data_to_draw.clear();
 
-		/*
-		  ::initial_track_data has been generated once, when the
-		  dialog has been opened. Now compress it to limit number of
-		  drawn points.
-		*/
-		const int compressed_n_points = this->get_central_n_columns();
+
 
 		const bool precise_drawing = true;
-
-
 		if (precise_drawing) {
 			this->track_data_to_draw = this->initial_track_data;
 		} else {
+			/*
+			  ::initial_track_data has been generated
+			  once, when the dialog has been opened. Now
+			  compress it to limit number of drawn points.
+			*/
+			const int compressed_n_points = this->get_central_n_columns();
 			this->initial_track_data.compress_into(track_data_to_draw, compressed_n_points);
 		}
 		if (!this->track_data_to_draw.is_valid()) {
@@ -478,6 +470,7 @@ namespace SlavGPS {
 		qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Regenerated valid compressed track data for" << this->get_title();
 		qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Initial track data" << this->get_title() << this->initial_track_data;
 		qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Track data to draw" << this->get_title() << this->track_data_to_draw;
+
 
 
 		if (sg_ret::ok != this->set_initial_visible_range_x()) {
@@ -1039,17 +1032,6 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_graph_without_crossha
 	QTime draw_time;
 	draw_time.start();
 
-	if (this->graph_2d->x_domain == GisViewportDomain::TimeDomain) {
-		const Duration duration = trk->get_duration(true);
-		if (!duration.is_valid()) {
-			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Invalid duration";
-			return sg_ret::err;
-		}
-		if (!duration.is_positive()) {
-			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Duration zero or negative:" << duration;
-			return sg_ret::err;
-		}
-	}
 
 	/* Clear before redrawing. */
 	this->graph_2d->clear();
@@ -1099,6 +1081,12 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 {
 	this->initial_track_data.clear();
 
+	/* Re-generate initial track data from track. */
+	if (sg_ret::ok != this->initial_track_data.make_track_data_x_over_y(trk)) {
+		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Failed to generate valid initial track data for" << this->get_title();
+		return sg_ret::err;
+	}
+
 	/*
 	  It may be time consuming to convert units on whole long,
 	  uncompressed ::initial_track_data. We could decide to do
@@ -1109,12 +1097,6 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 	  opened. Once it is done, we don't have to re-do it on every
 	  resizing of dialog window.
 	*/
-
-	if (sg_ret::ok != this->generate_initial_track_data(trk)) {
-		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Failed to generate valid initial track data for" << this->get_title();
-		return sg_ret::err;
-	}
-
 	this->initial_track_data.apply_unit_conversions_xy(this->x_unit, this->y_unit);
 
 	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Generated valid initial track data for" << this->get_title();

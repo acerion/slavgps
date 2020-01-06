@@ -145,10 +145,6 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 	snprintf(this->debug, sizeof (this->debug), "%s", "center");
 	//this->setMaximumSize(2700, 2700);
 
-	/* We want to constantly update cursor position in
-	   status bar. For this we need cursor tracking in viewport. */
-	this->setMouseTracking(true);
-
 
 
 	LatLon initial_lat_lon(Preferences::get_default_lat(), Preferences::get_default_lon());

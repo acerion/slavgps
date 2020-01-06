@@ -87,6 +87,11 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 	/* ::apply_total_sizes() first calls painter.end(), so in
 	   constructor we have to start with painter.begin(). */
 	this->painter.begin(&this->vpixmap);
+
+	/* We want to constantly update cursor position in status bar
+	   and/or draw crosshair. For this we need cursor tracking in
+	   viewport. */
+	this->setMouseTracking(true);
 }
 
 
@@ -625,6 +630,22 @@ int ViewportPixmap::central_get_width(void) const
 int ViewportPixmap::central_get_height(void) const
 {
 	return this->total_height - this->top_margin_height - this->bottom_margin_height;
+}
+
+
+
+
+int ViewportPixmap::central_get_n_columns(void) const
+{
+	return this->central_get_rightmost_pixel() - this->central_get_leftmost_pixel() + 1;
+}
+
+
+
+
+int ViewportPixmap::central_get_n_rows(void) const
+{
+	return this->central_get_bottommost_pixel() - this->central_get_topmost_pixel() + 1;
 }
 
 
