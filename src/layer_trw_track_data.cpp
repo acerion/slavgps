@@ -258,7 +258,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 	this->m_valid = true;
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::DistanceDomain;
-	this->y_distance_unit = DistanceUnit::Meters;
+	this->y_distance_unit = DistanceUnit::Unit::Meters;
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Distance over Time");
 
 	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());
@@ -665,7 +665,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
 	this->m_valid = true;
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
-	this->y_speed_unit = SpeedUnit::MetresPerSecond;
+	this->y_speed_unit = SpeedUnit::Unit::MetresPerSecond;
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Speed over Time");
 
 	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());

@@ -56,25 +56,25 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 	this->m_widget->setMaximum(scale.m_max.get_ll_value());
 	this->m_widget->setSingleStep(scale.m_step.get_ll_value());
 	this->m_widget->setValue(scale.m_initial.get_ll_value());
-	switch (scale.m_unit) {
-	case DurationUnit::Seconds:
+	switch (scale.m_unit.u) {
+	case DurationUnit::Unit::Seconds:
 		this->m_widget->setSuffix(tr("s"));
 		this->m_widget->setToolTip(tr("Duration in seconds"));
 		break;
-	case DurationUnit::Minutes:
+	case DurationUnit::Unit::Minutes:
 		this->m_widget->setSuffix(tr("m"));
 		this->m_widget->setToolTip(tr("Duration in minutes"));
 		break;
-	case DurationUnit::Hours:
+	case DurationUnit::Unit::Hours:
 		this->m_widget->setSuffix(tr("h"));
 		this->m_widget->setToolTip(tr("Duration in hours"));
 		break;
-	case DurationUnit::Days:
+	case DurationUnit::Unit::Days:
 		this->m_widget->setSuffix(tr("d"));
 		this->m_widget->setToolTip(tr("Duration in days"));
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << (int) scale.m_unit;
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << scale.m_unit;
 		break;
 	}
 
@@ -98,7 +98,7 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 sg_ret DurationWidget::set_value(const Duration & duration)
 {
 	if (duration.get_unit() != this->m_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << (int) this->m_unit << ", new unit =" << (int) duration.get_unit();
+		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << this->m_unit << ", new unit =" << duration.get_unit();
 		return sg_ret::err;
 	}
 

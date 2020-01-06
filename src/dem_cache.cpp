@@ -260,7 +260,7 @@ Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation metho
 
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
 		if (calculate_elev_by_coord((*iter).second, &ce)) {
-			result = Altitude(ce.elev, HeightUnit::Metres); /* This is DEM, so meters. */
+			result = Altitude(ce.elev, HeightUnit::Unit::Metres); /* This is DEM, so meters. */
 			break;
 		}
 	}

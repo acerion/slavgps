@@ -135,7 +135,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const Paramet
 
 	case SGVariantType::AltitudeType:
 		/* Meters, because that's program's internal/default unit. */
-		value = SGVariant(Altitude(variant.toDouble(), HeightUnit::Metres));
+		value = SGVariant(Altitude(variant.toDouble(), HeightUnit::Unit::Metres));
 		break;
 
 	default:

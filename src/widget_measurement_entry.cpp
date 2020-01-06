@@ -139,7 +139,7 @@ SGVariant MeasurementEntryWidget::get_value_iu(void) const
 			   to user, it must have been in user
 			   units. Now convert to internal unit. */
 			const Altitude altitude_uu(this->spin->value(), Preferences::get_unit_height());
-			result_iu = SGVariant(altitude_uu.convert_to_unit(HeightUnit::Metres));
+			result_iu = SGVariant(altitude_uu.convert_to_unit(HeightUnit::Unit::Metres));
 		}
 		break;
 	default:

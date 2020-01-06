@@ -186,7 +186,7 @@ static ParameterScale<int> scale_track_elevation_factor       (              1, 
 static ParameterScale<int> scale_trackpoint_size              ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
 static ParameterScale<int> scale_track_direction_size         ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
-static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, DurationUnit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
+static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, DurationUnit::Unit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
 
 
 
@@ -2799,7 +2799,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	Duration threshold(60, DurationUnit::Seconds);
+	Duration threshold(60, DurationUnit::Unit::Seconds);
 	if (false == Dialog::duration(tr("Merge Threshold..."),
 				      tr("Merge when time between tracks is less than:"),
 				      threshold,

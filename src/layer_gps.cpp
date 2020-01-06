@@ -138,7 +138,7 @@ static WidgetIntEnumerationData vehicle_position_enum = {
 static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
 
 /* If user enters 0 then retry is disabled. */
-static MeasurementScale<Duration, Duration_ll, DurationUnit> gpsd_retry_interval_scale(0, 10000, 10, 10, DurationUnit::Seconds, 0);
+static MeasurementScale<Duration, Duration_ll, DurationUnit> gpsd_retry_interval_scale(0, 10000, 10, 10, DurationUnit::Unit::Seconds, 0);
 
 /* If user enters 0 then default port number will be used. */
 static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT, SGVariantType::Int), 1, 0);
@@ -1428,9 +1428,9 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 	}
 
 
-	const Altitude alt = Altitude(this->current_rt_data.fix.altitude, HeightUnit::Metres); /* Altitude::is_valid() may return false. */
+	const Altitude alt = Altitude(this->current_rt_data.fix.altitude, HeightUnit::Unit::Metres); /* Altitude::is_valid() may return false. */
 	if (!create_this_tp && (cur_timestamp != last_timestamp)) {
-		const Altitude last_alt = Altitude(this->previous_rt_data.fix.altitude, HeightUnit::Metres); /* Altitude::is_valid() may return false. */
+		const Altitude last_alt = Altitude(this->previous_rt_data.fix.altitude, HeightUnit::Unit::Metres); /* Altitude::is_valid() may return false. */
 
 		if (!alt.is_valid() || !last_alt.is_valid()) {
 			/* Can't determine if altitude has changed by
@@ -1455,7 +1455,7 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 		new_tp->altitude = alt;
 		/* Speed only available for 3D fix. Check for NAN when use this speed. */
 		new_tp->gps_speed = this->current_rt_data.fix.speed;
-		new_tp->course = Angle(this->current_rt_data.fix.track, AngleUnit::Degrees); /* From the lecture of code of gpsd package, it seems that 'track' is in degrees (e.g. "Course over ground, degrees from true north."). */
+		new_tp->course = Angle(this->current_rt_data.fix.track, AngleUnit::Unit::Degrees); /* From the lecture of code of gpsd package, it seems that 'track' is in degrees (e.g. "Course over ground, degrees from true north."). */
 		new_tp->nsats = this->current_rt_data.satellites_used;
 		new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;
 

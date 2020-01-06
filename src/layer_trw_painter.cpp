@@ -257,7 +257,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		const Distance axis_mark_uu = interval * i;
 
 		/* Convert distance into metres for use in finding a trackpoint. */
-		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(DistanceUnit::Meters);
+		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(DistanceUnit::Unit::Meters);
 		if (!axis_mark_iu.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;

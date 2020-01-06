@@ -504,15 +504,15 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 		TreeItemViewFormat view_format;
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,  true, tr("Tree Item")));
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp, true, tr("Timestamp")));
-		switch (height_unit) {
-		case HeightUnit::Metres:
+		switch (height_unit.u) {
+		case HeightUnit::Unit::Metres:
 			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Metres)")));
 			break;
-		case HeightUnit::Feet:
+		case HeightUnit::Unit::Feet:
 			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Feet)")));
 			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+			qDebug() << SG_PREFIX_E << "Unhandled height unit" << height_unit;
 			break;
 		}
 

@@ -145,7 +145,7 @@ static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, LatLon & lat_l
 
 
 	lat_lon = LatLon(tmp_lat, tmp_lon);
-	alti = Altitude(tmp_alti, HeightUnit::Metres); /* GPS info, hence metres. */
+	alti = Altitude(tmp_alti, HeightUnit::Unit::Metres); /* GPS info, hence metres. */
 
 
 	return true;

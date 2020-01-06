@@ -481,7 +481,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleUnit::Degrees); /* TODO_LATER: verify unit read from gpx file. */
+		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleUnit::Unit::Degrees); /* TODO_LATER: verify unit read from gpx file. */
 		importer->cdata.clear();
 		break;
 
@@ -925,7 +925,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	if (tp->altitude.is_valid()) {
 		s_alt = tp->altitude.value_to_string_for_file();
 	} else if (context->options != NULL && context->options->force_ele) {
-		s_alt = Altitude(0.0, HeightUnit::Metres).value_to_string_for_file();
+		s_alt = Altitude(0.0, HeightUnit::Unit::Metres).value_to_string_for_file();
 	}
 	if (!s_alt.isEmpty()) {
 		fprintf(file, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());

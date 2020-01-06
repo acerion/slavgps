@@ -248,7 +248,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	   This is the TrackWaypoint draw stops default value 'LayerTRWPainter::track_min_stop_duration'.
 	   However this variable is not directly accessible - and I don't expect it's often changed from the default
 	   so ATM just put in the number. */
-	tmp_string = this->trk->get_average_speed_moving(Duration(60, DurationUnit::Seconds)).convert_to_unit(speed_unit).to_string();
+	tmp_string = this->trk->get_average_speed_moving(Duration(60, DurationUnit::Unit::Seconds)).convert_to_unit(speed_unit).to_string();
 	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(tr("Moving Average Speed:")), row, 0);
 	this->grid->addWidget(this->w_mvg_speed, row, 1);

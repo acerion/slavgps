@@ -272,13 +272,13 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	}
 
 
-	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string();
+	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string();
 
 	this->course->setText(this->current_point->course.to_string());
 	this->gps_speed->setText(Track::get_gps_speed(this->current_point).convert_to_unit(speed_unit).to_string());
-	this->hdop->setText(Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->pdop->setText(Distance(this->current_point->pdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->vdop->setText(Altitude(this->current_point->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
+	this->hdop->setText(Distance(this->current_point->hdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->pdop->setText(Distance(this->current_point->pdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->vdop->setText(Altitude(this->current_point->vdop, HeightUnit::Unit::Metres).convert_to_unit(height_unit).to_nice_string());
 	this->sat->setText(tr("%1 / %2").arg(this->current_point->nsats).arg((int) this->current_point->fix_mode));
 
 	return sg_ret::ok;

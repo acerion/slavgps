@@ -107,7 +107,7 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 {
 	/* Re-implementing Coord::distance() to have better control over Distance::valid. */
 
-	const DistanceUnit distance_unit = DistanceUnit::Meters; /* Using meters - the most basic and common unit. */
+	const DistanceUnit distance_unit = DistanceUnit::Unit::Meters; /* Using meters - the most basic and common unit. */
 	Distance result;
 
 	if (coord1.mode != CoordMode::LatLon && coord1.mode != CoordMode::UTM) {

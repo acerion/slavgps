@@ -182,8 +182,8 @@ namespace SlavGPS {
 
 
 	private:
-		DistanceUnit y_distance_unit = DistanceUnit::Meters;
-		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
+		DistanceUnit y_distance_unit = DistanceUnit::Unit::Meters;
+		SpeedUnit y_speed_unit = SpeedUnit::Unit::MetresPerSecond;
 
 		Tx_ll x_min_ll = 0;
 	        Tx_ll x_max_ll = 0;

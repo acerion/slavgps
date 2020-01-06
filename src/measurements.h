@@ -122,80 +122,170 @@ namespace SlavGPS {
 
 
 
+	class DistanceUnit {
+	public:
+		enum class Unit {
+			Kilometres,
+			Miles,
+			NauticalMiles,
 
-	enum class DistanceUnit {
-		Kilometres,
-		Miles,
-		NauticalMiles,
+			/* TODO: numerical values of these two enums should be
+			   somehow synchronized with Viking project. */
+			Meters,
+			Yards,
+		};
 
-		/* TODO: numerical values of these two enums should be
-		   somehow synchronized with Viking project. */
-		Meters,
-		Yards,
+		DistanceUnit() {}
+		DistanceUnit(DistanceUnit::Unit unit) { this->u = unit; }
+
+		static DistanceUnit internal_unit(void) { return DistanceUnit(); }
+		static DistanceUnit user_unit(void);
+		bool operator==(const DistanceUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const DistanceUnit & rhs) const { return !(*this == rhs); }
+
+		DistanceUnit::Unit u = DistanceUnit::Unit::Meters;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_DISTANCE DistanceUnit::Meters
+	QDebug operator<<(QDebug debug, const DistanceUnit & unit);
 
 
 
 
-	enum class SpeedUnit {
-		KilometresPerHour,
-		MilesPerHour,
-		MetresPerSecond,
-		Knots
+	class SpeedUnit {
+	public:
+		enum class Unit {
+			KilometresPerHour,
+			MilesPerHour,
+			MetresPerSecond,
+			Knots
+		};
+
+		SpeedUnit() {}
+		SpeedUnit(SpeedUnit::Unit unit) { this->u = unit; }
+
+		static SpeedUnit internal_unit(void) { return SpeedUnit(); }
+		static SpeedUnit user_unit(void);
+		bool operator==(const SpeedUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const SpeedUnit & rhs) const { return !(*this == rhs); }
+
+		SpeedUnit::Unit u = SpeedUnit::Unit::MetresPerSecond;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_SPEED SpeedUnit::MetresPerSecond
+	QDebug operator<<(QDebug debug, const SpeedUnit & unit);
 
 
 
 
-	enum class HeightUnit {
-		Metres,
-		Feet,
+	class HeightUnit {
+	public:
+		enum class Unit {
+			Metres,
+			Feet,
+		};
+
+		HeightUnit() {}
+		HeightUnit(HeightUnit::Unit unit) { this->u = unit; }
+
+		static HeightUnit internal_unit(void) { return HeightUnit(); }
+		static HeightUnit user_unit(void);
+		bool operator==(const HeightUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const HeightUnit & rhs) const { return !(*this == rhs); }
+
+		HeightUnit::Unit u = HeightUnit::Unit::Metres;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT HeightUnit::Metres
+	QDebug operator<<(QDebug debug, const HeightUnit & unit);
 
 
 
 
-	/* TODO: if you ever add another time unit, you will have to
-	   review all places where a time unit is used and update them
-	   accordingly. */
-	enum class TimeUnit {
-		Seconds, /* Default, internal unit. */
+	class TimeUnit {
+	public:
+		/* TODO: if you ever add another time unit, you will
+		   have to review all places where a time unit is used
+		   and update them accordingly. */
+		enum class Unit {
+			Seconds, /* Default, internal unit. */
+		};
+
+		TimeUnit() {}
+		TimeUnit(TimeUnit::Unit unit) { this->u = unit; }
+
+		static TimeUnit internal_unit(void) { return TimeUnit(); }
+		static TimeUnit user_unit(void);
+		bool operator==(const TimeUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const TimeUnit & rhs) const { return !(*this == rhs); }
+
+		TimeUnit::Unit u = TimeUnit::Unit::Seconds;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_TIME TimeUnit::Seconds
+	QDebug operator<<(QDebug debug, const TimeUnit & unit);
 
 
 
 
-	enum class DurationUnit {
-		Seconds, /* Default, internal unit. */
-		Minutes,
-		Hours,
-		Days
+	class DurationUnit {
+	public:
+		enum class Unit {
+			Seconds, /* Default, internal unit. */
+			Minutes,
+			Hours,
+			Days
+		};
+
+		DurationUnit() {}
+		DurationUnit(DurationUnit::Unit unit) { this->u = unit; }
+
+		static DurationUnit internal_unit(void) { return DurationUnit(); }
+		static DurationUnit user_unit(void);
+		bool operator==(const DurationUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const DurationUnit & rhs) const { return !(*this == rhs); }
+
+		DurationUnit::Unit u = DurationUnit::Unit::Seconds;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_DURATION DurationUnit::Seconds
+	QDebug operator<<(QDebug debug, const DurationUnit & unit);
 
 
 
 
-	/* TODO: if you ever add another gradient unit, you will have
-	   to review all places where a gradient unit is used and
-	   update them accordingly. */
-	enum class GradientUnit {
-		Percents, /* Default, internal unit. */
+	class GradientUnit {
+	public:
+		/* TODO: if you ever add another gradient unit, you
+		   will have to review all places where a gradient
+		   unit is used and update them accordingly. */
+		enum class Unit {
+			Percents, /* Default, internal unit. */
+		};
+
+		GradientUnit() {}
+		GradientUnit(GradientUnit::Unit unit) { this->u = unit; }
+
+		static GradientUnit internal_unit(void) { return GradientUnit(); }
+		static GradientUnit user_unit(void);
+		bool operator==(const GradientUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const GradientUnit & rhs) const { return !(*this == rhs); }
+
+		GradientUnit::Unit u = GradientUnit::Unit::Percents;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT GradientUnit::Percents
+	QDebug operator<<(QDebug debug, const GradientUnit & unit);
 
 
 
 
-	enum class AngleUnit {
-		Radians, /* Default, internal unit. TODO: verify. */
-		Degrees
+	class AngleUnit {
+	public:
+		enum class Unit {
+			Radians, /* Default, internal unit. TODO: verify. */
+			Degrees
+		};
+
+		AngleUnit() {}
+		AngleUnit(AngleUnit::Unit unit) { this->u = unit; }
+
+		static AngleUnit internal_unit(void) { return AngleUnit(); }
+		static AngleUnit user_unit(void);
+		bool operator==(const AngleUnit & rhs) const { return this->u == rhs.u; }
+		bool operator!=(const AngleUnit & rhs) const { return !(*this == rhs); }
+
+		AngleUnit::Unit u = AngleUnit::Unit::Radians;
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_ANGLE AngleUnit::Radians
+	QDebug operator<<(QDebug debug, const AngleUnit & unit);
 
 
 
@@ -219,7 +309,7 @@ namespace SlavGPS {
 	class Measurement {
 	public:
 		Measurement<Tll, Tu>() {}
-		Measurement<Tll, Tu>(Tll new_value, Tu new_unit) : Measurement<Tll, Tu>()
+		Measurement<Tll, Tu>(Tll new_value, const Tu & new_unit) : Measurement<Tll, Tu>()
 		{
 			this->m_ll_value = new_value;
 			this->m_valid = Measurement<Tll, Tu>::ll_value_is_valid(new_value);
@@ -233,12 +323,12 @@ namespace SlavGPS {
 			this->m_valid = other.m_valid;
 		}
 
-		static Tu get_user_unit(void);
-		static Tu get_internal_unit(void);
+		static Tu get_user_unit(void) { return Tu::user_unit(); };
+		static Tu get_internal_unit(void) { return Tu::internal_unit(); };
 
 		/* Get/set current unit of measurement. */
-		Tu get_unit(void) const { return this->m_unit; }
-		void set_unit(Tu unit) { this->m_unit = unit; }
+		const Tu & get_unit(void) const { return this->m_unit; }
+		void set_unit(const Tu & unit) { this->m_unit = unit; }
 
 		static bool ll_value_is_valid(Tll value);
 		bool is_valid(void) const { return this->m_valid; }
@@ -287,11 +377,11 @@ namespace SlavGPS {
 		   presentation to user. */
 		const QString value_to_string(void) const;
 
-		Measurement<Tll, Tu> convert_to_unit(Tu new_unit) const;
+		Measurement<Tll, Tu> convert_to_unit(const Tu & new_unit) const;
 
-		static Tll convert_to_unit(Tll value, Tu from, Tu to);
+		static Tll convert_to_unit(Tll value, const Tu & from, const Tu & to);
 
-		sg_ret convert_to_unit_in_place(Tu new_unit)
+		sg_ret convert_to_unit_in_place(const Tu & new_unit)
 		{
 			this->m_ll_value = Measurement<Tll, Tu>::convert_to_unit(this->m_ll_value, this->m_unit, new_unit);
 			this->m_valid = Measurement<Tll, Tu>::ll_value_is_valid(this->m_ll_value);
@@ -299,13 +389,13 @@ namespace SlavGPS {
 			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
 
-		/* Get string representing speed unit in abbreviated
-		   form, e.g. "km/h". */
-		static QString get_unit_string(Tu unit);
+		/* Get string representing measurement unit in
+		   abbreviated form, e.g. "km/h". */
+		static QString get_unit_string(const Tu & unit);
 
 		/* Return "kilometers" or "miles" string.
 		   This is a full string, not "km" or "mi". */
-		static QString get_unit_full_string(Tu unit);
+		static QString get_unit_full_string(const Tu & unit);
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance may be used to decide how
@@ -353,7 +443,7 @@ namespace SlavGPS {
 		QString to_string(void) const;
 		QString to_string(int precision) const;
 
-		static QString ll_value_to_string(Tll value, Tu unit);
+		static QString ll_value_to_string(Tll value, const Tu & unit);
 
 		/* Is this measurement so small that it can be treated as zero?
 
@@ -417,7 +507,7 @@ namespace SlavGPS {
 				return result;
 			}
 			if (this->m_unit != rhs.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << this->m_unit << rhs.m_unit;
 				return result;
 			}
 
@@ -439,7 +529,7 @@ namespace SlavGPS {
 				return result;
 			}
 			if (this->m_unit != rhs.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << this->m_unit << rhs.m_unit;
 				return result;
 			}
 
@@ -460,7 +550,7 @@ namespace SlavGPS {
 				return *this;
 			}
 			if (this->m_unit != rhs.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << this->m_unit << rhs.m_unit;
 				return *this;
 			}
 
@@ -481,7 +571,7 @@ namespace SlavGPS {
 				return *this;
 			}
 			if (this->m_unit != rhs.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << this->m_unit << rhs.m_unit;
 				return *this;
 			}
 
@@ -575,7 +665,7 @@ namespace SlavGPS {
 				return false;
 			}
 			if (this->m_unit != rhs.m_unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << this->m_unit << rhs.m_unit;
 				return false;
 			}
 
@@ -590,7 +680,7 @@ namespace SlavGPS {
 		Tll m_ll_value = 0;
 
 	//protected:
-		Tu m_unit = (Tu) 565; /* Invalid unit. */
+		Tu m_unit;
 		bool m_valid = false;
 	};
 	template<typename Tll, typename Tu>
@@ -613,7 +703,7 @@ namespace SlavGPS {
 	bool operator<(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
 	{
 		if (lhs.m_unit != rhs.m_unit) {
-			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.m_unit << (int) rhs.m_unit;
+			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.m_unit << rhs.m_unit;
 			return false;
 		}
 		return lhs.m_ll_value < rhs.m_ll_value;
@@ -650,7 +740,7 @@ namespace SlavGPS {
 			return NAN;
 		}
 		if (lhs.m_unit != rhs.m_unit) {
-			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.m_unit << (int) rhs.m_unit;
+			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.m_unit << rhs.m_unit;
 			return NAN;
 		}
 		if (rhs.is_zero()) {
@@ -669,6 +759,7 @@ namespace SlavGPS {
 		Altitude(const Measurement<Altitude_ll, HeightUnit> & base) : Measurement<Altitude_ll, HeightUnit>(base) {}
 		Altitude() : Measurement<Altitude_ll, HeightUnit>() {}
 		Altitude(Altitude_ll value, HeightUnit unit) : Measurement<Altitude_ll, HeightUnit>(value, unit) {}
+
 		//using Measurement<Altitude_ll, HeightUnit>::Measurement;
 		using Measurement<Altitude_ll, HeightUnit>::operator-;
 		using Measurement<Altitude_ll, HeightUnit>::operator=;
@@ -677,7 +768,11 @@ namespace SlavGPS {
 	class Gradient : public Measurement<Gradient_ll, GradientUnit>
 	{
 	public:
-		using Measurement<Gradient_ll, GradientUnit>::Measurement;
+		Gradient(const Measurement<Gradient_ll, GradientUnit> & base) : Measurement<Gradient_ll, GradientUnit>(base) {}
+		Gradient() : Measurement<Gradient_ll, GradientUnit>() {}
+		Gradient(Gradient_ll value, GradientUnit unit) : Measurement<Gradient_ll, GradientUnit>(value, unit) {}
+
+		//using Measurement<Gradient_ll, GradientUnit>::Measurement;
 		using Measurement<Gradient_ll, GradientUnit>::operator-;
 		using Measurement<Gradient_ll, GradientUnit>::operator=;
 	};
@@ -688,6 +783,7 @@ namespace SlavGPS {
 		Time(const Measurement<Time_ll, TimeUnit> & base) : Measurement<Time_ll, TimeUnit>(base) {}
 		Time() : Measurement<Time_ll, TimeUnit>() {}
 		Time(Time_ll value, TimeUnit unit) : Measurement<Time_ll, TimeUnit>(value, unit) {}
+
 		//using Measurement<Time_ll, TimeUnit>::Measurement;
 		using Measurement<Time_ll, TimeUnit>::operator-;
 		using Measurement<Time_ll, TimeUnit>::operator=;
@@ -714,6 +810,7 @@ namespace SlavGPS {
 		Duration(const Measurement<Duration_ll, DurationUnit> & base) : Measurement<Duration_ll, DurationUnit>(base) {}
 		Duration() : Measurement<Duration_ll, DurationUnit>() {}
 		Duration(Duration_ll value, DurationUnit unit) : Measurement<Duration_ll, DurationUnit>(value, unit) {}
+
 		//using Measurement<Duration_ll, DurationUnit>::Measurement;
 		using Measurement<Duration_ll, DurationUnit>::operator-;
 		using Measurement<Duration_ll, DurationUnit>::operator=;
@@ -736,6 +833,7 @@ namespace SlavGPS {
 		Distance(const Measurement<Distance_ll, DistanceUnit> & base) : Measurement<Distance_ll, DistanceUnit>(base) {}
 		Distance() : Measurement<Distance_ll, DistanceUnit>() {}
 		Distance(Distance_ll value, DistanceUnit unit) : Measurement<Distance_ll, DistanceUnit>(value, unit) {}
+
 		//using Measurement<Distance_ll, DistanceUnit>::Measurement;
 		using Measurement<Distance_ll, DistanceUnit>::operator-;
 		using Measurement<Distance_ll, DistanceUnit>::operator=;
@@ -755,7 +853,7 @@ namespace SlavGPS {
 		Speed() : Measurement<Speed_ll, SpeedUnit>() {}
 		Speed(Speed_ll value, SpeedUnit unit) : Measurement<Speed_ll, SpeedUnit>(value, unit) {}
 #else
-		using Measurement<Speed_ll, SpeedUnit>::Measurement;
+		//using Measurement<Speed_ll, SpeedUnit>::Measurement;
 		using Measurement<Speed_ll, SpeedUnit>::operator-;
 		using Measurement<Speed_ll, SpeedUnit>::operator=;
 #endif
@@ -768,10 +866,15 @@ namespace SlavGPS {
 	class Angle : public Measurement<Angle_ll, AngleUnit>
 	{
 	public:
+#if 1
+		Angle(const Measurement<Angle_ll, AngleUnit> & base) : Measurement<Angle_ll, AngleUnit>(base) {}
+		Angle() : Measurement<Angle_ll, AngleUnit>() {}
+		Angle(Angle_ll value, AngleUnit unit) : Measurement<Angle_ll, AngleUnit>(value, unit) {}
+#else
 		using Measurement<Angle_ll, AngleUnit>::Measurement;
 		using Measurement<Angle_ll, AngleUnit>::operator-;
 		using Measurement<Angle_ll, AngleUnit>::operator=;
-
+#endif
 		static Angle get_vector_sum(const Angle & meas1, const Angle & meas2);
 		/* Ensure that value is in range of 0-2pi (if the
 		   value is valid). */

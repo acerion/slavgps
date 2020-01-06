@@ -77,29 +77,29 @@ static WidgetIntEnumerationData degree_format_enum = {
 
 static WidgetIntEnumerationData unit_distance_enum = {
 	{
-		SGLabelID(QObject::tr("Kilometres"),     (int) DistanceUnit::Kilometres),
-		SGLabelID(QObject::tr("Miles"),          (int) DistanceUnit::Miles),
-		SGLabelID(QObject::tr("Nautical Miles"), (int) DistanceUnit::NauticalMiles),
+		SGLabelID(QObject::tr("Kilometres"),     (int) DistanceUnit::Unit::Kilometres),
+		SGLabelID(QObject::tr("Miles"),          (int) DistanceUnit::Unit::Miles),
+		SGLabelID(QObject::tr("Nautical Miles"), (int) DistanceUnit::Unit::NauticalMiles),
 	},
-	(int) DistanceUnit::Kilometres,
+	(int) DistanceUnit::Unit::Kilometres,
 };
 
 static WidgetIntEnumerationData unit_speed_enum = {
 	{
-		SGLabelID(QObject::tr("km/h"),  (int) SpeedUnit::KilometresPerHour),
-		SGLabelID(QObject::tr("mph"),   (int) SpeedUnit::MilesPerHour),
-		SGLabelID(QObject::tr("m/s"),   (int) SpeedUnit::MetresPerSecond),
-		SGLabelID(QObject::tr("knots"), (int) SpeedUnit::Knots)
+		SGLabelID(QObject::tr("km/h"),  (int) SpeedUnit::Unit::KilometresPerHour),
+		SGLabelID(QObject::tr("mph"),   (int) SpeedUnit::Unit::MilesPerHour),
+		SGLabelID(QObject::tr("m/s"),   (int) SpeedUnit::Unit::MetresPerSecond),
+		SGLabelID(QObject::tr("knots"), (int) SpeedUnit::Unit::Knots)
 	},
-	(int) SpeedUnit::KilometresPerHour,
+	(int) SpeedUnit::Unit::KilometresPerHour,
 };
 
 static WidgetIntEnumerationData unit_height_enum = {
 	{
-		SGLabelID(QObject::tr("Metres"), (int) HeightUnit::Metres),
-		SGLabelID(QObject::tr("Feet"),   (int) HeightUnit::Feet),
+		SGLabelID(QObject::tr("Metres"), (int) HeightUnit::Unit::Metres),
+		SGLabelID(QObject::tr("Feet"),   (int) HeightUnit::Unit::Feet),
 	},
-	(int) HeightUnit::Metres,
+	(int) HeightUnit::Unit::Metres,
 };
 
 
@@ -538,11 +538,11 @@ void Preferences::register_default_values()
 	i = 0;
 	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) DegreeFormat::DMS, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) DistanceUnit::Kilometres, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) DistanceUnit::Unit::Kilometres, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) SpeedUnit::KilometresPerHour, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) SpeedUnit::Unit::KilometresPerHour, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) HeightUnit::Metres, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) HeightUnit::Unit::Metres, general_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter_instance(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
 	i++;
@@ -619,7 +619,7 @@ DegreeFormat Preferences::get_degree_format(void)
 
 DistanceUnit Preferences::get_unit_distance()
 {
-	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_distance").u.val_enumeration;
+	return DistanceUnit((DistanceUnit::Unit)Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_distance").u.val_enumeration);
 }
 
 
@@ -627,7 +627,7 @@ DistanceUnit Preferences::get_unit_distance()
 
 SpeedUnit Preferences::get_unit_speed(void)
 {
-	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_speed").u.val_enumeration;
+	return SpeedUnit((SpeedUnit::Unit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_speed").u.val_enumeration);
 }
 
 
@@ -635,7 +635,7 @@ SpeedUnit Preferences::get_unit_speed(void)
 
 HeightUnit Preferences::get_unit_height(void)
 {
-	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_height").u.val_enumeration;
+	return HeightUnit((HeightUnit::Unit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_height").u.val_enumeration);
 }
 
 

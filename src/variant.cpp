@@ -102,7 +102,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->lon = Longitude(str);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Metres);
+		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Unit::Metres);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
@@ -153,7 +153,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->lon = Longitude(str);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(str.toDouble(), HeightUnit::Metres);
+		this->altitude = Altitude(str.toDouble(), HeightUnit::Unit::Metres);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
@@ -179,7 +179,7 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 		this->lon.set_value(d);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(d, HeightUnit::Metres);
+		this->altitude = Altitude(d, HeightUnit::Unit::Metres);
 		break;
 	default:
 		assert (0);

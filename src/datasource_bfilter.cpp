@@ -262,7 +262,7 @@ AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext & 
 	}
 	const double value = this->spin->value();
 
-	const char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
+	const char units = Preferences::get_unit_distance() == DistanceUnit::Unit::Kilometres ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
 	   However several things:
 	   - mainly that typical values to use for the error relate to method being used - so hard to explain and then give a default sensible value in the UI.

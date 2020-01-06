@@ -317,7 +317,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 		return sg_ret::ok;
 	}
 
-	const HeightUnit height_unit = HeightUnit::Metres;
+	const HeightUnit height_unit = HeightUnit::Unit::Metres;
 
 	for (auto iter = trk2->begin(); iter != trk2->end(); iter++) {
 
