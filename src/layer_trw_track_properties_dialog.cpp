@@ -272,11 +272,11 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	QString elevation_range;
 	TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> altitudes_ii;
 	altitudes_ii.make_track_data_x_over_y(this->trk);
-	if (altitudes_ii.y_min.is_valid()) {
+	if (altitudes_ii.y_min().is_valid()) {
 		const HeightUnit height_unit = Preferences::get_unit_height();
 		elevation_range = tr("%1 - %2")
-			.arg(altitudes_ii.y_min.convert_to_unit(height_unit).to_string())
-			.arg(altitudes_ii.y_max.convert_to_unit(height_unit).to_string());
+			.arg(altitudes_ii.y_min().convert_to_unit(height_unit).to_string())
+			.arg(altitudes_ii.y_max().convert_to_unit(height_unit).to_string());
 
 	} else {
 		elevation_range = tr("No Data");

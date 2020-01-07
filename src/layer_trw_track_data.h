@@ -66,30 +66,6 @@ namespace SlavGPS {
 		TrackDataBase();
 		~TrackDataBase();
 
-		/**
-		   Convert values in @param values to unit @param to_unit.
-		   Convert values in @param min and @param max to unit @param to_unit.
-
-		   Do the conversions only if necessary, i.e. if
-		   existing unit is different than given @param
-		   to_unit. Existing unit is gotten from @param min.
-
-		   @reviewed-on 2020-01-04
-		*/
-		template <typename T, typename T_ll, typename T_u>
-		sg_ret apply_unit_conversion(T_ll & values, T & min, T & max, T_u to_unit)
-		{
-			const T_u from_unit = min.get_unit();
-			if (from_unit != to_unit) {
-				for (int i = 0; i < this->size(); i++) {
-					values[i] = T::convert_to_unit(values[i], from_unit, to_unit);
-				}
-				min.convert_to_unit_in_place(to_unit);
-				max.convert_to_unit_in_place(to_unit);
-			}
-
-			return sg_ret::ok;
-		}
 
 
 		bool is_valid(void) const { return this->m_valid; };
@@ -123,18 +99,34 @@ namespace SlavGPS {
 		sg_ret make_track_data_x_over_y(Track * trk, int compressed_n_points); /* Unused. */
 		sg_ret make_track_data_x_over_y(Track * trk);
 
+		/**
+		   Convert all unit-bearing values in the track data to new units.
+
+		   Do the conversions only if necessary, i.e. if
+		   existing units are different than given @param
+		   to_unit_x and @param to_unit_y units.
+
+		   @reviewed-on 2020-01-07
+		*/
 		sg_ret apply_unit_conversions_xy(Tx_u to_unit_x, Ty_u to_unit_y)
 		{
-			if (sg_ret::ok != this->apply_unit_conversion(this->x, this->x_min, this->x_max, to_unit_x)) {
-				//qDebug() << SG_PREFIX_E << "Failed to apply distance unit conversion to x vector";
-				return sg_ret::err;
+			if (to_unit_x != this->x_unit) {
+				for (int i = 0; i < this->size(); i++) {
+					this->m_x_ll[i] = Tx::convert_to_unit(this->m_x_ll[i], this->x_unit, to_unit_x);
+				}
+				this->m_x_min.convert_to_unit_in_place(to_unit_x);
+				this->m_x_max.convert_to_unit_in_place(to_unit_x);
+				this->x_unit = to_unit_x;
 			}
-			if (sg_ret::ok != this->apply_unit_conversion(this->y, this->y_min, this->y_max, to_unit_y)) {
-				//qDebug() << SG_PREFIX_E << "Failed to apply speed unit conversion to y vector";
-				return sg_ret::err;
+			if (to_unit_y != this->y_unit) {
+				for (int i = 0; i < this->size(); i++) {
+					this->m_y_ll[i] = Ty::convert_to_unit(this->m_y_ll[i], this->y_unit, to_unit_y);
+				}
+				this->m_y_min.convert_to_unit_in_place(to_unit_y);
+				this->m_y_max.convert_to_unit_in_place(to_unit_y);
+				this->y_unit = to_unit_y;
 			}
 			return sg_ret::ok;
-
 		}
 
 
@@ -142,6 +134,29 @@ namespace SlavGPS {
 		sg_ret allocate(int n_points);
 		void clear(void);
 
+
+
+		/* For averaging/smoothing over N points of a
+		   track. Must be odd value. If set to 1, then no
+		   averaging will take place. */
+		int m_window_size = 1;
+
+
+		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
+		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
+
+		Tx_ll x_ll(int i) const { return this->m_x_ll[i]; }
+		Ty_ll y_ll(int i) const { return this->m_y_ll[i]; }
+		Trackpoint * tp(int i) const { return this->m_tps[i]; }
+
+		const Tx & x_min(void) const { return this->m_x_min; };
+		const Tx & x_max(void) const { return this->m_x_max; };
+		const Ty & y_min(void) const { return this->m_y_min; };
+		const Ty & y_max(void) const { return this->m_y_max; };
+
+	protected:
+		Tx_u x_unit;
+		Ty_u y_unit;
 
 		/*
 		  It is not that obvious how x_min/x_max should be
@@ -162,36 +177,17 @@ namespace SlavGPS {
 		*/
 		bool extremes_initialized = false;
 
-		/* For averaging/smoothing over N points of a
-		   track. Must be odd value. If set to 1, then no
-		   averaging will take place. */
-		int m_window_size = 1;
+		Tx_ll * m_x_ll = nullptr;
+		Ty_ll * m_y_ll = nullptr;
 
-		Tx x_min;
-		Tx x_max;
-		Ty y_min;
-		Ty y_max;
+		Trackpoint ** m_tps = nullptr;
 
-		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
-		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
-
-		Tx_ll * x = nullptr;
-		Ty_ll * y = nullptr;
-
-		Trackpoint ** tps = nullptr;
-
-
-	private:
-		DistanceUnit y_distance_unit = DistanceUnit::Unit::Meters;
-		SpeedUnit y_speed_unit = SpeedUnit::Unit::MetresPerSecond;
-
-		Tx_ll x_min_ll = 0;
-	        Tx_ll x_max_ll = 0;
-		Ty_ll y_min_ll = 0;
-	        Ty_ll y_max_ll = 0;
+		Tx m_x_min;
+		Tx m_x_max;
+		Ty m_y_min;
+		Ty m_y_max;
 	};
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> & track_data);
+
 
 
 
@@ -253,38 +249,41 @@ namespace SlavGPS {
 			return *this;
 		}
 
-		if (other.x) {
+		if (other.m_x_ll) {
 			const size_t size = sizeof (Tx_ll) * other.size();
-			this->x = (Tx_ll *) realloc(this->x, size);
-			memcpy(this->x, other.x, size);
+			this->m_x_ll = (Tx_ll *) realloc(this->m_x_ll, size);
+			memcpy(this->m_x_ll, other.m_x_ll, size);
 		} else {
-			free(this->x);
-			this->x = nullptr;
+			free(this->m_x_ll);
+			this->m_x_ll = nullptr;
+			this->m_valid = false;
 		}
 
-		if (other.y) {
+		if (other.m_y_ll) {
 			const size_t size = sizeof (Ty_ll) * other.size();
-			this->y = (Ty_ll *) realloc(this->y, size);
-			memcpy(this->y, other.y, size);
+			this->m_y_ll = (Ty_ll *) realloc(this->m_y_ll, size);
+			memcpy(this->m_y_ll, other.m_y_ll, size);
 		} else {
-			free(this->y);
-			this->y = nullptr;
+			free(this->m_y_ll);
+			this->m_y_ll = nullptr;
+			this->m_valid = false;
 		}
 
-		if (other.tps) {
+		if (other.m_tps) {
 			const size_t size = sizeof (Trackpoint *) * other.size();
-			this->tps = (Trackpoint **) realloc(this->tps, size);
-			memcpy(this->tps, other.tps, size);
+			this->m_tps = (Trackpoint **) realloc(this->m_tps, size);
+			memcpy(this->m_tps, other.m_tps, size);
 		} else {
-			free(this->tps);
-			this->tps = nullptr;
+			free(this->m_tps);
+			this->m_tps = nullptr;
+			this->m_valid = false;
 		}
 
-		this->x_min = other.x_min;
-		this->x_max = other.x_max;
+		this->m_x_min = other.m_x_min;
+		this->m_x_max = other.m_x_max;
 
-		this->y_min = other.y_min;
-		this->y_max = other.y_max;
+		this->m_y_min = other.m_y_min;
+		this->m_y_max = other.m_y_max;
 
 		this->m_valid = other.m_valid;
 		this->m_n_points = other.m_n_points;
@@ -294,9 +293,8 @@ namespace SlavGPS {
 		this->x_domain = other.x_domain;
 		this->y_domain = other.y_domain;
 
-		this->y_distance_unit = other.y_distance_unit;
-		this->y_speed_unit = other.y_speed_unit;
-
+		this->x_unit = other.x_unit;
+		this->y_unit = other.y_unit;
 
 		return *this;
 	}
@@ -313,10 +311,10 @@ namespace SlavGPS {
 		if (track_data.is_valid()) {
 			debug << "TrackData" << track_data.m_debug << "is valid"
 			      << qSetRealNumberPrecision(10)
-			      << ", x_min =" << track_data.x_min
-			      << ", x_max =" << track_data.x_max
-			      << ", y_min =" << track_data.y_min
-			      << ", y_max =" << track_data.y_max;
+			      << ", x_min =" << track_data.x_min()
+			      << ", x_max =" << track_data.x_max()
+			      << ", y_min =" << track_data.y_min()
+			      << ", y_max =" << track_data.y_max();
 		} else {
 			debug << "TrackData" << track_data.m_debug << "is invalid";
 		}
@@ -336,19 +334,19 @@ namespace SlavGPS {
 		this->m_valid = false;
 		this->m_n_points = 0;
 
-		if (this->x) {
-			free(this->x);
-			this->x = nullptr;
+		if (this->m_x_ll) {
+			free(this->m_x_ll);
+			this->m_x_ll = nullptr;
 		}
 
-		if (this->y) {
-			free(this->y);
-			this->y = nullptr;
+		if (this->m_y_ll) {
+			free(this->m_y_ll);
+			this->m_y_ll = nullptr;
 		}
 
-		if (this->tps) {
-			free(this->tps);
-			this->tps = nullptr;
+		if (this->m_tps) {
+			free(this->m_tps);
+			this->m_tps = nullptr;
 		}
 	}
 
@@ -361,63 +359,63 @@ namespace SlavGPS {
 	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
 	sg_ret TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::allocate(int n_points)
 	{
-		if (this->x) {
+		if (this->m_x_ll) {
 			if (this->size()) {
 				qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector x";
 			} else {
 				qDebug() << "WW   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector x";
 			}
-			free(this->x);
-			this->x = nullptr;
+			free(this->m_x_ll);
+			this->m_x_ll = nullptr;
 		}
 
-		if (this->y) {
+		if (this->m_y_ll) {
 			if (this->size()) {
 				qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector y";
 			} else {
 				qDebug() << "WW   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector y";
 			}
-			free(this->y);
-			this->y = nullptr;
+			free(this->m_y_ll);
+			this->m_y_ll = nullptr;
 		}
 
-		if (this->tps) {
+		if (this->m_tps) {
 			if (this->size()) {
 				qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector tps";
 			} else {
 				qDebug() << "WW   TrackData" << __func__ << __LINE__ << "Called the function for already allocated vector tps";
 			}
-			free(this->tps);
-			this->tps = nullptr;
+			free(this->m_tps);
+			this->m_tps = nullptr;
 		}
 
-		this->x = (Tx_ll *) malloc(sizeof (Tx_ll) * n_points);
-		if (nullptr == this->x) {
+		this->m_x_ll = (Tx_ll *) malloc(sizeof (Tx_ll) * n_points);
+		if (nullptr == this->m_x_ll) {
 			qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Failed to allocate 'x' vector";
 			return sg_ret::err;
 		}
 
-		this->y = (Ty_ll *) malloc(sizeof (Ty_ll) * n_points);
-		if (nullptr == this->y) {
-			free(this->x);
-			this->x = nullptr;
+		this->m_y_ll = (Ty_ll *) malloc(sizeof (Ty_ll) * n_points);
+		if (nullptr == this->m_y_ll) {
+			free(this->m_x_ll);
+			this->m_x_ll = nullptr;
 			qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Failed to allocate 'y' vector";
 			return sg_ret::err;
 		}
 
-		this->tps = (Trackpoint **) malloc(sizeof (Trackpoint *) * n_points);
-		if (nullptr == this->tps) {
-			free(this->x);
-			this->x = nullptr;
-			free(this->y);
-			this->y = nullptr;
+		this->m_tps = (Trackpoint **) malloc(sizeof (Trackpoint *) * n_points);
+		if (nullptr == this->m_tps) {
+			free(this->m_x_ll);
+			this->m_x_ll = nullptr;
+			free(this->m_y_ll);
+			this->m_y_ll = nullptr;
 			qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Failed to allocate 'tps' vector";
 			return sg_ret::err;
 		}
 
-		memset(this->x, 0, sizeof (Tx_ll) * n_points);
-		memset(this->y, 0, sizeof (Ty_ll) * n_points);
-		memset(this->tps, 0, sizeof (Trackpoint *) * n_points);
+		memset(this->m_x_ll, 0, sizeof (Tx_ll) * n_points);
+		memset(this->m_y_ll, 0, sizeof (Ty_ll) * n_points);
+		memset(this->m_tps, 0, sizeof (Trackpoint *) * n_points);
 
 		/* There are n cells in vectors, but the data in the
 		   vectors is still zero. */

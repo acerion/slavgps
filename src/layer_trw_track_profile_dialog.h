@@ -488,7 +488,7 @@ namespace SlavGPS {
 
 
 
-		if (!this->track_data_to_draw.is_valid() || NULL == this->track_data_to_draw.x || NULL == this->track_data_to_draw.y) {
+		if (!this->track_data_to_draw.is_valid()) {
 			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Final test of track data: failure";
 			return sg_ret::err;
 		} else {
@@ -506,8 +506,8 @@ namespace SlavGPS {
 		/* We won't display any x values outside of
 		   track_data.x_min/max. We will never be able to zoom out to
 		   show e.g. negative values of 'x'. */
-		this->x_visible_min = this->track_data_to_draw.x_min;
-		this->x_visible_max = this->track_data_to_draw.x_max;
+		this->x_visible_min = this->track_data_to_draw.x_min();
+		this->x_visible_max = this->track_data_to_draw.x_max();
 
 
 		this->x_visible_range_uu = this->x_visible_max - this->x_visible_min;
@@ -534,7 +534,7 @@ namespace SlavGPS {
 
 		/* This is not exactly the same range as this->y_visible_range_uu
 		   calculated below. TODO: ensure that y_min and y_max are valid. */
-		const auto y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min; /* TODO_LATER: replace 'auto' with proper type. */
+		const auto y_data_range = this->track_data_to_draw.y_max() - this->track_data_to_draw.y_min(); /* TODO_LATER: replace 'auto' with proper type. */
 
 		switch (this->graph_2d->y_domain) {
 
@@ -542,7 +542,7 @@ namespace SlavGPS {
 			/* Distance will be always non-negative, and it will
 			   be zero only at one point in the beginning. So it's
 			   ok to configure this value as below. */
-			this->y_visible_min = this->track_data_to_draw.y_min;
+			this->y_visible_min = this->track_data_to_draw.y_min();
 			break;
 
 		case GisViewportDomain::SpeedDomain: /* Speed will never be negative, but since it can drop
@@ -551,18 +551,18 @@ namespace SlavGPS {
 							graph area and zero values of speed. */
 		case GisViewportDomain::ElevationDomain:
 		case GisViewportDomain::GradientDomain:
-			this->y_visible_min = this->track_data_to_draw.y_min - y_data_range * y_margin;
+			this->y_visible_min = this->track_data_to_draw.y_min() - y_data_range * y_margin;
 			break;
 		default:
 			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Unhandled y domain" << (int) this->graph_2d->y_domain;
 			return sg_ret::err;
 		}
-		this->y_visible_max = this->track_data_to_draw.y_max + y_data_range * y_margin;
+		this->y_visible_max = this->track_data_to_draw.y_max() + y_data_range * y_margin;
 		this->y_visible_range_uu = this->y_visible_max - this->y_visible_min;
 
 		qDebug() << "II   ProfileView" << __func__ << __LINE__ << this->get_title()
-			 << "y min =" << this->track_data_to_draw.y_min
-			 << "y max =" << this->track_data_to_draw.y_max
+			 << "y min =" << this->track_data_to_draw.y_min()
+			 << "y max =" << this->track_data_to_draw.y_max()
 			 << "y data range =" << y_data_range
 			 << "y data range * y_margin =" << (y_data_range * y_margin)
 			 << "y visible min =" << this->y_visible_min
@@ -633,13 +633,13 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 
 	for (size_t i = 0; i < n_values; i++) {
 
-		const double y_current_value_uu = this->track_data_to_draw.y[i];
+		const double y_current_value_uu = this->track_data_to_draw.y_ll(i);
 		const bool y_value_valid = !std::isnan(y_current_value_uu);
 		if (!y_value_valid) {
 			continue;
 		}
 
-		const Tx_ll x_current_value_uu = this->track_data_to_draw.x[i];
+		const Tx_ll x_current_value_uu = this->track_data_to_draw.x_ll(i);
 		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.m_ll_value);
 
 		/* See if x coordinate of this trackpoint on a pixmap
@@ -655,7 +655,7 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 			result.found_x_px = x_px;
 			result.found_y_px = y_px;
 			result.found_tp_idx = i;
-			result.found_tp = this->track_data_to_draw.tps[i];
+			result.found_tp = this->track_data_to_draw.tp(i);
 			result.valid = true;
 
 			// qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Found new position closer to cursor event at index" << found_tp_idx << ":" << found_x_px << found_y_px;
@@ -752,7 +752,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_x_labels(const TPIn
 	/* Relative time from start of track. */
 	if (this->labels.x_value) {
 		/* Values in x[] are already re-calculated to user units. */
-		const Tx_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+		const Tx_ll x_ll_uu = this->track_data_to_draw.x_ll(tp_info.found_tp_idx);
 		const Tx x_uu = Tx(x_ll_uu, Tx::get_user_unit());
 
 		/* TODO: we should use x-value of first valid tp. Make
@@ -781,7 +781,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 
 	if (this->labels.y_value) {
 		/* Values in y[] are already re-calculated to user units. */
-		const Ty_ll y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
+		const Ty_ll y_uu = this->track_data_to_draw.y_ll(tp_info.found_tp_idx);
 		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::get_user_unit()));
 	}
 
@@ -810,7 +810,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation(Track *
 
 	for (size_t i = 0; i < n_values; i++) {
 
-		const Trackpoint * tp = this->track_data_to_draw.tps[i];
+		const Trackpoint * tp = this->track_data_to_draw.tp(i);
 		if (NULL == tp) {
 			continue;
 		}
@@ -821,7 +821,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation(Track *
 			continue;
 		}
 
-		const int x_value_uu = this->track_data_to_draw.x[i];
+		const int x_value_uu = this->track_data_to_draw.x_ll(i);
 
 		/* FIXME: try to change this section to use Altitude
 		   instead of Altitude_ll and see what compilation
@@ -891,7 +891,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 
 	for (size_t i = 0; i < n_values; i++) {
 
-		const Tx_ll x_current_value_uu = this->track_data_to_draw.x[i];
+		const Tx_ll x_current_value_uu = this->track_data_to_draw.x_ll(i);
 		/*
 		  This line creates x coordinate that is
 		  proportionally as far from left border, as
@@ -905,10 +905,10 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 		*/
 		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.m_ll_value);
 
-		const bool y_value_valid = !std::isnan(this->track_data_to_draw.y[i]);
+		const bool y_value_valid = !std::isnan(this->track_data_to_draw.y_ll(i));
 
 		if (y_value_valid) {
-			const double y_value_uu = this->track_data_to_draw.y[i];
+			const double y_value_uu = this->track_data_to_draw.y_ll(i);
 
 			cur_valid_pos.rx() = x_px;
 			cur_valid_pos.ry() = bottommost_px - (y_value_uu - this->y_visible_min.m_ll_value) * y_pixels_per_unit;
@@ -994,7 +994,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 
 	for (size_t i = 0; i < n_values; i++) {
 
-		const Trackpoint * tp = this->track_data_to_draw.tps[i];
+		const Trackpoint * tp = this->track_data_to_draw.tp(i);
 		if (NULL == tp) {
 			qDebug() << "NN   ProfileView" << __func__ << __LINE__ << "NULL trackpoint when drawing GPS speed for" << this->get_title();
 			continue;
@@ -1006,7 +1006,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 			continue;
 		}
 
-		const double x_value = this->track_data_to_draw.x[i];
+		const double x_value = this->track_data_to_draw.x_ll(i);
 		const double y_value = 100 * gps_speed / speed_max; /* Percentage of maximum speed. */
 
 		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->x_visible_min.m_ll_value);
