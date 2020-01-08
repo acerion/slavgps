@@ -509,17 +509,6 @@ void ProfileViewBase::create_graph_2d(void)
 	this->graph_2d = new Graph2D(GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, NULL);
 	snprintf(this->graph_2d->debug, sizeof (this->graph_2d->debug), "%s", this->get_title().toUtf8().constData());
 
-#if 0   /* This seems to be unnecessary. */
-	qDebug() << SG_PREFIX_I << "Before applying total sizes for graph" << this->graph_2d->debug;
-	const int initial_width = GRAPH_INITIAL_WIDTH;
-	const int initial_height = GRAPH_INITIAL_HEIGHT;
-	this->graph_2d->apply_total_sizes(initial_width, initial_height);
-	qDebug() << SG_PREFIX_I << "After applying total sizes for graph" << this->graph_2d->debug;
-#endif
-
-	this->graph_2d->x_domain = this->x_domain;
-	this->graph_2d->y_domain = this->y_domain;
-
 	return;
 }
 
@@ -950,7 +939,6 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 
 	this->create_graph_2d();
 	this->create_widgets_layout();
-	this->configure_controls();
 }
 
 
@@ -970,6 +958,7 @@ ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_x_time();
 	this->configure_labels_y_altitude();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
@@ -977,6 +966,7 @@ ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_x_time();
 	this->configure_labels_y_speed();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog)
 {
@@ -984,6 +974,7 @@ ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_x_time();
 	this->configure_labels_y_distance();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
@@ -991,6 +982,7 @@ ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Dist
 	this->configure_labels_x_distance();
 	this->configure_labels_y_speed();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog)
 {
@@ -998,6 +990,7 @@ ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Dist
 	this->configure_labels_x_distance();
 	this->configure_labels_y_altitude();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog)
 {
@@ -1005,6 +998,7 @@ ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Dist
 	this->configure_labels_x_distance();
 	this->configure_labels_y_gradient();
 	this->configure_labels_post();
+	this->configure_controls();
 }
 
 
@@ -1022,63 +1016,6 @@ int ProfileViewBase::get_central_n_rows(void) const
 {
 	return this->graph_2d->cached_central_n_rows;
 }
-
-
-
-
-Graph2D::Graph2D(int left, int right, int top, int bottom, QWidget * parent) : ViewportPixmap(left, right, top, bottom, parent)
-{
-
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret Graph2D::cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
-{
-	const int leftmost_px   = this->central_get_leftmost_pixel();
-	const int rightmost_px  = this->central_get_rightmost_pixel();
-	const int topmost_px    = this->central_get_topmost_pixel();
-	const int bottommost_px = this->central_get_bottommost_pixel();
-
-	const QPoint position = this->mapFromGlobal(QCursor::pos());
-
-#if 0   /* Verbose debug. */
-	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
-#endif
-
-#if 0
-	const int x_px = position.x();
-	const int y_px = position.y();
-#else
-	const int x_px = ev->x();
-	const int y_px = ev->y();
-#endif
-
-	/* Cursor outside of chart area. */
-	if (x_px > rightmost_px) {
-		return sg_ret::err;
-	}
-	if (y_px > bottommost_px) {
-		return sg_ret::err;
-	}
-	if (x_px < leftmost_px) {
-		return sg_ret::err;
-	}
-	if (y_px < topmost_px) {
-		return sg_ret::err;
-	}
-
-	/* Converting from Qt's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
-	screen_pos.rx() = x_px;
-	screen_pos.ry() = bottommost_px - y_px;
-
-	return sg_ret::ok;
-}
-
 
 
 
@@ -1115,43 +1052,4 @@ void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 	emit this->button_released(this, ev);
 	ev->accept();
-}
-
-
-
-
-void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
-{
-	const int leftmost_px = this->central_get_leftmost_pixel();
-	const int rigthmost_px = this->central_get_rightmost_pixel();
-	const int topmost_px = this->central_get_topmost_pixel();
-	const int bottommost_px = this->central_get_bottommost_pixel();
-
-	if (!crosshair.valid) {
-		qDebug() << SG_PREFIX_E << "Crosshair" << crosshair.debug << "is invalid";
-		/* Position outside of graph area. */
-		return;
-	}
-
-	//qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x_px << crosshair.y_px << "(central cbl =" << crosshair.central_cbl_x_px << crosshair.central_cbl_y_px << ")";
-
-	if (crosshair.x_px > rigthmost_px || crosshair.x_px < leftmost_px) {
-		qDebug() << SG_PREFIX_E << "Crosshair has bad x";
-		/* Position outside of graph area. */
-		return;
-	}
-	if (crosshair.y_px > bottommost_px || crosshair.y_px < topmost_px) {
-		qDebug() << SG_PREFIX_E << "Crosshair has bad y";
-		/* Position outside of graph area. */
-		return;
-	}
-
-
-	this->painter.setPen(this->marker_pen);
-
-	/* Small optimization: use QT's drawing primitives directly.
-	   Remember that (0,0) screen position is in upper-left corner of viewport. */
-
-	this->painter.drawLine(leftmost_px, crosshair.y_px, rigthmost_px, crosshair.y_px); /* Horizontal line. */
-	this->painter.drawLine(crosshair.x_px, topmost_px, crosshair.x_px, bottommost_px); /* Vertical line. */
 }

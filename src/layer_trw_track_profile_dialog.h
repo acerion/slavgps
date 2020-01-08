@@ -97,58 +97,15 @@ namespace SlavGPS {
 
 
 
-	/*
-	  Crosshair that knows its position in 2D graph and in Qt
-	  widget. See comments on x/y members for details.
-	*/
-	class Crosshair2D {
-	public:
-		/*
-		  Coordinates valid only in central area of 2d graph,
-		  and following 'beginning in bottom-left corner'
-		  coordinate system.
-
-		  So if the two values are zero, they indicate
-		  bottom-left corner of central area of 2d graph.
-		*/
-		int central_cbl_x_px = 0;
-		int central_cbl_y_px = 0;
-
-		/*
-		  Global coordinates in Qt widget, following
-		  'beginning in top-left corner' convention.
-		*/
-		int x_px = 0;
-		int y_px = 0;
-
-		QString debug;
-
-		bool valid = false;
-	};
-
-
-
-
-
 	class Graph2D : public ViewportPixmap {
 		Q_OBJECT
 	public:
-		Graph2D(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
-
-		/* Get cursor position of a mouse event.  Returned
-		   position is in "beginning is in bottom-left corner"
-		   coordinate system. */
-		sg_ret cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
-
-		void central_draw_simple_crosshair(const Crosshair2D & crosshair);
-
+		Graph2D(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = nullptr)
+			: ViewportPixmap(left, right, top, bottom, parent) {}
 
 		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
 		void mouseMoveEvent(QMouseEvent * event);
 		void mouseReleaseEvent(QMouseEvent * event);
-
-		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
-		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
 
 		/* Calculated on every resize event. Having cached
@@ -536,7 +493,7 @@ namespace SlavGPS {
 		   calculated below. TODO: ensure that y_min and y_max are valid. */
 		const auto y_data_range = this->track_data_to_draw.y_max() - this->track_data_to_draw.y_min(); /* TODO_LATER: replace 'auto' with proper type. */
 
-		switch (this->graph_2d->y_domain) {
+		switch (this->y_domain) {
 
 		case GisViewportDomain::DistanceDomain:
 			/* Distance will be always non-negative, and it will
@@ -554,7 +511,7 @@ namespace SlavGPS {
 			this->y_visible_min = this->track_data_to_draw.y_min() - y_data_range * y_margin;
 			break;
 		default:
-			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Unhandled y domain" << (int) this->graph_2d->y_domain;
+			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Unhandled y domain" << (int) this->y_domain;
 			return sg_ret::err;
 		}
 		this->y_visible_max = this->track_data_to_draw.y_max() + y_data_range * y_margin;

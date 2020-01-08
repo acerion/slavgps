@@ -55,6 +55,37 @@ namespace SlavGPS {
 
 
 
+	/*
+	  Crosshair that knows its position in 2D graph and in Qt
+	  widget. See comments on x/y members for details.
+	*/
+	class Crosshair2D {
+	public:
+		/*
+		  Coordinates valid only in central area of 2d graph,
+		  and following 'beginning in bottom-left corner'
+		  coordinate system.
+
+		  So if the two values are zero, they indicate
+		  bottom-left corner of central area of 2d graph.
+		*/
+		int central_cbl_x_px = 0;
+		int central_cbl_y_px = 0;
+
+		/*
+		  Global coordinates in Qt widget, following
+		  'beginning in top-left corner' convention.
+		*/
+		int x_px = 0;
+		int y_px = 0;
+
+		QString debug;
+
+		bool valid = false;
+	};
+
+
+
 
 	/* Wrapper around pixmap and a painter that paints to the
 	   pixmap.  Simple class providing paint primitives. */
@@ -175,13 +206,11 @@ namespace SlavGPS {
 		   bottom-left corner" coordinates system. */
 		void central_draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y);
 
-		/* Draw a crosshair in central part of viewport.  x/y
-		   coordinates should be in "beginning is in bottom
-		   left corner" coordinates system.
+		/* Draw a crosshair in central part of viewport.
 
 		   "Simple" means one horizontal and one vertical line
 		   crossing at given position. */
-		void central_draw_simple_crosshair(const ScreenPos & pos);
+		void central_draw_simple_crosshair(const Crosshair2D & crosshair);
 
 		/**
 		   Draw a rectangle around central area, but only if

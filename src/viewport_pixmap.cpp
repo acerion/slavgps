@@ -838,32 +838,38 @@ void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel 
 
   @reviewed-on tbd
 */
-void ViewportPixmap::central_draw_simple_crosshair(const ScreenPos & pos)
+void ViewportPixmap::central_draw_simple_crosshair(const Crosshair2D & crosshair)
 {
-	const int rigthmost_pixel = this->central_get_rightmost_pixel();
-	const int bottommost_pixel = this->central_get_bottommost_pixel();
+	const int leftmost_px = this->central_get_leftmost_pixel();
+	const int rigthmost_px = this->central_get_rightmost_pixel();
+	const int topmost_px = this->central_get_topmost_pixel();
+	const int bottommost_px = this->central_get_bottommost_pixel();
 
-	/* Convert from "beginning in bottom-left corner" to Qt's
-	   "beginning in top-left corner" coordinate system. "q_"
-	   prefix means "Qt's coordinate system". */
-	const int x = pos.x();
-	const int y = bottommost_pixel - pos.y();
+	if (!crosshair.valid) {
+		qDebug() << SG_PREFIX_E << "Crosshair" << crosshair.debug << "is invalid";
+		/* Position outside of graph area. */
+		return;
+	}
 
-	qDebug() << SG_PREFIX_I << "Crosshair at coord" << x << y;
+	//qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x_px << crosshair.y_px << "(central cbl =" << crosshair.central_cbl_x_px << crosshair.central_cbl_y_px << ")";
 
-	if (x > rigthmost_pixel || y > bottommost_pixel) {
+	if (crosshair.x_px > rigthmost_px || crosshair.x_px < leftmost_px) {
+		qDebug() << SG_PREFIX_E << "Crosshair has bad x";
+		/* Position outside of graph area. */
+		return;
+	}
+	if (crosshair.y_px > bottommost_px || crosshair.y_px < topmost_px) {
+		qDebug() << SG_PREFIX_E << "Crosshair has bad y";
 		/* Position outside of graph area. */
 		return;
 	}
 
 	this->painter.setPen(this->marker_pen);
 
-	/* Small optimization: use QT's drawing primitives directly.
-	   Remember that (0,0) screen position is in upper-left corner of viewport. */
-
-	this->painter.drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
-	this->painter.drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
+	this->painter.drawLine(leftmost_px, crosshair.y_px, rigthmost_px, crosshair.y_px); /* Horizontal line. */
+	this->painter.drawLine(crosshair.x_px, topmost_px, crosshair.x_px, bottommost_px); /* Vertical line. */
 }
+
 
 
 
