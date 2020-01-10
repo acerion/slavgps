@@ -85,7 +85,7 @@ sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * pare
 
 	this->widgets_row++;
 
-	const HeightUnit height_unit = Altitude::get_internal_unit();
+	const HeightUnit height_unit = Altitude::internal_unit();
 	MeasurementScale<Altitude, Altitude_ll, HeightUnit> scale_alti(SG_ALTITUDE_RANGE_MIN,
 								       SG_ALTITUDE_RANGE_MAX,
 								       0.0,

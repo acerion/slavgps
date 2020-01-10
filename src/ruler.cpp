@@ -161,8 +161,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Fill between middle and innermost circle. */
 	if (1) {
-		const float start_angle = (90 - RAD2DEG(this->base_angle.get_ll_value())) * 16;
-		const float span_angle = -RAD2DEG(this->angle.get_ll_value()) * 16;
+		const float start_angle = (90 - RAD2DEG(this->base_angle.ll_value())) * 16;
+		const float span_angle = -RAD2DEG(this->angle.ll_value()) * 16;
 
 		painter.setPen(this->arc_pen);
 
@@ -184,8 +184,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.get_ll_value());
-			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.get_ll_value());
+			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.ll_value());
+			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.ll_value());
 			painter.drawLine(this->begin_x + (radius-radius_delta) * cosine_factor,
 					 this->begin_y + (radius-radius_delta) * sine_factor, this->begin_x + (radius+ticksize) * cosine_factor,
 					 this->begin_y + (radius+ticksize) * sine_factor);
@@ -257,8 +257,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-		const int label2_x = this->begin_x - radius * cos(this->angle.get_ll_value() - M_PI_2) / 2;
-		const int label2_y = this->begin_y - radius * sin(this->angle.get_ll_value() - M_PI_2) / 2;
+		const int label2_x = this->begin_x - radius * cos(this->angle.ll_value() - M_PI_2) / 2;
+		const int label2_y = this->begin_y - radius * sin(this->angle.ll_value() - M_PI_2) / 2;
 
 		label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
 		label2_rect.adjust(-margin, -margin, margin, margin);

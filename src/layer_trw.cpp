@@ -1399,10 +1399,10 @@ QString LayerTRW::get_tooltip(void) const
 		TracksTooltipData ttd = this->get_tracks_tooltip_data();
 
 		QDateTime date_start;
-		date_start.setTime_t(ttd.start_time.get_ll_value());
+		date_start.setTime_t(ttd.start_time.ll_value());
 
 		QDateTime date_end;
-		date_end.setTime_t(ttd.end_time.get_ll_value());
+		date_end.setTime_t(ttd.end_time.ll_value());
 
 		result += QObject::tr("\n\n"
 				      "Tracks time span: %1 to %2").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
@@ -3218,7 +3218,7 @@ Time LayerTRW::get_timestamp(void) const
 		if (this->metadata && this->metadata->iso8601_timestamp.isValid()) {
 
 			/* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
-			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC, Time::get_internal_unit());
+			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC, Time::internal_unit());
 		}
 	}
 	if (timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
@@ -3261,7 +3261,7 @@ void LayerTRW::post_read(GisViewport * gisview, bool from_file)
 	if (this->metadata && !this->metadata->iso8601_timestamp.isValid()) {
 		const Time local_timestamp = this->get_timestamp();
 		if (local_timestamp.is_valid()) {
-			this->metadata->iso8601_timestamp.setMSecsSinceEpoch(local_timestamp.get_ll_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+			this->metadata->iso8601_timestamp.setMSecsSinceEpoch(local_timestamp.ll_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 		} else {
 			/* No time found - so use 'now' for the metadata time. */
 			this->metadata->iso8601_timestamp = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
@@ -3886,7 +3886,7 @@ void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 LayerTRW::TracksTooltipData::TracksTooltipData()
 {
 	/* Track uses internal distance and time units, so this also uses internal unit. */
-	this->length = Distance(0, Distance::get_internal_unit());
-	this->duration = Duration(0, Duration::get_internal_unit());
+	this->length = Distance(0, Distance::internal_unit());
+	this->duration = Duration(0, Duration::internal_unit());
 
 }

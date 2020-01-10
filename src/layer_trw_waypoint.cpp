@@ -643,7 +643,7 @@ void Waypoint::open_astro_cb(void)
 		const LatLon lat_lon = this->m_coord.get_lat_lon();
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
-		const QString alt_str = QString("%1").arg((int) round(this->altitude.get_ll_value()));
+		const QString alt_str = QString("%1").arg((int) round(this->altitude.ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
@@ -1108,7 +1108,7 @@ TreeItemViewFormat Waypoint::get_view_format_header(bool include_parent_layer)
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp,  true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Date, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility, true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Visibility, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,    true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, QObject::tr("Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, QObject::tr("Height\n(%1)").arg(Altitude::unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Icon,       true, QObject::tr("Symbol"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
 
 

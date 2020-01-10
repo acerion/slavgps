@@ -140,7 +140,7 @@ namespace SlavGPS {
 template <>
 GraphIntervals<Distance>::GraphIntervals()
 {
-	const DistanceUnit unit = Distance::get_internal_unit();
+	const DistanceUnit unit = Distance::internal_unit();
 	const size_t n_values = sizeof (interval_values_distance) / sizeof (interval_values_distance[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Distance(interval_values_distance[i], unit));
@@ -156,7 +156,7 @@ GraphIntervals<Distance>::GraphIntervals()
 template <>
 GraphIntervals<Time>::GraphIntervals()
 {
-	const TimeUnit unit = Time::get_internal_unit();
+	const TimeUnit unit = Time::internal_unit();
 	const size_t n_values = sizeof (interval_values_time) / sizeof (interval_values_time[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Time(interval_values_time[i], unit));
@@ -172,7 +172,7 @@ GraphIntervals<Time>::GraphIntervals()
 template <>
 GraphIntervals<Altitude>::GraphIntervals()
 {
-	const HeightUnit unit = Altitude::get_internal_unit();
+	const HeightUnit unit = Altitude::internal_unit();
 	const size_t n_values = sizeof (interval_values_altitude) / sizeof (interval_values_altitude[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Altitude(interval_values_altitude[i], unit));
@@ -188,7 +188,7 @@ GraphIntervals<Altitude>::GraphIntervals()
 template <>
 GraphIntervals<Gradient>::GraphIntervals()
 {
-	const GradientUnit unit = Gradient::get_internal_unit();
+	const GradientUnit unit = Gradient::internal_unit();
 	const size_t n_values = sizeof (interval_values_gradient) / sizeof (interval_values_gradient[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Gradient(interval_values_gradient[i], unit));
@@ -204,7 +204,7 @@ GraphIntervals<Gradient>::GraphIntervals()
 template <>
 GraphIntervals<Speed>::GraphIntervals()
 {
-	const SpeedUnit unit = Speed::get_internal_unit();
+	const SpeedUnit unit = Speed::internal_unit();
 	const size_t n_values = sizeof (interval_values_speed) / sizeof (interval_values_speed[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Speed(interval_values_speed[i], unit));

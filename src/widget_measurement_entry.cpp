@@ -107,8 +107,8 @@ void MeasurementEntryWidget::set_value_iu(const SGVariant & value_iu)
 
 				qDebug() << SG_PREFIX_I << "Setting value of altitude iu" << altitude_iu << ", in user units:" << altitude_uu;
 
-				this->spin->setValue(altitude_uu.get_ll_value());
-				this->spin->setSuffix(QString(" %1").arg(Altitude::get_unit_full_string(height_unit)));
+				this->spin->setValue(altitude_uu.ll_value());
+				this->spin->setSuffix(QString(" %1").arg(Altitude::unit_full_string(height_unit)));
 			} else {
 				qDebug() << SG_PREFIX_I << "Clearing value of altitude";
 				this->spin->clear();

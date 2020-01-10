@@ -88,7 +88,7 @@ void TpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 
 	/* Don't redraw unless we really have to. */
 	const Distance distance = Coord::distance_2(old_coord, new_coord); /* May not be exact due to rounding. */
-	const bool redraw = distance.is_valid() && distance.get_ll_value() > 0.05;
+	const bool redraw = distance.is_valid() && distance.ll_value() > 0.05;
 	if (redraw) {
 		/* One of track's trackpoints has changed
 		   its coordinates. */

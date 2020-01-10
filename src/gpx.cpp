@@ -855,7 +855,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 	if (wp->get_timestamp().is_valid()) {
 		GTimeVal timestamp;
-		timestamp.tv_sec = wp->get_timestamp().get_ll_value();
+		timestamp.tv_sec = wp->get_timestamp().ll_value();
 		timestamp.tv_usec = 0;
 
 		char * time_iso8601 = g_time_val_to_iso8601(&timestamp);
@@ -935,7 +935,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	char * time_iso8601 = NULL;
 	if (tp->timestamp.is_valid()) {
 		GTimeVal timestamp;
-		timestamp.tv_sec = tp->timestamp.get_ll_value();
+		timestamp.tv_sec = tp->timestamp.ll_value();
 		timestamp.tv_usec = 0;
 		time_iso8601 = g_time_val_to_iso8601(&timestamp);
 	} else if (context->options != NULL && context->options->force_time) {

@@ -606,7 +606,7 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 		}
 
 		const Tx_ll x_current_value_uu = this->track_data_to_draw.x_ll(i);
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.m_ll_value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.ll_value());
 
 		/* See if x coordinate of this trackpoint on a pixmap
 		   is closer to cursor than the previous x
@@ -616,7 +616,7 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 			/* Found a trackpoint painted at position 'x' that is closer to cursor event position on x axis. */
 			x_px_diff = x_px_diff_current;
 
-			const int y_px = bottommost_px - (y_current_value_uu - this->y_visible_min.m_ll_value) * y_pixels_per_unit;
+			const int y_px = bottommost_px - (y_current_value_uu - this->y_visible_min.ll_value()) * y_pixels_per_unit;
 
 			result.found_x_px = x_px;
 			result.found_y_px = y_px;
@@ -719,7 +719,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_x_labels(const TPIn
 	if (this->labels.x_value) {
 		/* Values in x[] are already re-calculated to user units. */
 		const Tx_ll x_ll_uu = this->track_data_to_draw.x_ll(tp_info.found_tp_idx);
-		const Tx x_uu = Tx(x_ll_uu, Tx::get_user_unit());
+		const Tx x_uu = Tx(x_ll_uu, Tx::user_unit());
 
 		/* TODO: we should use x-value of first valid tp. Make
 		   sure that x_min is an x-value of first valid tp. */
@@ -748,7 +748,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 	if (this->labels.y_value) {
 		/* Values in y[] are already re-calculated to user units. */
 		const Ty_ll y_uu = this->track_data_to_draw.y_ll(tp_info.found_tp_idx);
-		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::get_user_unit()));
+		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::user_unit()));
 	}
 
 	return sg_ret::ok;
@@ -782,7 +782,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Tr
 		}
 
 		/* TODO_MAYBE: This could be slow doing this each time... */
-		const Ty elev_uu = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple).convert_to_unit(Ty::get_user_unit());
+		const Ty elev_uu = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple).convert_to_unit(Ty::user_unit());
 		if (!elev_uu.is_valid()) {
 			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Elevation data from cache is invalid";
 			continue;
@@ -791,8 +791,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Tr
 		const Tx_ll x_value_uu = this->track_data_to_draw.x_ll(i);
 		const Ty y_value_uu = elev_uu - this->y_visible_min;
 
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->x_visible_min.m_ll_value);
-		const int y_px = bottommost_px - y_pixels_per_unit * y_value_uu.get_ll_value();
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->x_visible_min.ll_value());
+		const int y_px = bottommost_px - y_pixels_per_unit * y_value_uu.ll_value();
 
 		this->graph_2d->fill_rectangle(color, x_px - marker_shift, y_px - marker_shift, marker_size, marker_size);
 	}
@@ -864,7 +864,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 		  varying intervals (e.g. different values of
 		  distances between consecutive measurements of y).
 		*/
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.m_ll_value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.ll_value());
 
 		const bool y_value_valid = !std::isnan(this->track_data_to_draw.y_ll(i));
 
@@ -872,7 +872,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 			const double y_value_uu = this->track_data_to_draw.y_ll(i);
 
 			cur_valid_pos.rx() = x_px;
-			cur_valid_pos.ry() = bottommost_px - (y_value_uu - this->y_visible_min.m_ll_value) * y_pixels_per_unit;
+			cur_valid_pos.ry() = bottommost_px - (y_value_uu - this->y_visible_min.ll_value()) * y_pixels_per_unit;
 
 			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
 
@@ -946,7 +946,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 		return sg_ret::ok;
 	}
 
-	const double speed_max = max_speed.get_ll_value();
+	const double speed_max = max_speed.ll_value();
 
 	double x_pixels_per_unit;
 	double y_pixels_per_unit;
@@ -969,7 +969,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 		const double x_value = this->track_data_to_draw.x_ll(i);
 		const double y_value = 100 * gps_speed / speed_max; /* Percentage of maximum speed. */
 
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->x_visible_min.m_ll_value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->x_visible_min.ll_value());
 		const int y_px = bottommost_px - y_pixels_per_unit * y_value;
 
 		/* This is just a speed indicator - no actual values can be inferred by user. */
@@ -1057,7 +1057,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 	  opened. Once it is done, we don't have to re-do it on every
 	  resizing of dialog window.
 	*/
-	this->initial_track_data.apply_unit_conversions_xy(Tx::get_user_unit(), Ty::get_user_unit());
+	this->initial_track_data.apply_unit_conversions_xy(Tx::user_unit(), Ty::user_unit());
 
 	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
@@ -1087,8 +1087,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 	double y_pixels_per_unit;
 	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
-	Ty first_multiple_uu(0.0, Ty::get_user_unit());
-	Ty last_multiple_uu(0.0, Ty::get_user_unit());
+	Ty first_multiple_uu(0.0, Ty::user_unit());
+	Ty last_multiple_uu(0.0, Ty::user_unit());
 	GraphIntervals<Ty>::find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
@@ -1108,7 +1108,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 	   will get forever loop. */
 	for (Ty y_value_uu = first_multiple_uu; y_value_uu <= last_multiple_uu; y_value_uu += this->y_interval) {
 		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
-		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->y_visible_min).get_ll_value();
+		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->y_visible_min).ll_value();
 
 		if (y_px >= topmost_px && y_px <= bottommost_px) {
 			qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      value (inside) =" << y_value_uu << ", y_px =" << y_px;
@@ -1156,8 +1156,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 	double y_pixels_per_unit;
 	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
-	Tx first_multiple_uu(0, Tx::get_user_unit());
-	Tx last_multiple_uu(0, Tx::get_user_unit());
+	Tx first_multiple_uu(0, Tx::user_unit());
+	Tx last_multiple_uu(0, Tx::user_unit());
 	GraphIntervals<Tx>::find_multiples_of_interval(this->x_visible_min, this->x_visible_max, this->x_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
@@ -1172,7 +1172,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 
 	for (Tx x_value_uu = first_multiple_uu; x_value_uu <= last_multiple_uu; x_value_uu += this->x_interval) {
 		/* 'x_px' is in "beginning in top-left corner" coordinate system. */
-		const int x_px = leftmost_px + (x_value_uu.m_ll_value - this->x_visible_min.m_ll_value) * x_pixels_per_unit;
+		const int x_px = leftmost_px + (x_value_uu.ll_value() - this->x_visible_min.ll_value()) * x_pixels_per_unit;
 
 		if (x_px >= leftmost_px && x_px <= rightmost_px) {
 			qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      value (inside) =" << x_value_uu << ", x_px =" << x_px;
@@ -1201,8 +1201,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
 
-	x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
-	y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
+	x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.ll_value();
+	y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.ll_value();
 }
 
 

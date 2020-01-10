@@ -763,7 +763,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			fprintf(file, " altitude=\"%s\"", wp->altitude.value_to_string_for_file().toUtf8().constData());
 		}
 		if (wp->get_timestamp().is_valid()) {
-			fprintf(file, " unixtime=\"%ld\"", wp->get_timestamp().get_ll_value());
+			fprintf(file, " unixtime=\"%ld\"", wp->get_timestamp().ll_value());
 		}
 
 		if (!wp->comment.isEmpty()) {
@@ -840,7 +840,7 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 		fprintf(file, " altitude=\"%s\"", tp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 	if (tp->timestamp.is_valid()) {
-		fprintf(file, " unixtime=\"%ld\"", tp->timestamp.get_ll_value());
+		fprintf(file, " unixtime=\"%ld\"", tp->timestamp.ll_value());
 	}
 	if (tp->newsegment) {
 		fprintf(file, " newsegment=\"yes\"");

@@ -121,7 +121,7 @@ Time SGDateTimeDialog::get_timestamp(void) const
 	}
 	qDebug() << SG_PREFIX_D << "Extracted combined timestamp:" << date_time << date_time.toTime_t();
 
-	return Time(date_time.toTime_t(), Time::get_internal_unit());
+	return Time(date_time.toTime_t(), Time::internal_unit());
 }
 
 
@@ -168,13 +168,13 @@ SGDateTimeButton::SGDateTimeButton(const Time & date_time, QWidget * parent_widg
 	if (date_time.is_valid()) {
 		this->timestamp = date_time;
 	} else {
-		this->timestamp = Time(0, Time::get_internal_unit()); /* Initialize with default, valid value. */
+		this->timestamp = Time(0, Time::internal_unit()); /* Initialize with default, valid value. */
 
 		this->setIcon(QIcon::fromTheme("list-add"));
 		this->setText("");
 	}
 
-	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp.get_ll_value()), true, parent_widget);
+	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp.ll_value()), true, parent_widget);
 	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
@@ -197,7 +197,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 
 	/* Make sure that the dialog shows the correct date/time - the
 	   value that was last retrieved from the date time dialog. */
-	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp.get_ll_value()));
+	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp.ll_value()));
 
 	if (QDialog::Accepted == dialog->exec()) {
 		this->timestamp = this->dialog->get_timestamp();
@@ -208,7 +208,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 		emit this->value_is_set(this->timestamp);
 	} else {
 		qDebug() << SG_PREFIX_I << "Returning zero timestamp";
-		this->timestamp = Time(0, Time::get_internal_unit());
+		this->timestamp = Time(0, Time::internal_unit());
 	}
 }
 

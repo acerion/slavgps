@@ -264,15 +264,15 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		}
 
 		double dist_current = 0.0;
-		Trackpoint * tp_current = trk->get_tp_by_dist(axis_mark_iu.m_ll_value, false, &dist_current);
+		Trackpoint * tp_current = trk->get_tp_by_dist(axis_mark_iu.ll_value(), false, &dist_current);
 		double dist_next = 0.0;
-		Trackpoint * tp_next = trk->get_tp_by_dist(axis_mark_iu.m_ll_value, true, &dist_next);
+		Trackpoint * tp_next = trk->get_tp_by_dist(axis_mark_iu.ll_value(), true, &dist_next);
 
 		double dist_between_tps = std::fabs(dist_next - dist_current);
 		double ratio = 0.0;
 		/* Prevent division by 0 errors. */
 		if (dist_between_tps > 0.0) {
-			ratio = std::fabs(axis_mark_iu.m_ll_value - dist_current) / dist_between_tps;
+			ratio = std::fabs(axis_mark_iu.ll_value() - dist_current) / dist_between_tps;
 		}
 
 		if (tp_current && tp_next) {

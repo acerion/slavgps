@@ -89,7 +89,7 @@ void TimestampWidget::set_timestamp(const Time & timestamp, const Coord & new_co
 		return;
 	}
 
-	this->timestamp_entry->setValue(timestamp.get_ll_value());
+	this->timestamp_entry->setValue(timestamp.ll_value());
 	this->timestamp_button->set_label(timestamp, new_coord);
 }
 
@@ -107,7 +107,7 @@ void TimestampWidget::clear_widget(void)
 
 Time TimestampWidget::get_timestamp(void) const
 {
-	return Time((time_t) this->timestamp_entry->value(), Time::get_internal_unit());
+	return Time((time_t) this->timestamp_entry->value(), Time::internal_unit());
 }
 
 
@@ -116,7 +116,7 @@ Time TimestampWidget::get_timestamp(void) const
 void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_entry->value();
-	const Time new_timestamp = Time(new_value, Time::get_internal_unit());
+	const Time new_timestamp = Time(new_value, Time::internal_unit());
 	qDebug() << SG_PREFIX_SLOT << "New value of timestamp =" << new_timestamp;
 
 	qDebug() << SG_PREFIX_SIGNAL << "Timestamp value in entry field changed to" << new_value << ", emitting signal 'TimestampWidget::value_is_set()";
@@ -132,7 +132,7 @@ void TimestampWidget::on_timestamp_button_value_set_cb(void)
 {
 	const Time new_value = this->timestamp_button->get_value();
 	qDebug() << SG_PREFIX_SLOT << "New value =" << new_value;
-	this->timestamp_entry->setValue(new_value.get_ll_value());
+	this->timestamp_entry->setValue(new_value.ll_value());
 }
 
 
@@ -160,7 +160,7 @@ void TimestampWidget::set_coord(const Coord & new_coord)
 {
 	this->coord = new_coord;
 
-	const Time current_value((time_t) this->timestamp_entry->value(), Time::get_internal_unit());
+	const Time current_value((time_t) this->timestamp_entry->value(), Time::internal_unit());
 
 	this->timestamp_button->set_label(current_value, this->coord);
 }

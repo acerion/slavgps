@@ -311,7 +311,7 @@ void LayerMapnik::init(void)
 void LayerMapnik::post_init(void)
 {
 	const Duration seconds = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").get_duration().convert_to_unit(DurationUnit::Unit::Seconds);
-	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * seconds.get_ll_value()).toTime_t(); /* In local time zone. */
+	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * seconds.ll_value()).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
 	const QString import_time_full_path = SlavGPSLocations::get_file_full_path("planet-import-complete");

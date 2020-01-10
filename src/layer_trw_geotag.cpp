@@ -227,7 +227,7 @@ GeotagJob::GeotagJob(GeoTagDialog * dialog)
 
 	this->n_items = this->selected_images.size();
 
-	this->photo_time = Time(0, Time::get_internal_unit()); /* This will set timestamp as valid. */
+	this->photo_time = Time(0, Time::internal_unit()); /* This will set timestamp as valid. */
 }
 
 

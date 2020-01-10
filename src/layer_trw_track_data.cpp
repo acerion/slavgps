@@ -219,7 +219,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
-	this->m_x_ll[i] = (*iter)->timestamp.get_ll_value();
+	this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 	this->m_y_ll[i] = 0;
 	this->m_tps[i] = (*iter);
 	TRW_TRACK_DATA_UPDATE_MIN_MAX(this, i, (!std::isnan(this->m_y_ll[i])));
@@ -228,7 +228,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 
 	while (iter != trk->trackpoints.end()) {
 
-		this->m_x_ll[i] = (*iter)->timestamp.get_ll_value();
+		this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 		if (i > 0 && this->m_x_ll[i] <= this->m_x_ll[i - 1]) {
 			/* TODO_LATER: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->m_x_ll[i] << this->m_x_ll[i - 1];
@@ -273,8 +273,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::DistanceDomain;
 
-	this->x_unit = Time::get_internal_unit();
-	this->y_unit = Distance::get_internal_unit();
+	this->x_unit = Time::internal_unit();
+	this->y_unit = Distance::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Distance over Time");
 
@@ -320,8 +320,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 		this->m_x_ll[i] = 0; /* Distance at the beginning is zero. */
 
 		y_valid = (*iter)->altitude.is_valid();
-		this->m_y_ll[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
-		this->m_y_ll[i] = (*iter)->altitude.get_ll_value();
+		this->m_y_ll[i] = y_valid ? (*iter)->altitude.ll_value() : NAN;
+		this->m_y_ll[i] = (*iter)->altitude.ll_value();
 
 		this->m_tps[i] = (*iter);
 		TRW_TRACK_DATA_UPDATE_MIN_MAX(this, i, (!std::isnan(this->m_y_ll[i])));
@@ -338,8 +338,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 			this->m_x_ll[i] = this->m_x_ll[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
 			y_valid = (*iter)->altitude.is_valid();
-			this->m_y_ll[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
-			this->m_y_ll[i] = (*iter)->altitude.get_ll_value();
+			this->m_y_ll[i] = y_valid ? (*iter)->altitude.ll_value() : NAN;
+			this->m_y_ll[i] = (*iter)->altitude.ll_value();
 
 			this->m_tps[i] = (*iter);
 			TRW_TRACK_DATA_UPDATE_MIN_MAX(this, i, (!std::isnan(this->m_y_ll[i])));
@@ -354,8 +354,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Distance::get_internal_unit();
-	this->y_unit = Altitude::get_internal_unit();
+	this->x_unit = Distance::internal_unit();
+	this->y_unit = Altitude::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
 
@@ -407,7 +407,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
 			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
 
-			if ((*iter)->altitude.get_ll_value() > SG_ALTITUDE_RANGE_MAX) {
+			if ((*iter)->altitude.ll_value() > SG_ALTITUDE_RANGE_MAX) {
 				/* TODO_LATER: clamp the invalid values, but still generate vector? */
 				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
@@ -436,8 +436,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 	auto iter = trk->trackpoints.begin();
 	double current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
 
-	double altitude1 = (*iter)->altitude.get_ll_value();
-	double altitude2 = (*std::next(iter))->altitude.get_ll_value();
+	double altitude1 = (*iter)->altitude.ll_value();
+	double altitude2 = (*std::next(iter))->altitude.ll_value();
 	double dist_along_seg = 0;
 
 	bool ignore_it = false;
@@ -488,8 +488,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 			       && std::next(iter) != trk->trackpoints.end()) {
 
 				current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
-				altitude1 = (*iter)->altitude.get_ll_value();
-				altitude2 = (*std::next(iter))->altitude.get_ll_value();
+				altitude1 = (*iter)->altitude.ll_value();
+				altitude2 = (*std::next(iter))->altitude.ll_value();
 				ignore_it = (*std::next(iter))->newsegment;
 
 				if (delta_d - current_dist >= current_seg_length) {
@@ -546,8 +546,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Distance::get_internal_unit();
-	this->y_unit = Altitude::get_internal_unit();
+	this->x_unit = Distance::internal_unit();
+	this->y_unit = Altitude::internal_unit();
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
 
 	this->m_x_min = Distance(x_min_ll, this->x_unit);
@@ -624,8 +624,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::GradientDomain;
 
-	this->x_unit = Distance::get_internal_unit();
-	this->y_unit = Gradient::get_internal_unit();
+	this->x_unit = Distance::internal_unit();
+	this->y_unit = Gradient::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Gradient over Distance");
 
@@ -718,8 +718,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
 
-	this->x_unit = Time::get_internal_unit();
-	this->y_unit = Speed::get_internal_unit();
+	this->x_unit = Time::internal_unit();
+	this->y_unit = Speed::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Speed over Time");
 
@@ -775,7 +775,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
 	do {
-		this->m_x_ll[i] = (*iter)->timestamp.get_ll_value();
+		this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 		if (i > 0 && this->m_x_ll[i] <= this->m_x_ll[i - 1]) {
 			/* TODO_LATER: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->m_x_ll[i] << this->m_x_ll[i - 1];
@@ -783,7 +783,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
 		}
 
 		const bool y_valid = (*iter)->altitude.is_valid();
-		this->m_y_ll[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
+		this->m_y_ll[i] = y_valid ? (*iter)->altitude.ll_value() : NAN;
 		TRW_TRACK_DATA_UPDATE_MIN_MAX(this, i, y_valid);
 
 		this->m_tps[i] = (*iter);
@@ -801,8 +801,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Time::get_internal_unit();
-	this->y_unit = Altitude::get_internal_unit();
+	this->x_unit = Time::internal_unit();
+	this->y_unit = Altitude::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Time");
 
@@ -885,8 +885,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
 
-	this->x_unit = Distance::get_internal_unit();
-	this->y_unit = Speed::get_internal_unit();
+	this->x_unit = Distance::internal_unit();
+	this->y_unit = Speed::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Speed over Distance");
 

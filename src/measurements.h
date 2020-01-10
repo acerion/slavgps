@@ -323,11 +323,11 @@ namespace SlavGPS {
 			this->m_valid = other.m_valid;
 		}
 
-		static Tu get_user_unit(void) { return Tu::user_unit(); };
-		static Tu get_internal_unit(void) { return Tu::internal_unit(); };
+		static Tu user_unit(void) { return Tu::user_unit(); };
+		static Tu internal_unit(void) { return Tu::internal_unit(); };
 
 		/* Get/set current unit of measurement. */
-		const Tu & get_unit(void) const { return this->m_unit; }
+		const Tu & unit(void) const { return this->m_unit; }
 		void set_unit(const Tu & unit) { this->m_unit = unit; }
 
 		static bool ll_value_is_valid(Tll value);
@@ -353,7 +353,7 @@ namespace SlavGPS {
 		  measurement is invalid before calling this
 		  getter.
 		*/
-		Tll get_ll_value(void) const { return this->m_ll_value; }
+		Tll ll_value(void) const { return this->m_ll_value; }
 
 
 		/*
@@ -391,11 +391,11 @@ namespace SlavGPS {
 
 		/* Get string representing measurement unit in
 		   abbreviated form, e.g. "km/h". */
-		static QString get_unit_string(const Tu & unit);
+		static QString unit_string(const Tu & unit);
 
 		/* Return "kilometers" or "miles" string.
 		   This is a full string, not "km" or "mi". */
-		static QString get_unit_full_string(const Tu & unit);
+		static QString unit_full_string(const Tu & unit);
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance may be used to decide how
@@ -424,7 +424,7 @@ namespace SlavGPS {
 		{
 			this->m_ll_value = c_to_double(str);
 			this->m_valid = !std::isnan(this->m_ll_value);
-			this->m_unit = Measurement<Tll, Tu>::get_internal_unit();
+			this->m_unit = Measurement<Tll, Tu>::internal_unit();
 
 			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
@@ -677,9 +677,8 @@ namespace SlavGPS {
 			return !(*this == rhs);
 		}
 
+	protected:
 		Tll m_ll_value = 0;
-
-	//protected:
 		Tu m_unit;
 		bool m_valid = false;
 	};
@@ -702,11 +701,11 @@ namespace SlavGPS {
 	template<typename Tll, typename Tu>
 	bool operator<(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
 	{
-		if (lhs.m_unit != rhs.m_unit) {
-			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.m_unit << rhs.m_unit;
+		if (lhs.unit() != rhs.unit()) {
+			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.unit() << rhs.unit();
 			return false;
 		}
-		return lhs.m_ll_value < rhs.m_ll_value;
+		return lhs.ll_value() < rhs.ll_value();
 	}
 	template<typename Tll, typename Tu>
 	bool operator>(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
@@ -731,16 +730,16 @@ namespace SlavGPS {
 	template<typename Tll, typename Tu>
 	double operator/(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
 	{
-		if (!lhs.m_valid) {
+		if (!lhs.is_valid()) {
 			qDebug() << "WW    " << __FUNCTION__ << "Invalid 'lhs' operand";
 			return NAN;
 		}
-		if (!rhs.m_valid) {
+		if (!rhs.is_valid()) {
 			qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 			return NAN;
 		}
-		if (lhs.m_unit != rhs.m_unit) {
-			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.m_unit << rhs.m_unit;
+		if (lhs.unit() != rhs.unit()) {
+			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.unit() << rhs.unit();
 			return NAN;
 		}
 		if (rhs.is_zero()) {
@@ -748,7 +747,7 @@ namespace SlavGPS {
 			return NAN;
 		}
 
-		return (1.0 * lhs.m_ll_value) / rhs.m_ll_value;
+		return (1.0 * lhs.ll_value()) / rhs.ll_value();
 	}
 
 

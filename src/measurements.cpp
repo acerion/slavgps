@@ -180,7 +180,7 @@ QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 	QString result;
 	if (this->is_valid()) {
 		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
+		result = QDateTime::fromTime_t(this->ll_value(), time_spec).toString(Qt::ISODate);
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -198,7 +198,7 @@ QString Measurement<Time_ll, TimeUnit>::to_string(void) const
 		/* TODO_LATER: this can't be hardcoded 'local time'. */
 		Qt::TimeSpec time_spec = Qt::LocalTime;
 		/* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
+		result = QDateTime::fromTime_t(this->ll_value(), time_spec).toString(Qt::ISODate);
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -278,7 +278,7 @@ const QString Measurement<Time_ll, TimeUnit>::value_to_string_for_file(int preci
 
 
 template<>
-QString Measurement<Time_ll, TimeUnit>::get_unit_string(const TimeUnit & unit)
+QString Measurement<Time_ll, TimeUnit>::unit_string(const TimeUnit & unit)
 {
 	QString result;
 
@@ -552,7 +552,7 @@ template<>
 Measurement<Duration_ll, DurationUnit> Measurement<Duration_ll, DurationUnit>::convert_to_unit(const DurationUnit & target_unit) const
 {
 	Duration result;
-	result.m_ll_value = Duration::convert_to_unit(this->m_ll_value, this->get_unit(), target_unit);
+	result.m_ll_value = Duration::convert_to_unit(this->m_ll_value, this->unit(), target_unit);
 	result.m_unit = target_unit;
 	result.m_valid = Duration::ll_value_is_valid(result.m_ll_value);
 	return result;
@@ -564,23 +564,23 @@ Measurement<Duration_ll, DurationUnit> Measurement<Duration_ll, DurationUnit>::c
 Duration Duration::get_abs_duration(const Time & later, const Time & earlier)
 {
 	Duration result;
-	if (later.m_unit != earlier.m_unit) {
-		qDebug() << SG_PREFIX_E << "Arguments have different units:" << later.m_unit << earlier.m_unit;
+	if (later.unit() != earlier.unit()) {
+		qDebug() << SG_PREFIX_E << "Arguments have different units:" << later.unit() << earlier.unit();
 	} else {
 		Duration_ll diff = 0;
-		if (later.m_ll_value >= earlier.m_ll_value) {
-			diff = later.m_ll_value - earlier.m_ll_value;
+		if (later.ll_value() >= earlier.ll_value()) {
+			diff = later.ll_value() - earlier.ll_value();
 		} else {
-			diff = earlier.m_ll_value - later.m_ll_value;
+			diff = earlier.ll_value() - later.ll_value();
 		}
 		result.set_ll_value(diff);
 
-		switch (later.m_unit.u) {
+		switch (later.unit().u) {
 		case TimeUnit::Unit::Seconds:
 			result.set_unit(DurationUnit::Unit::Seconds);
 			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Unhandled unit" << later.m_unit;
+			qDebug() << SG_PREFIX_E << "Unhandled unit" << later.unit();
 			result.invalidate();
 			break;
 		}
@@ -592,7 +592,7 @@ Duration Duration::get_abs_duration(const Time & later, const Time & earlier)
 
 
 template<>
-QString Measurement<Duration_ll, DurationUnit>::get_unit_string(const DurationUnit & unit)
+QString Measurement<Duration_ll, DurationUnit>::unit_string(const DurationUnit & unit)
 {
 	QString result;
 
@@ -692,7 +692,7 @@ QString Measurement<Gradient_ll, GradientUnit>::to_string(void) const
 
 
 template<>
-QString Measurement<Gradient_ll, GradientUnit>::get_unit_string(const GradientUnit & unit)
+QString Measurement<Gradient_ll, GradientUnit>::unit_string(const GradientUnit & unit)
 {
 	QString result;
 
@@ -966,7 +966,7 @@ Measurement<Speed_ll, SpeedUnit> Measurement<Speed_ll, SpeedUnit>::convert_to_un
 
 
 template<>
-QString Measurement<Speed_ll, SpeedUnit>::get_unit_string(const SpeedUnit & speed_unit)
+QString Measurement<Speed_ll, SpeedUnit>::unit_string(const SpeedUnit & speed_unit)
 {
 	QString result;
 
@@ -995,7 +995,7 @@ QString Measurement<Speed_ll, SpeedUnit>::get_unit_string(const SpeedUnit & spee
 
 
 template<>
-QString Measurement<Speed_ll, SpeedUnit>::get_unit_full_string(const SpeedUnit & unit)
+QString Measurement<Speed_ll, SpeedUnit>::unit_full_string(const SpeedUnit & unit)
 {
 	QString result;
 
@@ -1068,16 +1068,16 @@ bool Measurement<Speed_ll, SpeedUnit>::is_zero(void) const
 
 sg_ret Speed::make_speed(const Distance & distance, const Duration & duration)
 {
-	if (distance.get_unit() != DistanceUnit::Unit::Meters) {
-		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << distance.get_unit();
+	if (distance.unit() != DistanceUnit::Unit::Meters) {
+		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << distance.unit();
 		return sg_ret::err;
 	}
-	if (duration.get_unit() != DurationUnit::Unit::Seconds) {
-		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << duration.get_unit();
+	if (duration.unit() != DurationUnit::Unit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << duration.unit();
 		return sg_ret::err;
 	}
 
-	this->m_ll_value = distance.get_ll_value() / duration.get_ll_value();
+	this->m_ll_value = distance.ll_value() / duration.ll_value();
 	this->m_unit = SpeedUnit::Unit::MetresPerSecond;
 	this->m_valid = Speed::ll_value_is_valid(this->m_ll_value);
 
@@ -1089,18 +1089,18 @@ sg_ret Speed::make_speed(const Distance & distance, const Duration & duration)
 
 sg_ret Speed::make_speed(const Altitude & altitude, const Duration & duration)
 {
-	if (altitude.get_unit() != HeightUnit::Unit::Metres) {
-		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << altitude.get_unit();
+	if (altitude.unit() != HeightUnit::Unit::Metres) {
+		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << altitude.unit();
 		return sg_ret::err;
 	}
-	if (duration.get_unit() != DurationUnit::Unit::Seconds) {
-		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << duration.get_unit();
+	if (duration.unit() != DurationUnit::Unit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled duration unit" << duration.unit();
 		return sg_ret::err;
 	}
 
-	this->m_ll_value = altitude.get_ll_value() / duration.get_ll_value();
+	this->m_ll_value = altitude.ll_value() / duration.ll_value();
 	this->m_unit = SpeedUnit::Unit::MetresPerSecond;
-	this->m_valid = Speed::ll_value_is_valid(this->m_ll_value);
+	this->m_valid = Speed::ll_value_is_valid(this->ll_value());
 
 	return this->m_valid ? sg_ret::ok : sg_ret::err;
 }
@@ -1195,7 +1195,7 @@ QString Measurement<Altitude_ll, HeightUnit>::ll_value_to_string(Altitude_ll val
 
 
 template<>
-QString Measurement<Altitude_ll, HeightUnit>::get_unit_string(const HeightUnit & unit)
+QString Measurement<Altitude_ll, HeightUnit>::unit_string(const HeightUnit & unit)
 {
 	QString result;
 
@@ -1308,7 +1308,7 @@ sg_ret Measurement<Altitude_ll, HeightUnit>::set_from_string(const QString & str
 
 
 template<>
-QString Measurement<Altitude_ll, HeightUnit>::get_unit_full_string(const HeightUnit & height_unit)
+QString Measurement<Altitude_ll, HeightUnit>::unit_full_string(const HeightUnit & height_unit)
 {
 	QString result;
 
@@ -1459,7 +1459,7 @@ QString Measurement<Angle_ll, AngleUnit>::to_string(int precision) const
 
 
 template<>
-QString Measurement<Angle_ll, AngleUnit>::get_unit_string(const AngleUnit & unit)
+QString Measurement<Angle_ll, AngleUnit>::unit_string(const AngleUnit & unit)
 {
 	QString result;
 
@@ -1876,7 +1876,7 @@ QString Measurement<Distance_ll, DistanceUnit>::to_string(void) const
 
 
 template<>
-QString Measurement<Distance_ll, DistanceUnit>::get_unit_string(const DistanceUnit & unit)
+QString Measurement<Distance_ll, DistanceUnit>::unit_string(const DistanceUnit & unit)
 {
 	QString result;
 
@@ -1903,7 +1903,7 @@ QString Measurement<Distance_ll, DistanceUnit>::get_unit_string(const DistanceUn
 
 
 template<>
-QString Measurement<Distance_ll, DistanceUnit>::get_unit_full_string(const DistanceUnit & distance_unit)
+QString Measurement<Distance_ll, DistanceUnit>::unit_full_string(const DistanceUnit & distance_unit)
 {
 	QString result;
 
@@ -2105,7 +2105,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(360.0), AngleUnit::Unit::Radians);
@@ -2114,7 +2114,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(70.0), AngleUnit::Unit::Radians);
@@ -2123,7 +2123,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(184.0), AngleUnit::Unit::Radians);
@@ -2132,7 +2132,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(185.0), AngleUnit::Unit::Radians);
@@ -2141,7 +2141,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(350.0), AngleUnit::Unit::Radians);
@@ -2150,7 +2150,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(0.0), AngleUnit::Unit::Radians);
@@ -2159,7 +2159,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(-180.0), AngleUnit::Unit::Radians);
@@ -2168,7 +2168,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(90), AngleUnit::Unit::Radians);
@@ -2177,7 +2177,7 @@ bool Measurements::unit_tests(void)
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
 		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_ll_value() - expected));
+		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 
 	return true;

@@ -130,9 +130,9 @@ namespace SlavGPS {
 				/* Order of calls is important. Use setDecimals() before using setValue(). */
 				qDebug() << "II    Measurement Entry 2: Setting scale: min =" << scale->m_min << "max =" << scale->m_max << "step =" << scale->m_step << "precision =" << scale->m_precision;
 				this->meas_widget->spin->setDecimals(scale->m_precision);
-				this->meas_widget->spin->setMinimum(scale->m_min.get_ll_value());
-				this->meas_widget->spin->setMaximum(scale->m_max.get_ll_value());
-				this->meas_widget->spin->setSingleStep(scale->m_step.get_ll_value());
+				this->meas_widget->spin->setMinimum(scale->m_min.ll_value());
+				this->meas_widget->spin->setMaximum(scale->m_max.ll_value());
+				this->meas_widget->spin->setSingleStep(scale->m_step.ll_value());
 			} else {
 				qDebug() << "II    Measurement Entry 2: Not setting scale";
 			}
@@ -146,13 +146,13 @@ namespace SlavGPS {
 		void set_value_iu(const Tm & value_iu)
 		{
 			if (value_iu.is_valid()) {
-				const Tu user_unit = Tm::get_user_unit();
+				const Tu user_unit = Tm::user_unit();
 				const Tm value_uu = value_iu.convert_to_unit(user_unit);
 
 				qDebug() << "II    Measurement Entry 2: Setting value of measurement iu" << value_iu << ", in user units:" << value_uu;
 
-				this->meas_widget->spin->setValue(value_uu.get_ll_value());
-				this->meas_widget->spin->setSuffix(QString(" %1").arg(Tm::get_unit_full_string(user_unit)));
+				this->meas_widget->spin->setValue(value_uu.ll_value());
+				this->meas_widget->spin->setSuffix(QString(" %1").arg(Tm::unit_full_string(user_unit)));
 			} else {
 				qDebug() << "NN    Measurement Entry 2: Value passed as argument is invalid, clearing value of measurement";
 				this->meas_widget->spin->clear();
@@ -170,8 +170,8 @@ namespace SlavGPS {
 			/* Since the value in the widget was presented
 			   to user, it must have been in user
 			   units. Now convert to internal unit. */
-			const Tm value_uu(this->meas_widget->spin->value(), Tm::get_user_unit());
-			Tm result_iu = value_uu.convert_to_unit(Tm::get_internal_unit());
+			const Tm value_uu(this->meas_widget->spin->value(), Tm::user_unit());
+			Tm result_iu = value_uu.convert_to_unit(Tm::internal_unit());
 
 			return result_iu;
 		}

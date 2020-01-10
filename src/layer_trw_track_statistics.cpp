@@ -47,20 +47,20 @@ TrackStatistics::TrackStatistics()
 {
 	 /* Set some valid initial value. */
 
-	this->min_alt = Altitude(0, Altitude::get_internal_unit());
-	this->max_alt = Altitude(0, Altitude::get_internal_unit());
+	this->min_alt = Altitude(0, Altitude::internal_unit());
+	this->max_alt = Altitude(0, Altitude::internal_unit());
 
-	this->elev_gain = Altitude(0, Altitude::get_internal_unit());;
-	this->elev_loss = Altitude(0, Altitude::get_internal_unit());
+	this->elev_gain = Altitude(0, Altitude::internal_unit());;
+	this->elev_loss = Altitude(0, Altitude::internal_unit());
 
-	this->length = Distance(0, Distance::get_internal_unit());
-	this->length_with_gaps = Distance(0, Distance::get_internal_unit());
+	this->length = Distance(0, Distance::internal_unit());
+	this->length_with_gaps = Distance(0, Distance::internal_unit());
 
-	this->max_speed = Speed(0, Speed::get_internal_unit());
+	this->max_speed = Speed(0, Speed::internal_unit());
 
-	this->sum_of_durations = Duration(0, Duration::get_internal_unit());
-	this->start_time = Time(0, Time::get_internal_unit());
-	this->end_time = Time(0, Time::get_internal_unit());
+	this->sum_of_durations = Duration(0, Duration::internal_unit());
+	this->start_time = Time(0, Time::internal_unit());
+	this->end_time = Time(0, Time::internal_unit());
 }
 
 

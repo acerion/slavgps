@@ -52,10 +52,10 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 
 
 	this->m_widget = new QSpinBox(parent);
-	this->m_widget->setMinimum(scale.m_min.get_ll_value());
-	this->m_widget->setMaximum(scale.m_max.get_ll_value());
-	this->m_widget->setSingleStep(scale.m_step.get_ll_value());
-	this->m_widget->setValue(scale.m_initial.get_ll_value());
+	this->m_widget->setMinimum(scale.m_min.ll_value());
+	this->m_widget->setMaximum(scale.m_max.ll_value());
+	this->m_widget->setSingleStep(scale.m_step.ll_value());
+	this->m_widget->setValue(scale.m_initial.ll_value());
 	switch (scale.m_unit.u) {
 	case DurationUnit::Unit::Seconds:
 		this->m_widget->setSuffix(tr("s"));
@@ -97,12 +97,12 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 */
 sg_ret DurationWidget::set_value(const Duration & duration)
 {
-	if (duration.get_unit() != this->m_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << this->m_unit << ", new unit =" << duration.get_unit();
+	if (duration.unit() != this->m_unit) {
+		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << this->m_unit << ", new unit =" << duration.unit();
 		return sg_ret::err;
 	}
 
-	this->m_widget->setValue(duration.get_ll_value());
+	this->m_widget->setValue(duration.ll_value());
 	return sg_ret::ok;
 }
 

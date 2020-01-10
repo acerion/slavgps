@@ -395,7 +395,7 @@ DurationDialog::DurationDialog(const QString & title, const QString & label, con
 
 	this->spinbox.setMinimum(1); /* [seconds] */
 	this->spinbox.setMaximum(60 * 60 * 24 * 366); /* [seconds] */
-	this->spinbox.setValue(duration.get_ll_value());
+	this->spinbox.setValue(duration.ll_value());
 	this->spinbox.setSingleStep(1);
 
 

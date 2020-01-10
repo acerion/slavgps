@@ -257,7 +257,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 	Distance average_dist_between_tp;
 	if (tp_count - seg_count == 0) {
-		average_dist_between_tp = Distance(0, Distance::get_internal_unit());
+		average_dist_between_tp = Distance(0, Distance::internal_unit());
 	} else {
 		average_dist_between_tp = track_length / (tp_count - seg_count);
 	}

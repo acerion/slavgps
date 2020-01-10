@@ -3076,7 +3076,7 @@ void Window::menu_file_properties_cb(void)
 		return;
 	}
 
-	const Time timestamp(stat_buf.st_mtime, Time::get_internal_unit());
+	const Time timestamp(stat_buf.st_mtime, Time::internal_unit());
 	const QString size_string = Measurements::get_file_size_string(stat_buf.st_size);
 	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(timestamp.strftime_utc("%c")).arg(size_string);
 

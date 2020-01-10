@@ -197,7 +197,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			if (tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					const Time t_diff = tp->timestamp - tp_prev->timestamp;
-					values[i] = QObject::tr("%1Time diff: %2s").arg(separator).arg((long) t_diff.get_ll_value());
+					values[i] = QObject::tr("%1Time diff: %2s").arg(separator).arg((long) t_diff.ll_value());
 				}
 			}
 			break;

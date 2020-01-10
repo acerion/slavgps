@@ -828,7 +828,7 @@ void Track::reverse(void)
  */
 Duration Track::get_duration(bool segment_gaps) const
 {
-	Duration duration(0, Duration::get_internal_unit());
+	Duration duration(0, Duration::internal_unit());
 
 	if (this->trackpoints.empty()) {
 		return duration;
@@ -865,7 +865,7 @@ Duration Track::get_duration(bool segment_gaps) const
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
 Duration Track::get_duration(void) const
 {
-	Duration result(0, Duration::get_internal_unit());
+	Duration result(0, Duration::internal_unit());
 
 	Time ts_begin;
 	Time ts_end;
@@ -900,8 +900,8 @@ Speed Track::get_average_speed(void) const
 		return result;
 	}
 
-	Distance distance(0, Distance::get_internal_unit());
-	Duration duration(0, Duration::get_internal_unit());
+	Distance distance(0, Distance::internal_unit());
+	Duration duration(0, Duration::internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -942,8 +942,8 @@ Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) 
 		return result;
 	}
 
-	Distance distance(0, Distance::get_internal_unit());
-	Duration duration(0, Duration::get_internal_unit());
+	Distance distance(0, Distance::internal_unit());
+	Duration duration(0, Duration::internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
@@ -1031,8 +1031,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 		return false;
 	}
 
-	delta_up = Altitude(0, Altitude::get_internal_unit());
-	delta_down = Altitude(0, Altitude::get_internal_unit());
+	delta_up = Altitude(0, Altitude::internal_unit());
+	delta_down = Altitude(0, Altitude::internal_unit());
 
 	size_t n = 0;
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
@@ -1477,12 +1477,12 @@ sg_ret Track::anonymize_times(void)
 		if (tp->timestamp.is_valid()) {
 			/* Calculate an offset in time using the first available timestamp. */
 			if (offset == 0) {
-				offset = tp->timestamp.get_ll_value() - century_secs;
+				offset = tp->timestamp.ll_value() - century_secs;
 			}
 
 			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
 			   Note that the relative difference between timestamps is kept - thus calculating speeds will still work. */
-			tp->timestamp.m_ll_value -= offset;
+			tp->timestamp.set_ll_value(tp->timestamp.ll_value() - offset);
 		}
 	}
 
@@ -1601,7 +1601,7 @@ void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, co
 {
 	/* If was really clever could try and weigh interpolation according to the distance between trackpoints somehow.
 	   Instead a simple average interpolation for the number of points given. */
-	double change = (elev2 - elev1).get_ll_value() / (points + 1);
+	double change = (elev2 - elev1).ll_value() / (points + 1);
 	int count = 1;
 	auto iter = start;
 	while (iter != stop) {
@@ -2641,7 +2641,7 @@ void Track::open_astro_cb(void)
 		const LatLon lat_lon = tp->coord.get_lat_lon();
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
-		const QString alt_str = QString("%1").arg((int)round(tp->altitude.get_ll_value()));
+		const QString alt_str = QString("%1").arg((int)round(tp->altitude.ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
@@ -3283,7 +3283,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 				const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
-				variant = QVariant::fromValue(trk_dist.get_ll_value());
+				variant = QVariant::fromValue(trk_dist.ll_value());
 				item->setData(variant, Qt::DisplayRole);
 				item->setEditable(false); /* This dialog is not a good place to edit track length. */
 				items << item;
@@ -3295,7 +3295,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 				const Duration trk_duration = this->get_duration();
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
-				variant = QVariant::fromValue(trk_duration.get_ll_value());
+				variant = QVariant::fromValue(trk_duration.ll_value());
 				item->setData(variant, Qt::DisplayRole);
 				item->setEditable(false); /* This dialog is not a good place to edit track duration. */
 				items << item;
@@ -3421,7 +3421,7 @@ void Trackpoint::set_timestamp(const Time & value)
 
 void Trackpoint::set_timestamp(time_t value)
 {
-	this->timestamp = Time(value, Time::get_internal_unit());
+	this->timestamp = Time(value, Time::internal_unit());
 }
 
 
@@ -3855,11 +3855,11 @@ TreeItemViewFormat Track::get_view_format_header(bool include_parent_layer)
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp,     true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility,    true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,       true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
 	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::DurationProp,  true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
-	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
 
 	return view_format;
 }
