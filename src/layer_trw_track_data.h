@@ -66,8 +66,6 @@ namespace SlavGPS {
 		TrackDataBase();
 		~TrackDataBase();
 
-
-
 		bool is_valid(void) const { return this->m_valid; };
 		int size(void) const { return this->m_n_points; };
 
@@ -157,25 +155,6 @@ namespace SlavGPS {
 	protected:
 		Tx_u x_unit;
 		Ty_u y_unit;
-
-		/*
-		  It is not that obvious how x_min/x_max should be
-		  initialized before we start calculating these values
-		  for whole graph.
-
-		  Should x_min for time-based graph be initialized
-		  with:
-		   - zero? that won't work for tracks that start at non-zero timestamp;
-		   - timestamp of first trackpoint? that won't work for tracks where first timestamp has invalid timestamp or invalid 'y' value.
-		  Similar considerations should be done for
-		  y_min/y_max.
-
-		  Therefore initialization of these four fields is
-		  left to code that calculates min/max values. The
-		  boolean flag is set the moment the code find some
-		  sane and valid initial values.
-		*/
-		bool extremes_initialized = false;
 
 		Tx_ll * m_x_ll = nullptr;
 		Ty_ll * m_y_ll = nullptr;

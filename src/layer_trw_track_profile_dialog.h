@@ -2,7 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -326,8 +326,8 @@ namespace SlavGPS {
 		void draw_x_grid(void);
 		void draw_y_grid(void);
 
-		Tx_u x_unit;
-		Ty_u y_unit;
+		void get_pixels_per_unit(double & x_pixels_per_unit, double & y_pixels_per_unit) const;
+
 
 
 		/* There can be two x-domains: Time or Distance. They
@@ -570,8 +570,6 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 		return result;
 	}
 
-	const int n_columns = this->graph_2d->central_get_n_columns();
-	const int n_rows = this->graph_2d->central_get_n_rows();
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
@@ -583,10 +581,11 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 	  It's integer, because event_x is integer. Making it double
 	  wouldn't give us anything.
 	*/
-	int x_px_diff = n_columns;
+	int x_px_diff = this->graph_2d->central_get_n_columns();;
 
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
-	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 	for (size_t i = 0; i < n_values; i++) {
 
@@ -757,11 +756,11 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation(Track *
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
-	const int n_columns = this->graph_2d->central_get_n_columns();
-	const int n_rows = this->graph_2d->central_get_n_rows();
 	const size_t n_values = this->track_data_to_draw.size();
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
-	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
+
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 	const QColor & color = this->dem_alt_pen.color();
 
@@ -817,10 +816,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 	  data points (trackpoints) visible.
 	*/
 
-
-	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
-
+	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
@@ -839,8 +836,9 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 		 << "with n values =" << n_values
 		 << "into n columns =" << n_columns;
 
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
-	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 
 	ScreenPos cur_valid_pos;
@@ -929,8 +927,6 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
-	const int n_columns = this->graph_2d->central_get_n_columns();
-	const int n_rows = this->graph_2d->central_get_n_rows();
 
 	const size_t n_values = this->track_data_to_draw.size();
 
@@ -944,10 +940,11 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
 		return sg_ret::ok;
 	}
 
-	const double speed_max = 1.1 * max_speed.get_ll_value();
+	const double speed_max = max_speed.get_ll_value();
 
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
-	const double y_pixels_per_unit = (1.0 * n_rows) / 110; /* "110" means 110%. Zero percent at the bottom of graph, 110% (since we used 1.1 above) on top of graph. */
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 	for (size_t i = 0; i < n_values; i++) {
 
@@ -1054,7 +1051,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 	  opened. Once it is done, we don't have to re-do it on every
 	  resizing of dialog window.
 	*/
-	this->initial_track_data.apply_unit_conversions_xy(this->x_unit, this->y_unit);
+	this->initial_track_data.apply_unit_conversions_xy(Tx::get_user_unit(), Ty::get_user_unit());
 
 	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
@@ -1080,7 +1077,9 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
 
-	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 	Ty first_multiple_uu(0.0, Ty::get_user_unit());
 	Ty last_multiple_uu(0.0, Ty::get_user_unit());
@@ -1133,8 +1132,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
 void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 {
-	const int n_columns      = this->get_central_n_columns();
 	const int n_rows         = this->get_central_n_rows();
+	const int n_columns      = this->get_central_n_columns();
 	const int bottom_width   = this->graph_2d->bottom_get_width();
 	const int bottom_height  = this->graph_2d->bottom_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -1146,7 +1145,10 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Zero visible range:" << this->x_visible_min << this->x_visible_max;
 		return;
 	}
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
+
+	double x_pixels_per_unit;
+	double y_pixels_per_unit;
+	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
 	Tx first_multiple_uu(0, Tx::get_user_unit());
 	Tx last_multiple_uu(0, Tx::get_user_unit());
@@ -1182,6 +1184,19 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 			qDebug() << "NN   ProfileView" << __func__ << __LINE__ << "      value (outside) =" << x_value_uu << ", x_px =" << x_px;
 		}
 	}
+}
+
+
+
+
+template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
+void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double & x_pixels_per_unit, double & y_pixels_per_unit) const
+{
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
+
+	x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.get_ll_value();
+	y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
 }
 
 

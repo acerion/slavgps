@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (c) 2012, Rob Norris <rw_norris@hotmail.com>
- * Copyright (c) 2016-2019, Kamil Ignacak <acerion@wp.pl>
+ * Copyright (c) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,17 +48,26 @@ using namespace SlavGPS;
 
 
 /*
-  See comment in class declaration for explanation of why we
-  initialize min/max the way we do it here.
+  It is not that obvious how x_min/x_max should be initialized before
+  we start calculating these values for whole graph.
+
+  Should x_min for time-based graph be initialized with:
+  - zero? that won't work for tracks that start at non-zero timestamp;
+  - timestamp of first trackpoint? that won't work for tracks where first timestamp has invalid timestamp or invalid 'y' value.
+  Similar considerations should be done for y_min/y_max.
+
+  Therefore initialization of these four fields is left to code that
+  calculates min/max values. The 'extremes_initialized' boolean flag
+  is set the moment the code find some sane and valid initial values.
 */
 #define TRW_TRACK_DATA_UPDATE_MIN_MAX(_track_data_, _i_, _point_valid_) \
 	if ((_point_valid_)) {						\
-		if (!_track_data_->extremes_initialized) {		\
+		if (!extremes_initialized) {				\
 			x_min_ll = _track_data_->m_x_ll[_i_];		\
 			x_max_ll = _track_data_->m_x_ll[_i_];		\
 			y_min_ll = _track_data_->m_y_ll[_i_];		\
 			y_max_ll = _track_data_->m_y_ll[_i_];		\
-			_track_data_->extremes_initialized = true;	\
+			extremes_initialized = true;			\
 		}							\
 									\
 		if (_track_data_->m_x_ll[_i_] < x_min_ll) {		\
@@ -187,6 +196,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 {
 	/* No special handling of segments ATM... */
 
+	bool extremes_initialized = false;
 	Time_ll x_min_ll = 0;
 	Time_ll x_max_ll = 0;
 	Distance_ll y_min_ll = 0;
@@ -286,6 +296,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Distance_ll x_min_ll = 0;
 	Distance_ll x_max_ll = 0;
 	Altitude_ll y_min_ll = 0;
@@ -371,6 +382,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Distance_ll x_min_ll = 0;
 	Distance_ll x_max_ll = 0;
 	Altitude_ll y_min_ll = 0;
@@ -559,6 +571,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Distance_ll x_min_ll = 0;
 	Distance_ll x_max_ll = 0;
 	Gradient_ll y_min_ll = 0;
@@ -639,6 +652,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Time_ll x_min_ll = 0;
 	Time_ll x_max_ll = 0;
 	Speed_ll y_min_ll = 0;
@@ -737,6 +751,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Time_ll x_min_ll = 0;
 	Time_ll x_max_ll = 0;
 	Altitude_ll y_min_ll = 0;
@@ -814,6 +829,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit
 {
 	TrackData result;
 
+	bool extremes_initialized = false;
 	Distance_ll x_min_ll = 0;
 	Distance_ll x_max_ll = 0;
 	Speed_ll y_min_ll = 0;
