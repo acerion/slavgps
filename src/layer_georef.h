@@ -157,9 +157,9 @@ namespace SlavGPS {
 
 		bool run_dialog(GisViewport * gisview, QWidget * parent);
 
-		ToolStatus move_release(QMouseEvent * event, LayerTool * tool);
-		ToolStatus zoom_press(QMouseEvent * event, LayerTool * tool);
-		ToolStatus move_press(QMouseEvent * event, LayerTool * tool);
+		LayerTool::Status move_release(QMouseEvent * event, LayerTool * tool);
+		LayerTool::Status zoom_press(QMouseEvent * event, LayerTool * tool);
+		LayerTool::Status move_press(QMouseEvent * event, LayerTool * tool);
 
 
 	public slots:
@@ -209,8 +209,8 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolGeorefZoom : public LayerTool {
@@ -221,7 +221,7 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 

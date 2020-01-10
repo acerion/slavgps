@@ -1053,3 +1053,33 @@ void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
 	emit this->button_released(this, ev);
 	ev->accept();
 }
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+template <>
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(Track * trk)
+{
+	qDebug() << SG_PREFIX_I << "Will call implementation that can draw DEM altitudes";
+	return this->draw_dem_elevation_impl(trk);
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(Track * trk)
+{
+	qDebug() << SG_PREFIX_I << "Will call implementation that can draw DEM altitudes";
+	return this->draw_dem_elevation_impl(trk);
+}
+
+
+
+
+}

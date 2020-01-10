@@ -60,9 +60,9 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 
 	private:
 		/* "ztr" == "zoom to rectangle". */
@@ -90,10 +90,10 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_key_press(Layer * layer, QKeyEvent * event) override;
 
 		void reset_ruler(void);
 
@@ -112,10 +112,10 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 
@@ -179,10 +179,10 @@ namespace SlavGPS {
 		ObjectState edited_object_state = ObjectState::NotSelected;
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 
 		void handle_mouse_click_common(Layer * layer, QMouseEvent * event);
 

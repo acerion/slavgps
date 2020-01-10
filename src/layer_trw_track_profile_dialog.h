@@ -319,8 +319,15 @@ namespace SlavGPS {
 
 		sg_ret draw_additional_indicators(Track * trk) override;
 		sg_ret draw_gps_speeds(Track * trk) override;
-		sg_ret draw_dem_elevation(Track * trk) override;
 
+		/**
+		   Draws DEM points if DEM layer is present.
+
+		   A specialization that really does something should
+		   be provided only for those views that have
+		   'Altitude' as Ty.
+		*/
+		sg_ret draw_dem_elevation(Track * trk) override { return sg_ret::ok; };
 
 
 		void draw_x_grid(void);
@@ -396,6 +403,9 @@ namespace SlavGPS {
 
 		sg_ret update_x_labels(const TPInfo & tp_info) override;
 		sg_ret update_y_labels(const TPInfo & tp_info) override;
+
+		/* A real implementation of 'draw dem elevation' algorithm. */
+		sg_ret draw_dem_elevation_impl(Track * trk);
 	};
 
 
@@ -747,48 +757,44 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 
 
 
-/**
-   Draws DEM points and a respresentative speed on the supplied pixmap
-   (which is the elevations graph).
-*/
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation(Track * trk)
+sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Track * trk)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 	const size_t n_values = this->track_data_to_draw.size();
 
+	const QColor & color = this->dem_alt_pen.color();
+
 	double x_pixels_per_unit;
 	double y_pixels_per_unit;
 	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
-	const QColor & color = this->dem_alt_pen.color();
+	const int marker_size = 4; /* Size of rectangle to draw to mark our parameter. */
+	const int marker_shift = 2; /* When drawing the rectangle, we have to offset its origin from trackpoint's position on pixmap. */
 
 	for (size_t i = 0; i < n_values; i++) {
 
 		const Trackpoint * tp = this->track_data_to_draw.tp(i);
-		if (NULL == tp) {
+		if (nullptr == tp) {
+			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Can't get trackpoint";
 			continue;
 		}
 
-		/* TODO: This could be slow doing this each time... */
-		const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
-		if (!elev.is_valid()) {
+		/* TODO_MAYBE: This could be slow doing this each time... */
+		const Ty elev_uu = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple).convert_to_unit(Ty::get_user_unit());
+		if (!elev_uu.is_valid()) {
+			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Elevation data from cache is invalid";
 			continue;
 		}
 
-		const int x_value_uu = this->track_data_to_draw.x_ll(i);
+		const Tx_ll x_value_uu = this->track_data_to_draw.x_ll(i);
+		const Ty y_value_uu = elev_uu - this->y_visible_min;
 
-		/* FIXME: try to change this section to use Altitude
-		   instead of Altitude_ll and see what compilation
-		   errors you will get. */
-		const Altitude_ll elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_ll_value();
-		const Altitude_ll y_value_uu = elev_uu - this->y_visible_min.m_ll_value;
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->x_visible_min.m_ll_value);
+		const int y_px = bottommost_px - y_pixels_per_unit * y_value_uu.get_ll_value();
 
-		const int x_px = leftmost_px + (x_value_uu - this->x_visible_min.m_ll_value) * x_pixels_per_unit;
-		const int y_px = bottommost_px - (y_value_uu - this->y_visible_min.m_ll_value) * y_pixels_per_unit;
-
-		this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
+		this->graph_2d->fill_rectangle(color, x_px - marker_shift, y_px - marker_shift, marker_size, marker_size);
 	}
 
 	return sg_ret::ok;

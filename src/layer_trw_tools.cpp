@@ -89,26 +89,26 @@ using namespace SlavGPS;
 extern LayerTool * trw_layer_tools[];
 
 
-static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
-static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return ToolStatus::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
+static LayerTool::Status create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
+static LayerTool::Status create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return LayerTool::Status::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
 
 
 
 
-ToolStatus helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+LayerTool::Status helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
 {
 	Waypoint * wp = trw->selected_wp_get();
 	if (!wp) {
 		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
 		Waypoint::properties_dialog_reset();
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
 	case Qt::LeftButton: {
 		if (!tool->can_tool_move_object()) {
 			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
-			return ToolStatus::Error;
+			return LayerTool::Status::Error;
 		}
 
 		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
@@ -118,28 +118,28 @@ ToolStatus helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * 
 		const bool recalculate_bbox = false; /* During moving of point we shouldn't recalculate Waypoints' bbox. */
 		wp->set_coord(new_coord, recalculate_bbox);
 
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
 	default:
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 
 
 
 
-ToolStatus helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+LayerTool::Status helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
 {
 	if (LayerToolSelect::ObjectState::IsHeld != tool->edited_object_state) {
 		/* We can't release what hasn't been held. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	Waypoint * wp = trw->selected_wp_get();
 	if (!wp) {
 		qDebug() << SG_PREFIX_E << "Will reset waypoint properties dialog data, No waypoint";
 		Waypoint::properties_dialog_reset();
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	switch (ev->button()) {
@@ -160,63 +160,63 @@ ToolStatus helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent
 		*/
 
 		//trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 		}
 
 	case Qt::RightButton:
 	default:
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 
 
 
 
-ToolStatus helper_move_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+LayerTool::Status helper_move_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
 {
 	Track * track = trw->selected_track_get();
 	if (nullptr == track) {
 		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
 		Track::tp_properties_dialog_reset();
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	switch (ev->buttons()) { /* Notice that it's ::buttons(), not ::button(). */
 	case Qt::LeftButton: {
 		if (!tool->can_tool_move_object()) {
 			qDebug() << SG_PREFIX_E << "Not moving, tool can't move object";
-			return ToolStatus::Error;
+			return LayerTool::Status::Error;
 		}
 
 		qDebug() << SG_PREFIX_I << "Will now set new position of trackpoint";
 		Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, track->m_type_id);
 		track->selected_tp_set_coord(new_coord, false);
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
 	default:
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 
 
 
 
-ToolStatus helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
+LayerTool::Status helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent * ev, GisViewport * gisview)
 {
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO_LATER: how can we be sure that a trackpoint is selected? */
 	if (nullptr == track) {
 		qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track";
 		/* Well, there was no track that was edited, so nothing to do here. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	if (LayerToolSelect::ObjectState::IsHeld != tool->edited_object_state) {
 		/* We can't release what hasn't been held. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
@@ -232,7 +232,7 @@ ToolStatus helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseEvent
 	   this->selected_tree_item_type_id = xxx;
 	*/
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
@@ -364,11 +364,11 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
-		return ToolStatus::Ack == helper_move_wp(this, select_tool, ev, select_tool->gisview);
+		return LayerTool::Status::Handled == helper_move_wp(this, select_tool, ev, select_tool->gisview);
 
 	} else if (select_tool->selected_tree_item_type_id == Track::type_id()
 		   || select_tool->selected_tree_item_type_id == Route::type_id()) {
-		return ToolStatus::Ack == helper_move_tp(this, select_tool, ev, select_tool->gisview);
+		return LayerTool::Status::Handled == helper_move_tp(this, select_tool, ev, select_tool->gisview);
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Not moving due to unknown type id" << select_tool->selected_tree_item_type_id;
@@ -390,11 +390,11 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
-		return ToolStatus::Ack == helper_release_wp(this, select_tool, ev, gisview);
+		return LayerTool::Status::Handled == helper_release_wp(this, select_tool, ev, gisview);
 
 	} else if (select_tool->selected_tree_item_type_id == Track::type_id()
 		   || select_tool->selected_tree_item_type_id == Route::type_id()) {
-		return ToolStatus::Ack == helper_release_tp(this, select_tool, ev, gisview);
+		return LayerTool::Status::Handled == helper_release_tp(this, select_tool, ev, gisview);
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Not releasing due to unknown type id" << select_tool->selected_tree_item_type_id;
@@ -633,17 +633,17 @@ SGObjectTypeID LayerToolTRWEditWaypoint::tool_id(void)
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->m_kind != LayerKind::TRW) {
-		qDebug() << SG_PREFIX_D << "Not TRW layer";
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Not TRW layer";
+		return LayerTool::Status::Error;
 	}
 	if (!trw->is_visible() || !trw->waypoints.is_visible()) {
-		qDebug() << SG_PREFIX_D << "Not visible";
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_N << "Waypoint is not visible";
+		return LayerTool::Status::Ignored;
 	}
 
 	/* Does this tool have a waypoint, on which it can operate? */
@@ -708,7 +708,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 			trw->emit_tree_item_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
 		}
 
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Handled;
 	}
 
 	/* Finally, a waypoint that this tool can operate on. Not too much operation, though. */
@@ -726,17 +726,17 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		break;
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->m_kind != LayerKind::TRW) {
 		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	return helper_move_wp((LayerTRW *) layer, this, ev, this->gisview);
@@ -745,11 +745,11 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->m_kind != LayerKind::TRW) {
 		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	return helper_release_wp((LayerTRW *) layer, this, ev, this->gisview);
@@ -975,11 +975,11 @@ void LayerTRW::update_statusbar()
 
 
 
-ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	if (!this->ruler) {
 		/* Cursor is moved, but there was no mouse click that would start a new track segment. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	LayerTRW * trw = (LayerTRW *) layer;
@@ -1038,23 +1038,23 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 		/* Update statusbar with full gain/loss information. */
 		statusbar_write(total_distance, ruler->get_line_distance(), elev_gain, elev_loss, this->ruler->get_angle(), trw);
 
-		return ToolStatus::AckGrabFocus;
+		return LayerTool::Status::HandledGrabFocus;
 	}
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
+LayerTool::Status LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 {
 	if (this->get_tool_id() == LayerToolTRWNewTrack::tool_id() && !this->creation_in_progress) {
 		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 	if (this->get_tool_id() == LayerToolTRWNewRoute::tool_id() && !this->creation_in_progress) {
 		/* Route is not being created at the moment, so a Key can't affect work of this tool. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	LayerTRW * trw = (LayerTRW *) layer;
@@ -1063,7 +1063,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
 	/* Check of consistency between LayerTRW and the tool. */
 	if (true && !track) {
 		qDebug() << SG_PREFIX_E << "New track handle key press: creation-in-progress=true, but no track selected in layer";
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 
@@ -1079,16 +1079,16 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
 
 		trw->selected_track_reset();
 		trw->emit_tree_item_changed("TRW - new track - handle key escape");
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 
 	case Qt::Key_Backspace:
 		track->remove_last_trackpoint();
 		trw->update_statusbar();
 		trw->emit_tree_item_changed("TRW - new track - handle key backspace");
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 
 	default:
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 
@@ -1105,11 +1105,11 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
    \param ev - mouse event
    \param viewport - viewport, in which a click occurred
 */
-ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview)
+LayerTool::Status create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track argument";
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 
@@ -1129,13 +1129,13 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 
 	trw->emit_tree_item_changed("TRW - extend track with mouse click end");
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1147,7 +1147,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		   otherwise this drawing done results in flickering back to an old image. */
 		/* TODO_LATER: implement panning during track creation. */
 		trw->draw_sync_do = false;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Handled;
 
 	} else if (ev->button() == Qt::RightButton) {
 		Track * track = trw->selected_track_get();
@@ -1155,13 +1155,13 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 			track->remove_last_trackpoint();
 			trw->update_statusbar();
 			trw->emit_tree_item_changed("Track's Last trackpoint has been removed after right mouse button click");
-			return ToolStatus::Ack;
+			return LayerTool::Status::Handled;
 		} else {
-			return ToolStatus::Ignored;
+			return LayerTool::Status::Ignored;
 		}
 	} else if (ev->button() != Qt::LeftButton) {
-		qDebug() << SG_PREFIX_E << "Unexpected mouse button";
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_N << "Unexpected mouse button";
+		return LayerTool::Status::Ignored;
 	} else {
 		; /* Pass, go to handling Qt::LeftButton. */
 	}
@@ -1202,7 +1202,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, this->is_route_tool, trw->get_window());
 			if (new_name.isEmpty()) {
-				return ToolStatus::Ignored;
+				return LayerTool::Status::Ignored;
 			}
 		}
 		if (this->is_route_tool) {
@@ -1219,15 +1219,16 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 
 
 
-ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->m_kind != LayerKind::TRW) {
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	if (this->ruler) {
@@ -1261,13 +1262,13 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_double_click(Layer * laye
 		trw->emit_tree_item_changed("Completed creating new track (detected double mouse click)");
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWNewTrack::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1275,9 +1276,10 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QM
 		/* Pan moving ended - enable potential point drawing again. */
 		trw->draw_sync_do = true;
 		trw->draw_sync_done = true;
+		return LayerTool::Status::Handled;
+	} else {
+		return LayerTool::Status::Ignored;
 	}
-
-	return ToolStatus::Ack;
 }
 
 
@@ -1312,12 +1314,13 @@ SGObjectTypeID LayerToolTRWNewWaypoint::tool_id(void)
 
 
 
-ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->m_kind != LayerKind::TRW) {
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	bool visible_with_parents = false;
@@ -1330,7 +1333,7 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 			trw->emit_tree_item_changed("New waypoint created with 'new waypoint' tool");
 		}
 	}
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
@@ -1385,20 +1388,21 @@ SGObjectTypeID LayerToolTRWEditTrackpoint::tool_id(void)
  * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
-ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	if (trw->m_kind != LayerKind::TRW) {
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	if (!trw->is_visible() && !(trw->tracks.is_visible() && trw->routes.is_visible())) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	Track * track = trw->selected_track_get();
@@ -1418,7 +1422,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 				qDebug() << SG_PREFIX_I << "Will set edited object state to IsHeld";
 				this->edited_object_state = LayerToolSelect::ObjectState::IsHeld;
 				this->selected_tree_item_type_id = track->m_type_id;
-				return ToolStatus::Ack;
+				return LayerTool::Status::Handled;
 			}
 		} else {
 			qDebug() << SG_PREFIX_E << "Invalid tp reference";
@@ -1427,22 +1431,22 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 
 
 	if (true == trw->try_clicking_track_or_route_trackpoint(ev, gisview->get_bbox(), this->gisview, this)) {
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
 
 
 	/* The mouse click wasn't near enough any Trackpoint that belongs to any tracks/routes in this layer. */
-	return ToolStatus::Ignored;
+	return LayerTool::Status::Ignored;
 }
 
 
 
 
-ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->m_kind != LayerKind::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	return helper_move_tp((LayerTRW *) layer, this, ev, this->gisview);
@@ -1451,11 +1455,11 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 
 
 
-ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->m_kind != LayerKind::TRW) {
-		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	return helper_release_tp((LayerTRW *) layer, this, ev, this->gisview);
@@ -1495,16 +1499,16 @@ SGObjectTypeID LayerToolTRWExtendedRouteFinder::tool_id(void)
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	/* TODO_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
-	return ToolStatus::Ignored;
+	return LayerTool::Status::Ignored;
 }
 
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1512,9 +1516,10 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_release(Layer 
 		/* Pan moving ended - enable potential point drawing again. */
 		trw->draw_sync_do = true;
 		trw->draw_sync_done = true;
+		return LayerTool::Status::Handled;
+	} else {
+		return LayerTool::Status::Ignored;
 	}
-
-	return ToolStatus::Ack;
 }
 
 
@@ -1547,7 +1552,7 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1556,10 +1561,11 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 	Coord tmp = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	if (ev->button() == Qt::RightButton && track) {
 		this->undo(trw, track);
+		return LayerTool::Status::Handled;
 
 	} else if (ev->button() == Qt::MiddleButton) {
 		trw->draw_sync_do = false;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
 	else if (track && track->is_route() && !track->get_tp_first()) {
@@ -1583,7 +1589,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 		QString engine_name;
 		if (false == Routing::get_default_engine_name(engine_name)) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Cannot plan route without a default routing engine."));
-			return ToolStatus::Ack;
+			return LayerTool::Status::Handled;
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
 			.arg(engine_name)
@@ -1605,38 +1611,37 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg2);
 
-
 		trw->emit_tree_item_changed("TRW - extended route finder - handle mouse click - route");
+
+		return LayerTool::Status::Handled;
 	} else {
 		trw->selected_track_reset();
 
 		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
 		if (NULL == new_route_tool) {
 			qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewRoute::tool_id();
-			return ToolStatus::Ignored;
+			return LayerTool::Status::Error;
 		}
 
 		/* Create a new route where we will add the planned route to. */
-		ToolStatus ret = new_route_tool->handle_mouse_click(trw, ev);
+		LayerTool::Status ret = new_route_tool->handle_mouse_click_wrapper(trw, ev);
 
 		trw->route_finder_started = true;
 
 		return ret;
 	}
-
-	return ToolStatus::Ack;
 }
 
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
+LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKeyEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	Track * track = trw->selected_track_get();
 	if (!track) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	switch (ev->key()) {
@@ -1644,14 +1649,14 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 		trw->route_finder_started = false;
 		trw->selected_track_reset();
 		trw->emit_tree_item_changed("TRW - extender route finder - handle key escape");
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 
 	case Qt::Key_Backspace:
 		this->undo(trw, track);
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 
 	default:
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 
@@ -1687,19 +1692,19 @@ SGObjectTypeID LayerToolTRWShowPicture::tool_id(void)
 
 
 
-ToolStatus LayerToolTRWShowPicture::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->m_kind != LayerKind::TRW) {
 		qDebug() << SG_PREFIX_E << "Expected TRW layer passed to TRW tool, got" << layer->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->gisview);
 	if (!found_image.isEmpty()) {
 		trw->show_wp_picture_cb();
-		return ToolStatus::Ack; /* Found a match. */
+		return LayerTool::Status::Handled; /* Found a match. */
 	} else {
-		return ToolStatus::Ignored; /* Go through other layers, searching for a match. */
+		return LayerTool::Status::Ignored; /* Go through other layers, searching for a match. */
 	}
 }

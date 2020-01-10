@@ -1070,19 +1070,20 @@ SGObjectTypeID LayerToolMapnikFeature::tool_id(void)
 
 
 
-ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	if (!layer) {
-		return ToolStatus::Ignored;
+	if (nullptr == layer) {
+		qDebug() << SG_PREFIX_E << "NULL pointer argument";
+		return LayerTool::Status::Error;
+	} else {
+		return ((LayerMapnik *) layer)->feature_release(ev, this);
 	}
-
-	return ((LayerMapnik *) layer)->feature_release(ev, this);
 }
 
 
 
 
-ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
+LayerTool::Status LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
 		const Coord coord = tool->gisview->screen_pos_to_coord(std::max(0, ev->x()), std::max(0, ev->y()));
@@ -1107,10 +1108,10 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 
 		this->right_click_menu->exec(QCursor::pos());
 
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
 
-	return ToolStatus::Ignored;
+	return LayerTool::Status::Ignored;
 }
 
 

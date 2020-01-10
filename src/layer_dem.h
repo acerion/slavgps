@@ -122,7 +122,7 @@ namespace SlavGPS {
 	public:
 		LayerToolDEMDownload(Window * window, GisViewport * gisview);
 
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event);
 
 		SGObjectTypeID get_tool_id(void) const override;
 		static SGObjectTypeID tool_id(void);

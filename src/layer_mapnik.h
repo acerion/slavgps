@@ -84,7 +84,7 @@ namespace SlavGPS {
 		*/
 		void render_tile_now(const TileInfo & tile_info);
 
-		ToolStatus feature_release(QMouseEvent * event, LayerTool * tool);
+		LayerTool::Status feature_release(QMouseEvent * event, LayerTool * tool);
 
 	public slots:
 		void tile_info_cb(void);
@@ -155,7 +155,7 @@ namespace SlavGPS {
 		SGObjectTypeID get_tool_id(void) const override;
 		static SGObjectTypeID tool_id(void);
 
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};
 
 

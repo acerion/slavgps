@@ -258,8 +258,8 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 

@@ -150,13 +150,13 @@ SGObjectTypeID GenericToolRuler::tool_id(void)
 
 
 
-ToolStatus GenericToolRuler::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
 
 	if (event->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	QString msg;
@@ -182,13 +182,13 @@ ToolStatus GenericToolRuler::internal_handle_mouse_click(Layer * layer, QMouseEv
 
 	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus GenericToolRuler::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -197,7 +197,7 @@ ToolStatus GenericToolRuler::internal_handle_mouse_move(Layer * layer, QMouseEve
 		   click that would establish beginning of the
 		   ruler. Mouse move event does not influence the
 		   ruler, because the ruler doesn't exist yet. */
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 
@@ -217,18 +217,17 @@ ToolStatus GenericToolRuler::internal_handle_mouse_move(Layer * layer, QMouseEve
 	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
 
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus GenericToolRuler::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_I << "called";
 
-
-	return ToolStatus::Ack;
+	return LayerTool::Status::Ignored;
 }
 
 
@@ -246,18 +245,17 @@ bool GenericToolRuler::deactivate_tool(void)
 
 
 
-ToolStatus GenericToolRuler::internal_handle_key_press(Layer * layer, QKeyEvent * event)
+LayerTool::Status GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
 	if (event->key() == Qt::Key_Escape) {
 		this->reset_ruler();
 		this->deactivate_tool();
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
+	} else {
+		return LayerTool::Status::Ignored;
 	}
-
-	/* Regardless of whether we used it, return false so other GTK things may use it. */
-	return ToolStatus::Ignored;
 }
 
 
@@ -316,7 +314,7 @@ SGObjectTypeID GenericToolZoom::tool_id(void)
 
 
 
-ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -386,13 +384,13 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 	}
 
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus GenericToolZoom::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -408,7 +406,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_move(Layer * layer, QMouseEven
 		   the box and abort "zoom to rectangle" procedure. */
 
 		this->ztr_is_active = false;
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
 
 	/* Update shape and size of "zoom to rectangle" box. The box
@@ -447,18 +445,18 @@ ToolStatus GenericToolZoom::internal_handle_mouse_move(Layer * layer, QMouseEven
 	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
 	this->gisview->update();
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
 	if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
@@ -513,7 +511,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 	   has been redrawn from scratch. */
 	this->ztr_is_active = false;
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
@@ -555,7 +553,7 @@ SGObjectTypeID LayerToolPan::tool_id(void)
 
 
 
-ToolStatus LayerToolPan::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 	this->window->set_dirty_flag(true);
@@ -566,56 +564,65 @@ ToolStatus LayerToolPan::internal_handle_mouse_click(Layer * layer, QMouseEvent 
 		this->window->pan_click(event);
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolPan::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
-	this->window->set_dirty_flag(true);
 
 	/* Zoom in / out on double click.
 	   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 	if (event->button() == Qt::LeftButton) {
+		this->window->set_dirty_flag(true);
+
 		if (event->modifiers() & Qt::ShiftModifier) {
 			this->window->get_main_gis_view()->zoom_out_on_center_pixel();
 		} else {
 			this->window->get_main_gis_view()->zoom_in_on_center_pixel();
 		}
+
+		this->window->draw_tree_items(this->gisview);
+
+		return LayerTool::Status::Handled;
+
 	} else if (event->button() == Qt::RightButton) {
+		this->window->set_dirty_flag(true);
 		this->window->get_main_gis_view()->zoom_out_on_center_pixel();
+		this->window->draw_tree_items(this->gisview);
+
+		return LayerTool::Status::Handled;
+
 	} else {
-		/* Ignore other mouse buttons. */
+		return LayerTool::Status::Ignored;
 	}
-
-	this->window->draw_tree_items(this->gisview);
-
-	return ToolStatus::Ack;
 }
 
 
 
 
-ToolStatus LayerToolPan::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	//qDebug() << SG_PREFIX_D << "Will call window->pan_move()";
 	this->window->pan_move(event);
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton) {
 		this->window->pan_release(event);
+		return LayerTool::Status::Handled;
+	} else {
+		return LayerTool::Status::Ignored;
 	}
-	return ToolStatus::Ack;
 }
 
 
@@ -661,7 +668,7 @@ SGObjectTypeID LayerToolSelect::tool_id(void)
 
 
 
-ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << this->get_tool_id();
 
@@ -669,7 +676,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 	/* Only allow selection on left button. */
 	if (event->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	if (event->modifiers() & SG_MOVE_MODIFIER) {
@@ -678,13 +685,13 @@ ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEve
 		this->handle_mouse_click_common(layer, event);
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << this->get_tool_id();
 
@@ -692,7 +699,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QM
 
 	/* Only allow selection on left button. */
 	if (event->button() != Qt::LeftButton) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	if (event->modifiers() & SG_MOVE_MODIFIER) {
@@ -701,7 +708,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QM
 		this->handle_mouse_click_common(layer, event);
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 
@@ -749,25 +756,30 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 
 
-ToolStatus LayerToolSelect::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (this->select_and_move_activated) {
 		if (layer) {
 			layer->handle_select_tool_move(event, this->gisview, this);
+			return LayerTool::Status::Handled;
+		} else {
+			return LayerTool::Status::Ignored;
 		}
 	} else {
 		/* Optional Panning. */
 		if (event->modifiers() & SG_MOVE_MODIFIER) {
 			this->window->pan_move(event);
+			return LayerTool::Status::Handled;
+		} else {
+			return LayerTool::Status::Ignored;
 		}
 	}
-	return ToolStatus::Ack;
 }
 
 
 
 
-ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (this->select_and_move_activated) {
 		if (layer) {
@@ -792,7 +804,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseE
 		}
 	}
 
-	return ToolStatus::Ack;
+	return LayerTool::Status::Handled;
 }
 
 

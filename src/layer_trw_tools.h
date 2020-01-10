@@ -60,7 +60,7 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWEditTrackpoint : public LayerToolSelect {
@@ -74,9 +74,9 @@ namespace SlavGPS {
 		TpPropertiesDialog * point_properties_dialog = NULL;
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWExtendedRouteFinder : public LayerTool {
@@ -88,10 +88,10 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_key_press(Layer * layer, QKeyEvent * event) override;
 
 	};
 
@@ -103,7 +103,7 @@ namespace SlavGPS {
 		static SGObjectTypeID tool_id(void);
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWEditWaypoint : public LayerToolSelect {
@@ -117,9 +117,9 @@ namespace SlavGPS {
 		WpPropertiesDialog * point_properties_dialog = NULL;
 
 	private:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWNewTrack : public LayerTool {
@@ -135,11 +135,11 @@ namespace SlavGPS {
 		QPixmap orig_viewport_pixmap;
 
 	protected:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
-		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+		LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		LayerTool::Status handle_key_press(Layer * layer, QKeyEvent * event) override;
 	};
 
 

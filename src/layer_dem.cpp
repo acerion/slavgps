@@ -1400,21 +1400,25 @@ SGObjectTypeID LayerToolDEMDownload::tool_id(void)
 
 
 
-ToolStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
+	qDebug() << SG_PREFIX_I << "'download' tool for DEM layer starts handing mouse release event" << ev->button();
+
 	if (layer->m_kind != LayerKind::DEM) {
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_E << "Passed layer is not DEM layer, is" << layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	/* Left button: download. Right button: context menu. */
 	if (ev->button() != Qt::LeftButton && ev->button() != Qt::RightButton) {
-		return ToolStatus::Ignored;
+		qDebug() << SG_PREFIX_N << "Bad button" << ev->button();
+		return LayerTool::Status::Ignored;
 	}
 
 	if (((LayerDEM *) layer)->download_release(ev, this)) {
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	} else {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 }
 

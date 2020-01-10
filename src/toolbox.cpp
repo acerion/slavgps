@@ -348,7 +348,7 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 	}
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->get_tool_id();
-	this->active_tool->handle_mouse_click(layer, event);
+	this->active_tool->handle_mouse_click_wrapper(layer, event);
 
 	return;
 }
@@ -364,7 +364,7 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 	}
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->get_tool_id();
-	this->active_tool->handle_mouse_double_click(layer, event);
+	this->active_tool->handle_mouse_double_click_wrapper(layer, event);
 
 	return;
 }
@@ -379,7 +379,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 		return;
 	}
 
-	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
+	if (LayerTool::Status::HandledGrabFocus == this->active_tool->handle_mouse_move_wrapper(layer, event)) {
 		this->window->get_main_gis_view()->setFocus();
 	}
 
@@ -397,7 +397,7 @@ void Toolbox::handle_mouse_release(QMouseEvent * event)
 	}
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->get_tool_id();
-	this->active_tool->handle_mouse_release(layer, event);
+	this->active_tool->handle_mouse_release_wrapper(layer, event);
 
 	return;
 }

@@ -1465,16 +1465,21 @@ void SlavGPS::tile_info_add_file_info_strings(QStringList & items, const QString
 
 
 
-ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, QMouseEvent * event)
+LayerTool::Status LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
-	if (!_layer || _layer->m_kind != LayerKind::Map) {
-		return ToolStatus::Ignored;
+	if (nullptr == _layer) {
+		qDebug() << SG_PREFIX_E << "NULL pointer argument";
+		return LayerTool::Status::Error;
+	}
+	if (_layer->m_kind != LayerKind::Map) {
+		qDebug() << SG_PREFIX_E << "Invalid layer kind" << _layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
 
 	if (layer->dl_tool_x == -1 || layer->dl_tool_y == -1) {
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Ignored;
 	}
 
 	const int leftmost_pixel   = this->gisview->central_get_leftmost_pixel();
@@ -1494,7 +1499,8 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 		layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 		layer->dl_tool_x = -1;
 		layer->dl_tool_y = -1;
-		return ToolStatus::Ack;
+
+		return LayerTool::Status::Handled;
 	} else {
 		const int ul_x = std::max(rightmost_pixel, std::min(event->x(), layer->dl_tool_x));
 		const int ul_y = std::max(topmost_pixel, std::min(event->y(), layer->dl_tool_y));
@@ -1531,8 +1537,9 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 			QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (tile_info_cb(void)));
 		}
 		layer->dl_right_click_menu->exec(QCursor::pos());
+
+		return LayerTool::Status::Handled;
 	}
-	return ToolStatus::Ignored;
 }
 
 
@@ -1567,11 +1574,16 @@ SGObjectTypeID LayerToolMapsDownload::tool_id(void)
 
 
 
-ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QMouseEvent * event)
+LayerTool::Status LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
-	if (!_layer || _layer->m_kind != LayerKind::Map) {
-		return ToolStatus::Ignored;
+	if (nullptr == _layer) {
+		qDebug() << SG_PREFIX_E << "NULL pointer argument";
+		return LayerTool::Status::Error;
+	}
+	if (_layer->m_kind != LayerKind::Map) {
+		qDebug() << SG_PREFIX_E << "Invalid layer kind" << _layer->m_kind;
+		return LayerTool::Status::Error;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
@@ -1585,9 +1597,9 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
-	return ToolStatus::Ignored;
+	return LayerTool::Status::Ignored;
 }
 
 

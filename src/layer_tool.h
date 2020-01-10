@@ -50,42 +50,35 @@ namespace SlavGPS {
 
 
 
-
-	/*
-	  I think most of these are ignored, returning GRAB_FOCUS grabs the
-	  focus for mouse move, mouse click, release always grabs
-	  focus. Focus allows key presses to be handled.
-
-	  It used to be that, if ignored, Viking could look for other layers.
-	  this was useful for clicking a way/trackpoint in any layer, if no
-	  layer was selected (find way/trackpoint).
-	*/
-	enum class ToolStatus {
-		Ignored = 0,
-		Ack,
-		AckRedrawAbove,
-		AckRedrawAll,
-		AckRedrawIfVisible,
-		AckGrabFocus, /* Only for move. */
-		Error
-	};
-
-
-
-
 	class LayerTool {
 
 	public:
 		LayerTool(Window * window, GisViewport * gisview, LayerKind layer_kind);
 		virtual ~LayerTool();
 
+		/*
+		  I think most of these are ignored, returning GRAB_FOCUS grabs the
+		  focus for mouse move, mouse click, release always grabs
+		  focus. Focus allows key presses to be handled.
+
+		  It used to be that, if ignored, Viking could look for other layers.
+		  this was useful for clicking a way/trackpoint in any layer, if no
+		  layer was selected (find way/trackpoint).
+		*/
+		enum class Status {
+			Ignored = 0,
+			Handled,
+			Error,
+			HandledGrabFocus, /* Only for move. */
+		};
+
 		QString get_description(void) const;
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event); /* TODO_LATER: where do we call this function? */
+		LayerTool::Status handle_mouse_click_wrapper(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_mouse_double_click_wrapper(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_mouse_move_wrapper(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_mouse_release_wrapper(Layer * layer, QMouseEvent * event);
+		LayerTool::Status handle_key_press_wrapper(Layer * layer, QKeyEvent * event); /* TODO_LATER: where do we call this function? */
 
 		/* Return true if tool has been successfully activated.
 		   Return false otherwise. */
@@ -121,11 +114,11 @@ namespace SlavGPS {
 		char debug_string[100]; /* For debug purposes only. */
 
 	protected:
-		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::Ignored; }
-		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::Ignored; }
-		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::Ignored; }
-		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::Ignored; }
-		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::Ignored; }
+		virtual LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event)        { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event)         { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event)      { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_key_press(Layer * layer, QKeyEvent * event)            { return LayerTool::Status::Ignored; }
 	};
 
 

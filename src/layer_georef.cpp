@@ -1235,7 +1235,7 @@ SGObjectTypeID LayerToolGeorefMove::tool_id(void)
 
 
 
-ToolStatus LayerToolGeorefMove::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->move_release(ev, this);
 }
@@ -1243,20 +1243,20 @@ ToolStatus LayerToolGeorefMove::internal_handle_mouse_release(Layer * layer, QMo
 
 
 
-ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
+LayerTool::Status LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->m_kind != LayerKind::Georef) {
 		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	if (this->click_x != -1) {
 		this->utm_tl.easting += (ev->x() - this->click_x) * tool->gisview->get_viking_scale().get_x();
 		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->gisview->get_viking_scale().get_y();
 		this->emit_tree_item_changed("Georef - move released");
-		return ToolStatus::Ack;
+		return LayerTool::Status::Handled;
 	}
-	return ToolStatus::Ignored; /* I didn't move anything on this layer! */
+	return LayerTool::Status::Ignored; /* I didn't move anything on this layer! */
 }
 
 
@@ -1289,7 +1289,7 @@ SGObjectTypeID LayerToolGeorefZoom::tool_id(void)
 
 
 
-ToolStatus LayerToolGeorefZoom::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->zoom_press(ev, this);
 }
@@ -1297,11 +1297,11 @@ ToolStatus LayerToolGeorefZoom::internal_handle_mouse_click(Layer * layer, QMous
 
 
 
-ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
+LayerTool::Status LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->m_kind != LayerKind::Georef) {
 		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 
 	if (ev->button() == Qt::LeftButton) {
@@ -1318,13 +1318,14 @@ ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	tool->gisview->set_viking_scale_x(this->mpp_easting);
 	tool->gisview->set_viking_scale_y(this->mpp_northing);
 	this->emit_tree_item_changed("Georef - zoom press");
-	return ToolStatus::Ack;
+
+	return LayerTool::Status::Handled;
 }
 
 
 
 
-ToolStatus LayerToolGeorefMove::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->move_press(ev, this);
 }
@@ -1332,15 +1333,16 @@ ToolStatus LayerToolGeorefMove::internal_handle_mouse_click(Layer * layer, QMous
 
 
 
-ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
+LayerTool::Status LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->m_kind != LayerKind::Georef) {
 		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;
-		return ToolStatus::Ignored;
+		return LayerTool::Status::Error;
 	}
 	this->click_x = ev->x();
 	this->click_y = ev->y();
-	return ToolStatus::Ack;
+
+	return LayerTool::Status::Handled;
 }
 
 
