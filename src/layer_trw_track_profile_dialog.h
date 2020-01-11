@@ -155,9 +155,6 @@ namespace SlavGPS {
 		sg_ret set_center_at_selected_tp(const ProfileViewBase * view, QMouseEvent * ev);
 
 
-		/* Pen used to draw main parts of views (i.e. the values of functions y = f(x)). */
-		QPen main_pen;
-
 		QTabWidget * tabs = NULL;
 
 		QDialogButtonBox * button_box = NULL;
@@ -194,8 +191,8 @@ namespace SlavGPS {
 		int get_central_n_columns(void) const;
 		int get_central_n_rows(void) const;
 
-		sg_ret draw_track_and_crosshairs(Track * trk);
-		virtual sg_ret draw_graph_without_crosshairs(Track * trk) = 0;
+		sg_ret draw_track_and_crosshairs(Track & trk);
+		virtual sg_ret draw_graph_without_crosshairs(Track & trk) = 0;
 		sg_ret draw_crosshairs(const Crosshair2D & selection_ch, const Crosshair2D & hover_ch);
 
 		virtual sg_ret generate_initial_track_data_wrapper(Track * trk) = 0;
@@ -236,16 +233,14 @@ namespace SlavGPS {
 
 		virtual sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) = 0;
 
-		virtual sg_ret draw_additional_indicators(Track * trk) = 0;
-		virtual sg_ret draw_gps_speeds(Track * trk) = 0;
-		virtual sg_ret draw_dem_elevation(Track * trk) = 0;
+		virtual sg_ret draw_additional_indicators(Track & trk) = 0;
 
 		Crosshair2D tpinfo_to_crosshair(const TPInfo & tp_info) const;
 
-		QPen main_pen;
-		QPen gps_speed_pen;
-		QPen dem_alt_pen;
-		QPen no_alt_info_pen;
+		QPen main_values_invalid_pen;
+		QPen main_values_valid_pen;
+		QPen aux_values_1_pen;
+		QPen aux_values_2_pen;
 
 		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
 		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
@@ -293,7 +288,7 @@ namespace SlavGPS {
 		void configure_controls(void) override {};
 
 
-		sg_ret draw_graph_without_crosshairs(Track * trk) override;
+		sg_ret draw_graph_without_crosshairs(Track & trk) override;
 
 		TPInfo get_tp_info_under_cursor(QMouseEvent * ev) const override;
 
@@ -313,12 +308,13 @@ namespace SlavGPS {
 		sg_ret generate_initial_track_data_wrapper(Track * trk) override;
 
 
-		sg_ret draw_function_values(Track * trk);
+		sg_ret draw_function_values(Track & trk);
 
+		sg_ret draw_additional_indicators(Track & trk) override { return sg_ret::ok; };
 
+		sg_ret draw_gps_speeds_relative(Track & trk);
 
-		sg_ret draw_additional_indicators(Track * trk) override;
-		sg_ret draw_gps_speeds(Track * trk) override;
+		sg_ret draw_gps_speeds(void) { return sg_ret::ok; };
 
 		/**
 		   Draws DEM points if DEM layer is present.
@@ -327,8 +323,19 @@ namespace SlavGPS {
 		   be provided only for those views that have
 		   'Altitude' as Ty.
 		*/
-		sg_ret draw_dem_elevation(Track * trk) override { return sg_ret::ok; };
+		sg_ret draw_dem_elevation(void) { return sg_ret::ok; };
 
+		/**
+		   @brief Get a specific value of trackpoint from auxiliary source.
+
+		   For speed, the auxiliary source is "GPS speed"
+		   field of trackpoint.
+
+		   For altitude, the auxiliary source is DEM cache (if
+		   DEM layer is loaded for area where a track is
+		   present).
+		*/
+		Ty get_tp_aux_value_uu(const Trackpoint & tp) { return Ty(); }
 
 		void draw_x_grid(void);
 		void draw_y_grid(void);
@@ -399,20 +406,23 @@ namespace SlavGPS {
 		  of ::track_data_to_draw, e.g. after resizing Profile
 		  View window.
 		*/
-		sg_ret regenerate_track_data_to_draw(Track * trk);
+		sg_ret regenerate_track_data_to_draw(Track & trk);
 
 		sg_ret update_x_labels(const TPInfo & tp_info) override;
 		sg_ret update_y_labels(const TPInfo & tp_info) override;
 
-		/* A real implementation of 'draw dem elevation' algorithm. */
-		sg_ret draw_dem_elevation_impl(Track * trk);
+		/* Draw additional markers for either Speed or
+		   Altitude (in real values, not in
+		   relative/percentage values) on views that have
+		   Speed or Altitude as Ty. */
+		sg_ret draw_parameter_from_auxiliary_source(void);
 	};
 
 
 
 
 	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::regenerate_track_data_to_draw(Track * trk)
+	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::regenerate_track_data_to_draw(Track & trk)
 	{
 		this->track_data_to_draw.clear();
 
@@ -758,13 +768,13 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 
 
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Track * trk)
+sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_parameter_from_auxiliary_source(void)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 	const size_t n_values = this->track_data_to_draw.size();
 
-	const QColor & color = this->dem_alt_pen.color();
+	const QColor & color = this->aux_values_2_pen.color();
 
 	double x_pixels_per_unit;
 	double y_pixels_per_unit;
@@ -781,15 +791,14 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Tr
 			continue;
 		}
 
-		/* TODO_MAYBE: This could be slow doing this each time... */
-		const Ty elev_uu = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple).convert_to_unit(Ty::user_unit());
-		if (!elev_uu.is_valid()) {
+		const Tx_ll x_value_uu = this->track_data_to_draw.x_ll(i);
+
+		Ty y_value_uu = this->get_tp_aux_value_uu(*tp);
+		if (!y_value_uu.is_valid()) {
 			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Elevation data from cache is invalid";
 			continue;
 		}
-
-		const Tx_ll x_value_uu = this->track_data_to_draw.x_ll(i);
-		const Ty y_value_uu = elev_uu - this->y_visible_min;
+		y_value_uu -= this->y_visible_min;
 
 		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->x_visible_min.ll_value());
 		const int y_px = bottommost_px - y_pixels_per_unit * y_value_uu.ll_value();
@@ -807,7 +816,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_dem_elevation_impl(Tr
    @reviewed-on tbd
 */
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track * trk)
+sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track & trk)
 {
 	const size_t n_values = this->track_data_to_draw.size();
 	if (0 == n_values) {
@@ -826,15 +835,6 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
-
-
-	QPen valid_pen;
-	valid_pen.setColor(trk->has_color ? trk->color : "blue");
-	valid_pen.setWidth(1);
-
-	QPen invalid_pen;
-	invalid_pen.setColor(trk->color == "red" ? "black" : "red");
-	invalid_pen.setWidth(1);
 
 
 	qDebug() << "II   ProfileView" << __func__ << __LINE__
@@ -874,7 +874,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 			cur_valid_pos.rx() = x_px;
 			cur_valid_pos.ry() = bottommost_px - (y_value_uu - this->y_visible_min.ll_value()) * y_pixels_per_unit;
 
-			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
+			graph_2d->draw_line(this->main_values_valid_pen, last_valid_pos, cur_valid_pos);
 
 			last_valid_pos = cur_valid_pos;
 		} else {
@@ -886,7 +886,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 			const int begin_y_px = bottommost_px;
 			const int end_y_px = bottommost_px - n_rows;
 
-			graph_2d->draw_line(invalid_pen, x_px, begin_y_px, x_px, end_y_px);
+			graph_2d->draw_line(this->main_values_invalid_pen, x_px, begin_y_px, x_px, end_y_px);
 		}
 	}
 
@@ -906,39 +906,16 @@ bool ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::track_data_is_valid(void) co
 
 
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_additional_indicators(Track * trk)
-{
-	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
-		this->draw_dem_elevation(trk);
-	}
-
-
-	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
-		/* Ensure some kind of max speed when not set. */
-		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().is_zero()) {
-			trk->calculate_max_speed();
-		}
-
-		this->draw_gps_speeds(trk);
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * trk)
+sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds_relative(Track & trk)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
 	const size_t n_values = this->track_data_to_draw.size();
 
-	const QColor & speed_color = this->gps_speed_pen.color();
+	const QColor & speed_color = this->aux_values_1_pen.color();
 
-	const Speed max_speed = trk->get_max_speed();
+	const Speed max_speed = trk.get_max_speed();
 	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Max speed is" << max_speed;
 
 	if (max_speed.is_zero()) {
@@ -986,7 +963,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds(Track * tr
    \brief Draw the y = f(x) graph
 */
 template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_graph_without_crosshairs(Track * trk)
+sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_graph_without_crosshairs(Track & trk)
 {
 	qDebug() << "II   ProfileView" << __func__ << __LINE__;
 	QTime draw_time;
@@ -1217,6 +1194,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 	};
 
 
@@ -1228,6 +1206,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 
 	};
 
@@ -1240,6 +1219,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 	private:
 
 	};
@@ -1253,6 +1233,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 	};
 
 
@@ -1264,6 +1245,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 	};
 
 
@@ -1275,6 +1257,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 		void configure_controls(void) override;
 		void save_settings(void) override;
+		sg_ret draw_additional_indicators(Track & trk) override;
 	};
 
 

@@ -352,6 +352,92 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 
 
+namespace SlavGPS {
+
+
+
+
+template <>
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(void)
+{
+	return this->draw_parameter_from_auxiliary_source();
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(void)
+{
+	return this->draw_parameter_from_auxiliary_source();
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, HeightUnit>::draw_gps_speeds(void)
+{
+	return this->draw_parameter_from_auxiliary_source();
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::draw_gps_speeds(void)
+{
+	return this->draw_parameter_from_auxiliary_source();
+}
+
+
+
+
+template <>
+Speed ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+{
+	return Speed(tp.gps_speed, Speed::user_unit());
+}
+
+
+
+
+template <>
+Speed ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+{
+	return Speed(tp.gps_speed, Speed::user_unit());
+}
+
+
+
+
+template <>
+Altitude ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+{
+	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
+	   when we do it for every TP on every redraw of view. */
+	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::user_unit());
+}
+
+
+
+
+template <>
+Altitude ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+{
+	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
+	   when we do it for every TP on every redraw of view. */
+	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::user_unit());
+}
+
+
+
+
+}
+
+
+
+
 void ProfileViewET::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM_ELEVATION, this->show_dem_cb->checkState());
@@ -361,9 +447,33 @@ void ProfileViewET::save_settings(void)
 
 
 
+sg_ret ProfileViewET::draw_additional_indicators(Track & trk)
+{
+	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
+		return this->draw_dem_elevation();
+	} else {
+		return sg_ret::ok;
+	}
+}
+
+
+
+
 void ProfileViewSD::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+sg_ret ProfileViewSD::draw_additional_indicators(Track & trk)
+{
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
+		return this->draw_gps_speeds();
+	} else {
+		return sg_ret::ok;
+	}
 }
 
 
@@ -378,9 +488,39 @@ void ProfileViewED::save_settings(void)
 
 
 
+sg_ret ProfileViewED::draw_additional_indicators(Track & trk)
+{
+	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
+		return this->draw_dem_elevation();
+	} else {
+		return sg_ret::ok;
+	}
+}
+
+
+
+
 void ProfileViewGD::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+sg_ret ProfileViewGD::draw_additional_indicators(Track & trk)
+{
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
+		/* Ensure some kind of max speed when not set. */
+		if (!trk.get_max_speed().is_valid() || trk.get_max_speed().is_zero()) {
+			trk.calculate_max_speed();
+		}
+
+		return this->draw_gps_speeds_relative(trk);
+	} else {
+		qDebug() << SG_PREFIX_E << "Can't draw relative GPS speeds - no widgets";
+		return sg_ret::err;
+	}
 }
 
 
@@ -393,10 +533,37 @@ void ProfileViewST::save_settings(void)
 
 
 
+sg_ret ProfileViewST::draw_additional_indicators(Track & trk)
+{
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
+		return this->draw_gps_speeds();
+	} else {
+		return sg_ret::ok;
+	}
+}
+
+
 
 void ProfileViewDT::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+sg_ret ProfileViewDT::draw_additional_indicators(Track & trk)
+{
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
+		/* Ensure some kind of max speed when not set. */
+		if (!trk.get_max_speed().is_valid() || trk.get_max_speed().is_zero()) {
+			trk.calculate_max_speed();
+		}
+		return this->draw_gps_speeds_relative(trk);
+	} else {
+		qDebug() << SG_PREFIX_E << "Can't draw relative GPS speeds - no widgets";
+		return sg_ret::err;
+	}
 }
 
 
@@ -432,14 +599,14 @@ void TrackProfileDialog::draw_all_views(bool resized)
 
 		/* If dialog window is resized then saved image is no longer valid. */
 		view->graph_2d->saved_pixmap_valid = !resized;
-		view->draw_track_and_crosshairs(this->trk);
+		view->draw_track_and_crosshairs(*this->trk);
 	}
 }
 
 
 
 
-sg_ret ProfileViewBase::draw_track_and_crosshairs(Track * trk)
+sg_ret ProfileViewBase::draw_track_and_crosshairs(Track & trk)
 {
 	sg_ret ret_trk;
 	sg_ret ret_marks;
@@ -495,7 +662,7 @@ sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 	view->graph_2d->cached_central_n_rows = view->graph_2d->central_get_n_rows();
 
 	view->graph_2d->saved_pixmap_valid = true;
-	view->draw_track_and_crosshairs(this->trk);
+	view->draw_track_and_crosshairs(*this->trk);
 
 
 	return sg_ret::ok;
@@ -843,7 +1010,7 @@ void ProfileViewSD::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -895,7 +1062,7 @@ void ProfileViewST::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -927,12 +1094,17 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 	this->widget->setProperty(MY_WIDGET_PROPERTY, QVariant::fromValue((qulonglong) this));
 	this->dialog = new_dialog;
 
-	this->main_pen.setColor("lightsteelblue");
-	this->main_pen.setWidth(1);
+	this->main_values_valid_pen.setColor(dialog->trk->has_color ? dialog->trk->color : "blue");
+	this->main_values_valid_pen.setWidth(1);
 
-	this->gps_speed_pen.setColor("orange");
-	this->dem_alt_pen.setColor("green");
-	this->no_alt_info_pen.setColor("yellow");
+	this->main_values_invalid_pen.setColor(dialog->trk->color == "red" ? "black" : "red");
+	this->main_values_invalid_pen.setWidth(1);
+
+	this->aux_values_1_pen.setColor("green");
+	this->aux_values_1_pen.setWidth(3);
+
+	this->aux_values_2_pen.setColor("blue");
+	this->aux_values_2_pen.setWidth(3);
 
 	this->x_domain = new_x_domain;
 	this->y_domain = new_y_domain;
@@ -1052,34 +1224,4 @@ void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 	emit this->button_released(this, ev);
 	ev->accept();
-}
-
-
-
-
-namespace SlavGPS {
-
-
-
-
-template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(Track * trk)
-{
-	qDebug() << SG_PREFIX_I << "Will call implementation that can draw DEM altitudes";
-	return this->draw_dem_elevation_impl(trk);
-}
-
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(Track * trk)
-{
-	qDebug() << SG_PREFIX_I << "Will call implementation that can draw DEM altitudes";
-	return this->draw_dem_elevation_impl(trk);
-}
-
-
-
-
 }
