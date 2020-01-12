@@ -37,7 +37,8 @@
 
 #include "globals.h"
 #include "measurements.h"
-#include "lat_lon.h"
+//#include "lat_lon.h"
+#include "coords.h"
 #include "variant.h"
 #include "ui_builder.h"
 
@@ -179,8 +180,10 @@ namespace SlavGPS {
 
 
 		static bool get_use_large_waypoint_icons();
-		static Latitude get_default_lat(void);
-		static Longitude get_default_lon(void);
+
+		/* Guaranteed to return some valid LatLon. */
+		static LatLon get_default_lat_lon(void);
+
 		static SGTimeReference get_time_ref_frame();
 		static KMLExportUnits get_kml_export_units();
 		static GPXExportTrackSort get_gpx_export_trk_sort();

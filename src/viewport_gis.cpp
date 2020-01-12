@@ -147,7 +147,7 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 
 
 
-	LatLon initial_lat_lon(Preferences::get_default_lat(), Preferences::get_default_lon());
+	LatLon initial_lat_lon = Preferences::get_default_lat_lon();
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
 

@@ -81,6 +81,11 @@ typedef int GtkCellEditable;
 
 
 
+extern SelectedTreeItems g_selected;
+
+
+
+
 QDataStream & operator<<(QDataStream & stream, const TreeItem * tree_item)
 {
 	qulonglong pointer(*reinterpret_cast<qulonglong *>(&tree_item));
@@ -1188,7 +1193,7 @@ bool SelectedTreeItems::remove_from_set(const TreeItem * tree_item)
 
 bool SelectedTreeItems::is_in_set(const TreeItem * tree_item) const
 {
-	if (!tree_item) {
+	if (nullptr == tree_item) {
 		return false;
 	}
 
@@ -1264,4 +1269,20 @@ TreeItemPropertyID TreeView::column_idx_to_property_id(int col) const
 	}
 
 	return property_id;
+}
+
+
+
+
+void SelectedTreeItems::print_draw_mode(const TreeItem & tree_item, bool parent_is_selected)
+{
+	if (1) {
+		if (g_selected.is_in_set(&tree_item)) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << tree_item.get_name() << "as selected (selected directly)";
+		} else if (parent_is_selected) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << tree_item.get_name() << "as selected (selected through parent)";
+		} else {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << tree_item.get_name() << "as non-selected";
+		}
+	}
 }

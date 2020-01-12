@@ -2746,15 +2746,7 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 		return;
 	}
 
-	if (1) { /* TODO_LATER: this pattern is being repeated in few other places. */
-		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
-		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
-		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
-		}
-	}
+	SelectedTreeItems::print_draw_mode(*this, parent_is_selected);
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;

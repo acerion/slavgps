@@ -116,9 +116,8 @@ static WidgetIntEnumerationData time_ref_frame_enum = {
 
 
 
-/* Hardcoded default location is New York. */
-static SGVariant hardcoded_latitude_value(40.714490, SGVariantType::Latitude);
-static SGVariant hardcoded_longitude_value(-74.007130, SGVariantType::Longitude);
+static SGVariant hardcoded_latitude_value(Latitude::hardcoded_default(), SGVariantType::Latitude);
+static SGVariant hardcoded_longitude_value(Longitude::hardcoded_default(), SGVariantType::Longitude);
 static SGVariant hardcoded_latitude_fn(void) { return hardcoded_latitude_value; }
 static SGVariant hardcoded_longitude_fn(void) { return hardcoded_longitude_value; }
 
@@ -649,17 +648,16 @@ bool Preferences::get_use_large_waypoint_icons()
 
 
 
-Latitude Preferences::get_default_lat(void)
+LatLon Preferences::get_default_lat_lon(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").get_latitude();
-}
+	LatLon result;
+	result = LatLon(Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").get_latitude(),
+			Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").get_longitude());
+	if (!result.is_valid()) {
+		result = LatLon(Latitude::hardcoded_default(), Longitude::hardcoded_default());
+	}
+	return result;
 
-
-
-
-Longitude Preferences::get_default_lon(void)
-{
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").get_longitude();
 }
 
 

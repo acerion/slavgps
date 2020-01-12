@@ -145,7 +145,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return AltitudeType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Metres;
+			Unit::E u = Unit::E::Metres; /* Default/internal unit. */
 
 			bool operator==(const AltitudeType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const AltitudeType::Unit & rhs) const { return !(*this == rhs);  }
@@ -177,7 +177,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return GradientType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Percents;
+			Unit::E u = Unit::E::Percents; /* Default/internal unit. */
 
 			bool operator==(const GradientType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const GradientType::Unit & rhs) const { return !(*this == rhs);  }
@@ -210,7 +210,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return TimeType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Seconds;
+			Unit::E u = Unit::E::Seconds; /* Default/internal unit. */
 
 			bool operator==(const TimeType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const TimeType::Unit & rhs) const { return !(*this == rhs);  }
@@ -242,7 +242,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return DurationType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Seconds;
+			Unit::E u = Unit::E::Seconds; /* Default/internal unit. */
 
 			bool operator==(const DurationType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const DurationType::Unit & rhs) const { return !(*this == rhs);  }
@@ -278,7 +278,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return DistanceType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Meters;
+			Unit::E u = Unit::E::Meters; /* Default/internal unit. */
 
 			bool operator==(const DistanceType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const DistanceType::Unit & rhs) const { return !(*this == rhs);  }
@@ -310,7 +310,7 @@ namespace SlavGPS {
 			static SpeedType::Unit internal_unit(void) { return SpeedType::Unit(); }
 			static SpeedType::Unit user_unit(void);
 
-			SpeedType::Unit::E u = SpeedType::Unit::E::MetresPerSecond;
+			SpeedType::Unit::E u = SpeedType::Unit::E::MetresPerSecond; /* Default/internal unit. */
 
 			bool operator==(const SpeedType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const SpeedType::Unit & rhs) const { return !(*this == rhs);  }
@@ -340,7 +340,7 @@ namespace SlavGPS {
 			static Unit internal_unit(void) { return AngleType::Unit(); }
 			static Unit user_unit(void);
 
-			Unit::E u = Unit::E::Radians;
+			Unit::E u = Unit::E::Radians; /* Default/internal unit. */
 
 			bool operator==(const AngleType::Unit & rhs) const { return this->u == rhs.u; }
 			bool operator!=(const AngleType::Unit & rhs) const { return !(*this == rhs);  }

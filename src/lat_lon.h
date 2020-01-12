@@ -36,6 +36,8 @@
 #define SG_LONGITUDE_PRECISION    6
 
 
+
+
 namespace SlavGPS {
 
 
@@ -60,6 +62,8 @@ namespace SlavGPS {
 		Latitude(double val = NAN) { this->set_value(val); };
 		Latitude(const char * str);
 		Latitude(const QString & str);
+
+		static double hardcoded_default(void) { return 53.4325; }
 
 		QString to_string(void) const;
 
@@ -89,6 +93,8 @@ namespace SlavGPS {
 		Longitude(double val = NAN) { this->set_value(val); };
 		Longitude(const char * str);
 		Longitude(const QString & str);
+
+		static double hardcoded_default(void) { return 14.548056; }
 
 		QString to_string(void) const;
 

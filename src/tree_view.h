@@ -80,6 +80,13 @@ namespace SlavGPS {
 		void clear(void);
 		int size(void) const;
 
+		/**
+		   Print to console information about how given @param
+		   tree_item will be drawn given its current selection
+		   status.
+		*/
+		static void print_draw_mode(const TreeItem & tree_item, bool parent_is_selected);
+
 	private:
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
 		std::map<sg_uid_t, TreeItem *> selected_tree_items;

@@ -1672,7 +1672,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	const LatLon lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
+	const LatLon lat_lon = Preferences::get_default_lat_lon();
 	if (sg_ret::ok != this->main_gis_vp->set_center_coord(lat_lon)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
 		return;

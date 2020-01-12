@@ -481,7 +481,15 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleType::Unit::E::Degrees); /* TODO_LATER: verify unit read from gpx file. */
+		/*
+		  On one hand gpx.xsd v1.1 doesn't specify 'course'
+		  XML element.
+
+		  On the other hand the spec provides 'degreesType'
+		  simple type, "Used for bearing, heading,
+		  course. Units are decimal degrees [...]."
+		*/
+		importer->tp->course = Angle(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), AngleType::Unit::E::Degrees);
 		importer->cdata.clear();
 		break;
 

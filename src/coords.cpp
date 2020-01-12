@@ -506,6 +506,7 @@ QString LatLon::to_string(void) const
 {
 	QString lat_string;
 	QString lon_string;
+	QString result;
 
 	const DegreeFormat format = Preferences::get_degree_format();
 
@@ -513,25 +514,28 @@ QString LatLon::to_string(void) const
 	case DegreeFormat::DDD:
 		convert_lat_dec_to_ddd(lat_string, this->lat);
 		convert_lon_dec_to_ddd(lon_string, this->lon);
+		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::DMM:
 		convert_lat_dec_to_dmm(lat_string, this->lat);
 		convert_lon_dec_to_dmm(lon_string, this->lon);
+		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::DMS:
 		convert_lat_dec_to_dms(lat_string, this->lat);
 		convert_lon_dec_to_dms(lon_string, this->lon);
+		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::Raw:
 		LatLon::lat_to_string_raw(lat_string, *this);
 		LatLon::lon_to_string_raw(lon_string, *this);
+		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown degree format" << (int) format;
-		break; /* TODO_LATER: you should return here. */
+		result = QString("%1").arg(SG_MEASUREMENT_INVALID_UNIT_STRING);
+		break;
 	}
-
-	QString result = QString("%1 %2").arg(lat_string, lon_string);
 
 	return result;
 }

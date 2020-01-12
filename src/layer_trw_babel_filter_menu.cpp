@@ -85,9 +85,10 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 	if (nullptr == g_babel_filter_track) {
 		/* Build empty submenu to suggest to user that it's
 		   possible to select a track and do filtering with
-		   the track. TODO_LATER: make the item inactive. */
+		   the track. */
 		const QString menu_label = QObject::tr("Filter with selected track");
-		submenu.addMenu(menu_label);
+		QMenu * filter_with = submenu.addMenu(menu_label);
+		filter_with->setEnabled(false);
 	} else {
 		/* Create a sub menu intended for rightclicking on a
 		   TRWLayer's menu called "Filter with Track

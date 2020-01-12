@@ -63,10 +63,6 @@ using namespace SlavGPS;
 
 
 extern SelectedTreeItems g_selected;
-
-
-
-
 /* This is how it knows when you click if you are clicking close to a waypoint. */
 #define WAYPOINT_SIZE_APPROX 5
 
@@ -798,15 +794,7 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 		return;
 	}
 
-	if (1) {
-		if (g_selected.is_in_set(this)) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected directly)";
-		} else if (parent_is_selected) {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as selected (selected through parent)";
-		} else {
-			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->get_name() << "as non-selected";
-		}
-	}
+	SelectedTreeItems::print_draw_mode(*this, parent_is_selected);
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	const LatLonBBox viewport_bbox = gisview->get_bbox();
