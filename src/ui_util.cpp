@@ -137,7 +137,7 @@ void SlavGPS::ui_pixmap_scale_size_to(QPixmap * pixmap, int width, int height)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha)
+void SlavGPS::ui_pixmap_scale_alpha(__attribute__((unused)) QPixmap & pixmap, __attribute__((unused)) int alpha)
 {
 #ifdef K_FIXME_RESTORE
 	unsigned char *pixels;
@@ -174,7 +174,7 @@ void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha)
 
 
 /* Update desktop manager's list of recently used documents. */
-void SlavGPS::update_desktop_recent_documents(Window * window, const QString & file_full_path, const QString & mime_type)
+void SlavGPS::update_desktop_recent_documents(__attribute__((unused)) Window * window, __attribute__((unused)) const QString & file_full_path, __attribute__((unused)) const QString & mime_type)
 {
 #ifdef K_FIXME_RESTORE
 	/* Update Recently Used Document framework */

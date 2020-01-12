@@ -71,7 +71,7 @@ namespace SlavGPS {
 	public:
 		LayerInterface() {};
 
-		virtual Layer * unmarshall(Pickle & pickle, GisViewport * gisview) { return NULL; };
+		virtual Layer * unmarshall(__attribute__((unused)) Pickle & pickle, __attribute__((unused)) GisViewport * gisview) { return NULL; };
 
 		QKeySequence action_accelerator;
 		QIcon action_icon;
@@ -79,7 +79,7 @@ namespace SlavGPS {
 		/* Create a container with layer-kind-specific tools.
 		   The container is owned by caller.
 		   Pointers in the container are owned by caller. */
-		virtual LayerToolContainer create_tools(Window * window, GisViewport * gisview)
+		virtual LayerToolContainer create_tools(__attribute__((unused)) Window * window, __attribute__((unused)) GisViewport * gisview)
 		{
 			LayerToolContainer none; /* By default a layer-kind has no layer-specific tools. */
 			return none;

@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
+LatLonEntryWidget::LatLonEntryWidget(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 

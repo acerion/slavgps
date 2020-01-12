@@ -1250,7 +1250,7 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewpor
 
 
 
-void LayerMap::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1909,7 +1909,7 @@ void LayerMap::flush_cb(void)
 
 
 
-sg_ret LayerMap::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerMap::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
 
@@ -2031,7 +2031,7 @@ sg_ret LayerMap::handle_downloaded_tile_cb(void)
 
 
 
-bool LayerMap::is_tile_visible(const TileInfo & tile_info)
+bool LayerMap::is_tile_visible(__attribute__((unused)) const TileInfo & tile_info)
 {
 	/* TODO_LATER: implement. */
 	return true;

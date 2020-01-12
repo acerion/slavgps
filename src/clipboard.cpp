@@ -95,7 +95,7 @@ typedef int GdkAtom;
 
 
 
-static void clip_get(GtkClipboard * c, GtkSelectionData * selection_data, unsigned int info, void * p)
+static void clip_get(__attribute__((unused)) GtkClipboard * c, __attribute__((unused)) GtkSelectionData * selection_data, __attribute__((unused)) unsigned int info, __attribute__((unused)) void * p)
 {
 #ifdef K
 	vik_clipboard_t * vc = (vik_clipboard_t *) p;
@@ -116,7 +116,7 @@ static void clip_get(GtkClipboard * c, GtkSelectionData * selection_data, unsign
 
 
 
-static void clip_clear(GtkClipboard * c, void * p)
+static void clip_clear(__attribute__((unused)) GtkClipboard * c, __attribute__((unused)) void * p)
 {
 #ifdef K
 	vik_clipboard_t* vc = (vik_clipboard_t*)p;
@@ -136,7 +136,7 @@ static void clip_clear(GtkClipboard * c, void * p)
 
 
 /* Our own data type. */
-static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * p)
+static void clip_receive_viking(__attribute__((unused)) GtkClipboard * c, __attribute__((unused)) GtkSelectionData * sd, __attribute__((unused)) void * p)
 {
 #ifdef K
 	LayersPanel * panel = (LayersPanel *) p;
@@ -184,8 +184,9 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
  *
  * Returns: true if coordinates are set.
  */
-static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
+static bool clip_parse_latlon(__attribute__((unused)) const char * text, __attribute__((unused)) LatLon & lat_lon)
 {
+#ifdef K
 	int latdeg, londeg, latmi, lonmi;
 	double lats, lons;
 	double latm, lonm;
@@ -195,7 +196,7 @@ static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
 	//  fprintf(stdout, "parsing %s\n", s);
 
 	int len = s.size();
-#ifdef K
+
 
 	/* Remove non-digits following digits; gets rid of degree
 	   symbols or whatever people use, and punctuation. */

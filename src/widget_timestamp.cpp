@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-TimestampWidget::TimestampWidget(QWidget * parent)
+TimestampWidget::TimestampWidget(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 

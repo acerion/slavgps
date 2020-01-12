@@ -150,7 +150,7 @@ SGObjectTypeID GenericToolRuler::tool_id(void)
 
 
 
-LayerTool::Status GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_click(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
@@ -188,7 +188,7 @@ LayerTool::Status GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEven
 
 
 
-LayerTool::Status GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_move(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -223,7 +223,7 @@ LayerTool::Status GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent
 
 
 
-LayerTool::Status GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolRuler::handle_mouse_release(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_I << "called";
 
@@ -245,7 +245,7 @@ bool GenericToolRuler::deactivate_tool(void)
 
 
 
-LayerTool::Status GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
+LayerTool::Status GenericToolRuler::handle_key_press(__attribute__((unused)) Layer * layer, QKeyEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
@@ -314,7 +314,7 @@ SGObjectTypeID GenericToolZoom::tool_id(void)
 
 
 
-LayerTool::Status GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -390,7 +390,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent
 
 
 
-LayerTool::Status GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_move(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -451,7 +451,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent 
 
 
 
-LayerTool::Status GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -553,7 +553,7 @@ SGObjectTypeID LayerToolPan::tool_id(void)
 
 
 
-LayerTool::Status LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_click(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 	this->window->set_dirty_flag(true);
@@ -570,7 +570,7 @@ LayerTool::Status LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * 
 
 
 
-LayerTool::Status LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -604,7 +604,7 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseE
 
 
 
-LayerTool::Status LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_move(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	//qDebug() << SG_PREFIX_D << "Will call window->pan_move()";
 	this->window->pan_move(event);
@@ -615,7 +615,7 @@ LayerTool::Status LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * e
 
 
 
-LayerTool::Status LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event)
+LayerTool::Status LayerToolPan::handle_mouse_release(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton) {
 		this->window->pan_release(event);
@@ -714,7 +714,7 @@ LayerTool::Status LayerToolSelect::handle_mouse_double_click(Layer * layer, QMou
 
 
 
-void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * event)
+void LayerToolSelect::handle_mouse_click_common(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
 	GisViewport * main_gis_view = this->window->get_main_gis_view();
 	TreeView * tree_view = this->window->get_items_tree()->get_tree_view();

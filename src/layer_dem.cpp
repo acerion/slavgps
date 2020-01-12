@@ -156,7 +156,6 @@ static ParameterSpecification dem_layer_param_specs[] = {
 
 
 
-static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static void srtm_draw_existence(GisViewport * gisview);
 #ifdef VIK_CONFIG_DEM24K
@@ -264,7 +263,7 @@ QString LayerDEM::get_tooltip(void) const
 
 
 
-Layer * LayerDEMInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
+Layer * LayerDEMInterface::unmarshall(Pickle & pickle, __attribute__((unused)) GisViewport * gisview)
 {
 	LayerDEM * layer = new LayerDEM();
 
@@ -853,14 +852,14 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 	const double max_elevation = this->max_elev.ll_value();
 
 	int32_t x;
-	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
+	for (x = start_x, counter.m_easting = start_eas; counter.m_easting <= end_eas; counter.m_easting += dem->east_scale * skip_factor, x += skip_factor) {
 		if (x <= 0 || x >= dem->n_columns) { /* TODO_LATER: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
 			continue;
 		}
 
 		const DEMColumn * column = dem->columns[x];
 	        int32_t y;
-		for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
+		for (y = start_y, counter.m_northing = start_nor; counter.m_northing <= end_nor; counter.m_northing += dem->north_scale * skip_factor, y += skip_factor) {
 			if (y > column->n_points) {
 				continue;
 			}
@@ -900,7 +899,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 
 
 
-void draw_loaded_dem_box(GisViewport * gisview)
+void draw_loaded_dem_box(__attribute__((unused)) GisViewport * gisview)
 {
 #ifdef TODO_LATER
 	/* For getting values of dem_northeast and dem_southwest see DEM::intersect(). */
@@ -986,7 +985,7 @@ static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 
 
 
-void LayerDEM::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerDEM::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
 	if (this->source == DEM_SOURCE_SRTM) {
@@ -1546,7 +1545,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 
 
 
-static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool)
+static bool dem_layer_download_click(__attribute__((unused)) Layer * vdl, __attribute__((unused)) QMouseEvent * ev, __attribute__((unused)) LayerTool * tool)
 {
 	/* Choose & keep track of cache dir.
 	 * Download in background thread.

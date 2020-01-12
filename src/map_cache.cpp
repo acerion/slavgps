@@ -329,7 +329,6 @@ void flush_matching(const std::string & key_part)
 
 	size_t len = key_part.length();
 
-	int i = 0;
 	for (auto iter = keys_list.begin(); iter != keys_list.end(); ) {
 		std::string key = *iter;
 

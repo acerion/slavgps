@@ -145,7 +145,7 @@ sg_ret WpPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * parent_
 
 
 
-sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
+sg_ret WpPropertiesWidget::build_buttons(__attribute__((unused)) QWidget * parent_widget)
 {
 	this->button_delete_current_point = this->button_box_upper->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
 	this->button_delete_current_point->setIcon(QIcon::fromTheme("list-delete"));

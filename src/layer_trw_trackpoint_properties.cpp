@@ -558,7 +558,7 @@ void TpPropertiesWidget::clear_widgets(void)
 
 
 
-void TpPropertiesWidget::build_buttons(QWidget * parent_widget)
+void TpPropertiesWidget::build_buttons(__attribute__((unused)) QWidget * parent_widget)
 {
 	this->button_insert_tp_after = this->button_box_upper->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
 	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));

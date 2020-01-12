@@ -621,7 +621,7 @@ void LayerTRWWaypoints::sublayer_menu_sort(QMenu & menu)
 
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
-sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
 
@@ -1036,7 +1036,7 @@ QString DefaultNameGenerator::try_new_name(void) const
 
 
 
-sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	/* Handle item in old location. */
 	{

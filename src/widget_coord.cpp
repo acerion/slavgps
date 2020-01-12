@@ -45,7 +45,7 @@ using namespace SlavGPS;
 
 
 
-CoordDisplayWidget::CoordDisplayWidget(QWidget * parent)
+CoordDisplayWidget::CoordDisplayWidget(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -77,7 +77,7 @@ void CoordDisplayWidget::set_value(const Coord & coord)
 /**
    @reviewed-on 2019-12-11
 */
-CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
+CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, __attribute__((unused)) QWidget * parent)
 {
 	this->m_vbox = new QVBoxLayout();
 

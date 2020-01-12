@@ -199,7 +199,7 @@ namespace SlavGPS {
 
 
 		virtual sg_ret menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view);
-		virtual sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) { return sg_ret::ok; }
+		virtual sg_ret menu_add_type_specific_operations(__attribute__((unused)) QMenu & menu, __attribute__((unused)) bool in_tree_view) { return sg_ret::ok; }
 
 		/**
 		   @param in_tree_view decides if context menu is
@@ -229,7 +229,7 @@ namespace SlavGPS {
 
 
 
-		virtual void marshall(Pickle & pickle) { };
+		virtual void marshall(__attribute__((unused)) Pickle & pickle) { };
 
 		virtual QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format);
 
@@ -249,7 +249,7 @@ namespace SlavGPS {
 		 */
 		virtual bool handle_selection_in_tree(void) { return false; };
 
-		virtual void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected) { return; };
+		virtual void draw_tree_item(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected) { return; };
 
 		virtual bool show_properties_dialog(void) { return false; };
 

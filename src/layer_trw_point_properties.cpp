@@ -67,7 +67,7 @@ PointPropertiesWidget::PointPropertiesWidget(QWidget * parent) : QWidget(parent)
 
 
 
-sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * parent_widget)
+sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, __attribute__((unused)) QWidget * parent_widget)
 {
 	const int left_col = 0;
 	const int right_col = 1;

@@ -168,8 +168,8 @@ namespace SlavGPS {
 
 		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
-		virtual void close_map_source(MapSourceArgs & args) { return; }
-		virtual void post_read(MapSourceArgs & args) { return; }
+		virtual void close_map_source(__attribute__((unused)) MapSourceArgs & args) { return; }
+		virtual void post_read(__attribute__((unused)) MapSourceArgs & args) { return; }
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;
 
 		bool is_direct_file_access(void) const;

@@ -76,7 +76,7 @@ extern bool have_geojson_export;
 
 
 
-sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
 

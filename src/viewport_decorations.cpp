@@ -103,7 +103,7 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 	}
 
 	const int central_width  = gisview.central_get_width();
-	const int central_height = gisview.central_get_height();
+	__attribute__((unused)) const int central_height = gisview.central_get_height();
 	const int leftmost_pixel = gisview.central_get_leftmost_pixel();
 	const fpixel y_center_pixel = gisview.central_get_y_center_pixel();
 
@@ -161,7 +161,7 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 	   the background. */
 	{
 		begin.rx() += (scale_len_px + this->base_padding); /* Scale value is to the right of scale bar. */
-		const QRectF bounding_rect = QRectF(begin.x(), 0, begin.x() + 300, begin.y());
+		__attribute__((unused)) const QRectF bounding_rect = QRectF(begin.x(), 0, begin.x() + 300, begin.y());
 
 		const QString scale_value = this->draw_scale_helper_get_value_string(gisview, distance_unit, scale_unit);
 		const QFont scale_font = QFont("Helvetica", 40);
@@ -225,7 +225,7 @@ void GisViewportDecorations::draw_scale_helper_draw_scale(GisViewport & gisview,
 /**
    @reviewed-on tbd
 */
-QString GisViewportDecorations::draw_scale_helper_get_value_string(GisViewport & gisview, const DistanceType::Unit & distance_unit, double scale_unit) const
+QString GisViewportDecorations::draw_scale_helper_get_value_string(__attribute__((unused)) GisViewport & gisview, const DistanceType::Unit & distance_unit, double scale_unit) const
 {
 	QString scale_value;
 

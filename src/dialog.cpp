@@ -141,7 +141,7 @@ int Dialog::get_int(const QString & title, const QString & label, int default_nu
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void Dialog::map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent)
+void Dialog::map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, __attribute__((unused)) QWidget * parent)
 {
 	const QString primary_text = QObject::tr("The map data is licensed: %1.").arg(map_license);
 	const QString secondary_text = QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>.")
@@ -259,7 +259,7 @@ void Dialog::move_dialog(QDialog * dialog, const ScreenPos & point_to_expose, bo
 
 
 
-BasicDialog::BasicDialog(QWidget * parent)
+BasicDialog::BasicDialog(__attribute__((unused)) QWidget * parent)
 {
 	this->vbox = new QVBoxLayout;
 	QLayout * old = this->layout();
@@ -292,7 +292,7 @@ BasicDialog::~BasicDialog()
 
 
 
-BasicMessage::BasicMessage(QWidget * parent)
+BasicMessage::BasicMessage(__attribute__((unused)) QWidget * parent)
 {
 	this->vbox = new QVBoxLayout;
 	QLayout * old = this->layout();
@@ -373,7 +373,7 @@ BasicMessage::~BasicMessage()
 
 
 
-DurationDialog::DurationDialog(const QString & title, const QString & label, const Duration & duration, QWidget * a_parent)
+DurationDialog::DurationDialog(const QString & title, const QString & label, const Duration & duration, __attribute__((unused)) QWidget * a_parent)
 {
 	this->setWindowTitle(title);
 

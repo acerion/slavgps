@@ -55,7 +55,7 @@ using namespace SlavGPS;
  *
  * Returns: indicates success or not.
  */
-bool RoutingEngine::find_route(LayerTRW * trw, const LatLon & start, const LatLon & end) const
+bool RoutingEngine::find_route(__attribute__((unused)) LayerTRW * trw, __attribute__((unused)) const LatLon & start, __attribute__((unused)) const LatLon & end) const
 {
 	return false;
 }
@@ -82,7 +82,7 @@ bool RoutingEngine::supports_direction(void)
  *
  * Returns: the computed URL.
  */
-QString RoutingEngine::get_url_from_directions(const QString & start, const QString & end) const
+QString RoutingEngine::get_url_from_directions(__attribute__((unused)) const QString & start, __attribute__((unused)) const QString & end) const
 {
 	return "";
 }
@@ -102,7 +102,7 @@ QString RoutingEngine::get_url_from_directions(const QString & start, const QStr
  *
  * Returns: indicates success or not.
  */
-bool RoutingEngine::refine_route(LayerTRW * trw, Track * trk) const
+bool RoutingEngine::refine_route(__attribute__((unused)) LayerTRW * trw, __attribute__((unused)) Track * trk) const
 {
 	return false;
 }

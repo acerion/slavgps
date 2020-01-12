@@ -277,7 +277,7 @@ static void * expedia_handle_init()
 
 
 
-static void expedia_handle_cleanup(void * handle)
+static void expedia_handle_cleanup(__attribute__((unused)) void * handle)
 {
 	/* Even less here! */
 }

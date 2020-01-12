@@ -280,7 +280,7 @@ void MapSource::set_file_extension(const QString & new_file_extension)
    @bbox: bounding box of interest
    @zoom: the zoom level of interest
 */
-void MapSource::add_copyright(GisViewport * gisview, const LatLonBBox &  bbox, const VikingScale & viking_scale)
+void MapSource::add_copyright(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) const LatLonBBox & bbox, __attribute__((unused)) const VikingScale & viking_scale)
 {
 	return;
 }
@@ -406,7 +406,7 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
+bool MapSource::coord_to_tile_info(__attribute__((unused)) const Coord & scr_coord, __attribute__((unused)) const VikingScale & viking_scale, __attribute__((unused)) TileInfo & tile_info) const
 {
 	qDebug() << SG_PREFIX_E << "Called method from base class";
 	return false;
@@ -415,7 +415,7 @@ bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingScale & 
 
 
 
-sg_ret MapSource::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
+sg_ret MapSource::tile_info_to_center_coord(__attribute__((unused)) const TileInfo & src, __attribute__((unused)) Coord & coord) const
 {
 	qDebug() << SG_PREFIX_E << "Called method from base class";
 	return sg_ret::err;
@@ -466,7 +466,7 @@ const QString MapSource::get_server_hostname(void) const
 
 
 
-const QString MapSource::get_server_path(const TileInfo & src) const
+const QString MapSource::get_server_path(__attribute__((unused)) const TileInfo & src) const
 {
 	return "";
 }
@@ -503,7 +503,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
 {
 	QStringList items;
 
@@ -524,7 +524,7 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
 {
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
 										   this->map_type_id,

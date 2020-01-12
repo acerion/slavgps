@@ -154,7 +154,7 @@ QString OnlineService_query::get_url_for_viewport(GisViewport * a_gisview)
 
 
 
-QString OnlineService_query::get_url_at_position(GisViewport * a_gisview, const Coord * a_coord)
+QString OnlineService_query::get_url_at_position(GisViewport * a_gisview, const __attribute__((unused)) Coord * a_coord)
 {
 	return this->get_url_for_viewport(a_gisview);
 }

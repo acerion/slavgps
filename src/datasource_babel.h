@@ -44,8 +44,8 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel();
 
-		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) override;
-		virtual void cleanup(void * data) { return; };
+		LoadStatus acquire_into_layer(AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) override;
+		virtual void cleanup(__attribute__((unused)) void * data) { return; };
 		virtual int kill(const QString & status);
 
 		virtual SGObjectTypeID get_source_id(void) const override = 0;

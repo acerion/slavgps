@@ -155,7 +155,8 @@ namespace SlavGPS {
 
 	class UTM {
 	public:
-		UTM(double new_northing = NAN, double new_easting = NAN, int new_zone = 0, UTMLetter new_band_letter = UTMLetter::None) {};
+		UTM(double northing = NAN, double easting = NAN, int zone = 0, UTMLetter band_letter = UTMLetter::None)
+			: m_northing(northing), m_easting(easting), m_zone(zone), m_band_letter(band_letter) {};
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_lat_lon(const UTM & utm);
@@ -186,21 +187,21 @@ namespace SlavGPS {
 
 		sg_ret shift_zone_by(int shift);
 
-		double get_northing(void) const { return this->northing; }
-		double get_easting(void) const { return this->easting; }
-		int get_zone(void) const { return this->zone; }
+		double get_northing(void) const { return this->m_northing; }
+		double get_easting(void) const { return this->m_easting; }
+		int get_zone(void) const { return this->m_zone; }
 		UTMLetter get_band_letter(void) const;
 		char get_band_as_letter(void) const;
 
 		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
-		double northing = 0;
-		double easting = 0;
+		double m_northing = 0;
+		double m_easting = 0;
 
 		static bool close_enough(const UTM & utm1, const UTM & utm2);
 
 	private:
-		int zone = 0;
-		UTMLetter band_letter = UTMLetter::None;
+		int m_zone = 0;
+		UTMLetter m_band_letter = UTMLetter::None;
 	};
 	QDebug operator<<(QDebug debug, const UTM & utm);
 

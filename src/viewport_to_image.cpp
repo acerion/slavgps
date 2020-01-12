@@ -118,7 +118,7 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 		label_text = tr("Total area: %1m x %2m (%3 sq. miles)").arg((long) width).arg((long) height).arg((width * height / 2589988.11), 0, 'f', 3); /* "%.3f" */
 		break;
 	case DistanceType::Unit::E::NauticalMiles:
-		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) width).arg((long) height).arg((width * height / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
+		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) width).arg((long) height).arg((width * height / (1852.0 * 1852.0)), 0, 'f', 3); /* "%.3f" */
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected distance unit" << distance_unit;
@@ -603,15 +603,15 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			const QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
 			UTM center_utm = center_utm_orig;
 			if (this->n_tiles_x & 0x1) {
-				center_utm.easting += ((double) x - ceil(((double) this->n_tiles_x)/2)) * (this->scaled_total_width * xmpp);
+				center_utm.m_easting += ((double) x - ceil(((double) this->n_tiles_x)/2)) * (this->scaled_total_width * xmpp);
 			} else {
-				center_utm.easting += ((double) x - (((double) this->n_tiles_x)+1)/2) * (this->scaled_total_width * xmpp);
+				center_utm.m_easting += ((double) x - (((double) this->n_tiles_x)+1)/2) * (this->scaled_total_width * xmpp);
 			}
 
 			if (this->n_tiles_y & 0x1) { /* odd */
-				center_utm.northing -= ((double) y - ceil(((double) this->n_tiles_y)/2)) * (this->scaled_total_height * ympp);
+				center_utm.m_northing -= ((double) y - ceil(((double) this->n_tiles_y)/2)) * (this->scaled_total_height * ympp);
 			} else { /* even */
-				center_utm.northing -= ((double) y - (((double) this->n_tiles_y)+1)/2) * (this->scaled_total_height * ympp);
+				center_utm.m_northing -= ((double) y - (((double) this->n_tiles_y)+1)/2) * (this->scaled_total_height * ympp);
 			}
 
 			viewport->set_center_coord(center_utm, false);

@@ -70,7 +70,7 @@ using namespace SlavGPS;
 
 
 #ifdef HAVE_X11_XLIB_H
-static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
+static int myXErrorHandler(__attribute__((unused)) Display * display, XErrorEvent * theEvent)
 {
 	qDebug() << QObject::tr("Ignoring Xlib error: error code %1 request code %2")
 		.arg(theEvent->error_code)

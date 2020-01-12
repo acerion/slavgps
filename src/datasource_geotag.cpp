@@ -93,7 +93,7 @@ SGObjectTypeID DataSourceGeoTag::source_id(void)
 
 
 
-int DataSourceGeoTag::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceGeoTag::run_config_dialog(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	DataSourceGeoTagDialog config_dialog(this->m_window_title);
 
@@ -139,7 +139,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
    In prinicple this loading should be quite fast and so don't need to
    have any progress monitoring.
 */
-LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceGeoTag::acquire_into_layer(AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog)
 {
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
@@ -158,8 +158,8 @@ LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext &
 			wp->set_name(file_base_name(file_full_path));
 		}
 
-		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->get_name() << "to layer" << trw->get_name();
-		trw->add_waypoint(wp);
+		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->get_name() << "to layer" << acquire_context.m_trw->get_name();
+		acquire_context.m_trw->add_waypoint(wp);
 	}
 
 	this->selected_files.clear();

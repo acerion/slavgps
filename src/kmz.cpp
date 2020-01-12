@@ -116,7 +116,7 @@ static char * doc_kml_str(const QString & file_name, const char * image_filename
  *
  * The KMZ is a zipped file containing a KML file with the associated image.
  */
-int SlavGPS::kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west)
+int SlavGPS::kmz_save_file(__attribute__((unused)) const QPixmap & pixmap, __attribute__((unused)) const QString & file_full_path, __attribute__((unused)) double north, __attribute__((unused)) double east, __attribute__((unused)) double south, __attribute__((unused)) double west)
 {
 #ifdef HAVE_ZIP_H
 /* Older libzip compatibility: */
@@ -379,7 +379,7 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
    @return <KMZOpenStatus::ZipError, zip-err-code> on zip errors,
    @return <KMZOpenStatus::some-value, ...> on KMZ errors.
 */
-KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, GisViewport * gisview, LayersPanel * panel)
+KMZOpenResult SlavGPS::kmz_open_file(__attribute__((unused)) const QString & file_full_path, __attribute__((unused)) GisViewport * gisview, __attribute__((unused)) LayersPanel * panel)
 {
 	KMZOpenResult ret;
 

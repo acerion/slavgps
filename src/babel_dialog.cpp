@@ -206,7 +206,6 @@ void BabelDialog::get_write_mode(BabelMode & mode)
 	}
 
 	QWidget * widget = NULL;
-	QCheckBox * checkbox = NULL;
 
 	widget = this->mode_box->itemAt(0)->widget();
 	if (!widget) {

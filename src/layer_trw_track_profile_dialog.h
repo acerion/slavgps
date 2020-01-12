@@ -123,7 +123,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, Track * trk, GisViewport * main_gisview, QWidget * parent = NULL);
+		TrackProfileDialog(Track * trk, GisViewport * main_gisview, QWidget * parent = NULL);
 		~TrackProfileDialog();
 
 		void clear_image(QPixmap * pix);
@@ -310,7 +310,7 @@ namespace SlavGPS {
 
 		sg_ret draw_function_values(Track & trk);
 
-		sg_ret draw_additional_indicators(Track & trk) override { return sg_ret::ok; };
+		sg_ret draw_additional_indicators(__attribute__((unused)) Track & trk) override { return sg_ret::ok; };
 
 		sg_ret draw_gps_speeds_relative(Track & trk);
 
@@ -422,7 +422,7 @@ namespace SlavGPS {
 
 
 	template <typename Tx, typename Ty>
-		sg_ret ProfileView<Tx, Ty>::regenerate_track_data_to_draw(Track & trk)
+	sg_ret ProfileView<Tx, Ty>::regenerate_track_data_to_draw(__attribute__((unused)) Track & trk)
 	{
 		this->track_data_to_draw.clear();
 
@@ -684,7 +684,7 @@ Crosshair2D ProfileView<Tx, Ty>::get_crosshair_under_cursor(QMouseEvent * ev) co
 
 
 template <typename Tx, typename Ty>
-sg_ret ProfileView<Tx, Ty>::on_cursor_move(Track * trk, QMouseEvent * ev)
+sg_ret ProfileView<Tx, Ty>::on_cursor_move(__attribute__((unused)) Track * trk, QMouseEvent * ev)
 {
 	const TPInfo tp_info = this->get_tp_info_under_cursor(ev);
 	if (!tp_info.valid || NULL == tp_info.found_tp) {
@@ -816,7 +816,7 @@ sg_ret ProfileView<Tx, Ty>::draw_parameter_from_auxiliary_source(void)
    @reviewed-on tbd
 */
 template <typename Tx, typename Ty>
-sg_ret ProfileView<Tx, Ty>::draw_function_values(Track & trk)
+sg_ret ProfileView<Tx, Ty>::draw_function_values(__attribute__((unused)) Track & trk)
 {
 	const size_t n_values = this->track_data_to_draw.size();
 	if (0 == n_values) {

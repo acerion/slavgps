@@ -222,7 +222,7 @@ Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 
-bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
+bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_value, __attribute__((unused)) bool is_file_operation)
 {
 	switch (param_id) {
 	case PARAM_IMAGE_FILE_FULL_PATH:
@@ -230,10 +230,10 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		this->set_image_file_full_path(param_value.val_string);
 		break;
 	case PARAM_CORNER_UTM_EASTING:
-		this->utm_tl.easting = param_value.u.val_double;
+		this->utm_tl.m_easting = param_value.u.val_double;
 		break;
 	case PARAM_CORNER_UTM_NORTHING:
-		this->utm_tl.northing = param_value.u.val_double;
+		this->utm_tl.m_northing = param_value.u.val_double;
 		break;
 	case PARAM_MPP_EASTING:
 		this->mpp_easting = param_value.u.val_double;
@@ -371,7 +371,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_
 
 
 
-void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerGeoref::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	if (this->image.isNull()) {
 		qDebug() << SG_PREFIX_I << "Not drawing the layer, no image";
@@ -476,7 +476,7 @@ bool LayerGeoref::show_properties_dialog(GisViewport * gisview)
 
 
 /* Also known as LayerGeoref::load_image(). */
-void LayerGeoref::post_read(GisViewport * gisview, bool from_file)
+void LayerGeoref::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
 {
 	if (this->image_file_full_path.isEmpty()) {
 		qDebug() << SG_PREFIX_I << "Not loading image, file path is empty";
@@ -678,7 +678,7 @@ void LayerGeoref::export_params_cb(void)
 		return;
 	}
 
-	fprintf(file, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->utm_tl.easting, this->utm_tl.northing);
+	fprintf(file, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->utm_tl.m_easting, this->utm_tl.m_northing);
 	fclose(file);
 	file = NULL;
 }
@@ -837,7 +837,7 @@ void GeorefConfigDialog::sync_coords_in_entries(void)
 
 
 
-void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
+void GeorefConfigDialog::coord_mode_changed_cb(__attribute__((unused)) int combo_index)
 {
 	const int current_coord_mode = this->coord_mode_combo->currentData().toInt();
 
@@ -947,7 +947,7 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 
 
 
-GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent)
+GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, __attribute__((unused)) QWidget * parent)
 {
 	this->layer = the_layer;
 
@@ -1171,8 +1171,8 @@ void LayerGeoref::goto_center_cb(void)
 	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
 	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
 
-	utm.easting = this->utm_tl.get_easting() + center_to_left_m;
-	utm.northing = this->utm_tl.get_northing() - center_to_bottom_m;
+	utm.m_easting = this->utm_tl.get_easting() + center_to_left_m;
+	utm.m_northing = this->utm_tl.get_northing() - center_to_bottom_m;
 
 	gisview->set_center_coord(utm);
 	gisview->request_redraw("Redrawing items after setting new center coord in viewport");
@@ -1181,7 +1181,7 @@ void LayerGeoref::goto_center_cb(void)
 
 
 
-sg_ret LayerGeoref::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerGeoref::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * action = NULL;
 
@@ -1251,8 +1251,8 @@ LayerTool::Status LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (this->click_x != -1) {
-		this->utm_tl.easting += (ev->x() - this->click_x) * tool->gisview->get_viking_scale().get_x();
-		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->gisview->get_viking_scale().get_y();
+		this->utm_tl.m_easting += (ev->x() - this->click_x) * tool->gisview->get_viking_scale().get_x();
+		this->utm_tl.m_northing -= (ev->y() - this->click_y) * tool->gisview->get_viking_scale().get_y();
 		this->emit_tree_item_changed("Georef - move released");
 		return LayerTool::Status::Handled;
 	}
@@ -1333,7 +1333,7 @@ LayerTool::Status LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseE
 
 
 
-LayerTool::Status LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
+LayerTool::Status LayerGeoref::move_press(QMouseEvent * ev, __attribute__((unused)) LayerTool * tool)
 {
 	if (this->m_kind != LayerKind::Georef) {
 		qDebug() << SG_PREFIX_E << "Unexpected layer kind" << this->m_kind;

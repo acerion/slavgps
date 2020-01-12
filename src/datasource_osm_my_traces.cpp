@@ -146,7 +146,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMMyTracesDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceOSMMyTracesDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
@@ -422,7 +422,7 @@ static LoadStatus read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 
 
 
-static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GPXMetaData *> & list, const char *title, const char *msg)
+static std::list<GPXMetaData *> * select_from_list(Window * parent, __attribute__((unused)) std::list<GPXMetaData *> & list, const char *title, const char *msg)
 {
 	BasicDialog * dialog = new BasicDialog(parent);
 
@@ -431,9 +431,9 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 	dialog->button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	/* Default to not apply - as initially nothing is selected! */
-	QPushButton * cancel_button = dialog->button_box->button(QDialogButtonBox::Cancel);
+	__attribute__((unused)) QPushButton * cancel_button = dialog->button_box->button(QDialogButtonBox::Cancel);
 
-	QLabel * label = new QLabel(msg);
+	__attribute__((unused)) QLabel * label = new QLabel(msg);
 
 #ifdef K_FIXME_RESTORE
 
@@ -570,7 +570,7 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
@@ -634,10 +634,11 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 	   Hence the preference is to create multiple layers
 	   and so this creation of the layers must be managed here. */
 
-	bool create_new_layer = (!trw);
+	/* TODO_LATER: it seems that this code has its own mechanism for creating new layer. Make it more in line with AcquireContext. */
+	bool create_new_layer = (!acquire_context.m_trw);
 
 	/* Only update the screen on the last layer acquired. */
-	LayerTRW * vtl_last = trw;
+	LayerTRW * vtl_last = acquire_context.m_trw;
 	bool got_something = false;
 
 	if (selected) {
@@ -655,7 +656,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 					target_layer->set_name(QObject::tr("My OSM Traces"));
 				}
 			} else {
-				target_layer = trw;
+				target_layer = acquire_context.m_trw;
 			}
 
 			LoadStatus convert_result = LoadStatus::Code::Error;
@@ -664,7 +665,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 				/* Download type is GPX (or a compressed version). */
 				this->m_acquire_options->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
-				convert_result = this->m_acquire_options->import_from_url(target_layer, &local_dl_options, NULL);
+				convert_result = this->m_acquire_options->import_from_url(acquire_context, &local_dl_options, NULL);
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 

@@ -203,7 +203,7 @@ void AcquireWorker::run(void)
 
 
 	this->m_acquire_is_running = true;
-	const LoadStatus acquire_result = this->m_data_source->acquire_into_layer(this->m_acquire_context.m_trw, this->m_acquire_context, this->m_progress_dialog);
+	const LoadStatus acquire_result = this->m_data_source->acquire_into_layer(this->m_acquire_context, this->m_progress_dialog);
 	this->m_acquire_is_running = false;
 
 
@@ -356,7 +356,7 @@ AcquireOptions::~AcquireOptions()
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-LoadStatus AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_with_shell_command(__attribute__((unused)) AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -413,7 +413,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_from_url(AcquireContext & acquire_context, const DownloadOptions * dl_options, __attribute__((unused)) AcquireProgressDialog * progr_dialog)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -445,7 +445,7 @@ LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions
 			file_importer->set_input(this->input_data_format, target_file_full_path);
 			file_importer->set_output("gpx", "-");
 
-			load_status = file_importer->convert_through_gpx(trw);
+			load_status = file_importer->convert_through_gpx(acquire_context.m_trw);
 			delete file_importer;
 		} else {
 			/* Process directly the retrieved file. */
@@ -453,7 +453,7 @@ LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions
 
 			QFile file(target_file_full_path);
 			if (file.open(QIODevice::ReadOnly)) {
-				load_status = GPX::read_layer_from_file(file, trw);
+				load_status = GPX::read_layer_from_file(file, acquire_context.m_trw);
 			} else {
 				load_status = LoadStatus::Code::FileAccess;
 				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
@@ -482,12 +482,12 @@ LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, const DownloadOptions
  *
  * Returns: %true on success.
  */
-LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 
-		if (!trw->is_in_tree()) {
-			acquire_context.m_parent_layer->add_child_item(trw, true);
+		if (!acquire_context.m_trw->is_in_tree()) {
+			acquire_context.m_parent_layer->add_child_item(acquire_context.m_trw, true);
 		}
 
 
@@ -505,7 +505,7 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
 		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(progr_dialog);
-		const LoadStatus result = importer->convert_through_gpx(trw);
+		const LoadStatus result = importer->convert_through_gpx(acquire_context.m_trw);
 
 		delete importer;
 
@@ -515,10 +515,10 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 
 	switch (this->mode) {
 	case AcquireOptions::Mode::FromURL:
-		return this->import_from_url(trw, dl_options, progr_dialog);
+		return this->import_from_url(acquire_context, dl_options, progr_dialog);
 
 	case AcquireOptions::Mode::FromShellCommand:
-		return this->import_with_shell_command(trw, acquire_context, progr_dialog);
+		return this->import_with_shell_command(acquire_context, progr_dialog);
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
@@ -580,7 +580,10 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but existing TRW is not set";
 		return sg_ret::err;
 	}
-	Layer * parent_layer = this->ctx.m_trw->get_owning_layer(); /* Either Aggregate layer or GPS layer. */
+	if (nullptr == this->ctx.m_parent_layer) {
+		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but parent layer is not set";
+		return sg_ret::err;
+	}
 
 	return Acquire::acquire_from_source(data_source, TargetLayerMode::AddToLayer, this->ctx);
 }
@@ -588,8 +591,13 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 
 
 
-sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer * parent_layer)
+sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source)
 {
+	if (nullptr == this->ctx.m_parent_layer) {
+		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but parent layer is not set";
+		return sg_ret::err;
+	}
+
 	return Acquire::acquire_from_source(data_source, TargetLayerMode::CreateNewLayer, this->ctx);
 }
 
@@ -598,7 +606,7 @@ sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source, Layer *
 
 void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 {
-	this->import_into_new_layer(new DataSourceGPS(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceGPS());
 }
 
 
@@ -606,7 +614,7 @@ void LayerTRWImporter::import_into_new_layer_from_gps_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 {
-	this->import_into_new_layer(new DataSourceFile(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceFile());
 }
 
 
@@ -614,7 +622,7 @@ void LayerTRWImporter::import_into_new_layer_from_file_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 {
-	this->import_into_new_layer(new DataSourceGeoJSON(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceGeoJSON());
 }
 
 
@@ -622,7 +630,7 @@ void LayerTRWImporter::import_into_new_layer_from_geojson_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 {
-	this->import_into_new_layer(new DataSourceRouting(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceRouting());
 }
 
 
@@ -630,7 +638,7 @@ void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 {
-	this->import_into_new_layer(new DataSourceOSMTraces(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceOSMTraces());
 }
 
 
@@ -638,7 +646,7 @@ void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
 {
-	this->import_into_new_layer(new DataSourceOSMMyTraces(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceOSMMyTraces());
 }
 
 
@@ -651,7 +659,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 		return;
 	}
 
-	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
 }
 #endif
 
@@ -661,7 +669,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 #ifdef VIK_CONFIG_GEOTAG
 void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 {
-	this->import_into_new_layer(new DataSourceGeoTag(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceGeoTag());
 }
 #endif
 
@@ -671,7 +679,7 @@ void LayerTRWImporter::import_into_new_layer_from_geotag_cb(void)
 #ifdef VIK_CONFIG_GEONAMES
 void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 {
-	this->import_into_new_layer(new DataSourceWikipedia(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceWikipedia());
 }
 #endif
 
@@ -680,7 +688,7 @@ void LayerTRWImporter::import_into_new_layer_from_wikipedia_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_url_cb(void)
 {
-	this->import_into_new_layer(new DataSourceURL(), this->ctx.m_parent_layer);
+	this->import_into_new_layer(new DataSourceURL());
 }
 
 

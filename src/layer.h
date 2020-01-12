@@ -120,20 +120,20 @@ namespace SlavGPS {
 		   created from create() or set_param(). */
 		virtual void post_read(GisViewport * gisview, bool from_file);
 
-		virtual void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected) { return; };
+		void draw_tree_item(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected) override { return; };
 
 		virtual QString get_tooltip(void) const;
 
 		bool handle_selection_in_tree(void);
 
-		virtual void set_coord_mode(CoordMode mode) { return; };
+		virtual void set_coord_mode(__attribute__((unused)) CoordMode mode) { return; };
 
 		/* Methods for generic "Select" tool. */
-		virtual bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)         { return false; };
-		virtual bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)  { return false; };
-		virtual bool handle_select_tool_move(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)          { return false; };
-		virtual bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)       { return false; };
-		virtual bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview)                                 { return false; };
+		virtual bool handle_select_tool_click(__attribute__((unused)) QMouseEvent * event, __attribute__((unused)) GisViewport * gisview, __attribute__((unused)) LayerToolSelect * select_tool)         { return false; };
+		virtual bool handle_select_tool_double_click(__attribute__((unused)) QMouseEvent * event, __attribute__((unused)) GisViewport * gisview, __attribute__((unused)) LayerToolSelect * select_tool)  { return false; };
+		virtual bool handle_select_tool_move(__attribute__((unused)) QMouseEvent * event, __attribute__((unused)) GisViewport * gisview, __attribute__((unused)) LayerToolSelect * select_tool)          { return false; };
+		virtual bool handle_select_tool_release(__attribute__((unused)) QMouseEvent * event, __attribute__((unused)) GisViewport * gisview, __attribute__((unused)) LayerToolSelect * select_tool)       { return false; };
+		virtual bool handle_select_tool_context_menu(__attribute__((unused)) QMouseEvent * event, __attribute__((unused)) GisViewport * gisview)                                 { return false; };
 
 
 
@@ -155,12 +155,12 @@ namespace SlavGPS {
 		*/
 		virtual sg_ret delete_child_item(TreeItem * item, bool confirm_deleting);
 
-		virtual sg_ret copy_child_item(TreeItem * item, uint8_t ** data, unsigned int * len) { return sg_ret::err; }
-		virtual sg_ret unpickle_child_item(TreeItem * item, Pickle & pickle) { return sg_ret::err; }
+		virtual sg_ret copy_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) uint8_t ** data, __attribute__((unused)) unsigned int * len) { return sg_ret::err; }
+		virtual sg_ret unpickle_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) Pickle & pickle) { return sg_ret::err; }
 
 
 
-		virtual void change_coord_mode(CoordMode dest_mode) { return; };
+		virtual void change_coord_mode(__attribute__((unused)) CoordMode dest_mode) { return; };
 
 		void request_new_viewport_center(GisViewport * gisview, const Coord & coord);
 

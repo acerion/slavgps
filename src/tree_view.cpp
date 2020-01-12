@@ -360,9 +360,7 @@ bool TreeView::get_tree_item_visibility(const TreeItem * tree_item)
 */
 bool TreeView::get_tree_item_visibility_with_parents(const TreeItem * tree_item)
 {
-	const TreeIndex & index = tree_item->index;
-
-	int loop_depth = 1;
+	__attribute__((unused)) int loop_depth = 1;
 
 	TreeIndex this_item_index = tree_item->index;
 	const TreeItem * this_tree_item = tree_item;
@@ -544,13 +542,13 @@ typedef struct _SortTuple
 	int64_t timestamp;
 } SortTuple;
 
-static int sort_tuple_compare(const void * a, const void * b, void * order)
+static int sort_tuple_compare(__attribute__((unused)) const void * a, __attribute__((unused)) const void * b, __attribute__((unused)) void * order)
 {
+	int answer = -1;
+
+#ifdef K_FIXME_RESTORE
 	SortTuple *sa = (SortTuple *)a;
 	SortTuple *sb = (SortTuple *)b;
-
-	int answer = -1;
-#ifdef K_FIXME_RESTORE
 	const int sort_order = (int) (long) order;
 	if (sort_order < TreeViewSortOrder::DateAscending) {
 		/* Alphabetical comparison, default ascending order. */
@@ -597,7 +595,7 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
  */
 void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order)
 {
-	TreeIndex const & parent_index = parent_tree_item->index;
+	__attribute__((unused)) TreeIndex const & parent_index = parent_tree_item->index;
 
 	if (sort_order == TreeViewSortOrder::None) {
 		/* Nothing to do. */
@@ -770,7 +768,7 @@ TreeView::~TreeView()
    Range of changed items is between @param top_left and @param
    bottom_right, but this method only handles @top_left item.
 */
-void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right)
+void TreeView::data_changed_cb(const QModelIndex & top_left, __attribute__((unused)) const QModelIndex & bottom_right)
 {
 	if (!top_left.isValid()) {
 		return;

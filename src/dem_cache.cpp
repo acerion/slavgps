@@ -250,7 +250,7 @@ Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation metho
 	Altitude result; /* Invalid by default. */
 
 	if (loaded_dems.empty()) {
-		result;
+		return result;
 	}
 
 	CoordElev ce;

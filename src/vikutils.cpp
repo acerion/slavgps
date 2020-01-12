@@ -352,7 +352,7 @@ void SGUtils::set_auto_features_on_first_run(void)
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to.
  * Then resolve the full path to get the normal canonical filename.
  */
-QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path)
+QString SlavGPS::vu_get_canonical_filename(__attribute__((unused)) Layer * layer, const QString & path, const QString & reference_file_full_path)
 {
 	QString canonical;
 

@@ -318,7 +318,7 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
  */
 void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	Layer * trigger = gisview->get_trigger();
+	__attribute__((unused)) Layer * trigger = gisview->get_trigger();
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
@@ -568,7 +568,7 @@ void LayerAggregate::analyse_cb(void) /* Slot. */
 
 
 
-sg_ret LayerAggregate::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerAggregate::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
 	menu.addSeparator();
@@ -700,7 +700,7 @@ sg_ret LayerAggregate::detach_from_tree(Layer * layer)
 
 
 
-sg_ret LayerAggregate::delete_child_item(TreeItem * item, bool confirm_deleting)
+sg_ret LayerAggregate::delete_child_item(TreeItem * item, __attribute__((unused)) bool confirm_deleting)
 {
 	if (!item->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not in tree";
@@ -720,7 +720,7 @@ sg_ret LayerAggregate::delete_child_item(TreeItem * item, bool confirm_deleting)
 		return sg_ret::err;
 	}
 
-	const bool was_visible = layer->is_visible();
+	__attribute__((unused)) const bool was_visible = layer->is_visible();
 
 	this->tree_view->detach_tree_item(layer);
 
@@ -1000,7 +1000,7 @@ int LayerAggregate::get_child_layers_count(void) const
 
 
 
-sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	/* Handle item in old location. */
 	{

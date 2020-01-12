@@ -823,10 +823,10 @@ DownloadProtocol SlavGPS::from_url(const QString & url)
 		protocol = DownloadProtocol::HTTPS;
 
 	} else if (url.left(strlen("ftp://")) == "ftp://") {
-		protocol == DownloadProtocol::FTP;
+		protocol = DownloadProtocol::FTP;
 
 	} else if (url.left(strlen("file://")) == "file://") {
-		protocol == DownloadProtocol::File;
+		protocol = DownloadProtocol::File;
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Unsupported protocol in" << url;

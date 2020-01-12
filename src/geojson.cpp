@@ -57,7 +57,7 @@ using namespace SlavGPS;
 /**
  * Perform any cleanup actions once program has completed running.
  */
-static void my_watch(GPid pid, int status, void * user_data)
+static void my_watch(GPid pid, __attribute__((unused)) int status, __attribute__((unused)) void * user_data)
 {
 	g_spawn_close_pid(pid);
 }

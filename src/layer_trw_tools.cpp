@@ -90,7 +90,10 @@ extern LayerTool * trw_layer_tools[];
 
 
 static LayerTool::Status create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
-static LayerTool::Status create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return LayerTool::Status::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
+static LayerTool::Status create_new_trackpoint_route_finder(__attribute__((unused)) LayerTRW * trw, __attribute__((unused)) Track * track, __attribute__((unused)) QMouseEvent * ev, __attribute__((unused)) GisViewport * gisview)
+{
+	return LayerTool::Status::Ignored;
+} /* TODO_LATER: implement the function for route finder tool. */
 
 
 
@@ -361,7 +364,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
    layer-specific movement, so the layer has to implement the
    behaviour itself.
 */
-bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, __attribute__((unused)) GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (select_tool->selected_tree_item_type_id == Waypoint::type_id()) {
 		return LayerTool::Status::Handled == helper_move_wp(this, select_tool, ev, select_tool->gisview);
@@ -1499,7 +1502,7 @@ SGObjectTypeID LayerToolTRWExtendedRouteFinder::tool_id(void)
 
 
 
-LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
+LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_move(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * ev)
 {
 	/* TODO_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
 	return LayerTool::Status::Ignored;
@@ -1584,11 +1587,11 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 
 
 		/* Update UI to let user know what's going on. */
-		StatusBar * sb = trw->get_window()->get_statusbar();
+		StatusBar * statusbar = trw->get_window()->get_statusbar();
 
 		QString engine_name;
 		if (false == Routing::get_default_engine_name(engine_name)) {
-			trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Cannot plan route without a default routing engine."));
+			statusbar->set_message(StatusBarField::Info, QObject::tr("Cannot plan route without a default routing engine."));
 			return LayerTool::Status::Handled;
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
@@ -1597,7 +1600,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 			.arg(start.lon, 0, 'f', 3)
 			.arg(end.lat, 0, 'f', 3)
 			.arg(end.lon, 0, 'f', 3);
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg1);
+		statusbar->set_message(StatusBarField::Info, msg1);
 
 		trw->get_window()->set_busy_cursor();
 		bool find_status = Routing::find_route_with_default_engine(trw, start, end);
@@ -1609,7 +1612,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine_name).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
 			: QObject::tr("Error getting route from %1.").arg(engine_name);
 
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg2);
+		statusbar->set_message(StatusBarField::Info, msg2);
 
 		trw->emit_tree_item_changed("TRW - extended route finder - handle mouse click - route");
 

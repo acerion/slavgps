@@ -222,7 +222,7 @@ static void draw_utm_skip_insignia(GisViewport * gisview, QPen & pen, int x, int
 
 
 
-void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord & coord)
+void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_color, __attribute__((unused)) const QColor & bg_color, const Coord & coord)
 {
 	ScreenPos label_pos;
 	this->gisview->coord_to_screen_pos(coord, label_pos);
@@ -1078,8 +1078,8 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_po
 
 	const fpixel label_x = wp_pos.x();
 	const fpixel label_y = wp_pos.y();
-	int label_width = 100;
-	int label_height = 50;
+	__attribute__((unused)) int label_width = 100;
+	__attribute__((unused)) int label_height = 50;
 
 	if (do_highlight) {
 

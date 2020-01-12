@@ -117,7 +117,7 @@ bool GisViewportZoomDialog::custom_zoom_dialog(VikingScale & scale, QWidget * pa
 
 
 
-GisViewportZoomDialog::GisViewportZoomDialog(VikingScale & scale, QWidget * parent)
+GisViewportZoomDialog::GisViewportZoomDialog(VikingScale & scale, __attribute__((unused)) QWidget * parent)
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
@@ -217,7 +217,6 @@ ZoomOperation SlavGPS::wheel_event_to_zoom_operation(const QWheelEvent * event)
 	ZoomOperation result;
 
 	const QPoint angle = event->angleDelta();
-	const bool scroll_up = angle.y() > 0;
 
 	if (angle.y() > 0) {
 		result = ZoomOperation::In;
@@ -524,7 +523,7 @@ TileScale VikingScale::to_tile_scale(void) const
 /* See: http://wiki.openstreetmap.org/wiki/Zoom_levels */
 TileZoomLevel VikingScale::to_tile_zoom_level(void) const
 {
-	const double mpp = this->x;
+	__attribute__((unused)) const double mpp = this->x;
 
 	const TileScale tile_scale = this->to_tile_scale();
 	int tile_zoom_level = tile_scale.get_tile_zoom_level();
@@ -625,7 +624,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox(GisViewport * gisview, CoordMode mode,
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
+sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attribute__((unused)) CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */

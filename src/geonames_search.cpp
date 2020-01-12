@@ -135,7 +135,7 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 static std::list<Geoname *> select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);
-std::list<Geoname *> Geonames::select_from_list(BasicDialog & dialog, const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
+std::list<Geoname *> Geonames::select_from_list(BasicDialog & dialog, __attribute__((unused)) const QString & title, __attribute__((unused)) const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
 {
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(dialog, geonames, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_geoname());
 

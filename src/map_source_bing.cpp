@@ -243,7 +243,7 @@ bool XMLHandlerBing::endDocument(void)
 
 
 
-bool XMLHandlerBing::startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts)
+bool XMLHandlerBing::startElement(__attribute__((unused)) const QString &namespaceURI, const QString &localName, __attribute__((unused)) const QString &qName, __attribute__((unused)) const QXmlAttributes &atts)
 {
 	qDebug() << SG_PREFIX_I << "Opening tag for" << localName;
 	this->stack.push_back(localName);
@@ -257,7 +257,7 @@ bool XMLHandlerBing::startElement(const QString &namespaceURI, const QString &lo
 
 
 
-bool XMLHandlerBing::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
+bool XMLHandlerBing::endElement(__attribute__((unused)) const QString &namespaceURI, const QString &localName, __attribute__((unused)) const QString &qName)
 {
 	qDebug() << SG_PREFIX_I << "Closing tag for" << localName;
 	this->stack.pop_back();
@@ -315,15 +315,15 @@ bool XMLHandlerBing::characters(const QString & ch)
 			this->current_provider->bbox.south = SGUtils::c_to_double(ch);
 			qDebug() << SG_PREFIX_I << "South =" << this->current_provider->bbox.south;
 
-		} else if (current, "WestLongitude") {
+		} else if (current == "WestLongitude") {
 			this->current_provider->bbox.west = SGUtils::c_to_double(ch);
 			qDebug() << SG_PREFIX_I << "West =" << this->current_provider->bbox.west;
 
-		} else if (current, "NorthLatitude") {
+		} else if (current == "NorthLatitude") {
 			this->current_provider->bbox.north = SGUtils::c_to_double(ch);
 			qDebug() << SG_PREFIX_I << "North =" << this->current_provider->bbox.north;
 
-		} else if (current, "EastLongitude") {
+		} else if (current == "EastLongitude") {
 			this->current_provider->bbox.east = SGUtils::c_to_double(ch);
 			qDebug() << SG_PREFIX_I << "East =" << this->current_provider->bbox.east;
 

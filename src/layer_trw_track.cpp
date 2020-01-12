@@ -1369,12 +1369,12 @@ void Track::marshall(Pickle & pickle)
 /*
  * Take a byte array and convert it into a Track.
  */
-Track * Track::unmarshall(Pickle & pickle)
+Track * Track::unmarshall(__attribute__((unused)) Pickle & pickle)
 {
+#ifdef TODO_LATER
 	const pickle_size_t data_size = pickle.take_size();
 	const QString type_id = pickle.take_string();
 
-#ifdef TODO_LATER
 	Track * new_trk = new Track(((Track *)pickle.data)->is_route());
 	/* Basic properties: */
 	new_trk->visible = ((Track *)pickle.data)->visible;
@@ -2171,9 +2171,8 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 
 
 
-sg_ret Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
+sg_ret Track::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, __attribute__((unused)) bool in_tree_view)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	QAction * qa = NULL;
 
 	if (ops.is_member(StandardMenuOperation::Properties)) {
@@ -3193,7 +3192,6 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 
 	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
-	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 
 
 	LayerTRW * trw = this->get_parent_layer_trw();

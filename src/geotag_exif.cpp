@@ -415,8 +415,6 @@ bool GeotagExif::object_has_gps_info(const QString & file_full_path)
 
 static sg_ret write_exif_gps_data(const QString & file_full_path, const Coord & coord, const Altitude & alt)
 {
-	sg_ret retv = sg_ret::ok;
-
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	if (NULL == image.get()) {
 		qDebug() << SG_PREFIX_E << "get() failed on pointer to" << file_full_path << "after open()";

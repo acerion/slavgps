@@ -84,7 +84,7 @@ SGObjectTypeID DataSourceGeoJSON::source_id(void)
 
 
 
-int DataSourceGeoJSON::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceGeoJSON::run_config_dialog(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	DataSourceGeoJSONDialog config_dialog(this->m_window_title);
 
@@ -129,7 +129,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-LoadStatus DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceGeoJSON::acquire_into_layer(AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog)
 {
 	/* Process selected files. */
 	for (int i = 0; i < this->selected_files.size(); i++) {

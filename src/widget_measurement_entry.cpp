@@ -49,7 +49,7 @@ using namespace SlavGPS;
 
 
 
-MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_iu, const ParameterScale<double> * scale, QWidget * parent)
+MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_iu, const ParameterScale<double> * scale, __attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::NoFrame);
 
@@ -161,7 +161,7 @@ void MeasurementEntryWidget::set_tooltip(const QString & tooltip)
 
 
 
-MeasurementEntryWidget_2::MeasurementEntryWidget_2(QWidget * parent)
+MeasurementEntryWidget_2::MeasurementEntryWidget_2(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::NoFrame);
 
@@ -188,7 +188,7 @@ MeasurementEntryWidget_2::MeasurementEntryWidget_2(QWidget * parent)
 
 
 
-MeasurementDisplayWidget::MeasurementDisplayWidget(QWidget * parent)
+MeasurementDisplayWidget::MeasurementDisplayWidget(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 

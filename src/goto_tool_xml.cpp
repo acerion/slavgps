@@ -131,7 +131,7 @@ bool MyHandler::endDocument(void)
   Updates element stack.
   Extracts lat/lon from element attributes.
 */
-bool MyHandler::startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts)
+bool MyHandler::startElement(__attribute__((unused)) const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts)
 {
 	this->stack.push_back(localName);
 
@@ -179,7 +179,7 @@ bool MyHandler::startElement(const QString &namespaceURI, const QString &localNa
 
 
 
-bool MyHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
+bool MyHandler::endElement(__attribute__((unused)) const QString &namespaceURI, const QString &localName, const QString &qName)
 {
 	qDebug() << SG_PREFIX_I << "localName =" << localName << "qName =" << qName;
 	this->stack.pop_back();

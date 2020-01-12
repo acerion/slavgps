@@ -71,9 +71,9 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireTool() {};
-		virtual int kill(const QString & status) { return -1; };
-		virtual void import_progress_cb(AcquireProgressCode code, void * data) { return; };
-		virtual void export_progress_cb(AcquireProgressCode code, void * data) { return; };
+		virtual int kill(__attribute__((unused)) const QString & status) { return -1; };
+		virtual void import_progress_cb(__attribute__((unused)) AcquireProgressCode code, __attribute__((unused)) void * data) { return; };
+		virtual void export_progress_cb(__attribute__((unused)) AcquireProgressCode code, __attribute__((unused)) void * data) { return; };
 	};
 
 
@@ -154,9 +154,9 @@ namespace SlavGPS {
 		AcquireOptions(AcquireOptions::Mode new_mode) : mode(new_mode) { };
 		virtual ~AcquireOptions();
 
-		LoadStatus universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
-		LoadStatus import_from_url(LayerTRW * trw, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
-		LoadStatus import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus universal_import_fn(AcquireContext & acquire_context, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_from_url(AcquireContext & acquire_context, const DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_with_shell_command(AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int kill_babel_process(const QString & status);
 
@@ -183,7 +183,7 @@ namespace SlavGPS {
 		   parent_layer. */
 		LayerTRWImporter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw);
 
-		sg_ret import_into_new_layer(DataSource * data_source, Layer * parent_layer);
+		sg_ret import_into_new_layer(DataSource * data_source);
 		sg_ret import_into_existing_layer(DataSource * data_source);
 
 		sg_ret add_import_into_new_layer_submenu(QMenu & submenu);

@@ -69,14 +69,14 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) { return LoadStatus::Code::Error; };
-		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context) { return; };
-		virtual void cleanup(void * data) { return; };
-		virtual int kill(const QString & status) { return -1; };
+		virtual LoadStatus acquire_into_layer(__attribute__((unused)) AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog) { return LoadStatus::Code::Error; };
+		virtual void progress_func(__attribute__((unused)) AcquireProgressCode code, __attribute__((unused)) void * data, __attribute__((unused)) AcquireContext * acquire_context) { return; };
+		virtual void cleanup(__attribute__((unused)) void * data) { return; };
+		virtual int kill(__attribute__((unused)) const QString & status) { return -1; };
 
 		virtual sg_ret on_complete(void) { return sg_ret::ok; };
 
-		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
+		virtual int run_config_dialog(__attribute__((unused)) AcquireContext & acquire_context) { return QDialog::Rejected; };
 
 		virtual AcquireProgressDialog * create_progress_dialog(const QString & title);
 
@@ -105,7 +105,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		DataSourceDialog(const QString & window_title, QWidget * parent_widget = nullptr) : BasicDialog(parent_widget) { this->setWindowTitle(window_title); };
-		virtual AcquireOptions * create_acquire_options(AcquireContext & acquire_context) { return nullptr; };
+		virtual AcquireOptions * create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context) { return nullptr; };
 	};
 
 

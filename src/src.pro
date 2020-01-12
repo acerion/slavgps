@@ -479,7 +479,7 @@ OBJECTS_DIR = ./
 
 
 
-QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -Wextra -pedantic -g -O0
+QMAKE_CXXFLAGS += -std=c++11 -Wshadow -Wall -Wextra -pedantic -g -O0
 QMAKE_LFLAGS += -lm
 
 # TODO: this lib needs to be added only if lib is present on build machine. Write test for the flag.

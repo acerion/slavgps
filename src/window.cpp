@@ -2877,7 +2877,7 @@ void Window::simple_map_update(bool only_new)
 /* Mouse event handlers ************************************************************************/
 
 
-void Window::draw_click_cb(QMouseEvent * ev)
+void Window::draw_click_cb(__attribute__((unused)) QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
 	this->main_gis_vp->setFocus();
@@ -2904,7 +2904,7 @@ void Window::draw_click_cb(QMouseEvent * ev)
  * Action the single click after a small timeout.
  * If a double click has occurred then this will do nothing.
  */
-static bool window_pan_timeout(Window * window)
+static bool window_pan_timeout(__attribute__((unused)) Window * window)
 {
 #ifdef K_FIXME_RESTORE
 	if (!window->single_click_pending) {
@@ -2931,7 +2931,7 @@ static bool window_pan_timeout(Window * window)
 
 
 
-void Window::draw_release_cb(QMouseEvent * ev)
+void Window::draw_release_cb(__attribute__((unused)) QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
 	this->main_gis_vp->setFocus();

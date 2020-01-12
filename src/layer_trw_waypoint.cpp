@@ -418,7 +418,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
+sg_ret Waypoint::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, __attribute__((unused)) bool in_tree_view)
 {
 	if (ops.is_member(StandardMenuOperation::Properties)) {
 		QAction * qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
@@ -965,11 +965,8 @@ sg_ret Waypoint::update_tree_item_properties(void)
 		return sg_ret::err;
 	}
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
 	this->propagate_new_waypoint_name();
 	this->set_new_waypoint_icon();
-
 
 	return sg_ret::ok;
 }

@@ -396,7 +396,7 @@ void LayerMapnik::set_cache_dir(const QString & name_)
 
 
 
-Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
+Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, __attribute__((unused)) GisViewport * gisview)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
@@ -409,7 +409,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 
-bool LayerMapnik::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
+bool LayerMapnik::set_param_value(param_id_t param_id, const SGVariant & data, __attribute__((unused)) bool is_file_operation)
 {
 	switch (param_id) {
 		case PARAM_CONFIG_CSS:
@@ -525,9 +525,6 @@ sg_ret LayerMapnik::carto_load(void)
 		window_->set_busy_cursor();
 	}
 
-	struct timespec before = { 0, 0 };
-	struct timespec after = { 0, 0 };
-
 	DurationMeter dmeter;
 	dmeter.start();
 	const bool spawn_result = g_spawn_command_line_sync(command.toUtf8().constData(), &mystdout, &mystderr, NULL, &error);
@@ -586,7 +583,7 @@ sg_ret LayerMapnik::carto_load(void)
 
 
 
-void LayerMapnik::post_read(GisViewport * gisview, bool from_file)
+void LayerMapnik::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
 {
 	if (this->should_run_carto()) {
 		/* Don't load the XML config if carto load fails. */
@@ -837,7 +834,7 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 
 
 
-void LayerMapnik::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerMapnik::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	if (!this->xml_map_file_loaded) {
 		return;
@@ -960,7 +957,7 @@ void LayerMapnik::about_mapnik_cb(void)
 
 
 
-sg_ret LayerMapnik::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerMapnik::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * action = NULL;
 

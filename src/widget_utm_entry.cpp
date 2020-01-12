@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-UTMEntryWidget::UTMEntryWidget(QWidget * parent)
+UTMEntryWidget::UTMEntryWidget(__attribute__((unused)) QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -118,8 +118,8 @@ sg_ret UTMEntryWidget::set_value(const UTM & utm, bool block_signal)
 		this->band_letter_combo->blockSignals(true);
 	}
 
-	this->easting_spin->setValue(utm.easting);
-	this->northing_spin->setValue(utm.northing);
+	this->easting_spin->setValue(utm.get_easting());
+	this->northing_spin->setValue(utm.get_northing());
 	this->zone_spin->setValue(utm.get_zone());
 	this->band_letter_combo->setCurrentText(QString(utm.get_band_as_letter()));
 

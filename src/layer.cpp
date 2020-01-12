@@ -325,7 +325,7 @@ void Layer::marshall_params(Pickle & pickle)
 
 void Layer::unmarshall_params(Pickle & pickle)
 {
-	const pickle_size_t params_size = pickle.take_size();
+	__attribute__((unused)) const pickle_size_t params_size = pickle.take_size();
 
 	pickle.take_object(&this->visible);
 	this->set_name(pickle.take_string());
@@ -477,7 +477,7 @@ Layer::Layer()
 
 
 
-void Layer::post_read(GisViewport * gisview, bool from_file)
+void Layer::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
 {
 	return;
 }
@@ -493,7 +493,7 @@ QString Layer::get_tooltip(void) const
 
 
 
-sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret Layer::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "into this Layer";
 	return sg_ret::err;
@@ -502,7 +502,7 @@ sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
 
 
 
-LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath)
+LayerDataReadStatus Layer::read_layer_data(__attribute__((unused)) QFile & file, __attribute__((unused)) const QString & dirpath)
 {
 	/* Value that indicates call of base class method. */
 	return LayerDataReadStatus::Unrecognized;
@@ -511,7 +511,7 @@ LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath
 
 
 
-SaveStatus Layer::write_layer_data(FILE * file) const
+SaveStatus Layer::write_layer_data(__attribute__((unused)) FILE * file) const
 {
 	return SaveStatus::Code::Success;
 }
@@ -519,7 +519,7 @@ SaveStatus Layer::write_layer_data(FILE * file) const
 
 
 
-sg_ret Layer::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret Layer::menu_add_type_specific_operations(__attribute__((unused)) QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	return sg_ret::ok;
 }
@@ -527,7 +527,7 @@ sg_ret Layer::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 
 
 
-SGVariant Layer::get_param_value(param_id_t param_id, bool is_file_operation) const
+SGVariant Layer::get_param_value(__attribute__((unused)) param_id_t param_id, __attribute__((unused)) bool is_file_operation) const
 {
 	 return SGVariant(); /* Type ID will be ::Empty. */
 }
@@ -535,7 +535,7 @@ SGVariant Layer::get_param_value(param_id_t param_id, bool is_file_operation) co
 
 
 
-bool Layer::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
+bool Layer::set_param_value(__attribute__((unused)) param_id_t param_id, __attribute__((unused)) const SGVariant & param_value, __attribute__((unused)) bool is_file_operation)
 {
 	return false;
 }
@@ -650,7 +650,7 @@ void Layer::location_info_cb(void) /* Slot. */
 
 
 
-std::list<TreeItem *> Layer::get_items_by_date(const QDate & search_date) const
+std::list<TreeItem *> Layer::get_items_by_date(__attribute__((unused)) const QDate & search_date) const
 {
 	std::list<TreeItem *> result;
 	return result;
@@ -705,7 +705,7 @@ bool Layer::is_layer(void) const
 /**
    @reviewed-on 2019-12-31
 */
-sg_ret Layer::add_child_item(TreeItem * item, bool allow_reordering)
+sg_ret Layer::add_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool allow_reordering)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -718,7 +718,7 @@ sg_ret Layer::add_child_item(TreeItem * item, bool allow_reordering)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret Layer::cut_child_item(TreeItem * item)
+sg_ret Layer::cut_child_item(__attribute__((unused)) TreeItem * item)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -730,7 +730,7 @@ sg_ret Layer::cut_child_item(TreeItem * item)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret Layer::copy_child_item(TreeItem * item)
+sg_ret Layer::copy_child_item(__attribute__((unused)) TreeItem * item)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -742,7 +742,7 @@ sg_ret Layer::copy_child_item(TreeItem * item)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret Layer::delete_child_item(TreeItem * item, bool confirm_deleting)
+sg_ret Layer::delete_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool confirm_deleting)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;

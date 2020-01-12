@@ -158,7 +158,7 @@ bool BackgroundJob::test_termination_condition(void)
 
    @pool_type: Which pool this thread should run in
 */
-void BackgroundJob::run_in_background(ThreadPoolType pool_type)
+void BackgroundJob::run_in_background(__attribute__((unused)) ThreadPoolType pool_type)
 {
 	qDebug() << SG_PREFIX_I << "creating background thread for job" << this->description;
 

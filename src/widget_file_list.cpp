@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-FileListWidget::FileListWidget(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
+FileListWidget::FileListWidget(__attribute__((unused)) const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->button_box = new QDialogButtonBox();
 	this->add = this->button_box->addButton("Add", QDialogButtonBox::ActionRole);

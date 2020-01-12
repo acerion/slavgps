@@ -256,7 +256,7 @@ sg_ret Time::set_timestamp_from_char_string(const char * str)
 
 
 template<>
-bool Measurement<TimeType>::ll_value_is_valid(TimeType::LL value)
+bool Measurement<TimeType>::ll_value_is_valid(__attribute__((unused)) TimeType::LL value)
 {
 	return true; /* TODO_LATER: improve for Time::LL data type. */
 }
@@ -345,7 +345,7 @@ QString Time::get_time_string(Qt::DateFormat format) const
 
 
 template<>
-TimeType::LL Measurement<TimeType>::convert_to_unit(TimeType::LL value, const TimeType::Unit & from, const TimeType::Unit & to)
+TimeType::LL Measurement<TimeType>::convert_to_unit(__attribute__((unused)) TimeType::LL value, __attribute__((unused)) const TimeType::Unit & from, __attribute__((unused)) const TimeType::Unit & to)
 {
 	return value; /* There is only one Time unit, so the conversion is simple. */
 }
@@ -354,7 +354,7 @@ TimeType::LL Measurement<TimeType>::convert_to_unit(TimeType::LL value, const Ti
 
 
 template<>
-Time Measurement<TimeType>::convert_to_unit(const TimeType::Unit & target_unit) const
+Time Measurement<TimeType>::convert_to_unit(__attribute__((unused)) const TimeType::Unit & target_unit) const
 {
 	return *this; /* There is only one Time unit, so the conversion is simple. */
 }
@@ -469,7 +469,7 @@ bool Measurement<DurationType>::is_zero(void) const
 
 
 template<>
-bool Measurement<DurationType>::ll_value_is_valid(TimeType::LL value)
+bool Measurement<DurationType>::ll_value_is_valid(__attribute__((unused)) TimeType::LL value)
 {
 	return true; /* TODO_LATER: improve for DurationType::LL data type. */
 }
@@ -552,7 +552,7 @@ DurationType::LL Measurement<DurationType>::convert_to_unit(DurationType::LL val
 		break;
 	}
 
-	return value;
+	return result;
 }
 
 
@@ -773,7 +773,7 @@ bool Measurement<GradientType>::is_zero(void) const
 
 
 template<>
-GradientType::LL Measurement<GradientType>::convert_to_unit(GradientType::LL value, const GradientType::Unit & from, const GradientType::Unit & to)
+GradientType::LL Measurement<GradientType>::convert_to_unit(__attribute__((unused)) GradientType::LL value, __attribute__((unused)) const GradientType::Unit & from, __attribute__((unused)) const GradientType::Unit & to)
 {
 	return value; /* There is only one Gradient unit, so the conversion is simple. */
 }
@@ -782,7 +782,7 @@ GradientType::LL Measurement<GradientType>::convert_to_unit(GradientType::LL val
 
 
 template<>
-Gradient Measurement<GradientType>::convert_to_unit(const GradientType::Unit & target_unit) const
+Gradient Measurement<GradientType>::convert_to_unit(__attribute__((unused)) const GradientType::Unit & target_unit) const
 {
 	return *this; /* There is only one Gradient unit, so the conversion is simple. */
 }
@@ -974,7 +974,7 @@ SpeedType::LL Measurement<SpeedType>::convert_to_unit(SpeedType::LL value, const
 		break;
 	}
 
-	return value;
+	return result;
 }
 
 

@@ -164,7 +164,7 @@ QString DataSourceGPSDialog::get_serial_port(void)
 
 
 
-AcquireOptions * DataSourceGPSDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceGPSDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	gps_acquire_in_progress = true;
 
@@ -180,7 +180,7 @@ AcquireOptions * DataSourceGPSDialog::create_acquire_options(AcquireContext & ac
 
 
 
-static void set_total_count(unsigned int cnt, AcquireWorker & getter)
+static void set_total_count(__attribute__((unused)) unsigned int cnt, __attribute__((unused)) AcquireWorker & getter)
 {
 #ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
@@ -215,7 +215,7 @@ static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 
 
 /* Compare this function with GPSSession::set_current_count(int cnt) */
-static void set_current_count(int cnt, AcquireWorker * getter)
+static void set_current_count(__attribute__((unused)) int cnt, __attribute__((unused)) AcquireWorker * getter)
 {
 #ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
@@ -258,7 +258,7 @@ static void set_current_count(int cnt, AcquireWorker * getter)
 
 
 
-static void set_gps_info(const char * info, AcquireWorker * getter)
+static void set_gps_info(__attribute__((unused)) const char * info, __attribute__((unused)) AcquireWorker * getter)
 {
 #ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
@@ -275,10 +275,10 @@ static void set_gps_info(const char * info, AcquireWorker * getter)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context)
+void DataSourceGPS::progress_func(__attribute__((unused)) AcquireProgressCode code, __attribute__((unused)) void * data, __attribute__((unused)) AcquireContext * acquire_context)
 {
-	char *line;
 #ifdef FIXME_RESTORE
+	char *line;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) getter->parent_data_source_dialog;
 
 	switch (code) {
@@ -530,7 +530,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DataSourceGPSD
    @xfer: The default type of items enabled for transfer, others disabled
    @xfer_all: When specified all items are enabled for transfer
 */
-DataSourceGPSDialog::DataSourceGPSDialog(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title)
+DataSourceGPSDialog::DataSourceGPSDialog(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title, parent)
 {
 	this->setWindowTitle(QObject::tr("GPS Upload"));
 
@@ -572,9 +572,11 @@ DataSourceGPSDialog::DataSourceGPSDialog(const QString & window_title, GPSTransf
 
 
 
-AcquireProgressDialog * DataSourceGPS::create_progress_dialog(void * user_data)
+AcquireProgressDialog * DataSourceGPS::create_progress_dialog(__attribute__((unused)) void * user_data)
 {
 	AcquireProgressDialog * progress_dialog = NULL;
+
+#ifdef K_FIXME_RESTORE
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) user_data;
 
 	QLabel * gpslabel = new QLabel(QObject::tr("GPS device: N/A"));
@@ -584,7 +586,6 @@ AcquireProgressDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 	QLabel * trklabel = new QLabel("");
 	QLabel * rtelabel = new QLabel("");
 
-#ifdef K_FIXME_RESTORE
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), gpslabel, false, false, 5);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), wplabel, false, false, 5);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), trklabel, false, false, 5);
@@ -606,7 +607,7 @@ AcquireProgressDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 
 
 
-DatasourceGPSProgress::DatasourceGPSProgress(const QString & window_title, QWidget * parent) : DataSourceDialog(window_title)
+DatasourceGPSProgress::DatasourceGPSProgress(const QString & window_title, QWidget * parent) : DataSourceDialog(window_title, parent)
 {
 }
 
@@ -672,7 +673,7 @@ sg_ret DataSourceGPS::on_complete(void)
 	const QString device = Babel::devices[g_last_device_index]->identifier;
 	if (device != "garmin" && device != "navilink") {
 		qDebug() << SG_PREFIX_W << "Unrecognized last active device" << device;
-		sg_ret::err;
+		return sg_ret::err;
 	}
 	qDebug() << SG_PREFIX_I << "Last active device:" << device;
 

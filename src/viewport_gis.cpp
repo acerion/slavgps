@@ -1166,7 +1166,7 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 			coord.utm.set_easting((delta_x_pixels * xmpp) + this->center_coord.utm.get_easting());
 			coord.utm.set_zone(this->center_coord.utm.get_zone());
 
-			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
+			const int zone_delta = floor((coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
 
@@ -1200,13 +1200,13 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 			test_coord.utm.set_zone(this->center_coord.utm.get_zone());
 			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
-			test_coord.utm.easting = (delta_x_pixels * xmpp) + this->center_coord.utm.easting;
+			test_coord.utm.m_easting = (delta_x_pixels * xmpp) + this->center_coord.utm.m_easting;
 
-			zone_delta = floor((test_coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
+			zone_delta = floor((test_coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			test_coord.utm.shift_zone_by(zone_delta);
-			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
-			test_coord.utm.northing = (delta_y_pixels * ympp) + this->center_coord.utm.northing;
+			test_coord.utm.m_easting -= zone_delta * this->utm_zone_width;
+			test_coord.utm.m_northing = (delta_y_pixels * ympp) + this->center_coord.utm.m_northing;
 
 
 			if (!UTM::is_the_same_zone(coord.utm, test_coord.utm)) {
@@ -1627,7 +1627,7 @@ void GisViewport::mousePressEvent(QMouseEvent * ev)
 /**
    @reviewed-on tbd
 */
-bool GisViewport::eventFilter(QObject * object, QEvent * ev)
+bool GisViewport::eventFilter(__attribute__((unused)) QObject * object, QEvent * ev)
 {
 	if (ev->type() == QEvent::MouseButtonDblClick) {
 		QMouseEvent * m = (QMouseEvent *) ev;
@@ -1783,7 +1783,7 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 /**
    @reviewed-on tbd
 */
-void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
+void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 {
 	QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -1839,7 +1839,7 @@ void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 bool GisViewport::print_cb(QPrinter * printer)
 {
 	const QRectF page_rect = printer->pageRect(QPrinter::DevicePixel);
-	const QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
+	//const QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
 
 	qDebug() << SG_PREFIX_I << "---- Printer Info ----";
 	qDebug() << SG_PREFIX_I << "printer name:" << printer->printerName();
@@ -2160,9 +2160,8 @@ sg_ret GisViewport::get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos)
 	const int topmost    = this->central_get_topmost_pixel();
 	const int bottommost = this->central_get_bottommost_pixel();
 
-	const QPoint position = this->mapFromGlobal(QCursor::pos());
-
 #if 0   /* Verbose debug. */
+	const QPoint position = this->mapFromGlobal(QCursor::pos());
 	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
 #endif
 

@@ -257,7 +257,7 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 
 
 
-AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "username").val_string);
 	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "password").val_string);

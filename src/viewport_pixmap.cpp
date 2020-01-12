@@ -1012,7 +1012,7 @@ QRect ViewportPixmap::central_get_rect(void) const
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::paintEvent(QPaintEvent * ev)
+void ViewportPixmap::paintEvent(__attribute__((unused)) QPaintEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
 
@@ -1054,7 +1054,7 @@ void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::pan_sync(int x_off, int y_off)
+void ViewportPixmap::pan_sync(__attribute__((unused)) int x_off, __attribute__((unused)) int y_off)
 {
 	qDebug() << SG_PREFIX_I;
 #ifdef K_FIXME_RESTORE
@@ -1434,7 +1434,7 @@ sg_ret ViewportPixmap::calculate_scaled_sizes(int target_width, int target_heigh
 /**
    @reviewed-on 2019-07-28
 */
-void ViewportPixmap::resizeEvent(QResizeEvent * ev)
+void ViewportPixmap::resizeEvent(__attribute__((unused)) QResizeEvent * ev)
 {
 	qDebug() << SG_PREFIX_I << "Reacting to resize event, new total size is width =" << this->geometry().width() << ", height =" << this->geometry().height();
 

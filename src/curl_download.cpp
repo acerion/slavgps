@@ -121,7 +121,7 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 
 
 
-static int curl_progress_func(void * clientp, double dltotal, double dlnow, double ultotal, double ulnow)
+static int curl_progress_func(__attribute__((unused)) void * clientp, __attribute__((unused)) double dltotal, __attribute__((unused)) double dlnow, __attribute__((unused)) double ultotal, __attribute__((unused)) double ulnow)
 {
 	return (int) Background::test_global_termination_condition();
 }

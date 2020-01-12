@@ -86,7 +86,7 @@ DataSourceOnlineServiceDialog::DataSourceOnlineServiceDialog(const QString & win
 
 
 
-AcquireOptions * DataSourceOnlineServiceDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceOnlineServiceDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	if (this->online_service->tool_needs_user_string()) {
 		this->online_service->user_string = this->input_field.text();

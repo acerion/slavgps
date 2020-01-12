@@ -66,7 +66,7 @@ using namespace SlavGPS;
 
 bool SlavGPS::track_properties_dialog(Track * trk, Window * parent)
 {
-	TrackPropertiesDialog dialog(QObject::tr("Track Properties"), trk, parent);
+	TrackPropertiesDialog dialog(trk, parent);
 	dialog.create_properties_page();
 	trk->set_properties_dialog(&dialog);
 	dialog.exec();
@@ -80,7 +80,7 @@ bool SlavGPS::track_properties_dialog(Track * trk, Window * parent)
 
 void SlavGPS::track_statistics_dialog(Track * trk, Window * parent)
 {
-	TrackStatisticsDialog dialog(QObject::tr("Track Statistics"), trk, parent);
+	TrackStatisticsDialog dialog(trk, parent);
 	dialog.create_statistics_page();
 	dialog.exec();
 }
@@ -88,7 +88,7 @@ void SlavGPS::track_statistics_dialog(Track * trk, Window * parent)
 
 
 
-TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
+TrackPropertiesDialog::TrackPropertiesDialog(Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
 {
 	this->setWindowTitle(tr("%1 - Track Properties").arg(a_trk->get_name()));
 
@@ -99,7 +99,7 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, Track * a_tr
 
 
 
-TrackStatisticsDialog::TrackStatisticsDialog(QString const & title, Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
+TrackStatisticsDialog::TrackStatisticsDialog(Track * a_trk, Window * a_parent) : BasicDialog(a_parent)
 {
 	this->setWindowTitle(tr("%1 - Track Statistics").arg(a_trk->get_name()));
 

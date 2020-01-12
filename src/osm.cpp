@@ -215,7 +215,7 @@ MapSourceOSMMetatiles::MapSourceOSMMetatiles() : MapSourceSlippy(MapTypeID::OSMM
 
 
 
-QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
 {
 	QString err_msg;
 	QPixmap pixmap;
@@ -275,7 +275,7 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 
 
-QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
 {
 	if (MapCacheLayout::OSM != map_cache_obj.layout) {
 		qDebug() << SG_PREFIX_W << "Layout mismatch:" << (int) MapCacheLayout::OSM << (int) map_cache_obj.layout;
@@ -296,7 +296,7 @@ QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, c
 
 
 
-QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
 {
 	QStringList items;
 

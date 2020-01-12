@@ -57,7 +57,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackPropertiesDialog() {};
-		TrackPropertiesDialog(QString const & title, Track * trk, Window * parent = NULL);
+		TrackPropertiesDialog(Track * trk, Window * parent = NULL);
 		~TrackPropertiesDialog() {};
 
 		void create_properties_page(void);
@@ -85,7 +85,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackStatisticsDialog() {};
-		TrackStatisticsDialog(QString const & title, Track * trk, Window * parent = NULL);
+		TrackStatisticsDialog(Track * trk, Window * parent = NULL);
 		~TrackStatisticsDialog() {};
 
 		void create_statistics_page(void);

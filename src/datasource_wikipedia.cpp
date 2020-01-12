@@ -116,10 +116,10 @@ SGObjectTypeID DataSourceWikipedia::source_id(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceWikipedia::acquire_into_layer(AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
-	if (!trw) {
-		qDebug() << SG_PREFIX_E << "Missing TRW layer";
+	if (!acquire_context.m_trw) {
+		qDebug() << SG_PREFIX_E << "Missing target TRW layer";
 		return LoadStatus::Code::InternalError;
 	}
 
@@ -150,8 +150,8 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
 
 		const Geoname * geoname = *iter;
-		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
-		trw->add_waypoint(wp);
+		Waypoint * wp = geoname->create_waypoint(acquire_context.m_trw->get_coord_mode());
+		acquire_context.m_trw->add_waypoint(wp);
 
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
@@ -164,7 +164,7 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 
 
-int DataSourceWikipedia::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceWikipedia::run_config_dialog(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	/* Fake acquire options, needed by current implementation of layer_trw_import.cpp. */
 	this->m_acquire_options = new AcquireOptions;

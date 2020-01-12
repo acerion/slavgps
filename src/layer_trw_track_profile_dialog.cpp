@@ -447,7 +447,7 @@ void ProfileViewET::save_settings(void)
 
 
 
-sg_ret ProfileViewET::draw_additional_indicators(Track & trk)
+sg_ret ProfileViewET::draw_additional_indicators(__attribute__((unused)) Track & trk)
 {
 	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
 		return this->draw_dem_elevation();
@@ -467,7 +467,7 @@ void ProfileViewSD::save_settings(void)
 
 
 
-sg_ret ProfileViewSD::draw_additional_indicators(Track & trk)
+sg_ret ProfileViewSD::draw_additional_indicators(__attribute__((unused)) Track & trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 		return this->draw_gps_speeds();
@@ -488,7 +488,7 @@ void ProfileViewED::save_settings(void)
 
 
 
-sg_ret ProfileViewED::draw_additional_indicators(Track & trk)
+sg_ret ProfileViewED::draw_additional_indicators(__attribute__((unused)) Track & trk)
 {
 	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
 		return this->draw_dem_elevation();
@@ -533,7 +533,7 @@ void ProfileViewST::save_settings(void)
 
 
 
-sg_ret ProfileViewST::draw_additional_indicators(Track & trk)
+sg_ret ProfileViewST::draw_additional_indicators(__attribute__((unused)) Track & trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 		return this->draw_gps_speeds();
@@ -608,9 +608,6 @@ void TrackProfileDialog::draw_all_views(bool resized)
 
 sg_ret ProfileViewBase::draw_track_and_crosshairs(Track & trk)
 {
-	sg_ret ret_trk;
-	sg_ret ret_marks;
-
 	sg_ret ret = this->draw_graph_without_crosshairs(trk);
 	if (sg_ret::ok != ret) {
 		qDebug() << SG_PREFIX_E << "Failed to draw graph without crosshairs";
@@ -788,7 +785,7 @@ void ProfileViewBase::create_widgets_layout(void)
 
 void SlavGPS::track_profile_dialog(Track * trk, GisViewport * main_gisview, QWidget * parent)
 {
-	TrackProfileDialog dialog(QObject::tr("Track Profile"), trk, main_gisview, parent);
+	TrackProfileDialog dialog(trk, main_gisview, parent);
 	trk->set_profile_dialog(&dialog);
 	dialog.exec();
 	trk->clear_profile_dialog();
@@ -809,7 +806,7 @@ const QString & ProfileViewBase::get_title(void) const
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, GisViewport * new_main_gisview, QWidget * parent) : QDialog(parent)
+TrackProfileDialog::TrackProfileDialog(Track * new_trk, GisViewport * new_main_gisview, QWidget * parent) : QDialog(parent)
 {
 	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->get_name()));
 

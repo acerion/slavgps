@@ -385,7 +385,6 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 	const std::list<Track *> tracks = this->get_sorted_by_name();
 
-	bool found = false;
 	for (auto iter = std::next(tracks.begin()); iter != tracks.end(); iter++) {
 		const QString this_one = (*iter)->get_name();
 		const QString previous = (*(std::prev(iter)))->get_name();
@@ -805,7 +804,7 @@ void LayerTRWTracks::sublayer_menu_sort(QMenu & menu)
 
 
 
-sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
@@ -1114,7 +1113,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 
 
 
-sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	/* Handle item in old location. */
 	{

@@ -202,7 +202,7 @@ static UTMLetter coords_utm_band_letter(double latitude);
 
 sg_ret UTM::set_northing(double value)
 {
-	this->northing = value;
+	this->m_northing = value;
 	return sg_ret::ok;
 }
 
@@ -211,7 +211,7 @@ sg_ret UTM::set_northing(double value)
 
 sg_ret UTM::set_easting(double value)
 {
-	this->easting = value;
+	this->m_easting = value;
 	return sg_ret::ok;
 }
 
@@ -225,7 +225,7 @@ sg_ret UTM::set_zone(int value)
 		return sg_ret::err;
 	}
 
-	this->zone = value;
+	this->m_zone = value;
 	return sg_ret::ok;
 }
 
@@ -234,7 +234,7 @@ sg_ret UTM::set_zone(int value)
 
 UTMLetter UTM::get_band_letter(void) const
 {
-	return this->band_letter;
+	return this->m_band_letter;
 }
 
 
@@ -242,7 +242,7 @@ UTMLetter UTM::get_band_letter(void) const
 
 char UTM::get_band_as_letter(void) const
 {
-	return (char) this->band_letter;
+	return (char) this->m_band_letter;
 }
 
 
@@ -254,7 +254,7 @@ sg_ret UTM::set_band_letter(UTMLetter letter)
 		qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal" << (char) letter;
 		return sg_ret::err;
 	}
-	this->band_letter = letter;
+	this->m_band_letter = letter;
 	return sg_ret::ok;
 }
 
@@ -267,7 +267,7 @@ sg_ret UTM::set_band_letter(char letter)
 		qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal" << letter;
 		return sg_ret::err;
 	}
-	this->band_letter = (UTMLetter) letter;
+	this->m_band_letter = (UTMLetter) letter;
 	return sg_ret::ok;
 }
 
@@ -276,7 +276,7 @@ sg_ret UTM::set_band_letter(char letter)
 
 sg_ret UTM::shift_northing_by(double delta_meters)
 {
-	this->northing += delta_meters;
+	this->m_northing += delta_meters;
 	return sg_ret::ok;
 }
 
@@ -285,7 +285,7 @@ sg_ret UTM::shift_northing_by(double delta_meters)
 
 sg_ret UTM::shift_easting_by(double delta_meters)
 {
-	this->easting += delta_meters;
+	this->m_easting += delta_meters;
 	return sg_ret::ok;
 }
 
@@ -312,7 +312,7 @@ QStringList UTM::get_band_symbols(void)
 
 bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 {
-	return (utm1.easting == utm2.easting && utm1.northing == utm2.northing && utm1.zone == utm2.zone);
+	return (utm1.m_easting == utm2.m_easting && utm1.m_northing == utm2.m_northing && utm1.m_zone == utm2.m_zone);
 }
 
 
@@ -321,10 +321,10 @@ bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 QString UTM::to_string(void) const
 {
 	const QString result = QString("N = %1, E = %2, Zone = %3, Band Letter = %4")
-		.arg(this->northing, 0, 'f', 4)
-		.arg(this->easting, 0, 'f', 4)
-		.arg(this->zone)
-		.arg((char) this->band_letter);
+		.arg(this->m_northing, 0, 'f', 4)
+		.arg(this->m_easting, 0, 'f', 4)
+		.arg(this->m_zone)
+		.arg((char) this->m_band_letter);
 
 	return result;
 }
@@ -334,7 +334,7 @@ QString UTM::to_string(void) const
 
 bool UTM::is_northern_hemisphere(const UTM & utm)
 {
-	return utm.band_letter >= UTMLetter::N;
+	return utm.m_band_letter >= UTMLetter::N;
 }
 
 
@@ -351,8 +351,8 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
 
 double UTM::get_distance(const UTM & utm1, const UTM & utm2)
 {
-	if (utm1.zone == utm2.zone) {
-		return sqrt(pow(utm1.easting - utm2.easting, 2) + pow(utm1.northing - utm2.northing, 2));
+	if (utm1.m_zone == utm2.m_zone) {
+		return sqrt(pow(utm1.m_easting - utm2.m_easting, 2) + pow(utm1.m_northing - utm2.m_northing, 2));
 	} else {
 		const LatLon tmp1 = UTM::to_lat_lon(utm1);
 		const LatLon tmp2 = UTM::to_lat_lon(utm2);
@@ -426,8 +426,8 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	/* All done. */
 
 	UTM utm;
-	utm.northing = northing;
-	utm.easting = easting;
+	utm.m_northing = northing;
+	utm.m_easting = easting;
 	utm.set_zone(zone);
 	utm.set_band_letter(coords_utm_band_letter(latitude)); /* We don't check result of set_band_letter() here, we assume that the letter has been calculated by coords_utm_band_letter() correctly. */
 	return utm;
@@ -471,15 +471,15 @@ static UTMLetter coords_utm_band_letter(double latitude)
 
 LatLon UTM::to_lat_lon(const UTM & utm)
 {
-	double x = utm.easting - 500000.0; /* remove 500000 meter offset */
-	double y = utm.northing;
-	assert (utm.band_letter >= UTMLetter::A && utm.band_letter <= UTMLetter::Z);
-	if (utm.band_letter < UTMLetter::N) {
+	double x = utm.m_easting - 500000.0; /* remove 500000 meter offset */
+	double y = utm.m_northing;
+	assert (utm.m_band_letter >= UTMLetter::A && utm.m_band_letter <= UTMLetter::Z);
+	if (utm.m_band_letter < UTMLetter::N) {
 		/* southern hemisphere */
 		y -= UTM_NORTHING_AT_EQUATOR; /* Remove offset. */
 	}
 
-	const double long_origin = (utm.zone - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
+	const double long_origin = (utm.m_zone - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
 	const double eccPrimeSquared = EccentricitySquared / (1.0 - EccentricitySquared);
 	const double e1 = (1.0 - sqrt(1.0 - EccentricitySquared)) / (1.0 + sqrt(1.0 - EccentricitySquared));
 	const double M = y / K0;
@@ -580,18 +580,18 @@ bool UTM::close_enough(const UTM & utm1, const UTM & utm2)
 {
 	const double epsilon = 0.1;
 
-	if (std::fabs(utm1.northing - utm2.northing) > epsilon) {
-		qDebug() << SG_PREFIX_E << "Northing error:" << utm1.northing << utm2.northing;
+	if (std::fabs(utm1.m_northing - utm2.m_northing) > epsilon) {
+		qDebug() << SG_PREFIX_E << "Northing error:" << utm1.m_northing << utm2.m_northing;
 		return false;
 	}
 
-	if (std::fabs(utm1.easting - utm2.easting) > epsilon) {
-		qDebug() << SG_PREFIX_E << "Easting error:" << utm1.easting << utm2.easting;
+	if (std::fabs(utm1.m_easting - utm2.m_easting) > epsilon) {
+		qDebug() << SG_PREFIX_E << "Easting error:" << utm1.m_easting << utm2.m_easting;
 		return false;
 	}
 
-	if (utm1.zone != utm2.zone) {
-		qDebug() << SG_PREFIX_E << "Zone error:" << utm1.zone << utm2.zone;
+	if (utm1.m_zone != utm2.m_zone) {
+		qDebug() << SG_PREFIX_E << "Zone error:" << utm1.m_zone << utm2.m_zone;
 		return false;
 	}
 
@@ -608,7 +608,7 @@ bool UTM::close_enough(const UTM & utm1, const UTM & utm2)
 
 bool UTM::is_the_same_zone(const UTM & utm1, const UTM & utm2)
 {
-	return utm1.zone == utm2.zone;
+	return utm1.m_zone == utm2.m_zone;
 }
 
 
@@ -616,7 +616,7 @@ bool UTM::is_the_same_zone(const UTM & utm1, const UTM & utm2)
 
 sg_ret UTM::shift_zone_by(int shift)
 {
-	this->zone += shift; /* TODO_LATER: wrap result to allowable range. */
+	this->m_zone += shift; /* TODO_LATER: wrap result to allowable range. */
 	return sg_ret::ok;
 }
 
@@ -640,8 +640,8 @@ bool Coords::unit_tests(void)
 	/* UTM -> LatLon -> UTM */
 	{
 		UTM utm_in;
-		utm_in.northing = 3778331;
-		utm_in.easting = 283673;
+		utm_in.m_northing = 3778331;
+		utm_in.m_easting = 283673;
 		utm_in.set_zone(33);
 		utm_in.set_band_letter(UTMLetter::S);
 		const LatLon lat_lon = UTM::to_lat_lon(utm_in);

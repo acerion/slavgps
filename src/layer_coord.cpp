@@ -106,7 +106,7 @@ LayerCoordInterface::LayerCoordInterface()
 
 
 
-Layer * LayerCoordInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
+Layer * LayerCoordInterface::unmarshall(Pickle & pickle, __attribute__((unused)) GisViewport * gisview)
 {
 	LayerCoord * layer = new LayerCoord();
 	layer->unmarshall_params(pickle);
@@ -117,7 +117,7 @@ Layer * LayerCoordInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 /* GisViewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
+bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_value, __attribute__((unused)) bool is_file_operation)
 {
 	switch (param_id) {
 	case PARAM_COLOR_DEG:
@@ -150,7 +150,7 @@ bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_va
 
 
 
-SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operation) const
+SGVariant LayerCoord::get_param_value(param_id_t param_id, __attribute__((unused)) bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (param_id) {
@@ -180,7 +180,7 @@ SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operatio
 
 
 
-void LayerCoord::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerCoord::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	const CoordMode mode = gisview->get_coord_mode();
 	switch (mode) {

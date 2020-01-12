@@ -532,7 +532,6 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 	}
 
 	const LayerKind layer_kind = Layer::kind_from_layer_kind_string(QString(line + 6));
-	TreeView * tree_view = NULL;
 
 	if (layer_kind == LayerKind::Max) {
 		this->parse_status = sg_ret::err;
@@ -570,7 +569,7 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 
 
 
-void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
+void ReadParser::handle_layer_end(__attribute__((unused)) const char * line, __attribute__((unused)) GisViewport * gisview)
 {
 	if (this->stack.second == NULL) {
 		this->parse_status = sg_ret::err;

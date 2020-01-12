@@ -118,7 +118,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceFileDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	/* Generate the process options. */
 	AcquireOptions * acquire_options = new AcquireOptions();

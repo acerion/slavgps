@@ -434,7 +434,7 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QStr
 
 
 
-Track * GPSPointParser::create_track(LayerTRW * trw)
+Track * GPSPointParser::create_track(__attribute__((unused)) LayerTRW * trw)
 {
 	Track * trk = new Track(this->line_type == GPSPOINT_TYPE_ROUTE);
 	/* Don't set defaults here as all properties are stored in the GPS_POINT format. */

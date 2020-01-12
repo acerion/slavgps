@@ -114,11 +114,11 @@ namespace SlavGPS {
 		char debug_string[100]; /* For debug purposes only. */
 
 	protected:
-		virtual LayerTool::Status handle_mouse_click(Layer * layer, QMouseEvent * event)        { return LayerTool::Status::Ignored; }
-		virtual LayerTool::Status handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return LayerTool::Status::Ignored; }
-		virtual LayerTool::Status handle_mouse_move(Layer * layer, QMouseEvent * event)         { return LayerTool::Status::Ignored; }
-		virtual LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event)      { return LayerTool::Status::Ignored; }
-		virtual LayerTool::Status handle_key_press(Layer * layer, QKeyEvent * event)            { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_click(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * event)        { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_double_click(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * event) { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_move(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * event)         { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_mouse_release(__attribute__((unused)) Layer * layer, __attribute__((unused)) QMouseEvent * event)      { return LayerTool::Status::Ignored; }
+		virtual LayerTool::Status handle_key_press(__attribute__((unused)) Layer * layer, __attribute__((unused)) QKeyEvent * event)            { return LayerTool::Status::Ignored; }
 	};
 
 

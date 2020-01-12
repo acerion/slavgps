@@ -138,7 +138,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 
 
-AcquireOptions * DataSourceRoutingDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceRoutingDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();

@@ -252,7 +252,6 @@ void LayerGPS::init(void)
 {
 	gps_protocols_enum.values.clear();
 
-	int i = 0;
 	for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
 		/* Should be using 'label' property but use
 		   'identifier' for now thus don't need to mess around
@@ -317,7 +316,7 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 
-bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
+bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, __attribute__((unused)) bool is_file_operation)
 {
 	qDebug() << SG_PREFIX_D << "";
 
@@ -387,7 +386,7 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 
 
 
-SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation) const
+SGVariant LayerGPS::get_param_value(param_id_t param_id, __attribute__((unused)) bool is_file_operation) const
 {
 	qDebug() << SG_PREFIX_D << "";
 
@@ -450,7 +449,7 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 
 
 
-void LayerGPS::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
+void LayerGPS::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
@@ -502,7 +501,7 @@ void LayerGPS::change_coord_mode(CoordMode mode)
 
 
 
-sg_ret LayerGPS::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
+sg_ret LayerGPS::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * action = NULL;
 
@@ -1568,7 +1567,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 
 
-static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * gps_layer)
+static int gpsd_data_available(__attribute__((unused)) GIOChannel *source, GIOCondition condition, void * gps_layer)
 {
 	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
@@ -1887,7 +1886,7 @@ void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 
 
 
-sg_ret LayerGPS::cut_child_item(TreeItem * item)
+sg_ret LayerGPS::cut_child_item(__attribute__((unused)) TreeItem * item)
 {
 	/* TODO_LATER: implement cutting of child TRW layer. */
 	qDebug() << SG_PREFIX_E << "Not implemented yet";
@@ -1897,7 +1896,7 @@ sg_ret LayerGPS::cut_child_item(TreeItem * item)
 
 
 
-sg_ret LayerGPS::delete_child_item(TreeItem * item, bool confirm_deleting)
+sg_ret LayerGPS::delete_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool confirm_deleting)
 {
 	/* TODO_LATER: implement deleting of child TRW layer. */
 	qDebug() << SG_PREFIX_E << "Not implemented yet";

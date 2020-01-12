@@ -76,7 +76,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QPixmap MapSourceMBTiles::get_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QPixmap result;
 
@@ -110,7 +110,7 @@ QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, con
 
 
 #ifdef HAVE_SQLITE3_H
-static int sql_select_tile_dump_cb(void * data, int cols, char ** fields, char ** col_names)
+static int sql_select_tile_dump_cb(__attribute__((unused)) void * data, int cols, char ** fields, char ** col_names)
 {
 	qDebug() << SG_PREFIX_D << "Found" << cols << "columns";
 	for (int i = 0; i < cols; i++) {
@@ -186,7 +186,7 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, const 
 
 
 
-QStringList MapSourceMBTiles::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 #ifdef HAVE_SQLITE3_H
 

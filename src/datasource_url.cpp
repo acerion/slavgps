@@ -149,7 +149,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-AcquireOptions * DataSourceURLDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceURLDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 

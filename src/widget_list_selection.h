@@ -145,7 +145,7 @@ namespace SlavGPS {
 
 
 	template <typename T>
-	std::list<T> ListSelectionWidget::get_selection(T dummy)
+	std::list<T> ListSelectionWidget::get_selection(__attribute__((unused)) T dummy)
 	{
 		qDebug() << __FILE__ << __LINE__;
 

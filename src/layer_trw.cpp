@@ -758,7 +758,7 @@ void LayerTRW::wp_image_cache_add(const CachedPixmap & cached_pixmap)
 
 
 
-bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
+bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, __attribute__((unused)) bool is_file_operation)
 {
 	switch (param_id) {
 	case PARAM_TRACKS_VISIBLE:
@@ -961,7 +961,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 
 
 
-SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation) const
+SGVariant LayerTRW::get_param_value(param_id_t param_id, __attribute__((unused)) bool is_file_operation) const
 {
 	SGVariant rv;
 	switch (param_id) {
@@ -1733,7 +1733,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_parents, Window * parent_window)
+bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_parents, __attribute__((unused)) Window * parent_window)
 {
 	visible_with_parents = false;
 
@@ -2236,7 +2236,7 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 
 
-sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	LayerTRW * source_trw = (LayerTRW *) tree_item->get_owning_layer();
 	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
@@ -3233,7 +3233,7 @@ Time LayerTRW::get_timestamp(void) const
 
 
 
-void LayerTRW::post_read(GisViewport * gisview, bool from_file)
+void LayerTRW::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
 {
 	if (this->tree_view) {
 		this->generate_missing_thumbnails();
@@ -3859,7 +3859,7 @@ void LayerTRW::unlock_remove(void)
 
 
 
-bool LayerTRW::move_child(TreeItem & child_tree_item, bool up)
+bool LayerTRW::move_child(__attribute__((unused)) TreeItem & child_tree_item, __attribute__((unused)) bool up)
 {
 	/* Let's not allow moving Tracks/Routes/Waypoints nodes. */
 	return false;

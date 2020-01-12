@@ -280,7 +280,7 @@ void TreeItem::set_menu_operation_ids(const StandardMenuOperations & ops)
 
 
 
-sg_ret TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view)
+sg_ret TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, __attribute__((unused)) bool in_tree_view)
 {
 	LayersPanel * layers_panel = ThisApp::get_layers_panel();
 	return layers_panel->context_menu_add_standard_operations(menu, ops);
@@ -390,7 +390,7 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewForma
 
 
 
-void TreeItem::display_debug_info(const QString & reference) const
+void TreeItem::display_debug_info(__attribute__((unused)) const QString & reference) const
 {
 	return;
 }
@@ -398,7 +398,7 @@ void TreeItem::display_debug_info(const QString & reference) const
 
 
 
-sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, int row, int col)
+sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "here";
 	return sg_ret::err;
@@ -448,7 +448,7 @@ void TreeItem::set_timestamp(time_t value)
 
 
 
-bool TreeItem::move_child(TreeItem & child_tree_item, bool up)
+bool TreeItem::move_child(__attribute__((unused)) TreeItem & child_tree_item, __attribute__((unused)) bool up)
 {
 	return false;
 }
@@ -487,7 +487,7 @@ void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 
 
 
-sg_ret TreeItem::click_in_tree(const QString & debug)
+sg_ret TreeItem::click_in_tree(__attribute__((unused)) const QString & debug)
 {
 	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index);
 	if (NULL == item) {
@@ -512,7 +512,7 @@ sg_ret TreeItem::click_in_tree(const QString & debug)
 
 
 
-sg_ret TreeItem::get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const
+sg_ret TreeItem::get_tree_items(__attribute__((unused)) std::list<TreeItem *> & list, __attribute__((unused)) const std::list<SGObjectTypeID> & wanted_types) const
 {
 	return sg_ret::ok;
 }
