@@ -245,7 +245,7 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
  */
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
-	const DistanceUnit user_distance_unit = Preferences::get_unit_distance();
+	const DistanceType::Unit user_distance_unit = Preferences::get_unit_distance();
 	const Distance start_distance(0.0, user_distance_unit);
 	const Distance track_length = trk->get_length_including_gaps().convert_to_unit(user_distance_unit);
 
@@ -257,7 +257,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		const Distance axis_mark_uu = interval * i;
 
 		/* Convert distance into metres for use in finding a trackpoint. */
-		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(DistanceUnit::Unit::Meters);
+		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(DistanceType::Unit(DistanceType::Unit::E::Meters));
 		if (!axis_mark_iu.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;
@@ -448,7 +448,8 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 
 
 
-void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const Altitude & min_alt, const Altitude & alt_diff)
+void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const
+						Altitude & min_alt, const Altitude & alt_diff)
 {
 #define FIXALTITUDE(m_tp) \
 	((m_tp->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * this->track_elevation_factor / this->vp_xmpp)

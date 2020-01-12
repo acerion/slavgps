@@ -109,15 +109,15 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 		width *= this->tiles_width_spin->value();
 		height *= this->tiles_height_spin->value();
 	}
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit.u) {
-	case DistanceUnit::Unit::Kilometres:
+	case DistanceType::Unit::E::Kilometres:
 		label_text = tr("Total area: %1m x %2m (%3 sq. km)").arg((long) width).arg((long) height).arg((width * height / 1000000), 0, 'f', 3); /* "%.3f" */
 		break;
-	case DistanceUnit::Unit::Miles:
+	case DistanceType::Unit::E::Miles:
 		label_text = tr("Total area: %1m x %2m (%3 sq. miles)").arg((long) width).arg((long) height).arg((width * height / 2589988.11), 0, 'f', 3); /* "%.3f" */
 		break;
-	case DistanceUnit::Unit::NauticalMiles:
+	case DistanceType::Unit::E::NauticalMiles:
 		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) width).arg((long) height).arg((width * height / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
 		break;
 	default:

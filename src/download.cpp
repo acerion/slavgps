@@ -196,7 +196,7 @@ static std::mutex dem_files_mutex;
 
 
 /* Spin button's scale. */
-static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_download_tile_age(1, 365, 7, 1, DurationUnit::Unit::Days, 0);
+static MeasurementScale<Duration> scale_download_tile_age(1, 365, 7, 1, DurationType::Unit::E::Days, 0);
 
 
 
@@ -544,7 +544,7 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 			return DownloadStatus::DownloadNotRequired;
 		}
 
-		Duration_ll tile_age = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").get_duration().convert_to_unit(DurationUnit::Unit::Seconds).ll_value();
+		DurationType::LL tile_age = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").get_duration().convert_to_unit(DurationType::Unit::E::Seconds).ll_value();
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);

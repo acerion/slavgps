@@ -46,11 +46,6 @@ namespace SlavGPS {
 
 
 
-	//typedef class Measurement<HeightUnit, Altitude_ll> Altitude;
-
-
-
-
 	class MeasurementEntryWidget : public QFrame {
 		Q_OBJECT
 	public:
@@ -102,14 +97,12 @@ namespace SlavGPS {
 
 
 	/*
-	  Tm: type of measurement (e.g. Altitude)
-	  Tm_ll: low-level type of measurement (e.g. Altitude_ll)
-	  Tu: type of unit of measurements (e.g. HeightUnit)
+	  T: type of measurement (e.g. Altitude)
 	*/
-	template <class Tm, class Tm_ll, class Tu>
+	template <class T>
 	class MeasurementEntry_2 {
 	public:
-		MeasurementEntry_2(const Tm & value_iu, const MeasurementScale<Tm, Tm_ll, Tu> * scale, QWidget * parent = NULL)
+		MeasurementEntry_2(const T & value_iu, const MeasurementScale<T> * scale, QWidget * parent = NULL)
 		{
 			this->meas_widget = new MeasurementEntryWidget_2(parent);
 
@@ -143,16 +136,16 @@ namespace SlavGPS {
 
 		/* Set value in user units (i.e. units set in
 		   program's preferences). */
-		void set_value_iu(const Tm & value_iu)
+		void set_value_iu(const T & value_iu)
 		{
 			if (value_iu.is_valid()) {
-				const Tu user_unit = Tm::user_unit();
-				const Tm value_uu = value_iu.convert_to_unit(user_unit);
+				const typename T::Unit user_unit = T::Unit::user_unit();
+				const T value_uu = value_iu.convert_to_unit(user_unit);
 
 				qDebug() << "II    Measurement Entry 2: Setting value of measurement iu" << value_iu << ", in user units:" << value_uu;
 
 				this->meas_widget->spin->setValue(value_uu.ll_value());
-				this->meas_widget->spin->setSuffix(QString(" %1").arg(Tm::unit_full_string(user_unit)));
+				this->meas_widget->spin->setSuffix(QString(" %1").arg(T::unit_full_string(user_unit)));
 			} else {
 				qDebug() << "NN    Measurement Entry 2: Value passed as argument is invalid, clearing value of measurement";
 				this->meas_widget->spin->clear();
@@ -165,13 +158,13 @@ namespace SlavGPS {
 
 		/* Get value in user units (i.e. units set in
 		   program's preferences). */
-		Tm get_value_iu(void) const
+		T get_value_iu(void) const
 		{
 			/* Since the value in the widget was presented
 			   to user, it must have been in user
 			   units. Now convert to internal unit. */
-			const Tm value_uu(this->meas_widget->spin->value(), Tm::user_unit());
-			Tm result_iu = value_uu.convert_to_unit(Tm::internal_unit());
+			const T value_uu(this->meas_widget->spin->value(), T::Unit::user_unit());
+			T result_iu = value_uu.convert_to_unit(T::Unit::internal_unit());
 
 			return result_iu;
 		}

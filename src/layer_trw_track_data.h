@@ -79,7 +79,7 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
+	template <typename Tx, typename Ty>
 	class TrackData : public TrackDataBase {
 	public:
 		TrackData() : TrackDataBase() {};
@@ -106,7 +106,7 @@ namespace SlavGPS {
 
 		   @reviewed-on 2020-01-07
 		*/
-		sg_ret apply_unit_conversions_xy(Tx_u to_unit_x, Ty_u to_unit_y)
+		sg_ret apply_unit_conversions_xy(typename Tx::Unit to_unit_x, typename Ty::Unit to_unit_y)
 		{
 			if (to_unit_x != this->x_unit) {
 				for (int i = 0; i < this->size(); i++) {
@@ -143,8 +143,8 @@ namespace SlavGPS {
 		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
 		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
-		Tx_ll x_ll(int i) const { return this->m_x_ll[i]; }
-		Ty_ll y_ll(int i) const { return this->m_y_ll[i]; }
+		typename Tx::LL x_ll(int i) const { return this->m_x_ll[i]; }
+		typename Ty::LL y_ll(int i) const { return this->m_y_ll[i]; }
 		Trackpoint * tp(int i) const { return this->m_tps[i]; }
 
 		const Tx & x_min(void) const { return this->m_x_min; };
@@ -153,11 +153,11 @@ namespace SlavGPS {
 		const Ty & y_max(void) const { return this->m_y_max; };
 
 	protected:
-		Tx_u x_unit;
-		Ty_u y_unit;
+		typename Tx::Unit x_unit;
+		typename Ty::Unit y_unit;
 
-		Tx_ll * m_x_ll = nullptr;
-		Ty_ll * m_y_ll = nullptr;
+		typename Tx::LL * m_x_ll = nullptr;
+		typename Ty::LL * m_y_ll = nullptr;
 
 		Trackpoint ** m_tps = nullptr;
 
@@ -174,8 +174,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	void TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::calculate_min_max(void)
+	template <typename Tx, typename Ty>
+	void TrackData<Tx, Ty>::calculate_min_max(void)
 	{
 		this->x_min_ll = this->x[0];
 		this->x_max_ll = this->x[0];
@@ -221,16 +221,16 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> & TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::operator=(const TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> & other)
+	template <typename Tx, typename Ty>
+	TrackData<Tx, Ty> & TrackData<Tx, Ty>::operator=(const TrackData<Tx, Ty> & other)
 	{
 		if (&other == this) {
 			return *this;
 		}
 
 		if (other.m_x_ll) {
-			const size_t size = sizeof (Tx_ll) * other.size();
-			this->m_x_ll = (Tx_ll *) realloc(this->m_x_ll, size);
+			const size_t size = sizeof (typename Tx::LL) * other.size();
+			this->m_x_ll = (typename Tx::LL *) realloc(this->m_x_ll, size);
 			memcpy(this->m_x_ll, other.m_x_ll, size);
 		} else {
 			free(this->m_x_ll);
@@ -239,8 +239,8 @@ namespace SlavGPS {
 		}
 
 		if (other.m_y_ll) {
-			const size_t size = sizeof (Ty_ll) * other.size();
-			this->m_y_ll = (Ty_ll *) realloc(this->m_y_ll, size);
+			const size_t size = sizeof (typename Ty::LL) * other.size();
+			this->m_y_ll = (typename Ty::LL *) realloc(this->m_y_ll, size);
 			memcpy(this->m_y_ll, other.m_y_ll, size);
 		} else {
 			free(this->m_y_ll);
@@ -284,8 +284,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> & track_data)
+	template <typename Tx, typename Ty>
+	QDebug operator<<(QDebug debug, const TrackData<Tx, Ty> & track_data)
 	{
 		if (track_data.is_valid()) {
 			debug << "TrackData" << track_data.m_debug << "is valid"
@@ -307,8 +307,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	void TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::clear(void)
+	template <typename Tx, typename Ty>
+	void TrackData<Tx, Ty>::clear(void)
 	{
 		this->m_valid = false;
 		this->m_n_points = 0;
@@ -335,8 +335,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::allocate(int n_points)
+	template <typename Tx, typename Ty>
+	sg_ret TrackData<Tx, Ty>::allocate(int n_points)
 	{
 		if (this->m_x_ll) {
 			if (this->size()) {
@@ -368,13 +368,13 @@ namespace SlavGPS {
 			this->m_tps = nullptr;
 		}
 
-		this->m_x_ll = (Tx_ll *) malloc(sizeof (Tx_ll) * n_points);
+		this->m_x_ll = (typename Tx::LL *) malloc(sizeof (typename Tx::LL) * n_points);
 		if (nullptr == this->m_x_ll) {
 			qDebug() << "EE   TrackData" << __func__ << __LINE__ << "Failed to allocate 'x' vector";
 			return sg_ret::err;
 		}
 
-		this->m_y_ll = (Ty_ll *) malloc(sizeof (Ty_ll) * n_points);
+		this->m_y_ll = (typename Ty::LL *) malloc(sizeof (typename Ty::LL) * n_points);
 		if (nullptr == this->m_y_ll) {
 			free(this->m_x_ll);
 			this->m_x_ll = nullptr;
@@ -392,8 +392,8 @@ namespace SlavGPS {
 			return sg_ret::err;
 		}
 
-		memset(this->m_x_ll, 0, sizeof (Tx_ll) * n_points);
-		memset(this->m_y_ll, 0, sizeof (Ty_ll) * n_points);
+		memset(this->m_x_ll, 0, sizeof (typename Tx::LL) * n_points);
+		memset(this->m_y_ll, 0, sizeof (typename Ty::LL) * n_points);
 		memset(this->m_tps, 0, sizeof (Trackpoint *) * n_points);
 
 		/* There are n cells in vectors, but the data in the

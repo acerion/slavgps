@@ -190,7 +190,7 @@ void Track::split_by_timestamp_cb(void)
 		return;
 	}
 
-	Duration threshold(60, DurationUnit::Unit::Seconds);
+	Duration threshold(60, DurationType::Unit::E::Seconds);
 	QWidget * dialog_parent = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 

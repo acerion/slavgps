@@ -171,9 +171,10 @@ namespace SlavGPS {
 		static bool get_restore_window_state(void);
 
 
-		static DistanceUnit get_unit_distance(void);
-		static SpeedUnit    get_unit_speed(void);
-		static HeightUnit   get_unit_height(void);
+		static DistanceType::Unit get_unit_distance(void);
+		static SpeedType::Unit    get_unit_speed(void);
+		static AltitudeType::Unit get_unit_height(void);
+
 		static DegreeFormat get_degree_format(void);
 
 

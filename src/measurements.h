@@ -122,215 +122,264 @@ namespace SlavGPS {
 
 
 
-	class DistanceUnit {
-	public:
-		enum class Unit {
-			Kilometres,
-			Miles,
-			NauticalMiles,
-
-			/* TODO: numerical values of these two enums should be
-			   somehow synchronized with Viking project. */
-			Meters,
-			Yards,
-		};
-
-		DistanceUnit() {}
-		DistanceUnit(DistanceUnit::Unit unit) { this->u = unit; }
-
-		static DistanceUnit internal_unit(void) { return DistanceUnit(); }
-		static DistanceUnit user_unit(void);
-		bool operator==(const DistanceUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const DistanceUnit & rhs) const { return !(*this == rhs); }
-
-		DistanceUnit::Unit u = DistanceUnit::Unit::Meters;
-	};
-	QDebug operator<<(QDebug debug, const DistanceUnit & unit);
-
-
-
-
-	class SpeedUnit {
-	public:
-		enum class Unit {
-			KilometresPerHour,
-			MilesPerHour,
-			MetresPerSecond,
-			Knots
-		};
-
-		SpeedUnit() {}
-		SpeedUnit(SpeedUnit::Unit unit) { this->u = unit; }
-
-		static SpeedUnit internal_unit(void) { return SpeedUnit(); }
-		static SpeedUnit user_unit(void);
-		bool operator==(const SpeedUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const SpeedUnit & rhs) const { return !(*this == rhs); }
-
-		SpeedUnit::Unit u = SpeedUnit::Unit::MetresPerSecond;
-	};
-	QDebug operator<<(QDebug debug, const SpeedUnit & unit);
-
-
-
-
-	class HeightUnit {
-	public:
-		enum class Unit {
-			Metres,
-			Feet,
-		};
-
-		HeightUnit() {}
-		HeightUnit(HeightUnit::Unit unit) { this->u = unit; }
-
-		static HeightUnit internal_unit(void) { return HeightUnit(); }
-		static HeightUnit user_unit(void);
-		bool operator==(const HeightUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const HeightUnit & rhs) const { return !(*this == rhs); }
-
-		HeightUnit::Unit u = HeightUnit::Unit::Metres;
-	};
-	QDebug operator<<(QDebug debug, const HeightUnit & unit);
-
-
-
-
-	class TimeUnit {
-	public:
-		/* TODO: if you ever add another time unit, you will
-		   have to review all places where a time unit is used
-		   and update them accordingly. */
-		enum class Unit {
-			Seconds, /* Default, internal unit. */
-		};
-
-		TimeUnit() {}
-		TimeUnit(TimeUnit::Unit unit) { this->u = unit; }
-
-		static TimeUnit internal_unit(void) { return TimeUnit(); }
-		static TimeUnit user_unit(void);
-		bool operator==(const TimeUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const TimeUnit & rhs) const { return !(*this == rhs); }
-
-		TimeUnit::Unit u = TimeUnit::Unit::Seconds;
-	};
-	QDebug operator<<(QDebug debug, const TimeUnit & unit);
-
-
-
-
-	class DurationUnit {
-	public:
-		enum class Unit {
-			Seconds, /* Default, internal unit. */
-			Minutes,
-			Hours,
-			Days
-		};
-
-		DurationUnit() {}
-		DurationUnit(DurationUnit::Unit unit) { this->u = unit; }
-
-		static DurationUnit internal_unit(void) { return DurationUnit(); }
-		static DurationUnit user_unit(void);
-		bool operator==(const DurationUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const DurationUnit & rhs) const { return !(*this == rhs); }
-
-		DurationUnit::Unit u = DurationUnit::Unit::Seconds;
-	};
-	QDebug operator<<(QDebug debug, const DurationUnit & unit);
-
-
-
-
-	class GradientUnit {
-	public:
-		/* TODO: if you ever add another gradient unit, you
-		   will have to review all places where a gradient
-		   unit is used and update them accordingly. */
-		enum class Unit {
-			Percents, /* Default, internal unit. */
-		};
-
-		GradientUnit() {}
-		GradientUnit(GradientUnit::Unit unit) { this->u = unit; }
-
-		static GradientUnit internal_unit(void) { return GradientUnit(); }
-		static GradientUnit user_unit(void);
-		bool operator==(const GradientUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const GradientUnit & rhs) const { return !(*this == rhs); }
-
-		GradientUnit::Unit u = GradientUnit::Unit::Percents;
-	};
-	QDebug operator<<(QDebug debug, const GradientUnit & unit);
-
-
-
-
-	class AngleUnit {
-	public:
-		enum class Unit {
-			Radians, /* Default, internal unit. TODO: verify. */
-			Degrees
-		};
-
-		AngleUnit() {}
-		AngleUnit(AngleUnit::Unit unit) { this->u = unit; }
-
-		static AngleUnit internal_unit(void) { return AngleUnit(); }
-		static AngleUnit user_unit(void);
-		bool operator==(const AngleUnit & rhs) const { return this->u == rhs.u; }
-		bool operator!=(const AngleUnit & rhs) const { return !(*this == rhs); }
-
-		AngleUnit::Unit u = AngleUnit::Unit::Radians;
-	};
-	QDebug operator<<(QDebug debug, const AngleUnit & unit);
-
-
-
-
-	/* Low-level types corresponding to measurement classes. */
-	typedef time_t Time_ll;
-	typedef long int Duration_ll; /* Signed int allows negative durations. Maybe I will regret it later ;) */
-	typedef double Distance_ll;
-	typedef double Angle_ll;
-	typedef double Altitude_ll;
-	typedef double Speed_ll;
-	typedef double Gradient_ll;
-
-
 
 	double c_to_double(const QString & string);
 
 
 
-	template <typename Tll, typename Tu>
-	class Measurement {
+
+	class Altitude;
+	class AltitudeType
+	{
 	public:
-		Measurement<Tll, Tu>() {}
-		Measurement<Tll, Tu>(Tll new_value, const Tu & new_unit) : Measurement<Tll, Tu>()
+		class Unit {
+		public:
+			enum class E {
+				Metres,
+				Feet,
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return AltitudeType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Metres;
+
+			bool operator==(const AltitudeType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const AltitudeType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef double LL;
+		typedef Altitude Meas;
+	};
+	QDebug operator<<(QDebug debug, const AltitudeType::Unit & unit);
+
+
+
+
+	class Gradient;
+	class GradientType {
+	public:
+		class Unit {
+		public:
+			/* TODO: if you ever add another gradient unit, you
+			   will have to review all places where a gradient
+			   unit is used and update them accordingly. */
+			enum class E {
+				Percents, /* Default, internal unit. */
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return GradientType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Percents;
+
+			bool operator==(const GradientType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const GradientType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef double LL;
+		typedef Gradient Meas;
+	};
+	QDebug operator<<(QDebug debug, const GradientType::Unit & unit);
+
+
+
+
+	class Time;
+	class TimeType {
+	public:
+
+		class Unit {
+		public:
+			/* TODO: if you ever add another time unit, you will
+			   have to review all places where a time unit is used
+			   and update them accordingly. */
+			enum class E {
+				Seconds, /* Default, internal unit. */
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return TimeType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Seconds;
+
+			bool operator==(const TimeType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const TimeType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef time_t LL;
+		typedef Time Meas;
+	};
+	QDebug operator<<(QDebug debug, const TimeType::Unit & unit);
+
+
+
+
+	class Duration;
+	class DurationType {
+	public:
+		class Unit {
+		public:
+			enum class E {
+				Seconds, /* Default, internal unit. */
+				Minutes,
+				Hours,
+				Days
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return DurationType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Seconds;
+
+			bool operator==(const DurationType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const DurationType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef time_t LL;
+		typedef Duration Meas;
+	};
+	QDebug operator<<(QDebug debug, const DurationType::Unit & unit);
+
+
+
+
+	class Distance;
+	class DistanceType {
+	public:
+		class Unit {
+		public:
+			enum class E {
+				Kilometres,
+				Miles,
+				NauticalMiles,
+
+				/* TODO: numerical values of these two enums should be
+				   somehow synchronized with Viking project. */
+				Meters,
+				Yards,
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return DistanceType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Meters;
+
+			bool operator==(const DistanceType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const DistanceType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef double LL;
+		typedef Distance Meas;
+	};
+	QDebug operator<<(QDebug debug, const DistanceType::Unit & unit);
+
+
+
+
+	class Speed;
+	class SpeedType {
+	public:
+		class Unit {
+		public:
+			enum class E {
+				KilometresPerHour,
+				MilesPerHour,
+				MetresPerSecond,
+				Knots
+			};
+
+			Unit() {}
+			Unit(SpeedType::Unit::E unit) { this->u = unit; }
+
+			static SpeedType::Unit internal_unit(void) { return SpeedType::Unit(); }
+			static SpeedType::Unit user_unit(void);
+
+			SpeedType::Unit::E u = SpeedType::Unit::E::MetresPerSecond;
+
+			bool operator==(const SpeedType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const SpeedType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef double LL;
+		typedef Speed Meas;
+	};
+	QDebug operator<<(QDebug debug, const SpeedType::Unit & unit);
+
+
+
+
+	class Angle;
+	class AngleType {
+	public:
+		class Unit {
+		public:
+			enum class E {
+				Radians, /* Default, internal unit. TODO: verify. */
+				Degrees
+			};
+
+			Unit() {}
+			Unit(Unit::E unit) { this->u = unit; }
+
+			static Unit internal_unit(void) { return AngleType::Unit(); }
+			static Unit user_unit(void);
+
+			Unit::E u = Unit::E::Radians;
+
+			bool operator==(const AngleType::Unit & rhs) const { return this->u == rhs.u; }
+			bool operator!=(const AngleType::Unit & rhs) const { return !(*this == rhs);  }
+		};
+
+		typedef double LL;
+		typedef Angle Meas;
+	};
+	QDebug operator<<(QDebug debug, const AngleType::Unit & unit);
+
+
+
+
+	template <typename T>
+	class Measurement {
+
+	public:
+		using LL = typename T::LL;
+
+		Measurement<T>() {}
+		Measurement<T>(typename T::LL new_value, const typename T::Unit & new_unit) : Measurement<T>()
 		{
 			this->m_ll_value = new_value;
-			this->m_valid = Measurement<Tll, Tu>::ll_value_is_valid(new_value);
+			this->m_valid = T::Meas::ll_value_is_valid(new_value);
 			this->m_unit = new_unit;
 		}
 
-		Measurement<Tll, Tu>(const Measurement<Tll, Tu> & other)
+		Measurement<T>(const Measurement<T> & other)
 		{
 			this->m_ll_value = other.m_ll_value;
 			this->m_unit  = other.m_unit;
 			this->m_valid = other.m_valid;
 		}
 
-		static Tu user_unit(void) { return Tu::user_unit(); };
-		static Tu internal_unit(void) { return Tu::internal_unit(); };
-
 		/* Get/set current unit of measurement. */
-		const Tu & unit(void) const { return this->m_unit; }
-		void set_unit(const Tu & unit) { this->m_unit = unit; }
+		const typename T::Unit & unit(void) const { return this->m_unit; }
+		void set_unit(const typename T::Unit & unit) { this->m_unit = unit; }
 
-		static bool ll_value_is_valid(Tll value);
+		static bool ll_value_is_valid(typename T::LL value);
 		bool is_valid(void) const { return this->m_valid; }
 		void invalidate(void)
 		{
@@ -340,10 +389,10 @@ namespace SlavGPS {
 
 
 		/* Set value, don't change unit. */
-		void set_ll_value(Tll new_value)
+		void set_ll_value(typename T::LL new_value)
 		{
 			this->m_ll_value = new_value;
-			this->m_valid = Measurement<Tll, Tu>::ll_value_is_valid(new_value);
+			this->m_valid = T::Meas::ll_value_is_valid(new_value);
 			/* this->m_unit = ; ... Don't change unit. */
 		}
 
@@ -353,7 +402,7 @@ namespace SlavGPS {
 		  measurement is invalid before calling this
 		  getter.
 		*/
-		Tll ll_value(void) const { return this->m_ll_value; }
+		typename T::LL ll_value(void) const { return this->m_ll_value; }
 
 
 		/*
@@ -377,25 +426,25 @@ namespace SlavGPS {
 		   presentation to user. */
 		const QString value_to_string(void) const;
 
-		Measurement<Tll, Tu> convert_to_unit(const Tu & new_unit) const;
+		typename T::Meas convert_to_unit(const typename T::Unit & new_unit) const;
 
-		static Tll convert_to_unit(Tll value, const Tu & from, const Tu & to);
+		static typename T::LL convert_to_unit(typename T::LL value, const typename T::Unit & from, const typename T::Unit & to);
 
-		sg_ret convert_to_unit_in_place(const Tu & new_unit)
+		sg_ret convert_to_unit_in_place(const typename T::Unit & new_unit)
 		{
-			this->m_ll_value = Measurement<Tll, Tu>::convert_to_unit(this->m_ll_value, this->m_unit, new_unit);
-			this->m_valid = Measurement<Tll, Tu>::ll_value_is_valid(this->m_ll_value);
+			this->m_ll_value = Measurement<T>::convert_to_unit(this->m_ll_value, this->m_unit, new_unit);
+			this->m_valid = Measurement<T>::ll_value_is_valid(this->m_ll_value);
 			this->m_unit = new_unit;
 			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
 
 		/* Get string representing measurement unit in
 		   abbreviated form, e.g. "km/h". */
-		static QString unit_string(const Tu & unit);
+		static QString unit_string(const typename T::Unit & unit);
 
 		/* Return "kilometers" or "miles" string.
 		   This is a full string, not "km" or "mi". */
-		static QString unit_full_string(const Tu & unit);
+		static QString unit_full_string(const typename T::Unit & unit);
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance may be used to decide how
@@ -424,14 +473,14 @@ namespace SlavGPS {
 		{
 			this->m_ll_value = c_to_double(str);
 			this->m_valid = !std::isnan(this->m_ll_value);
-			this->m_unit = Measurement<Tll, Tu>::internal_unit();
+			this->m_unit = T::Unit::internal_unit();
 
 			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
 
 
 		/* Will return INT_MIN or NAN if value is invalid. */
-		Tll floor(void) const;
+		typename T::LL floor(void) const;
 
 
 
@@ -443,7 +492,7 @@ namespace SlavGPS {
 		QString to_string(void) const;
 		QString to_string(int precision) const;
 
-		static QString ll_value_to_string(Tll value, const Tu & unit);
+		static QString ll_value_to_string(typename T::LL value, const typename T::Unit & unit);
 
 		/* Is this measurement so small that it can be treated as zero?
 
@@ -477,7 +526,7 @@ namespace SlavGPS {
 			}
 		}
 
-		Measurement<Tll, Tu> & operator=(const Measurement<Tll, Tu> & rhs)
+		Measurement<T> & operator=(const Measurement<T> & rhs)
 		{
 			if (this == &rhs) {
 				return *this;
@@ -491,13 +540,13 @@ namespace SlavGPS {
 		}
 
 
-		Measurement<Tll, Tu> operator+(double rhs) const { Measurement<Tll, Tu> result = *this; result += rhs; return result; }
-		Measurement<Tll, Tu> operator-(double rhs) const { Measurement<Tll, Tu> result = *this; result -= rhs; return result; }
+		typename T::Meas operator+(double rhs) const { typename T::Meas result = *this; result += rhs; return result; }
+		typename T::Meas operator-(double rhs) const { typename T::Meas result = *this; result -= rhs; return result; }
 
 
-		Measurement<Tll, Tu> operator+(const Measurement<Tll, Tu> & rhs) const
+		typename T::Meas operator+(const typename T::Meas & rhs) const
 		{
-			Measurement<Tll, Tu> result;
+			typename T::Meas result;
 			if (!this->m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
 				return result;
@@ -517,9 +566,9 @@ namespace SlavGPS {
 		}
 
 
-		Measurement<Tll, Tu> operator-(const Measurement<Tll, Tu> & rhs) const
+		typename T::Meas operator-(const typename T::Meas & rhs) const
 		{
-			Measurement<Tll, Tu> result;
+			typename T::Meas result;
 			if (!this->m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
 				return result;
@@ -539,7 +588,7 @@ namespace SlavGPS {
 		}
 
 
-		Measurement<Tll, Tu> & operator+=(const Measurement<Tll, Tu> & rhs)
+		Measurement<T> & operator+=(const Measurement<T> & rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -560,7 +609,7 @@ namespace SlavGPS {
 		}
 
 
-		Measurement<Tll, Tu> & operator-=(const Measurement<Tll, Tu> & rhs)
+		Measurement<T> & operator-=(const Measurement<T> & rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -580,7 +629,7 @@ namespace SlavGPS {
 			return *this;
 		}
 
-		Measurement<Tll, Tu> & operator+=(double rhs)
+		Measurement<T> & operator+=(double rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -596,7 +645,7 @@ namespace SlavGPS {
 			return *this;
 		}
 
-		Measurement<Tll, Tu> & operator-=(double rhs)
+		Measurement<T> & operator-=(double rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -615,7 +664,7 @@ namespace SlavGPS {
 		//friend Measurement operator+(Measurement lhs, const Measurement & rhs) { lhs += rhs; return lhs; }
 		//friend Measurement operator-(Measurement lhs, const Measurement & rhs) { lhs -= rhs; return lhs; }
 
-		Measurement<Tll, Tu> & operator*=(double rhs)
+		Measurement<T> & operator*=(double rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -631,7 +680,7 @@ namespace SlavGPS {
 			return *this;
 		}
 
-		Measurement<Tll, Tu> & operator/=(double rhs)
+		Measurement<T> & operator/=(double rhs)
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
@@ -654,7 +703,7 @@ namespace SlavGPS {
 
 
 
-		bool operator==(const Measurement<Tll, Tu> & rhs) const
+		bool operator==(const Measurement<T> & rhs) const
 		{
 			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
@@ -672,34 +721,30 @@ namespace SlavGPS {
 			return this->m_ll_value == rhs.m_ll_value;
 		}
 
-		bool operator!=(const Measurement<Tll, Tu> & rhs) const
+		bool operator!=(const Measurement<T> & rhs) const
 		{
 			return !(*this == rhs);
 		}
 
 	protected:
-		Tll m_ll_value = 0;
-		Tu m_unit;
-		bool m_valid = false;
+		typename T::LL m_ll_value;
+		typename T::Unit m_unit;
+		bool m_valid;
 	};
-	template<typename Tll, typename Tu>
-	double operator/(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs); /* For getting proportion of two values. */
+	template<typename T>
+	QDebug operator<<(QDebug debug, const typename T::Unit & unit);
 
-	template<typename Tll, typename Tu>
-	Measurement<Tll, Tu> operator*(Measurement<Tll, Tu> lhs, double rhs) { lhs *= rhs; return lhs; }
+	template<typename T>
+	double operator/(const T & lhs, const T & rhs); /* For getting proportion of two values. */
 
-	template<typename Tll, typename Tu>
-	Measurement<Tll, Tu> operator/(Measurement<Tll, Tu> lhs, double rhs) { lhs /= rhs; return lhs; }
+	template<typename T>
+	T operator*(T lhs, double rhs) { lhs *= rhs; return lhs; }
 
-	template<typename Tll, typename Tu>
-	QDebug operator<<(QDebug debug, const Measurement<Tll, Tu> & meas)
-	{
-		debug << meas.to_string();
-		return debug;
-	}
+	template<typename T>
+	T operator/(T lhs, double rhs) { lhs /= rhs; return lhs; }
 
-	template<typename Tll, typename Tu>
-	bool operator<(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
+	template<typename T>
+	bool operator<(const T & lhs, const T & rhs)
 	{
 		if (lhs.unit() != rhs.unit()) {
 			qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << lhs.unit() << rhs.unit();
@@ -707,18 +752,18 @@ namespace SlavGPS {
 		}
 		return lhs.ll_value() < rhs.ll_value();
 	}
-	template<typename Tll, typename Tu>
-	bool operator>(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
+	template<typename T>
+	bool operator>(const T & lhs, const T & rhs)
 	{
 		return rhs < lhs;
 	}
-	template<typename Tll, typename Tu>
-	bool operator<=(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
+	template<typename T>
+	bool operator<=(const T & lhs, const T & rhs)
 	{
 		return !(lhs > rhs);
 	}
-	template<typename Tll, typename Tu>
-	bool operator>=(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
+	template<typename T>
+	bool operator>=(const T & lhs, const T & rhs)
 	{
 		return !(lhs < rhs);
 	}
@@ -727,8 +772,8 @@ namespace SlavGPS {
 	  For getting proportion of two values.
 	  Implemented in class declaration because of this: https://stackoverflow.com/a/10787730
 	*/
-	template<typename Tll, typename Tu>
-	double operator/(const Measurement<Tll, Tu> & lhs, const Measurement<Tll, Tu> & rhs)
+	template<typename T>
+	double operator/(const T & lhs, const T & rhs)
 	{
 		if (!lhs.is_valid()) {
 			qDebug() << "WW    " << __FUNCTION__ << "Invalid 'lhs' operand";
@@ -752,40 +797,61 @@ namespace SlavGPS {
 
 
 
-	class Altitude : public  Measurement<Altitude_ll, HeightUnit>
-	{
-	public:
-		Altitude(const Measurement<Altitude_ll, HeightUnit> & base) : Measurement<Altitude_ll, HeightUnit>(base) {}
-		Altitude() : Measurement<Altitude_ll, HeightUnit>() {}
-		Altitude(Altitude_ll value, HeightUnit unit) : Measurement<Altitude_ll, HeightUnit>(value, unit) {}
 
-		//using Measurement<Altitude_ll, HeightUnit>::Measurement;
-		using Measurement<Altitude_ll, HeightUnit>::operator-;
-		using Measurement<Altitude_ll, HeightUnit>::operator=;
+	class Altitude : public Measurement<AltitudeType> {
+	public:
+		typedef AltitudeType::LL LL;
+		typedef AltitudeType::Unit Unit;
+
+		Altitude() {};
+		Altitude(const Measurement<AltitudeType> & other) : Measurement<AltitudeType>(other) {}
+		Altitude(AltitudeType::LL value, const AltitudeType::Unit & unit) : Measurement<AltitudeType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Altitude & altitude);
+
+		//using Measurement<AltitudeType>::Measurement;
+		using Measurement<AltitudeType>::operator-;
+		using Measurement<AltitudeType>::operator+;
+		using Measurement<AltitudeType>::operator-=;
+		using Measurement<AltitudeType>::operator=;
 	};
 
-	class Gradient : public Measurement<Gradient_ll, GradientUnit>
-	{
-	public:
-		Gradient(const Measurement<Gradient_ll, GradientUnit> & base) : Measurement<Gradient_ll, GradientUnit>(base) {}
-		Gradient() : Measurement<Gradient_ll, GradientUnit>() {}
-		Gradient(Gradient_ll value, GradientUnit unit) : Measurement<Gradient_ll, GradientUnit>(value, unit) {}
 
-		//using Measurement<Gradient_ll, GradientUnit>::Measurement;
-		using Measurement<Gradient_ll, GradientUnit>::operator-;
-		using Measurement<Gradient_ll, GradientUnit>::operator=;
+
+
+	class Gradient : public Measurement<GradientType> {
+	public:
+		Gradient() {};
+		Gradient(const Measurement<GradientType> & other) : Measurement<GradientType>(other) {}
+		Gradient(GradientType::LL value, const GradientType::Unit & unit) : Measurement<GradientType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Gradient & gradient);
+
+		typedef GradientType::LL LL;
+		typedef GradientType::Unit Unit;
+
+		//using Measurement<GradientType>::Measurement;
+		using Measurement<GradientType>::operator-;
+		using Measurement<GradientType>::operator=;
 	};
 
-	class Time : public Measurement<Time_ll, TimeUnit>
-	{
-	public:
-		Time(const Measurement<Time_ll, TimeUnit> & base) : Measurement<Time_ll, TimeUnit>(base) {}
-		Time() : Measurement<Time_ll, TimeUnit>() {}
-		Time(Time_ll value, TimeUnit unit) : Measurement<Time_ll, TimeUnit>(value, unit) {}
 
-		//using Measurement<Time_ll, TimeUnit>::Measurement;
-		using Measurement<Time_ll, TimeUnit>::operator-;
-		using Measurement<Time_ll, TimeUnit>::operator=;
+
+
+	class Time : public Measurement<TimeType> {
+	public:
+		Time() {};
+		Time(const Measurement<TimeType> & other) : Measurement<TimeType>(other) {}
+		Time(TimeType::LL value, const TimeType::Unit & unit) : Measurement<TimeType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Time & time);
+
+		typedef TimeType::LL LL;
+		typedef TimeType::Unit Unit;
+
+		//using Measurement<TimeType>::Measurement;
+		using Measurement<TimeType>::operator-;
+		using Measurement<TimeType>::operator=;
 
 		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
 		QString strftime_local(const char * format) const;
@@ -803,16 +869,23 @@ namespace SlavGPS {
 		sg_ret set_timestamp_from_string(const QString & str);
 	};
 
-	class Duration : public Measurement<Duration_ll, DurationUnit>
-	{
-	public:
-		Duration(const Measurement<Duration_ll, DurationUnit> & base) : Measurement<Duration_ll, DurationUnit>(base) {}
-		Duration() : Measurement<Duration_ll, DurationUnit>() {}
-		Duration(Duration_ll value, DurationUnit unit) : Measurement<Duration_ll, DurationUnit>(value, unit) {}
 
-		//using Measurement<Duration_ll, DurationUnit>::Measurement;
-		using Measurement<Duration_ll, DurationUnit>::operator-;
-		using Measurement<Duration_ll, DurationUnit>::operator=;
+
+
+	class Duration : public Measurement<DurationType> {
+	public:
+		Duration() {};
+		Duration(const Measurement<DurationType> & other) : Measurement<DurationType>(other) {}
+		Duration(DurationType::LL value, const DurationType::Unit & unit) : Measurement<DurationType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Duration & duration);
+
+		typedef DurationType::LL LL;
+		typedef DurationType::Unit Unit;
+
+		//using Measurement<DurationType>::Measurement;
+		using Measurement<DurationType>::operator-;
+		using Measurement<DurationType>::operator=;
 
 		static Duration get_abs_duration(const Time & later, const Time & earlier);
 
@@ -826,54 +899,65 @@ namespace SlavGPS {
 	};
 
 
-	class Distance : public Measurement<Distance_ll, DistanceUnit>
-	{
-	public:
-		Distance(const Measurement<Distance_ll, DistanceUnit> & base) : Measurement<Distance_ll, DistanceUnit>(base) {}
-		Distance() : Measurement<Distance_ll, DistanceUnit>() {}
-		Distance(Distance_ll value, DistanceUnit unit) : Measurement<Distance_ll, DistanceUnit>(value, unit) {}
 
-		//using Measurement<Distance_ll, DistanceUnit>::Measurement;
-		using Measurement<Distance_ll, DistanceUnit>::operator-;
-		using Measurement<Distance_ll, DistanceUnit>::operator=;
-		//Distance() {}
-		//Distance(Distance_ll value, DistanceUnit unit) : Measurement(value, unit) {}
+
+	class Distance : public Measurement<DistanceType> {
+	public:
+		Distance() {};
+		Distance(const Measurement<DistanceType> & other) : Measurement<DistanceType>(other) {}
+		Distance(DistanceType::LL value, const DistanceType::Unit & unit) : Measurement<DistanceType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Distance & distance);
+
+		typedef DistanceType::LL LL;
+		typedef DistanceType::Unit Unit;
+
+		//using Measurement<DistanceType>::Measurement;
+		using Measurement<DistanceType>::operator-;
+		using Measurement<DistanceType>::operator=;
 	};
 
 
 
-	class Speed : public Measurement<Speed_ll, SpeedUnit>
-	{
+
+	class Speed : public Measurement<SpeedType> {
 	public:
-		Speed(const Measurement<Speed_ll, SpeedUnit> & base) : Measurement<Speed_ll, SpeedUnit>(base) {}
-		Speed() : Measurement<Speed_ll, SpeedUnit>() {}
-		Speed(Speed_ll value, SpeedUnit unit) : Measurement<Speed_ll, SpeedUnit>(value, unit) {}
-#if 0
-		Speed() : Measurement<Speed_ll, SpeedUnit>() {}
-		Speed(Speed_ll value, SpeedUnit unit) : Measurement<Speed_ll, SpeedUnit>(value, unit) {}
-#else
-		//using Measurement<Speed_ll, SpeedUnit>::Measurement;
-		using Measurement<Speed_ll, SpeedUnit>::operator-;
-		using Measurement<Speed_ll, SpeedUnit>::operator=;
-#endif
+		Speed() {};
+		Speed(const Measurement<SpeedType> & other) : Measurement<SpeedType>(other) {}
+		Speed(SpeedType::LL value, const SpeedType::Unit & unit) : Measurement<SpeedType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Speed & speed);
+
+		//using Measurement<SpeedType>::Measurement;
+		using Measurement<SpeedType>::operator-;
+		using Measurement<SpeedType>::operator=;
+		//using Measurement<SpeedType>::user_unit;
+
+		typedef SpeedType::LL LL;
+		typedef SpeedType::Unit Unit;
 
 		sg_ret make_speed(const Distance & distance, const Duration & duration);
 		sg_ret make_speed(const Altitude & altitude, const Duration & duration);
 	};
 
 
-	class Angle : public Measurement<Angle_ll, AngleUnit>
-	{
+
+
+	class Angle : public Measurement<AngleType> {
 	public:
-#if 1
-		Angle(const Measurement<Angle_ll, AngleUnit> & base) : Measurement<Angle_ll, AngleUnit>(base) {}
-		Angle() : Measurement<Angle_ll, AngleUnit>() {}
-		Angle(Angle_ll value, AngleUnit unit) : Measurement<Angle_ll, AngleUnit>(value, unit) {}
-#else
-		using Measurement<Angle_ll, AngleUnit>::Measurement;
-		using Measurement<Angle_ll, AngleUnit>::operator-;
-		using Measurement<Angle_ll, AngleUnit>::operator=;
-#endif
+		Angle() {};
+		Angle(const Measurement<AngleType> & other) : Measurement<AngleType>(other) {}
+		Angle(AngleType::LL value, const AngleType::Unit & unit) : Measurement<AngleType>(value, unit) {}
+
+		friend QDebug operator<<(QDebug debug, const Angle & angle);
+
+		typedef AngleType::LL LL;
+		typedef AngleType::Unit Unit;
+
+		//using Measurement<AngleType>::Measurement;
+		//using Measurement<AngleType>::operator-;
+		//using Measurement<AngleType>::operator=;
+
 		static Angle get_vector_sum(const Angle & meas1, const Angle & meas2);
 		/* Ensure that value is in range of 0-2pi (if the
 		   value is valid). */

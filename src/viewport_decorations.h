@@ -80,7 +80,7 @@ namespace SlavGPS {
 		*/
 		void draw_scale_helper_draw_scale(GisViewport & gisview, const ScreenPos & begin, const QPen & pen, int scale_len_px, int bar_height_max_px) const;
 
-		QString draw_scale_helper_get_value_string(GisViewport & gisview, DistanceUnit distance_unit, double scale_unit) const;
+		QString draw_scale_helper_get_value_string(GisViewport & gisview, const DistanceType::Unit & distance_unit, double scale_unit) const;
 
 		/* For scale and center mark. */
 		QPen pen_marks_bg;

@@ -500,15 +500,15 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	if (items_by_date.empty()) {
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
 	} else {
-		const HeightUnit height_unit = Preferences::get_unit_height();
+		const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 		TreeItemViewFormat view_format;
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,  true, tr("Tree Item")));
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp, true, tr("Timestamp")));
 		switch (height_unit.u) {
-		case HeightUnit::Unit::Metres:
+		case AltitudeType::Unit::E::Metres:
 			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Metres)")));
 			break;
-		case HeightUnit::Unit::Feet:
+		case AltitudeType::Unit::E::Feet:
 			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Feet)")));
 			break;
 		default:

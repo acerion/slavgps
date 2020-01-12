@@ -186,7 +186,7 @@ static ParameterScale<int> scale_track_elevation_factor       (              1, 
 static ParameterScale<int> scale_trackpoint_size              ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
 static ParameterScale<int> scale_track_direction_size         ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
-static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, DurationUnit::Unit::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
+static MeasurementScale<Duration> scale_track_min_stop_duration(MIN_STOP_LENGTH, MAX_STOP_LENGTH, 60, 1, DurationType::Unit::E::Seconds, 0); /* PARAM_TRACK_MIN_STOP_LENGTH */
 
 
 
@@ -1473,7 +1473,7 @@ void LayerTRW::set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Tra
  */
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
-	const HeightUnit height_unit = Preferences::get_unit_height();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 	const QString alti_string_uu = QObject::tr("Wpt: Alt %1").arg(wp->altitude.convert_to_unit(height_unit).to_string());
 
 	/* Position part.
@@ -2799,7 +2799,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	Duration threshold(60, DurationUnit::Unit::Seconds);
+	Duration threshold(60, DurationType::Unit::E::Seconds);
 	if (false == Dialog::duration(tr("Merge Threshold..."),
 				      tr("Merge when time between tracks is less than:"),
 				      threshold,
@@ -3218,7 +3218,7 @@ Time LayerTRW::get_timestamp(void) const
 		if (this->metadata && this->metadata->iso8601_timestamp.isValid()) {
 
 			/* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
-			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC, Time::internal_unit());
+			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC, TimeType::Unit::internal_unit());
 		}
 	}
 	if (timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
@@ -3886,7 +3886,7 @@ void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 LayerTRW::TracksTooltipData::TracksTooltipData()
 {
 	/* Track uses internal distance and time units, so this also uses internal unit. */
-	this->length = Distance(0, Distance::internal_unit());
-	this->duration = Duration(0, Duration::internal_unit());
+	this->length = Distance(0, DistanceType::Unit::internal_unit());
+	this->duration = Duration(0, DurationType::Unit::internal_unit());
 
 }

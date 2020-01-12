@@ -218,9 +218,9 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
 
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
 
 	const TrackPoints::iterator & current_point_iter = this->current_track->get_selected_children().front().m_iter; /* TODO_LATER: where do we check if it's valid? */
 	const bool is_route = this->current_track->is_route();
@@ -272,13 +272,13 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	}
 
 
-	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string();
+	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceType::Unit::E::Meters).convert_to_unit(distance_unit).to_nice_string();
 
 	this->course->setText(this->current_point->course.to_string());
 	this->gps_speed->setText(Track::get_gps_speed(this->current_point).convert_to_unit(speed_unit).to_string());
-	this->hdop->setText(Distance(this->current_point->hdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->pdop->setText(Distance(this->current_point->pdop, DistanceUnit::Unit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->vdop->setText(Altitude(this->current_point->vdop, HeightUnit::Unit::Metres).convert_to_unit(height_unit).to_nice_string());
+	this->hdop->setText(Distance(this->current_point->hdop, DistanceType::Unit::E::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->pdop->setText(Distance(this->current_point->pdop, DistanceType::Unit::E::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->vdop->setText(Altitude(this->current_point->vdop, AltitudeType::Unit::E::Metres).convert_to_unit(height_unit).to_nice_string());
 	this->sat->setText(tr("%1 / %2").arg(this->current_point->nsats).arg((int) this->current_point->fix_mode));
 
 	return sg_ret::ok;

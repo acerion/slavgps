@@ -358,7 +358,7 @@ namespace SlavGPS {
 
 
 template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(void)
+sg_ret ProfileView<Distance, Altitude>::draw_dem_elevation(void)
 {
 	return this->draw_parameter_from_auxiliary_source();
 }
@@ -367,7 +367,7 @@ sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, H
 
 
 template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::draw_dem_elevation(void)
+sg_ret ProfileView<Time, Altitude>::draw_dem_elevation(void)
 {
 	return this->draw_parameter_from_auxiliary_source();
 }
@@ -376,7 +376,7 @@ sg_ret ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::
 
 
 template <>
-sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, HeightUnit>::draw_gps_speeds(void)
+sg_ret ProfileView<Distance, Speed>::draw_gps_speeds(void)
 {
 	return this->draw_parameter_from_auxiliary_source();
 }
@@ -385,7 +385,7 @@ sg_ret ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, HeightU
 
 
 template <>
-sg_ret ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::draw_gps_speeds(void)
+sg_ret ProfileView<Time, Speed>::draw_gps_speeds(void)
 {
 	return this->draw_parameter_from_auxiliary_source();
 }
@@ -394,40 +394,40 @@ sg_ret ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::draw_gp
 
 
 template <>
-Speed ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+Speed ProfileView<Distance, Speed>::get_tp_aux_value_uu(const Trackpoint & tp)
 {
-	return Speed(tp.gps_speed, Speed::user_unit());
+	return Speed(tp.gps_speed, SpeedType::Unit::user_unit());
 }
 
 
 
 
 template <>
-Speed ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+Speed ProfileView<Time, Speed>::get_tp_aux_value_uu(const Trackpoint & tp)
 {
-	return Speed(tp.gps_speed, Speed::user_unit());
+	return Speed(tp.gps_speed, SpeedType::Unit::user_unit());
 }
 
 
 
 
 template <>
-Altitude ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+Altitude ProfileView<Distance, Altitude>::get_tp_aux_value_uu(const Trackpoint & tp)
 {
 	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
 	   when we do it for every TP on every redraw of view. */
-	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::user_unit());
+	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::Unit::user_unit());
 }
 
 
 
 
 template <>
-Altitude ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::get_tp_aux_value_uu(const Trackpoint & tp)
+Altitude ProfileView<Time, Altitude>::get_tp_aux_value_uu(const Trackpoint & tp)
 {
 	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
 	   when we do it for every TP on every redraw of view. */
-	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::user_unit());
+	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(AltitudeType::Unit::user_unit());
 }
 
 
@@ -639,7 +639,7 @@ sg_ret ProfileViewBase::draw_track_and_crosshairs(Track & trk)
 sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 {
 	Graph2D * graph_2d = (Graph2D *) pixmap;
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << QString(graph_2d->debug);
 
 	ProfileViewBase * view = this->find_view(graph_2d);
 	if (!view) {
@@ -862,7 +862,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 
 		this->tabs->addTab(view->widget, view->get_title());
 
-		qDebug() << SG_PREFIX_I << "Configuring signals for graph" << view->graph_2d->debug << "in view" << view->get_title();
+		qDebug() << SG_PREFIX_I << "Configuring signals for graph" << QString(view->graph_2d->debug) << "in view" << view->get_title();
 		connect(view->graph_2d, SIGNAL (cursor_moved(ViewportPixmap *, QMouseEvent *)),    this, SLOT (handle_cursor_move_cb(ViewportPixmap *, QMouseEvent *)));
 		connect(view->graph_2d, SIGNAL (button_released(ViewportPixmap *, QMouseEvent *)), this, SLOT (handle_mouse_button_release_cb(ViewportPixmap *, QMouseEvent *)));
 		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (handle_graph_resize_cb(ViewportPixmap *)));
@@ -1124,7 +1124,7 @@ ProfileViewBase::~ProfileViewBase()
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog)
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Altitude>(GisViewportDomain::TimeDomain, GisViewportDomain::ElevationDomain, new_dialog)
 {
 	this->title = QObject::tr("Elevation over time");
 	this->configure_labels_x_time();
@@ -1132,7 +1132,7 @@ ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_post();
 	this->configure_controls();
 }
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Speed>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
 	this->title = QObject::tr("Speed over time");
 	this->configure_labels_x_time();
@@ -1140,7 +1140,7 @@ ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_post();
 	this->configure_controls();
 }
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog)
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Distance>(GisViewportDomain::TimeDomain, GisViewportDomain::DistanceDomain,  new_dialog)
 {
 	this->title = QObject::tr("Distance over time");
 	this->configure_labels_x_time();
@@ -1148,7 +1148,7 @@ ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time
 	this->configure_labels_post();
 	this->configure_controls();
 }
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Speed>(GisViewportDomain::DistanceDomain,    GisViewportDomain::SpeedDomain,     new_dialog)
 {
 	this->title = QObject::tr("Speed over distance");
 	this->configure_labels_x_distance();
@@ -1156,7 +1156,7 @@ ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Dist
 	this->configure_labels_post();
 	this->configure_controls();
 }
-ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog)
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Altitude>(GisViewportDomain::DistanceDomain, GisViewportDomain::ElevationDomain, new_dialog)
 {
 	this->title = QObject::tr("Elevation over distance");
 	this->configure_labels_x_distance();
@@ -1164,7 +1164,7 @@ ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Dist
 	this->configure_labels_post();
 	this->configure_controls();
 }
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog)
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Gradient>(GisViewportDomain::DistanceDomain, GisViewportDomain::GradientDomain,  new_dialog)
 {
 	this->title = QObject::tr("Gradient over distance");
 	this->configure_labels_x_distance();

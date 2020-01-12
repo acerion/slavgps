@@ -99,8 +99,8 @@ namespace SlavGPS {
 		QStringList files;
 
 		/* Always in meters, even if units selected by user are different. */
-		Altitude min_elev{0.0, HeightUnit::Unit::Metres};
-		Altitude max_elev{0.0, HeightUnit::Unit::Metres};
+		Altitude min_elev{0.0, AltitudeType::Unit::E::Metres};
+		Altitude max_elev{0.0, AltitudeType::Unit::E::Metres};
 
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
 		int source = DEM_SOURCE_SRTM;    /* Signed int because this is a generic enum ID. */

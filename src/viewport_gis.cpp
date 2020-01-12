@@ -269,7 +269,7 @@ GisViewport * GisViewport::copy(int target_total_width, int target_total_height,
 */
 GisViewport::~GisViewport()
 {
-	qDebug() << SG_PREFIX_I << "Deleting viewport" << this->debug;
+	qDebug() << SG_PREFIX_I << "Deleting viewport" << QString(this->debug);
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		const LatLon lat_lon = this->center_coord.get_lat_lon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
@@ -290,7 +290,7 @@ GisViewport::~GisViewport()
 */
 void GisViewport::clear(void)
 {
-	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->debug;
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << QString(this->debug);
 
 	/* Some maps may have been removed, so their logos and/or
 	   attributions/copyrights must be cleared as well. */

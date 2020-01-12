@@ -545,7 +545,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		assert (param_spec.type_id == SGVariantType::DurationType);
 		if (param_spec.type_id == SGVariantType::DurationType && param_spec.widget_data) {
 			const Duration init_val = param_value.get_duration();
-			MeasurementScale<Duration, Duration_ll, DurationUnit> * scale = (MeasurementScale<Duration, Duration_ll, DurationUnit> *) param_spec.widget_data;
+			MeasurementScale<Duration> * scale = (MeasurementScale<Duration> *) param_spec.widget_data;
 			DurationWidget * widget_ = new DurationWidget(*scale);
 
 			widget = widget_;

@@ -115,17 +115,17 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 	const Coord left  = gisview.screen_pos_to_coord(leftmost_pixel,                                  y_center_pixel);
 	const Coord right = gisview.screen_pos_to_coord(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel);
 
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);
 	switch (distance_unit.u) {
-	case DistanceUnit::Unit::Kilometres:
+	case DistanceType::Unit::E::Kilometres:
 		base_distance = l2r; /* In meters. */
 		break;
-	case DistanceUnit::Unit::Miles:
+	case DistanceType::Unit::E::Miles:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
 		base_distance = VIK_METERS_TO_MILES (l2r) * 10.0;
 		break;
-	case DistanceUnit::Unit::NauticalMiles:
+	case DistanceType::Unit::E::NauticalMiles:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
 		base_distance = VIK_METERS_TO_NAUTICAL_MILES (l2r) * 10.0;
 		break;
@@ -225,19 +225,19 @@ void GisViewportDecorations::draw_scale_helper_draw_scale(GisViewport & gisview,
 /**
    @reviewed-on tbd
 */
-QString GisViewportDecorations::draw_scale_helper_get_value_string(GisViewport & gisview, DistanceUnit distance_unit, double scale_unit) const
+QString GisViewportDecorations::draw_scale_helper_get_value_string(GisViewport & gisview, const DistanceType::Unit & distance_unit, double scale_unit) const
 {
 	QString scale_value;
 
 	switch (distance_unit.u) {
-	case DistanceUnit::Unit::Kilometres:
+	case DistanceType::Unit::E::Kilometres:
 		if (scale_unit >= 1000) {
 			scale_value = QObject::tr("%1 km").arg((int) scale_unit / 1000);
 		} else {
 			scale_value = QObject::tr("%1 m").arg((int) scale_unit);
 		}
 		break;
-	case DistanceUnit::Unit::Miles:
+	case DistanceType::Unit::E::Miles:
 		/* Handle units in 0.1 miles. */
 		if (scale_unit < 10.0) {
 			scale_value = QObject::tr("%1 miles").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
@@ -247,7 +247,7 @@ QString GisViewportDecorations::draw_scale_helper_get_value_string(GisViewport &
 			scale_value = QObject::tr("%1 miles").arg((int) (scale_unit / 10.0));
 		}
 		break;
-	case DistanceUnit::Unit::NauticalMiles:
+	case DistanceType::Unit::E::NauticalMiles:
 		/* Handle units in 0.1 NM. */
 		if (scale_unit < 10.0) {
 			scale_value = QObject::tr("%1 NM").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */

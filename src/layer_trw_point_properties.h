@@ -68,7 +68,7 @@ namespace SlavGPS {
 
 		QLineEdit * name_entry = nullptr;
 		CoordEntryWidget * coord_widget = nullptr;
-		MeasurementEntry_2<Altitude, Altitude_ll, HeightUnit> * altitude_widget = nullptr;
+		MeasurementEntry_2<Altitude> * altitude_widget = nullptr;
 		TimestampWidget * timestamp_widget = nullptr;
 
 		/* Buttons will be in two rows. */

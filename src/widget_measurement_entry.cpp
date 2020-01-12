@@ -102,7 +102,7 @@ void MeasurementEntryWidget::set_value_iu(const SGVariant & value_iu)
 		{
 			const Altitude altitude_iu = value_iu.get_altitude();
 			if (altitude_iu.is_valid()) {
-				const HeightUnit height_unit = Preferences::get_unit_height();
+				const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 				const Altitude altitude_uu = altitude_iu.convert_to_unit(height_unit);
 
 				qDebug() << SG_PREFIX_I << "Setting value of altitude iu" << altitude_iu << ", in user units:" << altitude_uu;
@@ -139,7 +139,7 @@ SGVariant MeasurementEntryWidget::get_value_iu(void) const
 			   to user, it must have been in user
 			   units. Now convert to internal unit. */
 			const Altitude altitude_uu(this->spin->value(), Preferences::get_unit_height());
-			result_iu = SGVariant(altitude_uu.convert_to_unit(HeightUnit::Unit::Metres));
+			result_iu = SGVariant(altitude_uu.convert_to_unit(AltitudeType::Unit(AltitudeType::Unit::E::Metres)));
 		}
 		break;
 	default:

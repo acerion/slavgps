@@ -937,7 +937,7 @@ static void statusbar_write(const Distance & total_distance, const Distance & la
 	const QString total_distance_string = total_distance.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
 
 	if (elev_gain.is_valid() || elev_loss.is_valid()) {
-		const HeightUnit height_unit = Preferences::get_unit_height();
+		const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 		str_gain_loss = QObject::tr(" - Gain %1 / Loss %2")
 			.arg(elev_gain.convert_to_unit(height_unit).to_string())
 			.arg(elev_loss.convert_to_unit(height_unit).to_string());

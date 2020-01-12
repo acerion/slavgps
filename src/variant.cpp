@@ -102,7 +102,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->lon = Longitude(str);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Unit::Metres);
+		this->altitude = Altitude(strtod(str, NULL), AltitudeType::Unit::E::Metres);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
@@ -153,7 +153,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->lon = Longitude(str);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(str.toDouble(), HeightUnit::Unit::Metres);
+		this->altitude = Altitude(str.toDouble(), AltitudeType::Unit::E::Metres);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
@@ -179,7 +179,7 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 		this->lon.set_value(d);
 		break;
 	case SGVariantType::AltitudeType:
-		this->altitude = Altitude(d, HeightUnit::Unit::Metres);
+		this->altitude = Altitude(d, AltitudeType::Unit::E::Metres);
 		break;
 	default:
 		assert (0);
@@ -367,6 +367,9 @@ SGVariant SlavGPS::sg_variant_false(void)
 
 QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 {
+	// TODO: remove the line below to be able to print the variant
+	return debug;
+
 	debug << value.type_id;
 
 	switch (value.type_id) {

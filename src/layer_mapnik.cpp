@@ -129,7 +129,7 @@ static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_defaul
 
 
 static ParameterScale<int> scale_alpha(0,  255, SGVariant(255, SGVariantType::Int), 5, 0);
-static MeasurementScale<Duration, Duration_ll, DurationUnit> scale_renderer_timeout(0, 1024, 7 * 24, 12, DurationUnit::Unit::Hours, 0);
+static MeasurementScale<Duration> scale_renderer_timeout(0, 1024, 7 * 24, 12, DurationType::Unit::E::Hours, 0);
 static ParameterScale<int> scale_threads(1, 64, SGVariant(1, SGVariantType::Int), 1, 0); /* 64 threads should be enough for anyone... */
 
 
@@ -310,7 +310,7 @@ void LayerMapnik::init(void)
 */
 void LayerMapnik::post_init(void)
 {
-	const Duration seconds = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").get_duration().convert_to_unit(DurationUnit::Unit::Seconds);
+	const Duration seconds = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").get_duration().convert_to_unit(DurationType::Unit(DurationType::Unit::E::Seconds));
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * seconds.ll_value()).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */

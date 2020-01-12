@@ -120,7 +120,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const Paramet
 		  or seconds.
 		*/
 		{
-			MeasurementScale<Duration, Duration_ll, DurationUnit> * scale = (MeasurementScale<Duration, Duration_ll, DurationUnit> *) param_spec.widget_data;
+			MeasurementScale<Duration> * scale = (MeasurementScale<Duration> *) param_spec.widget_data;
 			value = SGVariant(Duration(variant.toLongLong(), scale->m_unit));
 		}
 		break;
@@ -135,7 +135,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const Paramet
 
 	case SGVariantType::AltitudeType:
 		/* Meters, because that's program's internal/default unit. */
-		value = SGVariant(Altitude(variant.toDouble(), HeightUnit::Unit::Metres));
+		value = SGVariant(Altitude(variant.toDouble(), AltitudeType::Unit::E::Metres));
 		break;
 
 	default:

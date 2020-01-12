@@ -915,7 +915,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 
 		case TreeItemPropertyID::Elevation:
 			{
-				const HeightUnit height_unit = Preferences::get_unit_height();
+				const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 				const Altitude display_alt = this->altitude.convert_to_unit(height_unit);
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
@@ -1098,7 +1098,7 @@ sg_ret Waypoint::properties_dialog_reset(void)
 
 TreeItemViewFormat Waypoint::get_view_format_header(bool include_parent_layer)
 {
-	const HeightUnit height_unit = Preferences::get_unit_height();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 
 	TreeItemViewFormat view_format;
 	if (include_parent_layer) {

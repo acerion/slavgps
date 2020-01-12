@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 	class Ruler {
 	public:
-		Ruler(GisViewport * gisview, DistanceUnit new_distance_unit);
+		Ruler(GisViewport * gisview, DistanceType::Unit new_distance_unit);
 
 		/* Arguments to the functions should indicate
 		   coordinates of pixel in Qt's coordinate system,
@@ -86,7 +86,7 @@ namespace SlavGPS {
 		Angle angle;
 		Angle base_angle;
 
-		DistanceUnit distance_unit;
+		DistanceType::Unit distance_unit;
 		Distance line_distance;
 		Distance total_distance;
 

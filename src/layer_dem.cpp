@@ -88,8 +88,8 @@ void draw_loaded_dem_box(GisViewport * gisview);
 
 
 /* Internal units - Metres. */
-static SGVariant scale_min_elev_initial_iu(Altitude(0.0, HeightUnit::Unit::Metres));
-static SGVariant scale_max_elev_initial_iu(Altitude(1000.0, HeightUnit::Unit::Metres));
+static SGVariant scale_min_elev_initial_iu(Altitude(0.0, AltitudeType::Unit::E::Metres));
+static SGVariant scale_max_elev_initial_iu(Altitude(1000.0, AltitudeType::Unit::E::Metres));
 
 /* Upper limit is that high in case if units are feet. */
 static ParameterScale<double> scale_min_elev_iu(0.0, 30000.0, scale_min_elev_initial_iu, 10, 1);
@@ -403,7 +403,7 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 			   altitude, and has sent us a simple double.
 			   Therefore use param_value.u.val_double.
 			*/
-			this->min_elev = Altitude(param_value.u.val_double, HeightUnit::Unit::Metres);
+			this->min_elev = Altitude(param_value.u.val_double, AltitudeType::Unit::E::Metres);
 		} else {
 			/* This value should have been converted to
 			   internal units right after getting it from
@@ -424,12 +424,12 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 			   value from file doesn't know that it's an
 			   altitude, and has sent us a simple double.
 			   Therefore use param_value.u.val_double. */
-			this->max_elev = Altitude(param_value.u.val_double, HeightUnit::Unit::Metres);
+			this->max_elev = Altitude(param_value.u.val_double, AltitudeType::Unit::E::Metres);
 		} else {
 			/* Convert from value that was presented in
 			   user interface with user units into value
 			   in internal units (meters) */
-			this->max_elev = param_value.get_altitude().convert_to_unit(HeightUnit::Unit::Metres);
+			this->max_elev = param_value.get_altitude().convert_to_unit(AltitudeType::Unit(AltitudeType::Unit::E::Metres));
 		}
 		qDebug() << SG_PREFIX_I << "Saved max elev to layer:" << this->max_elev << ", file operation =" << is_file_operation;
 		break;
@@ -1461,7 +1461,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 		/* Get some timestamp information of the file. */
 		struct stat stat_buf;
 		if (stat(cache_file_path.toUtf8().constData(), &stat_buf) == 0) {
-			const Time ts(stat_buf.st_mtime, Time::internal_unit());
+			const Time ts(stat_buf.st_mtime, TimeType::Unit::internal_unit());
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(ts.strftime_utc("%c"));
 		} else {
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);

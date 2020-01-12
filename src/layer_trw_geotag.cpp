@@ -227,7 +227,7 @@ GeotagJob::GeotagJob(GeoTagDialog * dialog)
 
 	this->n_items = this->selected_images.size();
 
-	this->photo_time = Time(0, Time::internal_unit()); /* This will set timestamp as valid. */
+	this->photo_time = Time(0, TimeType::Unit::internal_unit()); /* This will set timestamp as valid. */
 }
 
 
@@ -317,7 +317,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 		return sg_ret::ok;
 	}
 
-	const HeightUnit height_unit = HeightUnit::Unit::Metres;
+	const AltitudeType::Unit height_unit = AltitudeType::Unit::E::Metres;
 
 	for (auto iter = trk2->begin(); iter != trk2->end(); iter++) {
 

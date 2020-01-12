@@ -51,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-Ruler::Ruler(GisViewport * new_gisview, DistanceUnit new_distance_unit)
+Ruler::Ruler(GisViewport * new_gisview, DistanceType::Unit new_distance_unit)
 {
 	this->distance_unit = new_distance_unit;
 	this->gisview = new_gisview;

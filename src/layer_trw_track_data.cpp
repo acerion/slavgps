@@ -89,8 +89,8 @@ using namespace SlavGPS;
 /**
    @reviewed-on tbd
 */
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::compress_into(TrackData & target, int compressed_n_points) const
+template <typename Tx, typename Ty>
+sg_ret TrackData<Tx, Ty>::compress_into(TrackData & target, int compressed_n_points) const
 {
 	target.invalidate();
 	if (sg_ret::ok != target.allocate(compressed_n_points)) {
@@ -192,15 +192,15 @@ namespace SlavGPS { /* Template specializations need to be put inside a namespac
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
 {
 	/* No special handling of segments ATM... */
 
 	bool extremes_initialized = false;
-	Time_ll x_min_ll = 0;
-	Time_ll x_max_ll = 0;
-	Distance_ll y_min_ll = 0;
-	Distance_ll y_max_ll = 0;
+	TimeType::LL x_min_ll = 0;
+	TimeType::LL x_max_ll = 0;
+	DistanceType::LL y_min_ll = 0;
+	DistanceType::LL y_max_ll = 0;
 
 	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
@@ -273,8 +273,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::DistanceDomain;
 
-	this->x_unit = Time::internal_unit();
-	this->y_unit = Distance::internal_unit();
+	this->x_unit = TimeType::Unit::internal_unit();
+	this->y_unit = DistanceType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Distance over Time");
 
@@ -292,15 +292,15 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit>::
 
 
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Distance_ll x_min_ll = 0;
-	Distance_ll x_max_ll = 0;
-	Altitude_ll y_min_ll = 0;
-	Altitude_ll y_max_ll = 0;
+	DistanceType::LL x_min_ll = 0;
+	DistanceType::LL x_max_ll = 0;
+	AltitudeType::LL y_min_ll = 0;
+	AltitudeType::LL y_max_ll = 0;
 
 	const double total_length = trk->get_length_value_including_gaps();
 	if (total_length <= 0) {
@@ -354,8 +354,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Distance::internal_unit();
-	this->y_unit = Altitude::internal_unit();
+	this->x_unit = DistanceType::Unit::internal_unit();
+	this->y_unit = AltitudeType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
 
@@ -378,15 +378,15 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit>::make_track_data_x_over_y(Track * trk, int compressed_n_points)
+sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk, int compressed_n_points)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Distance_ll x_min_ll = 0;
-	Distance_ll x_max_ll = 0;
-	Altitude_ll y_min_ll = 0;
-	Altitude_ll y_max_ll = 0;
+	DistanceType::LL x_min_ll = 0;
+	DistanceType::LL x_max_ll = 0;
+	AltitudeType::LL y_min_ll = 0;
+	AltitudeType::LL y_max_ll = 0;
 
 	/* TODO_LATER: this function does not set this->m_tps[]. */
 
@@ -546,8 +546,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Distance::internal_unit();
-	this->y_unit = Altitude::internal_unit();
+	this->x_unit = DistanceType::Unit::internal_unit();
+	this->y_unit = AltitudeType::Unit::internal_unit();
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
 
 	this->m_x_min = Distance(x_min_ll, this->x_unit);
@@ -567,15 +567,15 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, Hei
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Gradient>::make_track_data_x_over_y(Track * trk)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Distance_ll x_min_ll = 0;
-	Distance_ll x_max_ll = 0;
-	Gradient_ll y_min_ll = 0;
-	Gradient_ll y_max_ll = 0;
+	DistanceType::LL x_min_ll = 0;
+	DistanceType::LL x_max_ll = 0;
+	GradientType::LL y_min_ll = 0;
+	GradientType::LL y_max_ll = 0;
 
 	const int tp_count = trk->get_tp_count();
 	if (tp_count < 2) {
@@ -584,7 +584,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
 	}
 
 
-	TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> data_ad;
+	TrackData<Distance, Altitude> data_ad;
 	data_ad.make_track_data_x_over_y(trk);
 	if (!data_ad.is_valid()) {
 		qDebug() << SG_PREFIX_I << "Failed to collect 'altitude over distance' track data";
@@ -594,17 +594,17 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
 	this->allocate(tp_count);
 
 	int i = 0;
-	Gradient_ll gradient;
+	GradientType::LL gradient;
 	for (i = 0; i < (tp_count - 1); i++) {
 
 		this->m_x_ll[i] = data_ad.x_ll(i);
 
-		const Distance_ll delta_distance = data_ad.x_ll(i + 1) - data_ad.x_ll(i);
+		const DistanceType::LL delta_distance = data_ad.x_ll(i + 1) - data_ad.x_ll(i);
 
 		if (delta_distance <= 0.0) { /* e.g. two trackpoints in the same location. */
 			this->m_y_ll[i] = 0;
 		} else {
-			const Altitude_ll delta_altitude = data_ad.y_ll(i + 1) - data_ad.y_ll(i);
+			const AltitudeType::LL delta_altitude = data_ad.y_ll(i + 1) - data_ad.y_ll(i);
 			gradient = 100.0 * delta_altitude / delta_distance;
 			this->m_y_ll[i] = gradient;
 		}
@@ -624,8 +624,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::GradientDomain;
 
-	this->x_unit = Distance::internal_unit();
-	this->y_unit = Gradient::internal_unit();
+	this->x_unit = DistanceType::Unit::internal_unit();
+	this->y_unit = GradientType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Gradient over Distance");
 
@@ -648,15 +648,15 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, Gra
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Speed>::make_track_data_x_over_y(Track * trk)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Time_ll x_min_ll = 0;
-	Time_ll x_max_ll = 0;
-	Speed_ll y_min_ll = 0;
-	Speed_ll y_max_ll = 0;
+	TimeType::LL x_min_ll = 0;
+	TimeType::LL x_max_ll = 0;
+	SpeedType::LL y_min_ll = 0;
+	SpeedType::LL y_max_ll = 0;
 
 	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
@@ -670,7 +670,7 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
 		return sg_ret::err;
 	}
-	TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit> data_dt;
+	TrackData<Time, Distance> data_dt;
 	data_dt.make_track_data_x_over_y(trk);
 
 
@@ -718,8 +718,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
 
-	this->x_unit = Time::internal_unit();
-	this->y_unit = Speed::internal_unit();
+	this->x_unit = TimeType::Unit::internal_unit();
+	this->y_unit = SpeedType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Speed over Time");
 
@@ -747,15 +747,15 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit>::make_trac
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Time_ll x_min_ll = 0;
-	Time_ll x_max_ll = 0;
-	Altitude_ll y_min_ll = 0;
-	Altitude_ll y_max_ll = 0;
+	TimeType::LL x_min_ll = 0;
+	TimeType::LL x_max_ll = 0;
+	AltitudeType::LL y_min_ll = 0;
+	AltitudeType::LL y_max_ll = 0;
 
 	const Duration duration = trk->get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
@@ -801,8 +801,8 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
 	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::ElevationDomain;
 
-	this->x_unit = Time::internal_unit();
-	this->y_unit = Altitude::internal_unit();
+	this->x_unit = TimeType::Unit::internal_unit();
+	this->y_unit = AltitudeType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Time");
 
@@ -825,15 +825,15 @@ sg_ret TrackData<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit>::ma
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Speed>::make_track_data_x_over_y(Track * trk)
 {
 	TrackData result;
 
 	bool extremes_initialized = false;
-	Distance_ll x_min_ll = 0;
-	Distance_ll x_max_ll = 0;
-	Speed_ll y_min_ll = 0;
-	Speed_ll y_max_ll = 0;
+	DistanceType::LL x_min_ll = 0;
+	DistanceType::LL x_max_ll = 0;
+	SpeedType::LL y_min_ll = 0;
+	SpeedType::LL y_max_ll = 0;
 
 	const double total_length = trk->get_length_value_including_gaps();
 	if (total_length <= 0) {
@@ -841,7 +841,7 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit
 	}
 
 	const int tp_count = trk->get_tp_count();
-	TrackData<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit> data_dt;
+	TrackData<Time, Distance> data_dt;
 	data_dt.make_track_data_x_over_y(trk);
 
 	this->allocate(tp_count);
@@ -885,8 +885,8 @@ sg_ret TrackData<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit
 	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
 
-	this->x_unit = Distance::internal_unit();
-	this->y_unit = Speed::internal_unit();
+	this->x_unit = DistanceType::Unit::internal_unit();
+	this->y_unit = SpeedType::Unit::internal_unit();
 
 	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Speed over Distance");
 

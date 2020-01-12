@@ -442,7 +442,7 @@ void TreeItem::set_timestamp(const Time & value)
 
 void TreeItem::set_timestamp(time_t value)
 {
-	this->timestamp = Time(value, Time::internal_unit());
+	this->timestamp = Time(value, TimeType::Unit::internal_unit());
 }
 
 

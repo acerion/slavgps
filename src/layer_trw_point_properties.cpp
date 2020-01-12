@@ -85,14 +85,14 @@ sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * pare
 
 	this->widgets_row++;
 
-	const HeightUnit height_unit = Altitude::internal_unit();
-	MeasurementScale<Altitude, Altitude_ll, HeightUnit> scale_alti(SG_ALTITUDE_RANGE_MIN,
-								       SG_ALTITUDE_RANGE_MAX,
-								       0.0,
-								       1,
-								       height_unit,
-								       SG_ALTITUDE_PRECISION);
-	this->altitude_widget = new MeasurementEntry_2<Altitude, Altitude_ll, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
+	const AltitudeType::Unit height_unit = AltitudeType::Unit::internal_unit();
+	MeasurementScale<Altitude> scale_alti(SG_ALTITUDE_RANGE_MIN,
+						  SG_ALTITUDE_RANGE_MAX,
+						  0.0,
+						  1,
+						  height_unit,
+						  SG_ALTITUDE_PRECISION);
+	this->altitude_widget = new MeasurementEntry_2<Altitude>(Altitude(0, height_unit), &scale_alti, this);
 	this->altitude_widget->meas_widget->label->setText(tr("Altitude:"));
 	this->grid->addWidget(this->altitude_widget->meas_widget, this->widgets_row, left_col, 1, 2);
 

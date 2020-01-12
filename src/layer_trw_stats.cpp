@@ -119,7 +119,7 @@ QLabel * StatsTable::get_value_label(TRWStatsRow row)
 void TRWStatsDialog::display_stats(TrackStatistics & stats)
 {
 	QString tmp_string;
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
 
 
 	/* Number of Tracks */
@@ -134,7 +134,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	}
 
 
-	const HeightUnit height_unit = Preferences::get_unit_height();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 
 
 	/* Date Range */
@@ -157,7 +157,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Total Length */
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	this->stats_table->get_value_label(TRWStatsRow::TotalLength)->setText(stats.length.convert_to_unit(distance_unit).to_nice_string());
 
 

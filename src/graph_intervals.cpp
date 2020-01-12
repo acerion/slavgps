@@ -48,7 +48,7 @@ using namespace SlavGPS;
   (Hopefully!) Human friendly altitude grid sizes - note no fixed
   'ratio' just numbers that look nice...
 */
-static const Altitude_ll interval_values_altitude[] = {
+static const AltitudeType::LL interval_values_altitude[] = {
 	1.0, 2.0, 4.0, 5.0,
 	10.0, 15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
 	100.0, 150.0, 200.0, 250.0, 375.0, 500.0, 750.0,
@@ -68,7 +68,7 @@ static const Altitude_ll interval_values_altitude[] = {
   invalid DEM values in otherwise mountainous regions) - thus giving
   huge negative gradients.
 */
-static const Gradient_ll interval_values_gradient[] = {
+static const GradientType::LL interval_values_gradient[] = {
 	1.0, 2.0, 3.0, 4.0, 5.0, 8.0,
 	10.0, 12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 75.0,
 	100.0, 150.0, 200.0, 250.0, 375.0, 500.0, 750.0,
@@ -85,7 +85,7 @@ static const Gradient_ll interval_values_gradient[] = {
   As need to cover walking speeds - have many low numbers (but also
   may go up to airplane speeds!).
 */
-static const Speed_ll interval_values_speed[] = {
+static const SpeedType::LL interval_values_speed[] = {
 	1.0, 2.0, 3.0, 4.0, 5.0, 8.0,
 	10.0, 15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
 	100.0, 150.0, 200.0, 250.0, 375.0, 500.0, 750.0,
@@ -98,7 +98,7 @@ static const Speed_ll interval_values_speed[] = {
   (Hopefully!) Human friendly distance grid sizes - note no fixed
   'ratio' just numbers that look nice...
 */
-static const Distance_ll interval_values_distance[] = {
+static const DistanceType::LL interval_values_distance[] = {
 	0.1, 0.2, 0.5,
 	1.0, 2.0, 3.0, 4.0, 5.0, 8.0,
 	10.0, 15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
@@ -109,7 +109,7 @@ static const Distance_ll interval_values_distance[] = {
 
 
 /* Time intervals in seconds. */
-static const Time_ll interval_values_time[] = {
+static const TimeType::LL interval_values_time[] = {
 	60,     /* 1 minute. */
 	120,    /* 2 minutes. */
 	300,    /* 5 minutes. */
@@ -140,7 +140,7 @@ namespace SlavGPS {
 template <>
 GraphIntervals<Distance>::GraphIntervals()
 {
-	const DistanceUnit unit = Distance::internal_unit();
+	const DistanceType::Unit unit = DistanceType::Unit::internal_unit();
 	const size_t n_values = sizeof (interval_values_distance) / sizeof (interval_values_distance[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Distance(interval_values_distance[i], unit));
@@ -156,7 +156,7 @@ GraphIntervals<Distance>::GraphIntervals()
 template <>
 GraphIntervals<Time>::GraphIntervals()
 {
-	const TimeUnit unit = Time::internal_unit();
+	const TimeType::Unit unit = TimeType::Unit::internal_unit();
 	const size_t n_values = sizeof (interval_values_time) / sizeof (interval_values_time[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Time(interval_values_time[i], unit));
@@ -172,7 +172,7 @@ GraphIntervals<Time>::GraphIntervals()
 template <>
 GraphIntervals<Altitude>::GraphIntervals()
 {
-	const HeightUnit unit = Altitude::internal_unit();
+	const AltitudeType::Unit unit = AltitudeType::Unit::internal_unit();
 	const size_t n_values = sizeof (interval_values_altitude) / sizeof (interval_values_altitude[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Altitude(interval_values_altitude[i], unit));
@@ -188,7 +188,7 @@ GraphIntervals<Altitude>::GraphIntervals()
 template <>
 GraphIntervals<Gradient>::GraphIntervals()
 {
-	const GradientUnit unit = Gradient::internal_unit();
+	const GradientType::Unit unit = GradientType::Unit::internal_unit();
 	const size_t n_values = sizeof (interval_values_gradient) / sizeof (interval_values_gradient[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Gradient(interval_values_gradient[i], unit));
@@ -204,7 +204,7 @@ GraphIntervals<Gradient>::GraphIntervals()
 template <>
 GraphIntervals<Speed>::GraphIntervals()
 {
-	const SpeedUnit unit = Speed::internal_unit();
+	const SpeedType::Unit unit = SpeedType::Unit::internal_unit();
 	const size_t n_values = sizeof (interval_values_speed) / sizeof (interval_values_speed[0]);
 	for (size_t i = 0; i < n_values; i++) {
 		this->values.push_back(Speed(interval_values_speed[i], unit));

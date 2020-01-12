@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, DurationUnit> & scale, QWidget * parent)
+void DurationWidget::build_widget(const MeasurementScale<Duration> & scale, QWidget * parent)
 {
 	this->m_hbox = new QHBoxLayout();
 
@@ -57,19 +57,19 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 	this->m_widget->setSingleStep(scale.m_step.ll_value());
 	this->m_widget->setValue(scale.m_initial.ll_value());
 	switch (scale.m_unit.u) {
-	case DurationUnit::Unit::Seconds:
+	case DurationType::Unit::E::Seconds:
 		this->m_widget->setSuffix(tr("s"));
 		this->m_widget->setToolTip(tr("Duration in seconds"));
 		break;
-	case DurationUnit::Unit::Minutes:
+	case DurationType::Unit::E::Minutes:
 		this->m_widget->setSuffix(tr("m"));
 		this->m_widget->setToolTip(tr("Duration in minutes"));
 		break;
-	case DurationUnit::Unit::Hours:
+	case DurationType::Unit::E::Hours:
 		this->m_widget->setSuffix(tr("h"));
 		this->m_widget->setToolTip(tr("Duration in hours"));
 		break;
-	case DurationUnit::Unit::Days:
+	case DurationType::Unit::E::Days:
 		this->m_widget->setSuffix(tr("d"));
 		this->m_widget->setToolTip(tr("Duration in days"));
 		break;
@@ -98,7 +98,7 @@ void DurationWidget::build_widget(const MeasurementScale<Duration, Duration_ll, 
 sg_ret DurationWidget::set_value(const Duration & duration)
 {
 	if (duration.unit() != this->m_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << this->m_unit << ", new unit =" << duration.unit();
+		qDebug() << SG_PREFIX_E << "Unit mismatch: widget unit =" << (int) this->m_unit.u << ", new unit =" << (int) duration.unit().u;
 		return sg_ret::err;
 	}
 

@@ -119,7 +119,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 	std::vector<QString> values(FMT_MAX_NUMBER_CODES);
 
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
 
 	const QString separator = " | ";
 
@@ -155,7 +155,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			/* Climbing speed. May be negative if we are going downhill. */
 			Speed speed;
 			if (false == std::isnan(climb)) {
-				speed = Speed(climb, SpeedUnit::Unit::MetresPerSecond);
+				speed = Speed(climb, SpeedType::Unit::E::MetresPerSecond);
 				values[i] = QObject::tr("%1Climb Speed: %2").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
 			} else {
 				speed = get_climb_diff_speed(tp, tp_prev);
@@ -284,7 +284,7 @@ Speed get_climb_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
 		return result;
 	}
 	if (tp->timestamp == tp_prev->timestamp) {
-		result = Speed(0, SpeedUnit::Unit::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
+		result = Speed(0, SpeedType::Unit::E::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
 		return result;
 	}
 

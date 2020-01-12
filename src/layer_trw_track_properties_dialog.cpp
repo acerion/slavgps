@@ -194,7 +194,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	int row = 0;
 
 
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	const Distance track_length = this->trk->get_length();
 #if 0
 	/* Unused at the moment. */
@@ -229,7 +229,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	row++;
 
 
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
 	tmp_string = this->trk->get_max_speed().convert_to_unit(speed_unit).to_string();
 	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(tr("Max Speed:")), row, 0);
@@ -248,7 +248,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	   This is the TrackWaypoint draw stops default value 'LayerTRWPainter::track_min_stop_duration'.
 	   However this variable is not directly accessible - and I don't expect it's often changed from the default
 	   so ATM just put in the number. */
-	tmp_string = this->trk->get_average_speed_moving(Duration(60, DurationUnit::Unit::Seconds)).convert_to_unit(speed_unit).to_string();
+	tmp_string = this->trk->get_average_speed_moving(Duration(60, DurationType::Unit::E::Seconds)).convert_to_unit(speed_unit).to_string();
 	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(tr("Moving Average Speed:")), row, 0);
 	this->grid->addWidget(this->w_mvg_speed, row, 1);
@@ -257,7 +257,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 	Distance average_dist_between_tp;
 	if (tp_count - seg_count == 0) {
-		average_dist_between_tp = Distance(0, Distance::internal_unit());
+		average_dist_between_tp = Distance(0, DistanceType::Unit::internal_unit());
 	} else {
 		average_dist_between_tp = track_length / (tp_count - seg_count);
 	}
@@ -270,10 +270,10 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	QString elevation_range;
-	TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> altitudes_ii;
+	TrackData<Distance, Altitude> altitudes_ii;
 	altitudes_ii.make_track_data_x_over_y(this->trk);
 	if (altitudes_ii.y_min().is_valid()) {
-		const HeightUnit height_unit = Preferences::get_unit_height();
+		const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 		elevation_range = tr("%1 - %2")
 			.arg(altitudes_ii.y_min().convert_to_unit(height_unit).to_string())
 			.arg(altitudes_ii.y_max().convert_to_unit(height_unit).to_string());
@@ -293,7 +293,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	QString elevation_gain;
 	if (this->trk->get_total_elevation_gain(delta_up, delta_down)) {
 		/* true == function collected some data. */
-		const HeightUnit height_unit = Preferences::get_unit_height();
+		const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 		elevation_gain = tr("%1 / %2")
 			.arg(delta_up.convert_to_unit(height_unit).to_string())
 			.arg(delta_down.convert_to_unit(height_unit).to_string());

@@ -278,7 +278,7 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
+	template <typename Tx, typename Ty>
 	class ProfileView : public ProfileViewBase {
 	public:
 		ProfileView(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent = NULL)
@@ -391,14 +391,14 @@ namespace SlavGPS {
 		  have to collect data from track every time user
 		  resizes the graph.
 		*/
-		TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> initial_track_data;
+		TrackData<Tx, Ty> initial_track_data;
 
 		/*
 		  Data structure with data from initial_track_data,
 		  but processed and prepared for painting
 		  (e.g. compressed).
 		*/
-		TrackData<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u> track_data_to_draw;
+		TrackData<Tx, Ty> track_data_to_draw;
 
 	private:
 		/*
@@ -421,8 +421,8 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::regenerate_track_data_to_draw(Track & trk)
+	template <typename Tx, typename Ty>
+		sg_ret ProfileView<Tx, Ty>::regenerate_track_data_to_draw(Track & trk)
 	{
 		this->track_data_to_draw.clear();
 
@@ -477,8 +477,8 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::set_initial_visible_range_x(void)
+	template <typename Tx, typename Ty>
+	sg_ret ProfileView<Tx, Ty>::set_initial_visible_range_x(void)
 	{
 		/* We won't display any x values outside of
 		   track_data.x_min/max. We will never be able to zoom out to
@@ -499,8 +499,8 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::set_initial_visible_range_y(void)
+	template <typename Tx, typename Ty>
+	sg_ret ProfileView<Tx, Ty>::set_initial_visible_range_y(void)
 	{
 		/* When user will be zooming in and out, and (in particular)
 		   moving graph up and down, the y_min/max_visible values will
@@ -555,8 +555,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on: 2019-08-24
 	*/
-	template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-	sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::set_grid_intervals(void)
+	template <typename Tx, typename Ty>
+	sg_ret ProfileView<Tx, Ty>::set_grid_intervals(void)
 	{
 		/* Find a suitable interval index and value for graph grid
 		   lines (x grid and y grid) that will nicely cover visible
@@ -579,8 +579,8 @@ namespace SlavGPS {
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(QMouseEvent * ev) const
+template <typename Tx, typename Ty>
+TPInfo ProfileView<Tx, Ty>::get_tp_info_under_cursor(QMouseEvent * ev) const
 {
 	TPInfo result;
 
@@ -615,7 +615,7 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
 			continue;
 		}
 
-		const Tx_ll x_current_value_uu = this->track_data_to_draw.x_ll(i);
+		const typename Tx::LL x_current_value_uu = this->track_data_to_draw.x_ll(i);
 		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.ll_value());
 
 		/* See if x coordinate of this trackpoint on a pixmap
@@ -664,8 +664,8 @@ TPInfo ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_tp_info_under_cursor(Q
   We have to try to find a trackpoint in track data arrays that is
   drawn the closest to 'x' coordinate of mouse event.
 */
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-Crosshair2D ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_crosshair_under_cursor(QMouseEvent * ev) const
+template <typename Tx, typename Ty>
+Crosshair2D ProfileView<Tx, Ty>::get_crosshair_under_cursor(QMouseEvent * ev) const
 {
 	Crosshair2D crosshair;
 
@@ -683,8 +683,8 @@ Crosshair2D ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_crosshair_under_c
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::on_cursor_move(Track * trk, QMouseEvent * ev)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::on_cursor_move(Track * trk, QMouseEvent * ev)
 {
 	const TPInfo tp_info = this->get_tp_info_under_cursor(ev);
 	if (!tp_info.valid || NULL == tp_info.found_tp) {
@@ -717,8 +717,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::on_cursor_move(Track * trk
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_x_labels(const TPInfo & tp_info)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::update_x_labels(const TPInfo & tp_info)
 {
 	/* This is a private method, so we assume that tp_info, and in
 	   particular tp_info.found_tp are valid. */
@@ -728,8 +728,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_x_labels(const TPIn
 	/* Relative time from start of track. */
 	if (this->labels.x_value) {
 		/* Values in x[] are already re-calculated to user units. */
-		const Tx_ll x_ll_uu = this->track_data_to_draw.x_ll(tp_info.found_tp_idx);
-		const Tx x_uu = Tx(x_ll_uu, Tx::user_unit());
+		const typename Tx::LL x_ll_uu = this->track_data_to_draw.x_ll(tp_info.found_tp_idx);
+		const Tx x_uu = Tx(x_ll_uu, Tx::Unit::user_unit());
 
 		/* TODO: we should use x-value of first valid tp. Make
 		   sure that x_min is an x-value of first valid tp. */
@@ -747,8 +747,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_x_labels(const TPIn
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPInfo & tp_info)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::update_y_labels(const TPInfo & tp_info)
 {
 	/* This is a private method, so we assume that tp_info, and in
 	   particular tp_info.found_tp are valid. */
@@ -757,8 +757,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 
 	if (this->labels.y_value) {
 		/* Values in y[] are already re-calculated to user units. */
-		const Ty_ll y_uu = this->track_data_to_draw.y_ll(tp_info.found_tp_idx);
-		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::user_unit()));
+		const typename Ty::LL y_uu = this->track_data_to_draw.y_ll(tp_info.found_tp_idx);
+		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::Unit::user_unit()));
 	}
 
 	return sg_ret::ok;
@@ -767,8 +767,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::update_y_labels(const TPIn
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_parameter_from_auxiliary_source(void)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::draw_parameter_from_auxiliary_source(void)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
@@ -791,7 +791,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_parameter_from_auxili
 			continue;
 		}
 
-		const Tx_ll x_value_uu = this->track_data_to_draw.x_ll(i);
+		const typename Tx::LL x_value_uu = this->track_data_to_draw.x_ll(i);
 
 		Ty y_value_uu = this->get_tp_aux_value_uu(*tp);
 		if (!y_value_uu.is_valid()) {
@@ -815,8 +815,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_parameter_from_auxili
 /**
    @reviewed-on tbd
 */
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track & trk)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::draw_function_values(Track & trk)
 {
 	const size_t n_values = this->track_data_to_draw.size();
 	if (0 == n_values) {
@@ -852,7 +852,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 
 	for (size_t i = 0; i < n_values; i++) {
 
-		const Tx_ll x_current_value_uu = this->track_data_to_draw.x_ll(i);
+		const typename Tx::LL x_current_value_uu = this->track_data_to_draw.x_ll(i);
 		/*
 		  This line creates x coordinate that is
 		  proportionally as far from left border, as
@@ -896,8 +896,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_function_values(Track
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-bool ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::track_data_is_valid(void) const
+template <typename Tx, typename Ty>
+bool ProfileView<Tx, Ty>::track_data_is_valid(void) const
 {
 	return this->track_data_to_draw.is_valid();
 }
@@ -905,8 +905,8 @@ bool ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::track_data_is_valid(void) co
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds_relative(Track & trk)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::draw_gps_speeds_relative(Track & trk)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
@@ -962,8 +962,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_gps_speeds_relative(T
 /**
    \brief Draw the y = f(x) graph
 */
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_graph_without_crosshairs(Track & trk)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::draw_graph_without_crosshairs(Track & trk)
 {
 	qDebug() << "II   ProfileView" << __func__ << __LINE__;
 	QTime draw_time;
@@ -1004,8 +1004,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_graph_without_crossha
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::~ProfileView()
+template <typename Tx, typename Ty>
+ProfileView<Tx, Ty>::~ProfileView()
 {
 	delete this->graph_2d;
 }
@@ -1013,8 +1013,8 @@ ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::~ProfileView()
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_data_wrapper(Track * trk)
+template <typename Tx, typename Ty>
+sg_ret ProfileView<Tx, Ty>::generate_initial_track_data_wrapper(Track * trk)
 {
 	this->initial_track_data.clear();
 
@@ -1034,7 +1034,7 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 	  opened. Once it is done, we don't have to re-do it on every
 	  resizing of dialog window.
 	*/
-	this->initial_track_data.apply_unit_conversions_xy(Tx::user_unit(), Ty::user_unit());
+	this->initial_track_data.apply_unit_conversions_xy(Tx::Unit::user_unit(), Ty::Unit::user_unit());
 
 	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
@@ -1043,8 +1043,8 @@ sg_ret ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::generate_initial_track_dat
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
+template <typename Tx, typename Ty>
+void ProfileView<Tx, Ty>::draw_y_grid(void)
 {
 	if (this->y_visible_range_uu.is_zero()) {
 		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Zero visible range:" << this->y_visible_range_uu;
@@ -1064,8 +1064,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 	double y_pixels_per_unit;
 	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
-	Ty first_multiple_uu(0.0, Ty::user_unit());
-	Ty last_multiple_uu(0.0, Ty::user_unit());
+	Ty first_multiple_uu(0.0, Ty::Unit::user_unit());
+	Ty last_multiple_uu(0.0, Ty::Unit::user_unit());
 	GraphIntervals<Ty>::find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
@@ -1112,8 +1112,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_y_grid(void)
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
+template <typename Tx, typename Ty>
+void ProfileView<Tx, Ty>::draw_x_grid(void)
 {
 	const int n_rows         = this->get_central_n_rows();
 	const int n_columns      = this->get_central_n_columns();
@@ -1133,8 +1133,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 	double y_pixels_per_unit;
 	this->get_pixels_per_unit(x_pixels_per_unit, y_pixels_per_unit);
 
-	Tx first_multiple_uu(0, Tx::user_unit());
-	Tx last_multiple_uu(0, Tx::user_unit());
+	Tx first_multiple_uu(0, Tx::Unit::user_unit());
+	Tx last_multiple_uu(0, Tx::Unit::user_unit());
 	GraphIntervals<Tx>::find_multiples_of_interval(this->x_visible_min, this->x_visible_max, this->x_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
@@ -1172,8 +1172,8 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::draw_x_grid(void)
 
 
 
-template <typename Tx, typename Tx_ll, typename Tx_u, typename Ty, typename Ty_ll, typename Ty_u>
-void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double & x_pixels_per_unit, double & y_pixels_per_unit) const
+template <typename Tx, typename Ty>
+void ProfileView<Tx, Ty>::get_pixels_per_unit(double & x_pixels_per_unit, double & y_pixels_per_unit) const
 {
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
@@ -1186,7 +1186,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* ET = elevation as a function of time. */
-	class ProfileViewET : public ProfileView<Time, Time_ll, TimeUnit, Altitude, Altitude_ll, HeightUnit> {
+	class ProfileViewET : public ProfileView<Time, Altitude> {
 	public:
 		ProfileViewET(TrackProfileDialog * dialog);
 		~ProfileViewET() {};
@@ -1199,7 +1199,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* SD = speed as a function of distance. */
-	class ProfileViewSD : public ProfileView<Distance, Distance_ll, DistanceUnit, Speed, Speed_ll, SpeedUnit> {
+	class ProfileViewSD : public ProfileView<Distance, Speed> {
 	public:
 		ProfileViewSD(TrackProfileDialog * dialog);
 		~ProfileViewSD() {};
@@ -1212,7 +1212,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* ED = elevation as a function of distance. */
-	class ProfileViewED : public ProfileView<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> {
+	class ProfileViewED : public ProfileView<Distance, Altitude> {
 	public:
 		ProfileViewED(TrackProfileDialog * dialog);
 		~ProfileViewED() {};
@@ -1226,7 +1226,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* GD = gradient as a function of distance. */
-	class ProfileViewGD : public ProfileView<Distance, Distance_ll, DistanceUnit, Gradient, Gradient_ll, GradientUnit> {
+	class ProfileViewGD : public ProfileView<Distance, Gradient> {
 	public:
 		ProfileViewGD(TrackProfileDialog * dialog);
 		~ProfileViewGD() {};
@@ -1238,7 +1238,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* ST = speed as a function of time. */
-	class ProfileViewST : public ProfileView<Time, Time_ll, TimeUnit, Speed, Speed_ll, SpeedUnit> {
+	class ProfileViewST : public ProfileView<Time, Speed> {
 	public:
 		ProfileViewST(TrackProfileDialog * dialog);
 		~ProfileViewST() {};
@@ -1250,7 +1250,7 @@ void ProfileView<Tx, Tx_ll, Tx_u, Ty, Ty_ll, Ty_u>::get_pixels_per_unit(double &
 
 
 	/* DT = distance as a function of time. */
-	class ProfileViewDT : public ProfileView<Time, Time_ll, TimeUnit, Distance, Distance_ll, DistanceUnit> {
+	class ProfileViewDT : public ProfileView<Time, Distance> {
 	public:
 		ProfileViewDT(TrackProfileDialog * dialog);
 		~ProfileViewDT() {};

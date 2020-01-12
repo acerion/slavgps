@@ -537,7 +537,7 @@ double Track::get_length_value_to_trackpoint(const Trackpoint * tp) const
 
 Distance Track::get_length_to_trackpoint(const Trackpoint * tp) const
 {
-	return Distance(this->get_length_value_to_trackpoint(tp), DistanceUnit::Unit::Meters);
+	return Distance(this->get_length_value_to_trackpoint(tp), DistanceType::Unit::E::Meters);
 }
 
 
@@ -564,7 +564,7 @@ double Track::get_length_value(void) const
 
 Distance Track::get_length(void) const
 {
-	return Distance(this->get_length_value(), DistanceUnit::Unit::Meters);
+	return Distance(this->get_length_value(), DistanceType::Unit::E::Meters);
 }
 
 
@@ -588,7 +588,7 @@ double Track::get_length_value_including_gaps(void) const
 
 Distance Track::get_length_including_gaps(void) const
 {
-	return Distance(this->get_length_value_including_gaps(), DistanceUnit::Unit::Meters);
+	return Distance(this->get_length_value_including_gaps(), DistanceType::Unit::E::Meters);
 }
 
 
@@ -828,7 +828,7 @@ void Track::reverse(void)
  */
 Duration Track::get_duration(bool segment_gaps) const
 {
-	Duration duration(0, Duration::internal_unit());
+	Duration duration(0, DurationType::Unit::internal_unit());
 
 	if (this->trackpoints.empty()) {
 		return duration;
@@ -865,7 +865,7 @@ Duration Track::get_duration(bool segment_gaps) const
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
 Duration Track::get_duration(void) const
 {
-	Duration result(0, Duration::internal_unit());
+	Duration result(0, DurationType::Unit::internal_unit());
 
 	Time ts_begin;
 	Time ts_end;
@@ -894,14 +894,14 @@ Duration Track::get_duration(void) const
 
 Speed Track::get_average_speed(void) const
 {
-	Speed result(NAN, SpeedUnit::Unit::MetresPerSecond); /* Invalid by default. */
+	Speed result(NAN, SpeedType::Unit::E::MetresPerSecond); /* Invalid by default. */
 
 	if (this->trackpoints.empty()) {
 		return result;
 	}
 
-	Distance distance(0, Distance::internal_unit());
-	Duration duration(0, Duration::internal_unit());
+	Distance distance(0, DistanceType::Unit::internal_unit());
+	Duration duration(0, DurationType::Unit::internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -942,8 +942,8 @@ Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) 
 		return result;
 	}
 
-	Distance distance(0, Distance::internal_unit());
-	Duration duration(0, Duration::internal_unit());
+	Distance distance(0, DistanceType::Unit::internal_unit());
+	Duration duration(0, DurationType::Unit::internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
@@ -970,13 +970,13 @@ Speed Track::get_average_speed_moving(const Duration & track_min_stop_duration) 
 
 sg_ret Track::calculate_max_speed(void)
 {
-	this->max_speed = Speed(NAN, SpeedUnit::Unit::MetresPerSecond); /* Invalidate. */
+	this->max_speed = Speed(NAN, SpeedType::Unit::E::MetresPerSecond); /* Invalidate. */
 
 	if (this->trackpoints.empty()) {
 		return sg_ret::ok;
 	}
 
-	Speed maxspeed(0.0, SpeedUnit::Unit::MetresPerSecond); /* Initialized as valid, but zero. */
+	Speed maxspeed(0.0, SpeedType::Unit::E::MetresPerSecond); /* Initialized as valid, but zero. */
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
@@ -1031,8 +1031,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 		return false;
 	}
 
-	delta_up = Altitude(0, Altitude::internal_unit());
-	delta_down = Altitude(0, Altitude::internal_unit());
+	delta_up = Altitude(0, AltitudeType::Unit::internal_unit());
+	delta_down = Altitude(0, AltitudeType::Unit::internal_unit());
 
 	size_t n = 0;
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
@@ -3199,9 +3199,9 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 	QVariant variant;
 
 
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	const HeightUnit height_unit = Preferences::get_unit_height();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
 
 
 	LayerTRW * trw = this->get_parent_layer_trw();
@@ -3322,8 +3322,8 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 
 		case TreeItemPropertyID::MaximumHeight:
 			{
-				Altitude max_alt(0.0, HeightUnit::Unit::Metres);
-				TrackData<Distance, Distance_ll, DistanceUnit, Altitude, Altitude_ll, HeightUnit> altitudes;
+				Altitude max_alt(0.0, AltitudeType::Unit::E::Metres);
+				TrackData<Distance, Altitude> altitudes;
 				altitudes.make_track_data_x_over_y(this);
 				if (altitudes.is_valid()) {
 					max_alt = altitudes.y_max();
@@ -3421,7 +3421,7 @@ void Trackpoint::set_timestamp(const Time & value)
 
 void Trackpoint::set_timestamp(time_t value)
 {
-	this->timestamp = Time(value, Time::internal_unit());
+	this->timestamp = Time(value, TimeType::Unit::internal_unit());
 }
 
 
@@ -3844,9 +3844,9 @@ TreeItemViewFormat Track::get_view_format_header(bool include_parent_layer)
 {
 	TreeItemViewFormat view_format;
 
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const AltitudeType::Unit height_unit = Preferences::get_unit_height();
+	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
+	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 
 	if (include_parent_layer) {
 		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("Parent Layer"))); // this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
@@ -3876,7 +3876,7 @@ Speed Track::get_gps_speed(const Trackpoint * tp)
 	if (nullptr == tp) {
 		return result;
 	} else {
-		result = Speed(tp->gps_speed, SpeedUnit::Unit::MetresPerSecond); /* We are dealing with GPS trackpoints, so natural unit is m/s. */
+		result = Speed(tp->gps_speed, SpeedType::Unit::E::MetresPerSecond); /* We are dealing with GPS trackpoints, so natural unit is m/s. */
 		return result;
 	}
 }
@@ -3899,7 +3899,7 @@ Speed Track::get_diff_speed(const Trackpoint * tp, const Trackpoint * tp_prev)
 	}
 	if (tp->timestamp == tp_prev->timestamp) {
 		/* This actually is not an error. */
-		result = Speed(0, SpeedUnit::Unit::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
+		result = Speed(0, SpeedType::Unit::E::MetresPerSecond); /* Since we deal with GPS trackpoints, let's use m/s. */
 		return result;
 	}
 
@@ -3927,7 +3927,7 @@ Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
 		return result;
 	}
 	if (tp->timestamp == tp_prev->timestamp) {
-		result = Duration(0, DurationUnit::Unit::Seconds); /* Since we deal with GPS trackpoints, let's use seconds. */
+		result = Duration(0, DurationType::Unit::E::Seconds); /* Since we deal with GPS trackpoints, let's use seconds. */
 		return result;
 	}
 	result = Duration::get_abs_duration(tp_prev->timestamp, tp->timestamp);

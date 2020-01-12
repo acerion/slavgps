@@ -156,7 +156,7 @@ int main(int argc, char ** argv)
 	Coords::unit_tests();
 	SGVariant::unit_tests();
 
-	MeasurementScale<Duration, Duration_ll, DurationUnit> aaa(1, 10, 5, 1, DurationUnit::Unit::Seconds, 0);
+	MeasurementScale<Duration> aaa(1, 10, 5, 1, DurationType::Unit::E::Seconds, 0);
 
 	QApplication app(argc, argv);
 	CommandLineOptions command_line_options;
