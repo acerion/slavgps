@@ -91,12 +91,8 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 		const SaveStatus result = VikFile::export_trw(this, output_file_full_path, file_type, trk, trk ? true : false);
 		this->get_window()->clear_busy_cursor();
 
-		switch (result.code) {
-		case SaveStatus::Code::Success:
-			break;
-		default:
-			result.show_error_dialog(this->get_window());
-			break;
+		if (SaveStatus::Code::Success != result.code) {
+			result.show_status_dialog(this->get_window());
 		}
 	}
 }
@@ -143,7 +139,7 @@ SaveStatus LayerTRW::export_layer_with_gpsbabel(const QString & title, const QSt
 		mode.waypoints_write = 1;
 	}
 
-	SaveStatus save_status = SaveStatus::Code::Error;
+	SaveStatus save_status = SaveStatus::Code::GenericError;
 
 	BabelDialog dialog(title);
 	dialog.build_ui(&mode);
@@ -186,7 +182,7 @@ SaveStatus LayerTRW::export_layer_with_gpsbabel(const QString & title, const QSt
 	}
 
 	if (SaveStatus::Code::Success != save_status) {
-		save_status.show_error_dialog(this->get_window());
+		save_status.show_status_dialog(this->get_window());
 	}
 
 	return save_status;

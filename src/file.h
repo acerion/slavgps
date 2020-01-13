@@ -1,8 +1,9 @@
-/*
+ /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,7 +102,7 @@ namespace SlavGPS {
 		static SaveStatus export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints);
 
 	private:
-		static sg_ret read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview);
+		static LoadStatus read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview);
 	};
 
 

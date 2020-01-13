@@ -343,8 +343,6 @@ namespace SlavGPS {
 
 		QString current_document_full_path;
 
-		LoadStatus file_load_status = LoadStatus::Code::ReadFailure; /* AKA none. */
-
 		/* For importing of track/route/waypoint data into new
 		   TRW layer (a layer that will be created during the
 		   import). */

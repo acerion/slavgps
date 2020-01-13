@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2012-2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,12 +48,30 @@
 
 
 
+#define VIK_MAGIC "#VIK"
+#define GPX_MAGIC "<?xm"
+#define VIK_MAGIC_LEN 4
+#define GPX_MAGIC_LEN 4
+
+
+
+
 namespace SlavGPS {
 
 
 
 	class FileUtils {
 	public:
+		enum class FileType {
+			Vik,
+			JPEG,
+			KML,
+			GPX,
+			Unknown
+		};
+
+		static FileType discover_file_type(QFile & file, const QString & full_path);
+
 		static QString get_base_name(const QString & file_name);
 		static sg_ret create_directory_for_file(const QString & file_full_path);
 		static QString path_get_dirname(const QString & file_full_path);

@@ -52,82 +52,81 @@ static std::mutex g_object_type_id_mutex;
 
 QDebug SlavGPS::operator<<(QDebug debug, const LoadStatus & load_status)
 {
-	switch (load_status.code) {
-	case LoadStatus::Code::Success:
-		debug << "Success";
-		break;
-	case LoadStatus::Code::OtherSuccess:
-		debug << "Other success";
-		break;
-	case LoadStatus::Code::Error:
-		debug << "Generic error";
-		break;
-	case LoadStatus::Code::InternalError:
-		debug << "Internal logic error";
-		break;
-	case LoadStatus::Code::ReadFailure:
-		debug << "Read failure";
-		break;
-	case LoadStatus::Code::FileAccess:
-		debug << "Can't access file";
-		break;
-	case LoadStatus::Code::IntermediateFileAccess:
-		debug << "Can't access intermediate file";
-		break;
-	case LoadStatus::Code::GPSBabelFailure:
-		debug << "gpsbabel failure";
-		break;
-	case LoadStatus::Code::GPXFailure:
-		debug << "GPX failure";
-		break;
-	case LoadStatus::Code::UnsupportedFailure:
-		debug << "Failure: unsupported feature";
-		break;
-	case LoadStatus::Code::FailureNonFatal:
-		debug << "Non-fatal failure";
-		break;
-
-	default:
-		debug << "EE: Unhandled load status" << (int) load_status.code;
-		break;
-	}
-
+	debug << load_status.get_message_string();
 	return debug;
 }
 
 
 
 
-void LoadStatus::show_error_dialog(QWidget * parent) const
+QString LoadStatus::get_message_string(void) const
 {
 	QString message;
 
-	qDebug() << SG_PREFIX_I << "Will show error dialog for load status code" << *this;
+	qDebug() << SG_PREFIX_I << "Will get message string for load status code" << (int) this->code;;
 
 	switch (this->code) {
-
 	case LoadStatus::Code::Success:
-	case LoadStatus::Code::OtherSuccess:
-		qDebug() << SG_PREFIX_E << "Called the method for 'success' code";
+		message = QObject::tr("Successfully loaded new data.");
 		break;
-	case LoadStatus::Code::Error:
-	case LoadStatus::Code::InternalError:
-	case LoadStatus::Code::ReadFailure:
-	case LoadStatus::Code::FileAccess:
-	case LoadStatus::Code::IntermediateFileAccess:
-	case LoadStatus::Code::GPSBabelFailure:
-	case LoadStatus::Code::GPXFailure:
-	case LoadStatus::Code::UnsupportedFailure:
-	case LoadStatus::Code::FailureNonFatal:
-		message = QObject::tr("Can't load file: error");
+	case LoadStatus::Code::GenericError:
+		message = QObject::tr("Generic error during processing of file.");
+		break;
+	case LoadStatus::Code::InternalLogicError:
+		message = QObject::tr("Internal logic error.");
+		break;
+	case LoadStatus::Code::ParseError:
+		message = QObject::tr("Can't parse file.");
+		break;
+	case LoadStatus::Code::ParseWarning:
+		message = QObject::tr("Encountered non-critical problems during parsing.");
+		break;
+	case LoadStatus::Code::CantOpenFileError:
+		message = QObject::tr("Can't open file.");
+		break;
+	case LoadStatus::Code::CantOpenIntermediateFileError:
+		message = QObject::tr("Can't open intermediate file.");
+		break;
+	case LoadStatus::Code::GPSBabelError:
+		message = QObject::tr("Error related to gpsbabel.");
+		break;
+	case LoadStatus::Code::GPXError:
+		message = QObject::tr("Error related to parsing of GPX.");
+		break;
+	case LoadStatus::Code::UnsupportedFileTypeError:
+		message = QObject::tr("Unsupported file type.");
 		break;
 	default:
-		message = QObject::tr("Can't load file: unknown error");
+		message = QObject::tr("Can't load file: unknown error.");
 		qDebug() << SG_PREFIX_E << "Unhandled load status" << (int) this->code;
 		break;
 	}
 
-	if (!message.isEmpty()) {
+	if (this->parser_line != -1) {
+		message += "\n";
+		message += QObject::tr("Parsing error in line %1.").arg(this->parser_line);
+	}
+
+	if ("" != this->parser_message) {
+		message += "\n";
+		message += QObject::tr("Parser message: '%1'").arg(this->parser_message);
+	}
+
+	return message;
+}
+
+
+
+
+void LoadStatus::show_status_dialog(QWidget * parent) const
+{
+	const QString message = this->get_message_string();
+
+	if (LoadStatus::Code::Success == this->code) {
+		Dialog::info(message, parent);
+	} else if (LoadStatus::Code::ParseWarning == this->code) {
+		Dialog::warning(message, parent);
+	} else {
 		Dialog::error(message, parent);
 	}
 
@@ -155,69 +154,62 @@ bool SlavGPS::operator!=(LoadStatus::Code code, const LoadStatus & lhs)
 
 QDebug SlavGPS::operator<<(QDebug debug, const SaveStatus & save_status)
 {
-	switch (save_status.code) {
-	case SaveStatus::Code::Error:
-		debug << "Generic error";
-		break;
-	case SaveStatus::Code::InternalError:
-		debug << "Internal logic error";
-		break;
-	case SaveStatus::Code::FileAccess:
-		debug << "Can't access file";
-		break;
-	case SaveStatus::Code::IntermediateFileAccess:
-		debug << "Can't access intermediate file";
-		break;
-	case SaveStatus::Code::Success:
-		debug << "Success";
-		break;
-	default:
-		debug << "EE: Unhandled save status" << (int) save_status.code;
-		break;
-	}
-
+	debug << save_status.get_message_string();
 	return debug;
 }
 
 
 
 
-void SaveStatus::show_error_dialog(QWidget * parent) const
+QString SaveStatus::get_message_string(void) const
 {
 	QString message;
 
-	qDebug() << SG_PREFIX_I << "Will show error dialog for save status code" << *this;
+	qDebug() << SG_PREFIX_I << "Will get message string for save status code" << (int) this->code;
 
 	switch (this->code) {
-	case SaveStatus::Code::Error:
-		message = QObject::tr("Can't save file: error");
+	case SaveStatus::Code::Success:
+		message = QObject::tr("Successfully saved the data.");
 		break;
-	case SaveStatus::Code::InternalError:
-		message = QObject::tr("Can't save file: internal error");
+	case SaveStatus::Code::GenericError:
+		message = QObject::tr("Can't save file: generic error.");
 		break;
-	case SaveStatus::Code::FileAccess:
+	case SaveStatus::Code::InternalLogicError:
+		message = QObject::tr("Can't save file: internal error.");
+		break;
+	case SaveStatus::Code::CantOpenFileError:
 		/*
 		  Examples of situation when this error can occur:
 		  1. trying to save-again file in directory that has been removed.
 		*/
 		message = QObject::tr("Can't save file: can't open file for writing. Try to save file in different location.");
 		break;
-	case SaveStatus::Code::IntermediateFileAccess:
-		message = QObject::tr("Can't save file: Can't access intermediate file");
+	case SaveStatus::Code::CantOpenIntermediateFileError:
+		message = QObject::tr("Can't save file: can't access intermediate file.");
 		break;
-	case SaveStatus::Code::Success:
-		qDebug() << SG_PREFIX_E << "Called the method for 'success' code";
+	case SaveStatus::Code::GPSBabelError:
+		message = QObject::tr("Error related to gpsbabel.");
 		break;
 	default:
-		message = QObject::tr("Can't save file: unknown error");
+		message = QObject::tr("Can't save file: unknown error.");
 		qDebug() << SG_PREFIX_E << "Unhandled save status" << (int) this->code;
 		break;
 	}
 
-	if (!message.isEmpty()) {
+	return message;
+}
+
+
+
+
+void SaveStatus::show_status_dialog(QWidget * parent) const
+{
+	const QString message = this->get_message_string();
+	if (this->code == SaveStatus::Code::Success) {
+		Dialog::info(message, parent);
+	} else {
 		Dialog::error(message, parent);
 	}
-
 	return;
 }
 

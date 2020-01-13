@@ -1227,7 +1227,7 @@ SaveStatus GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW
 	tmp_file.setFileTemplate("viking_XXXXXX.gpx");
 	if (!tmp_file.open()) {
 		qDebug() << SG_PREFIX_E << "Failed to open temporary file, error =" << tmp_file.error();
-		return SaveStatus::Code::IntermediateFileAccess;
+		return SaveStatus::Code::CantOpenIntermediateFileError;
 	}
 	tmp_file.setAutoRemove(false);
 	file_full_path = tmp_file.fileName();
@@ -1332,5 +1332,5 @@ LoadStatus GPXImporter::write(const char * data, size_t size)
 	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << ();
 #endif
 
-	return this->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
+	return this->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::ParseError;
 }

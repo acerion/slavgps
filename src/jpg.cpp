@@ -114,7 +114,7 @@ bool SlavGPS::jpg_magic_check(const QString & file_full_path)
 
    Returns: Whether the loading was a success or not.
 */
-bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path)
+LoadStatus SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path)
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
@@ -163,5 +163,5 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview
 	}
 
 	/* ATM This routine can't fail. */
-	return true;
+	return LoadStatus::Code::Success;
 }

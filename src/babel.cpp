@@ -242,7 +242,7 @@ LoadStatus BabelProcess::convert_through_gpx(LayerTRW * trw)
 
 	if (sg_ret::ok != this->run_process()) {
 		qDebug() << SG_PREFIX_E << "Conversion failed";
-		return LoadStatus::Code::Error;
+		return LoadStatus::Code::GenericError;
 	}
 	this->gpx_importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
 	sleep(3);
@@ -252,13 +252,13 @@ LoadStatus BabelProcess::convert_through_gpx(LayerTRW * trw)
 		this->babel_progr_indicator->set_current_status("");
 	}
 
-	if (trw == NULL) {
+	if (nullptr == trw) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
 		return LoadStatus::Code::Success;
 	}
 
-	const LoadStatus read_success = this->gpx_importer->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
+	const LoadStatus read_success = this->gpx_importer->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::ParseError;
 
 	delete this->gpx_importer;
 
@@ -661,13 +661,13 @@ SaveStatus BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 {
 	if (!Babel::is_available()) {
 		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
-		return SaveStatus(SaveStatus::Code::Error);
+		return SaveStatus(SaveStatus::Code::GPSBabelError);
 	}
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return SaveStatus::Code::IntermediateFileAccess;
+		return SaveStatus::Code::CantOpenIntermediateFileError;
 	}
 	const QString tmp_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
@@ -682,7 +682,7 @@ SaveStatus BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 
 	this->set_input("gpx", tmp_file_full_path);
 
-	return (sg_ret::ok == this->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
+	return (sg_ret::ok == this->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::GenericError;
 }
 
 

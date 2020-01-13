@@ -2081,81 +2081,61 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	const QString original_filename = this->current_document_full_path;
 	this->current_document_full_path = new_document_full_path;
 
-	bool success = false;
-	bool restore_original_filename = false;
+	bool loaded_new_contents = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->file_load_status = VikFile::load(agg, this->main_gis_vp, new_document_full_path);
-	switch (this->file_load_status.code) {
-	case LoadStatus::Code::ReadFailure:
-		Dialog::error(tr("The file you requested could not be opened."), this);
-		break;
-	case LoadStatus::Code::GPSBabelFailure:
-		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
-		break;
-	case LoadStatus::Code::GPXFailure:
-		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_document_full_path), this);
-		break;
-	case LoadStatus::Code::UnsupportedFailure:
-		Dialog::error(tr("Unsupported file type for %1").arg(new_document_full_path), this);
-		break;
-	case LoadStatus::Code::FailureNonFatal:
-		{
-			/* Since we can process .vik files with issues just show a warning in the status bar.
-			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::Info, tr("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
+
+	const LoadStatus file_load_status = VikFile::load(agg, this->main_gis_vp, new_document_full_path);
+
+	if (LoadStatus::Code::Success == file_load_status
+	    || LoadStatus::Code::ParseWarning == file_load_status) {
+
+		loaded_new_contents = true;
+	}
+
+	if (loaded_new_contents) {
+		/* Update UI */
+		if (set_as_current_document) {
+			this->set_current_document_full_path(new_document_full_path);
 		}
-		/* No break, carry on to show any data. */
-	case LoadStatus::Code::Success:
-		{
 
-			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
-			/* Update UI */
-			if (set_as_current_document) {
-				this->set_current_document_full_path(new_document_full_path);
-			}
-
-			QAction * drawmode_action = this->get_drawmode_action(this->main_gis_vp->get_draw_mode());
-			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
-			drawmode_action->setChecked(true);
-			this->only_updating_coord_mode_ui = false;
+		QAction * drawmode_action = this->get_drawmode_action(this->main_gis_vp->get_draw_mode());
+		this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
+		drawmode_action->setChecked(true);
+		this->only_updating_coord_mode_ui = false;
 
 
-			this->items_tree->change_coord_mode(this->main_gis_vp->get_coord_mode());
+		this->items_tree->change_coord_mode(this->main_gis_vp->get_coord_mode());
 
-			/* Slightly long winded methods to align loaded viewport settings with the UI. */
-			bool vp_state_scale = this->main_gis_vp->get_scale_visibility();
-			bool ui_state_scale = this->qa_view_scale_visibility->isChecked();
-			if (vp_state_scale != ui_state_scale) {
-				this->main_gis_vp->set_scale_visibility(!vp_state_scale);
-				this->set_scale_visibility_cb(!vp_state_scale);
-			}
-			bool vp_state_centermark = this->main_gis_vp->get_center_mark_visibility();
-			bool ui_state_centermark = this->qa_view_center_mark_visibility->isChecked();
-			if (vp_state_centermark != ui_state_centermark) {
-				this->main_gis_vp->set_center_mark_visibility(!vp_state_centermark);
-				this->set_center_mark_visibility_cb(!vp_state_centermark);
-			}
-			bool vp_state_highlight = this->main_gis_vp->get_highlight_usage();
-			bool ui_state_highlight = this->qa_view_highlight_usage->isChecked();
-			if (vp_state_highlight != ui_state_highlight) {
-				this->main_gis_vp->set_highlight_usage(!vp_state_highlight);
-				this->set_highlight_usage_cb(!vp_state_highlight);
-			}
+		/* Slightly long winded methods to align loaded viewport settings with the UI. */
+		bool vp_state_scale = this->main_gis_vp->get_scale_visibility();
+		bool ui_state_scale = this->qa_view_scale_visibility->isChecked();
+		if (vp_state_scale != ui_state_scale) {
+			this->main_gis_vp->set_scale_visibility(!vp_state_scale);
+			this->set_scale_visibility_cb(!vp_state_scale);
 		}
-		/* No break, carry on to redraw. */
-		//case LoadStatus::OTHER_SUCCESS:
-	default:
-		success = true;
-		/* When LoadStatus::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
-		restore_original_filename = !restore_original_filename;
+		bool vp_state_centermark = this->main_gis_vp->get_center_mark_visibility();
+		bool ui_state_centermark = this->qa_view_center_mark_visibility->isChecked();
+		if (vp_state_centermark != ui_state_centermark) {
+			this->main_gis_vp->set_center_mark_visibility(!vp_state_centermark);
+			this->set_center_mark_visibility_cb(!vp_state_centermark);
+		}
+		bool vp_state_highlight = this->main_gis_vp->get_highlight_usage();
+		bool ui_state_highlight = this->qa_view_highlight_usage->isChecked();
+		if (vp_state_highlight != ui_state_highlight) {
+			this->main_gis_vp->set_highlight_usage(!vp_state_highlight);
+			this->set_highlight_usage_cb(!vp_state_highlight);
+		}
 
 		this->update_recent_files(new_document_full_path, "text/x-gps-data");
 		this->draw_tree_items(this->main_gis_vp);
-		break;
 	}
 
-	if (!success || restore_original_filename) {
+	if (true || LoadStatus::Code::Success != file_load_status) {
+		file_load_status.show_status_dialog(this);
+	}
+
+	if (!loaded_new_contents) {
 		// Load didn't work or want to keep as the existing Viking project, keep using the original name
 		this->set_current_document_full_path(original_filename);
 	}
@@ -2470,7 +2450,7 @@ void Window::finish_new(void)
 
 
 	/* If not loaded any file, maybe try the location lookup. */
-	if (true || LoadStatus::Code::ReadFailure == this->file_load_status) {
+	if (this->current_document_full_path.isEmpty()) {
 		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
 			this->status_bar->set_message(StatusBarField::Info, tr("Trying to determine location..."));
@@ -3115,7 +3095,7 @@ sg_ret Window::save_current_workspace_to_file(const QString & full_path)
 		this->update_recent_files(full_path, "text/x-gps-data");
 		return sg_ret::ok;
 	} else {
-		save_status.show_error_dialog(this);
+		save_status.show_status_dialog(this);
 		return sg_ret::err;
 	}
 }

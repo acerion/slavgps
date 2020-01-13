@@ -2582,7 +2582,7 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 		ThisApp::get_main_window()->clear_busy_cursor();
 
 		if (SaveStatus::Code::Success != export_status) {
-			export_status.show_error_dialog(ThisApp::get_main_window());
+			export_status.show_status_dialog(ThisApp::get_main_window());
 		}
 	}
 }

@@ -1023,7 +1023,7 @@ void GPSSession::run(void)
 		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(NULL /* TODO_LATER: progr_dialog */);
 
-		save_status = (sg_ret::ok == importer->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
+		save_status = (sg_ret::ok == importer->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::GenericError;
 	} else {
 		BabelProcess * exporter = new BabelProcess();
 		exporter->set_options(this->babel_opts);

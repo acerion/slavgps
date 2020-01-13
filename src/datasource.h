@@ -69,7 +69,7 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual LoadStatus acquire_into_layer(__attribute__((unused)) AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog) { return LoadStatus::Code::Error; };
+		virtual LoadStatus acquire_into_layer(__attribute__((unused)) AcquireContext & acquire_context, __attribute__((unused)) AcquireProgressDialog * progr_dialog) { return LoadStatus::Code::GenericError; };
 		virtual void progress_func(__attribute__((unused)) AcquireProgressCode code, __attribute__((unused)) void * data, __attribute__((unused)) AcquireContext * acquire_context) { return; };
 		virtual void cleanup(__attribute__((unused)) void * data) { return; };
 		virtual int kill(__attribute__((unused)) const QString & status) { return -1; };

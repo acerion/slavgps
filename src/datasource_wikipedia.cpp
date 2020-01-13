@@ -120,7 +120,7 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(AcquireContext & acquire_cont
 {
 	if (!acquire_context.m_trw) {
 		qDebug() << SG_PREFIX_E << "Missing target TRW layer";
-		return LoadStatus::Code::InternalError;
+		return LoadStatus::Code::InternalLogicError;
 	}
 
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;

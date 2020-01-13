@@ -421,14 +421,14 @@ LoadStatus AcquireOptions::import_from_url(AcquireContext & acquire_context, con
 		babel_dl_options = *dl_options;
 	}
 
-	LoadStatus load_status = LoadStatus::Code::Error;
+	LoadStatus load_status = LoadStatus::Code::GenericError;
 
 	qDebug() << SG_PREFIX_D << "Input data format =" << this->input_data_format << ", url =" << this->source_url;
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return LoadStatus::Code::IntermediateFileAccess;
+		return LoadStatus::Code::CantOpenIntermediateFileError;
 	}
 	const QString target_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << target_file_full_path;
@@ -455,7 +455,7 @@ LoadStatus AcquireOptions::import_from_url(AcquireContext & acquire_context, con
 			if (file.open(QIODevice::ReadOnly)) {
 				load_status = GPX::read_layer_from_file(file, acquire_context.m_trw);
 			} else {
-				load_status = LoadStatus::Code::FileAccess;
+				load_status = LoadStatus::Code::CantOpenFileError;
 				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
 			}
 		}
@@ -522,7 +522,7 @@ LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context,
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
-		return LoadStatus::Code::InternalError;
+		return LoadStatus::Code::InternalLogicError;
 	}
 }
 

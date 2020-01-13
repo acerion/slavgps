@@ -391,9 +391,9 @@ static void gpx_meta_data_cdata(xml_data * xd, const XML_Char *s, int len)
 */
 static LoadStatus read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 {
-	FILE *ff = fopen(file.fileName().toUtf8().constData(), "r");
-	if (!ff) {
-		return LoadStatus::Code::FileAccess;
+	FILE * ff = fopen(file.fileName().toUtf8().constData(), "r");
+	if (nullptr == ff) {
+		return LoadStatus::Code::CantOpenFileError;
 	}
 
 	XML_Parser parser = XML_ParserCreate(NULL);
@@ -416,7 +416,7 @@ static LoadStatus read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 
 	fclose(ff);
 
-	return status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
+	return status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::ParseError;
 }
 
 
@@ -574,7 +574,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
-	LoadStatus result = LoadStatus::Code::Error;
+	LoadStatus result = LoadStatus::Code::GenericError;
 
 	/* Support .zip + bzip2 files directly. */
 	DownloadOptions local_dl_options(2); /* Allow a couple of redirects. */
@@ -585,7 +585,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES)) {
-		return LoadStatus::Code::IntermediateFileAccess;
+		return LoadStatus::Code::CantOpenIntermediateFileError;
 	}
 
 	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
@@ -602,7 +602,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 
 	if (LoadStatus::Code::Success != metadata_load_result) {
 		free(xd);
-		return LoadStatus::Code::IntermediateFileAccess;
+		return LoadStatus::Code::CantOpenIntermediateFileError;
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
@@ -612,7 +612,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 		}
 #endif
 		free(xd);
-		return LoadStatus::Code::Error;
+		return LoadStatus::Code::GenericError;
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
@@ -659,7 +659,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 				target_layer = acquire_context.m_trw;
 			}
 
-			LoadStatus convert_result = LoadStatus::Code::Error;
+			LoadStatus convert_result = LoadStatus::Code::GenericError;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
@@ -713,7 +713,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 
 	/* ATM The user is only informed if all getting *all* of the traces failed. */
 	if (selected) {
-		result = got_something ? LoadStatus::Code::Success : LoadStatus::Code::Error;
+		result = got_something ? LoadStatus::Code::Success : LoadStatus::Code::GenericError;
 	} else {
 		/* Process was cancelled but need to return that it proceeded as expected. */
 		result = LoadStatus::Code::Success;

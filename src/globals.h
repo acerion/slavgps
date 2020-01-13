@@ -97,25 +97,30 @@ namespace SlavGPS {
 
 		enum class Code {
 			Success,
-			OtherSuccess,
-			Error,                  /* General error. */
-			InternalError,          /* Error in code logic. */
-			ReadFailure,
-			FileAccess,             /* Can't open target file for reading. */
-			IntermediateFileAccess, /* Can't open intermediate file for reading/writing. */
-			GPSBabelFailure,
-			GPXFailure,
-			UnsupportedFailure,
-			FailureNonFatal,
+			GenericError,           /* Generic error code. */
+			InternalLogicError,     /* Error in code logic. */
+			ParseError,             /* Error encountered during parsing of file (or during read operation). */
+			ParseWarning, /* Non-critical problems during parsing of a file. */
+			CantOpenFileError,      /* Can't open target file for reading. */
+			CantOpenIntermediateFileError, /* Can't open intermediate file for reading/writing. */
+			GPSBabelError,
+			GPXError,
+			UnsupportedFileTypeError,
 		};
 		LoadStatus() {}
 		LoadStatus(LoadStatus::Code new_code) { this->code = new_code; }
 
-		void show_error_dialog(QWidget * parent = NULL) const;
+		void show_status_dialog(QWidget * parent = NULL) const;
 
 		LoadStatus & operator=(LoadStatus::Code new_code) { this->code = new_code; return *this; }
 
-		LoadStatus::Code code = LoadStatus::Code::Error;
+		LoadStatus::Code code = LoadStatus::Code::GenericError;
+
+		/* Additional info from parser. */
+		int parser_line = -1;
+		QString parser_message;
+
+		QString get_message_string(void) const;
 	};
 	bool operator==(LoadStatus::Code code, const LoadStatus & lhs);
 	bool operator!=(LoadStatus::Code code, const LoadStatus & lhs);
@@ -129,20 +134,23 @@ namespace SlavGPS {
 	public:
 		enum class Code {
 			Success,
-			Error,                  /* General error. */
-			InternalError,          /* Error in code logic. */
-			FileAccess,             /* Can't open target file for writing. */
-			IntermediateFileAccess, /* Can't open intermediate file for reading/writing. */
+			GenericError,           /* Generic error code. */
+			InternalLogicError,     /* Error in code logic. */
+			CantOpenFileError,      /* Can't open target file for writing. */
+			CantOpenIntermediateFileError, /* Can't open intermediate file for reading/writing. */
+			GPSBabelError,
 		};
 
 		SaveStatus() {}
 		SaveStatus(SaveStatus::Code new_code) { this->code = new_code; }
 
-		void show_error_dialog(QWidget * parent = NULL) const;
+		void show_status_dialog(QWidget * parent = NULL) const;
 
 		SaveStatus & operator=(SaveStatus::Code new_code) { this->code = new_code; return *this; }
 
-		SaveStatus::Code code = SaveStatus::Code::Error;
+		SaveStatus::Code code = SaveStatus::Code::GenericError;
+
+		QString get_message_string(void) const;
 	};
 	bool operator==(SaveStatus::Code code, const SaveStatus & lhs);
 	bool operator!=(SaveStatus::Code code, const SaveStatus & lhs);

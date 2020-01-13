@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2012-2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,11 +87,6 @@ using namespace SlavGPS;
 
 
 
-#define VIK_MAGIC "#VIK"
-#define GPX_MAGIC "<?xm"
-#define VIK_MAGIC_LEN 4
-#define GPX_MAGIC_LEN 4
-
 #define VIKING_FILE_VERSION 1
 
 
@@ -134,7 +130,7 @@ public:
 	ReadParser(QFile * new_file) : file(new_file) {};
 
 	void handle_layer_begin(const char * line, GisViewport * gisview);
-	void handle_layer_end(const char * line, GisViewport * gisview);
+	void handle_layer_end(GisViewport * gisview);
 	void handle_layer_data_begin(const QString & dirpath);
 
 	/**
@@ -156,8 +152,8 @@ public:
 
 	sg_ret read_header(Layer * top_layer, GisViewport * gisview, LatLon & lat_lon);
 
-	LayerStack<Layer *> stack;
-	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	LayerStack<Layer *> layers_stack;
+	ParameterSpecification * param_specs = nullptr; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t param_specs_count = 0;
 
 	size_t line_num = 0;
@@ -173,7 +169,7 @@ public:
 	*/
 	QHash<param_id_t, QStringList> string_lists;
 
-	sg_ret parse_status = sg_ret::ok;
+	LoadStatus parse_status = LoadStatus::Code::Success;
 
 	char buffer[4096];
 	const size_t buffer_size = sizeof (ReadParser::buffer);
@@ -335,7 +331,7 @@ sg_ret ReadParser::read_header(Layer * top_layer, GisViewport * gisview, LatLon 
 		}
 
 		size_t name_len = 0; /* Length of parameter's name. */
-		const char * value_start = NULL;
+		const char * value_start = nullptr;
 		for (size_t i = 0; i < line_len; i++) {
 			if (line[i] == '=') {
 				name_len = i;
@@ -345,29 +341,41 @@ sg_ret ReadParser::read_header(Layer * top_layer, GisViewport * gisview, LatLon 
 
 
 		if (name_len == 12 && strncasecmp(line, "FILE_VERSION", name_len) == 0) {
-			const int version = strtol(value_start, NULL, 10);
+			const int version = strtol(value_start, nullptr, 10);
 			if (version <= VIKING_FILE_VERSION) {
 				qDebug() << SG_PREFIX_D << "File version" << version;
 			} else {
-				qDebug() << SG_PREFIX_E << "Invalid file version" << version;
+				this->parse_status = LoadStatus::Code::ParseError;
+				this->parse_status.parser_line = this->line_num;
+				this->parse_status.parser_message = QString("Invalid file version %1.").arg(version);
+				qDebug() << QObject::tr("Error in line %1: %2")
+					.arg(this->parse_status.parser_line)
+					.arg(this->parse_status.parser_message);
+
 				read_status = sg_ret::err;
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
-			gisview->set_viking_scale_x(strtod_i8n(value_start, NULL));
+			gisview->set_viking_scale_x(strtod_i8n(value_start, nullptr));
 
 		} else if (name_len == 4 && strncasecmp(line, "ympp", name_len) == 0) {
-			gisview->set_viking_scale_y(strtod_i8n(value_start, NULL));
+			gisview->set_viking_scale_y(strtod_i8n(value_start, nullptr));
 
 		} else if (name_len == 3 && strncasecmp(line, "lat", name_len) == 0) {
-			lat_lon.lat = strtod_i8n(value_start, NULL);
+			lat_lon.lat = strtod_i8n(value_start, nullptr);
 
 		} else if (name_len == 3 && strncasecmp(line, "lon", name_len) == 0) {
-			lat_lon.lon = strtod_i8n(value_start, NULL);
+			lat_lon.lon = strtod_i8n(value_start, nullptr);
 
 		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
 			if (!GisViewportDrawModes::set_draw_mode_from_file(gisview, value_start)) {
-				qDebug() << SG_PREFIX_E << "Failed to set draw mode";
+				this->parse_status = LoadStatus::Code::ParseError;
+				this->parse_status.parser_line = this->line_num;
+				this->parse_status.parser_message = QString("Failed to set draw mode %1.").arg(value_start);
+				qDebug() << QObject::tr("Error in line %1: %2")
+					.arg(this->parse_status.parser_line)
+					.arg(this->parse_status.parser_message);
+
 				read_status = sg_ret::err;
 			}
 
@@ -391,8 +399,14 @@ sg_ret ReadParser::read_header(Layer * top_layer, GisViewport * gisview, LatLon 
 			top_layer->set_visible(TEST_BOOLEAN(value_start));
 
 		} else {
+			this->parse_status = LoadStatus::Code::ParseError;
+			this->parse_status.parser_line = this->line_num;
+			this->parse_status.parser_message = QString("Invalid parameter or parameter outside of layer (%1).").arg(line);
+			qDebug() << QObject::tr("Error in line %1: %2")
+				.arg(this->parse_status.parser_line)
+				.arg(this->parse_status.parser_message);
+
 			read_status = sg_ret::err;
-			fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer (%s).\n", this->line_num, line);
 		}
 	}
 
@@ -466,15 +480,15 @@ SGVariant value_string_to_sgvariant(const char * line, SGVariantType type_id)
 	SGVariant new_val;
 	switch (type_id) {
 	case SGVariantType::Double:
-		new_val = SGVariant((double) strtod_i8n(line, NULL));
+		new_val = SGVariant((double) strtod_i8n(line, nullptr));
 		break;
 
 	case SGVariantType::Int: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		new_val = SGVariant((int32_t) strtol(line, NULL, 10), SGVariantType::Int);
+		new_val = SGVariant((int32_t) strtol(line, nullptr, 10), SGVariantType::Int);
 		break;
 
 	case SGVariantType::Enumeration: /* 'Int' and 'Enumeration' are distinct types, so keep them in separate cases. */
-		new_val = SGVariant((int) strtol(line, NULL, 10), SGVariantType::Enumeration);
+		new_val = SGVariant((int) strtol(line, nullptr, 10), SGVariantType::Enumeration);
 		break;
 
 	case SGVariantType::String:
@@ -515,42 +529,64 @@ SGVariant value_string_to_sgvariant(const char * line, SGVariantType type_id)
 
 void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 {
-	if (!this->stack.first) { /* TODO_LATER: verify that this condition is handled correctly inside of this branch. */
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer\n", this->line_num);
-		this->stack.push(NULL); /* Inside INVALID layer. */
+	const LayerKind current_layer_kind = Layer::kind_from_layer_kind_string(QString(line + 6));
+	if (current_layer_kind == LayerKind::Max) {
+
+		/* We have encountered beginning of layer of unknown type. */
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("Unknown layer type '%1'").arg(line + 6);
+		qDebug() << QObject::tr("Error in line %1: %2")
+			.arg(this->parse_status.parser_line)
+			.arg(this->parse_status.parser_message);
+
+		this->layers_stack.push(nullptr); /* This will indicate that current layer is invalid. */
+		return;
+	}
+
+	if (nullptr == this->layers_stack.first) {
+		/* There must be some layer on stack that will be a
+		   parent of currently read layer. The parent could be
+		   a Top Layer, or some other Aggregate layer, or at
+		   least a GPS layer. */
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("Layer command inside non-Aggregate, non-GPS Layer.");
+		qDebug() << "Error:" + this->parse_status.parser_message + "\n";
+
+		this->layers_stack.push(nullptr); /* This will indicate that current layer is invalid. */
 		return;
 	}
 
 
-	const LayerKind parent_kind = this->stack.first->m_kind;
-	if (parent_kind != LayerKind::Aggregate && parent_kind != LayerKind::GPS) {
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_kind);
-		this->stack.push(NULL); /* Inside INVALID layer. */
-		return;
-	}
+	const LayerKind parent_kind = this->layers_stack.first->m_kind;
+	switch (parent_kind) {
+	case LayerKind::GPS: {
+		LayerGPS * parent = (LayerGPS *) this->layers_stack.second;
 
-	const LayerKind layer_kind = Layer::kind_from_layer_kind_string(QString(line + 6));
-
-	if (layer_kind == LayerKind::Max) {
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
-		this->stack.push(NULL);
-	} else if (parent_kind == LayerKind::GPS) {
-		LayerGPS * parent = (LayerGPS *) this->stack.second;
+		/* This child layer has probably been created when a GPS layer has been read from file. */
 		Layer * child = parent->get_a_child();
-		this->stack.push(child);
-		this->param_specs = Layer::get_interface(layer_kind)->parameters_c;
-		this->param_specs_count = Layer::get_interface(layer_kind)->parameter_specifications.size();
+		this->layers_stack.push(child);
+
+		/* In this function we handle beginning of a new
+		   layer, and here we prepare references to the
+		   layer's parameter specs. To be used by other parts
+		   of parser. */
+		this->param_specs = Layer::get_interface(current_layer_kind)->parameters_c;
+		this->param_specs_count = Layer::get_interface(current_layer_kind)->parameter_specifications.size();
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << child->get_name() << "to tree under" << parent->get_name();
 		child->attach_to_tree_under_parent(parent);
+		return;
+	}
+	case LayerKind::Aggregate: {
+		Layer * layer = Layer::construct_layer(current_layer_kind, gisview);
+		this->layers_stack.push(layer);
 
-	} else { /* Any other LayerKind::X type. */
-
-		Layer * layer = Layer::construct_layer(layer_kind, gisview);
-		this->stack.push(layer);
+		/* In this function we handle beginning of a new
+		   layer, and here we prepare references to the
+		   layer's parameter specs. To be used by other parts
+		   of parser. */
 		this->param_specs = layer->get_interface().parameters_c;
 		this->param_specs_count = layer->get_interface().parameter_specifications.size();
 
@@ -562,28 +598,44 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
 		//qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << agg->get_name();
 		//layer->attach_to_tree_under_parent(agg);
+		return;
 	}
+	default:
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("Layer command inside non-Aggregate, non-GPS Layer (type %1).").arg((int) parent_kind);
+		qDebug() << QObject::tr("Error in line %1: %2")
+			.arg(this->parse_status.parser_line)
+			.arg(this->parse_status.parser_message);
 
-	return;
+		this->layers_stack.push(nullptr); /* This will indicate that current layer is invalid. */
+		return;
+	}
 }
 
 
 
-void ReadParser::handle_layer_end(__attribute__((unused)) const char * line, __attribute__((unused)) GisViewport * gisview)
+
+void ReadParser::handle_layer_end(GisViewport * gisview)
 {
-	if (this->stack.second == NULL) {
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Mismatched ~EndLayer command\n", this->line_num);
+	if (nullptr == this->layers_stack.second) {
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("Mismatched ~EndLayer command.");
+		qDebug() << QObject::tr("Error in line %1: %2")
+			.arg(this->parse_status.parser_line)
+			.arg(this->parse_status.parser_message);
+
 	} else {
-		Layer * parent_layer = this->stack.second;
-		Layer * layer = this->stack.first;
+		Layer * parent_layer = this->layers_stack.second;
+		Layer * layer = this->layers_stack.first;
 
 		/* Add to the layer any string lists we've accumulated. */
 		this->push_string_lists_to_layer(layer);
 		/* The layer is read, we don't need to store its StringList parameters. */
 		this->string_lists.clear();
 
-		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->get_name() << this->stack.second->get_name();
+		qDebug() << "------- EndLayer for pair of first/second = " << this->layers_stack.first->get_name() << this->layers_stack.second->get_name();
 
 		if (layer && parent_layer) {
 			if (parent_layer->m_kind == LayerKind::Aggregate) {
@@ -591,11 +643,16 @@ void ReadParser::handle_layer_end(__attribute__((unused)) const char * line, __a
 			} else if (parent_layer->m_kind == LayerKind::GPS) {
 				/* TODO_MAYBE: anything else needs to be done here? */
 			} else {
-				this->parse_status = sg_ret::err;
-				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (kind %d)\n", this->line_num, (int) this->stack.first->m_kind);
+				this->parse_status = LoadStatus::Code::ParseError;
+				this->parse_status.parser_line = this->line_num;
+				this->parse_status.parser_message = QString("EndLayer command inside non-Aggregate, non-GPS layer (kind %1).")
+					.arg((int) this->layers_stack.first->m_kind);
+				qDebug() << QObject::tr("Error in line %1: %2")
+					.arg(this->parse_status.parser_line)
+					.arg(this->parse_status.parser_message);
 			}
 		}
-		this->stack.pop();
+		this->layers_stack.pop();
 	}
 
 	return;
@@ -627,14 +684,19 @@ void ReadParser::push_string_lists_to_layer(Layer * layer)
 
 void ReadParser::handle_layer_data_begin(const QString & dirpath)
 {
-	Layer * layer = this->stack.first;
+	Layer * layer = this->layers_stack.first;
 
 	const LayerDataReadStatus read_status = layer->read_layer_data(*this->file, dirpath);
 	switch (read_status) {
 	case LayerDataReadStatus::Error:
-		qDebug() << SG_PREFIX_E << "LayerData for layer named" << layer->get_name() << "read unsuccessfully";
-		this->parse_status = sg_ret::err;
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("LayerData for layer named '%1' read unsuccessfully.").arg(layer->get_name());
+		qDebug() << QObject::tr("Error in line %1: %2")
+			.arg(this->parse_status.parser_line)
+			.arg(this->parse_status.parser_message);
 		break;
+
 	case LayerDataReadStatus::Success:
 		qDebug() << SG_PREFIX_D << "LayerData for layer named" << layer->get_name() << "read successfully";
 		/* Success, pass. */
@@ -672,14 +734,14 @@ void ReadParser::handle_layer_data_begin(const QString & dirpath)
 void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 {
 	/* The layer, for which we will set parameters. */
-	Layer * layer = this->stack.first;
+	Layer * layer = this->layers_stack.first;
 
 	/* Parent layer of current layer. */
-	LayerAggregate * parent_layer = (LayerAggregate *) this->stack.second;
+	Layer * parent_layer = this->layers_stack.second;
 
 
 	size_t name_len = 0; /* Length of parameter's name. */
-	const char * value_start = NULL;
+	const char * value_start = nullptr;
 	for (size_t i = 0; i < line_len; i++) {
 		if (line[i] == '=') {
 			name_len = i;
@@ -688,8 +750,13 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 	}
 
 	if (0 == name_len) {
-		this->parse_status = sg_ret::err;
-		fprintf(stderr, "WARNING: Line %zd: Invalid parameter or parameter outside of layer.\n", this->line_num);
+		this->parse_status = LoadStatus::Code::ParseError;
+		this->parse_status.parser_line = this->line_num;
+		this->parse_status.parser_message = QString("Invalid parameter or parameter outside of layer.");
+		qDebug() << QObject::tr("Error in line %1: %2")
+			.arg(this->parse_status.parser_line)
+			.arg(this->parse_status.parser_message);
+
 		return;
 	}
 
@@ -708,9 +775,14 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 		layer->set_visible(TEST_BOOLEAN(value_start));
 
 	} else { /* Some layer-type-specific parameter. */
-		if (!this->param_specs) {
-			this->parse_status = sg_ret::err;
-			fprintf(stderr, "WARNING: Line %zd: No options for this kind of layer\n", this->line_num);
+		if (nullptr == this->param_specs) {
+			this->parse_status = LoadStatus::Code::ParseError;
+			this->parse_status.parser_line = this->line_num;
+			this->parse_status.parser_message = QString("Error when parsing parameters for layer.");
+			qDebug() << QObject::tr("Error in line %1: %2")
+				.arg(this->parse_status.parser_line)
+				.arg(this->parse_status.parser_message);
+
 			return;
 		}
 
@@ -775,18 +847,16 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
    Read in a Viking file and return how successful the parsing was.
    ATM this will always work, in that even if there are parsing problems
    then there will be no new values to override the defaults.
-
-   TODO_LATER flow up line number(s) / error messages of problems encountered...
 */
-sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview)
+LoadStatus VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview)
 {
 	LatLon lat_lon;
 
 	ReadParser read_parser(&file);
-	read_parser.stack.push(top_layer);
+	read_parser.layers_stack.push(top_layer);
 
 	if (sg_ret::ok != read_parser.read_header(top_layer, gisview, lat_lon)) {
-		return sg_ret::err;
+		return read_parser.parse_status;
 	}
 
 	/* First interesting line after header is already in
@@ -814,21 +884,30 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
 				qDebug() << SG_PREFIX_D << "Encountered end of Layer in line" << read_parser.line_num << line;
-				read_parser.handle_layer_end(line, gisview);
+				read_parser.handle_layer_end(gisview);
 
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
 				qDebug() << SG_PREFIX_D << "Encountered begin of LayerData in line" << read_parser.line_num << line;
 				read_parser.handle_layer_data_begin(dirpath);
 
 			} else {
-				read_parser.parse_status = sg_ret::err;
-				fprintf(stderr, "WARNING: Line %zd: Unknown tilde command\n", read_parser.line_num);
+				read_parser.parse_status = LoadStatus::Code::ParseError;
+				read_parser.parse_status.parser_line = read_parser.line_num;
+				read_parser.parse_status.parser_message = QString("Unknown tilde command.");
+				qDebug() << QObject::tr("Error in line %1: %2")
+					.arg(read_parser.parse_status.parser_line)
+					.arg(read_parser.parse_status.parser_message);
 			}
 		} else {
-			if (!read_parser.stack.first || !read_parser.stack.second) {
+			if (nullptr == read_parser.layers_stack.first || nullptr == read_parser.layers_stack.second) {
+				/* There is no target layer into which
+				   we could read data ('first') or
+				   there is no target layers' parent
+				   ('second'). */
 				continue;
+			} else {
+				read_parser.handle_layer_parameter(line, line_len);
 			}
-			read_parser.handle_layer_parameter(line, line_len);
 		}
 		/* could be:
 		   [Layer Type=Bla]
@@ -837,21 +916,27 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 		   name=this
 		   #comment
 		*/
+
+		if (LoadStatus::Code::Success != read_parser.parse_status) {
+			return read_parser.parse_status;
+		}
 	} while (0 < file.readLine(read_parser.buffer, read_parser.buffer_size));
 
-	while (!read_parser.stack.empty()) {
-		if (read_parser.stack.second && read_parser.stack.first){
+	while (!read_parser.layers_stack.empty()) {
+		if (read_parser.layers_stack.second && read_parser.layers_stack.first){
 
-			LayerAggregate * parent = (LayerAggregate *) read_parser.stack.second;
-			Layer * child = read_parser.stack.first;
+#if 0 /* TODO: restore? */
+			LayerAggregate * parent = (LayerAggregate *) read_parser.layers_stack.second;
+			Layer * child = read_parser.layers_stack.first;
 
-			//qDebug() << SG_PREFIX_D << "Will call parent Aggregate Layer's" << parent->name << "add_child_item(" << child->name << ")";
-			//parent->add_child_item(child, false);
+			qDebug() << SG_PREFIX_D << "Will call parent Aggregate Layer's" << parent->name << "add_child_item(" << child->name << ")";
+			parent->add_child_item(child, false);
 
-			//qDebug() << SG_PREFIX_D << "Will call child layer's" << child->name << "post_read()";
-			//child->post_read(gisview, true);
+			qDebug() << SG_PREFIX_D << "Will call child layer's" << child->name << "post_read()";
+			child->post_read(gisview, true);
+#endif
 		}
-		read_parser.stack.pop();
+		read_parser.layers_stack.pop();
 	}
 
 	gisview->set_center_coord(lat_lon); /* The function will reject lat_lon if it's invalid. */
@@ -945,8 +1030,8 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 LoadStatus VikFile::load(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path)
 {
-	if (!gisview) {
-		return LoadStatus::Code::ReadFailure;
+	if (nullptr == gisview) {
+		return LoadStatus::Code::InternalLogicError;
 	}
 
 	QString full_path;
@@ -960,69 +1045,51 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, GisViewport * gisview, c
 	QFile file(full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << full_path << "as read only:" << file.error();
-		return LoadStatus::Code::ReadFailure;
+		return LoadStatus::Code::CantOpenFileError;
 	}
 
-	LoadStatus load_status = LoadStatus::Code::OtherSuccess;
-
-	const QString dir_full_path = FileUtils::path_get_dirname(full_path);
+	LoadStatus load_status = LoadStatus::Code::GenericError;
 
 	/* Attempt loading the primary file type first - our internal .vik file: */
-	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dir_full_path, gisview)) {
-			load_status = LoadStatus::Code::Success;
-		} else {
-			load_status = LoadStatus::Code::FailureNonFatal;
-		}
-	} else if (jpg_magic_check(full_path)) {
-		if (!jpg_load_file(parent_layer, gisview, full_path)) {
-			load_status = LoadStatus::Code::UnsupportedFailure;
-		}
+	FileUtils::FileType file_type = FileUtils::discover_file_type(file, full_path);
+	if (FileUtils::FileType::Vik == file_type) {
+		const QString dir_full_path = FileUtils::path_get_dirname(full_path);
+		load_status = VikFile::read_file(file, parent_layer, dir_full_path, gisview);
+
+	} else if (FileUtils::FileType::JPEG == file_type) {
+		load_status = jpg_load_file(parent_layer, gisview, full_path);
+
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
-		LoadStatus convert_status = LoadStatus::Code::Error; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
 		LayerTRW * trw = new LayerTRW();
 		trw->set_coord_mode(gisview->get_coord_mode());
 		trw->set_name(FileUtils::get_base_name(full_path));
 
-		/* In fact both kml & gpx files start the same as they are in xml. */
-		if (FileUtils::has_extension(full_path, ".kml") && FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-
+		if (FileUtils::FileType::KML == file_type) {
 			qDebug() << SG_PREFIX_I << "Explicit import of kml file";
 
-			BabelProcess * importer = new BabelProcess();
-			importer->set_input("kml", full_path);
-			importer->set_output("gpx", "-");
-			convert_status = importer->convert_through_gpx(trw);
-			delete importer;
+			BabelProcess importer;
+			importer.set_input("kml", full_path);
+			importer.set_output("gpx", "-");
 
-			if (LoadStatus::Code::Success != convert_status) {
-				load_status = LoadStatus::Code::GPSBabelFailure;
-			}
-		}
-		/* NB use a extension check first, as a GPX file
-		   header may have a Byte Order Mark (BOM) in it -
-		   which currently confuses our
-		   FileUtils::file_has_magic() function. */
-		else if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			convert_status = GPX::read_layer_from_file(file, trw);
-			if (LoadStatus::Code::Success != convert_status) {
-				load_status = LoadStatus::Code::GPXFailure;
-			}
+			load_status = importer.convert_through_gpx(trw);
+
+		} else if (FileUtils::FileType::GPX == file_type) {
+			load_status = GPX::read_layer_from_file(file, trw);
+
 		} else {
-			/* Try final supported file type. */
+			/* Try final supported file type. Failure here
+			   means we don't know how to handle the
+			   file. */
+			const QString dir_full_path = FileUtils::path_get_dirname(full_path);
 			const LayerDataReadStatus rv = GPSPoint::read_layer_from_file(file, trw, dir_full_path);
-			convert_status = (rv == LayerDataReadStatus::Success ? LoadStatus::Code::Success : LoadStatus::Code::Error);
-			if (LoadStatus::Code::Success != convert_status) {
-				/* Failure here means we don't know how to handle the file. */
-				load_status = LoadStatus::Code::UnsupportedFailure;
-			}
+			load_status = (rv == LayerDataReadStatus::Success ? LoadStatus::Code::Success : LoadStatus::Code::GenericError);
 		}
 
 		/* Clean up when we can't handle the file. */
-		if (LoadStatus::Code::Success != convert_status) {
+		if (LoadStatus::Code::Success != load_status) {
 			delete trw;
 		} else {
 			/* Complete the setup from the successful load. */
@@ -1052,7 +1119,7 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, GisViewport * gisview, cons
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	if (!file) {
-		return SaveStatus::Code::FileAccess;
+		return SaveStatus::Code::CantOpenFileError;
 	}
 
 	/* Enable relative paths in .vik files to work. */
@@ -1073,7 +1140,7 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, GisViewport * gisview, cons
 	}
 
 	fclose(file);
-	file = NULL;
+	file = nullptr;
 
 	return SaveStatus::Code::Success;
 }
@@ -1086,9 +1153,9 @@ SaveStatus VikFile::export_trw_track(Track * trk, const QString & file_full_path
 	GPXWriteOptions options(false, false, write_hidden, false);
 
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
-	if (NULL == file) {
+	if (nullptr == file) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as write only";
-		return SaveStatus::Code::FileAccess;
+		return SaveStatus::Code::CantOpenFileError;
 	}
 
 	SaveStatus save_status;
@@ -1101,7 +1168,7 @@ SaveStatus VikFile::export_trw_track(Track * trk, const QString & file_full_path
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected file type for track" << (int) file_type;
-		save_status = SaveStatus::Code::InternalError;
+		save_status = SaveStatus::Code::InternalLogicError;
 	}
 
 	fclose(file);
@@ -1130,13 +1197,13 @@ static SaveStatus export_to_kml(const QString & file_full_path, LayerTRW * trw)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid KML Export units" << (int) units;
-		save_status = SaveStatus::Code::InternalError;
+		save_status = SaveStatus::Code::InternalLogicError;
 		break;
 	}
 
 
 	if (SaveStatus::Code::Success == save_status) {
-		save_status = exporter->export_through_gpx(trw, NULL);
+		save_status = exporter->export_through_gpx(trw, nullptr);
 	}
 
 	delete exporter;
@@ -1153,12 +1220,12 @@ SaveStatus VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_p
 	GPXWriteOptions options(false, false, write_hidden, false);
 
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
-	if (NULL == file) {
+	if (nullptr == file) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path;
-		return SaveStatus::Code::FileAccess;
+		return SaveStatus::Code::CantOpenFileError;
 	}
 
-	SaveStatus result = SaveStatus::Code::Error;
+	SaveStatus result = SaveStatus::Code::GenericError;
 
 	switch (file_type) {
 	case SGFileType::GPSMapper:
@@ -1216,7 +1283,7 @@ SaveStatus VikFile::export_with_babel(LayerTRW * trw, const QString & output_fil
 	exporter->set_options(BabelProcess::get_trw_string(tracks, routes, waypoints));
 	exporter->set_output(output_data_format, output_file_full_path);
 
-	const SaveStatus save_status = exporter->export_through_gpx(trw, NULL);
+	const SaveStatus save_status = exporter->export_through_gpx(trw, nullptr);
 
 	delete exporter;
 
@@ -1258,7 +1325,7 @@ char const * SlavGPS::file_GetRelativeFilename(const char * currentDirectory, co
 	/* Make sure the names are not too long or too short */
 	if (cdLen > MAXPATHLEN || cdLen < ABSOLUTE_NAME_START+1
 	    || afLen > MAXPATHLEN || afLen < ABSOLUTE_NAME_START+1) {
-		return NULL;
+		return nullptr;
 	}
 
 	static char relativeFilename[MAXPATHLEN+1];
@@ -1322,7 +1389,7 @@ char const * SlavGPS::file_GetRelativeFilename(const char * currentDirectory, co
 
 	/* Check that the result will not be too long. */
 	if (levels * 3 + afLen - afMarker > MAXPATHLEN) {
-		return NULL;
+		return nullptr;
 	}
 
 	/* Add the appropriate number of "..\"s. */

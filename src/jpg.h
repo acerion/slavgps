@@ -29,6 +29,11 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -40,7 +45,7 @@ namespace SlavGPS {
 
 
 	bool jpg_magic_check(const QString & file_full_path);
-	bool jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path);
+	LoadStatus jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path);
 
 
 

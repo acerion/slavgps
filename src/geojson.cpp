@@ -70,12 +70,12 @@ static void my_watch(GPid pid, __attribute__((unused)) int status, __attribute__
  */
 SaveStatus GeoJSON::write_layer_to_file(FILE * file, LayerTRW * trw)
 {
-	SaveStatus result = SaveStatus::Code::Error;
+	SaveStatus result = SaveStatus::Code::GenericError;
 
 	QString tmp_file_full_path;
 	SaveStatus intermediate_status = GPX::write_layer_to_tmp_file(tmp_file_full_path, trw, NULL);
 	if (SaveStatus::Code::Success != intermediate_status) {
-		intermediate_status = SaveStatus::Code::IntermediateFileAccess;
+		intermediate_status = SaveStatus::Code::CantOpenIntermediateFileError;
 		return intermediate_status;
 	}
 

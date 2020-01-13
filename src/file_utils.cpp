@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2012-2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@
 
 
 #include "file_utils.h"
+#include "jpg.h"
 
 
 
@@ -166,4 +168,32 @@ sg_ret FileUtils::create_directory_for_file(const QString & file_full_path)
 		qDebug() << SG_PREFIX_E << "Not created path:" << file_full_path << "->" << dir_path;
 		return sg_ret::err;
 	}
+}
+
+
+
+
+
+FileUtils::FileType FileUtils::discover_file_type(QFile & file, const QString & full_path)
+{
+	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
+		return FileUtils::FileType::Vik;
+	}
+
+	if (jpg_magic_check(full_path)) {
+		return FileUtils::FileType::JPEG;
+	}
+
+	if (FileUtils::has_extension(full_path, ".kml") && FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		return FileUtils::FileType::KML;
+	}
+
+	/* Use a extension check first, as a GPX file header may have
+	   a Byte Order Mark (BOM) in it - which currently confuses
+	   our FileUtils::file_has_magic() function. */
+	if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		return FileUtils::FileType::GPX;
+	}
+
+	return FileUtils::FileType::Unknown;
 }
