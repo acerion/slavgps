@@ -387,7 +387,8 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->main_gis_vp = new GisViewport(90, 60, 30, 120, this);
+	this->main_gis_vp = new GisViewport(0, 0, 0, 0, this);
+	//this->main_gis_vp = new GisViewport(90, 60, 30, 120, this);
 	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->main_gis_vp->central_get_height() << this->main_gis_vp->central_get_width();
 	this->setCentralWidget(this->main_gis_vp);
 

@@ -774,7 +774,7 @@ int16_t DEM::get_east_north_shepard_interpolation(double east_seconds, double no
 
 
 
-void DEM::east_north_to_xy(double east_seconds, double north_seconds, int32_t * col, int32_t * row)
+void DEM::east_north_to_xy(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const
 {
 	*col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->east_scale);
 	*row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->north_scale);

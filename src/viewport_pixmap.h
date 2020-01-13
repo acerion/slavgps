@@ -184,6 +184,7 @@ namespace SlavGPS {
 		void draw_rectangle(const QPen & pen, const QRect & rect);
 		void draw_rectangle(const QPen & pen, const QRectF & rect);
 		void fill_rectangle(const QColor & color, fpixel x, fpixel y, fpixel width, fpixel height);
+		void fill_rectangle(const QColor & color, const QRectF & rect);
 
 		void draw_text(const QFont & font, const QPen & pen, fpixel x, fpixel y, const QString & text);
 		QRectF draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset = TextOffset::None);

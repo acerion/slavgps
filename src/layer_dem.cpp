@@ -603,133 +603,225 @@ void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
 
 
 
-/* Get index to array of colors or gradients for given value 'm_value' of elevation or gradient. */
-#define GET_INDEX(m_value, m_min_elev, m_max_elev, m_palette_size) \
-	(1 + ((int) floor(((m_value - m_min_elev)/(m_max_elev - m_min_elev)) * (m_palette_size - 2))))
+/* Get index to array of colors or gradients for given value 'value' of elevation or gradient. */
+int get_palette_index(int16_t value, double min_elev, double max_elev, int palette_size)
+{
+	const double relative_value = value - min_elev;
+	const double total_elev_range = max_elev - min_elev;
 
+	const int something = ((int) floor((relative_value/total_elev_range) * (palette_size - 2)));
+
+	return 1 + something;
+}
+
+
+
+
+struct GradientColumns {
+	GradientColumns(const DEM & dem, int32_t x, int32_t gradient_skip_factor);
+	DEMColumn * cur = nullptr;
+	DEMColumn * prev = nullptr;
+	DEMColumn * next = nullptr;
+};
+
+
+
+
+GradientColumns::GradientColumns(const DEM & dem, int32_t x, int32_t gradient_skip_factor)
+{
+	/* Get previous and next column. Catch out-of-bound. */
+	this->cur = dem.columns[x];
+
+	int32_t new_x = x - gradient_skip_factor;
+	if (new_x < 1) {
+		new_x = x + 1;
+	}
+	this->prev = dem.columns[new_x];
+
+	new_x = x + gradient_skip_factor;
+	if (new_x >= dem.n_columns) {
+		new_x = x - 1;
+	}
+	this->next = dem.columns[new_x];
+}
+
+
+
+
+class LatLonRectCalculator {
+public:
+	LatLonRectCalculator(const CoordMode & viewport_coord_mode, double nscale_deg, double escale_deg, const GisViewport * gisview, unsigned int skip_factor)
+		: m_coord_mode(viewport_coord_mode), m_nscale_deg(nscale_deg), m_escale_deg(escale_deg), m_gisview(gisview), m_skip_factor(skip_factor) {}
+
+	bool get_rectangle(const LatLon & counter, QRectF & rect) const;
+
+private:
+	const CoordMode m_coord_mode;
+	const double m_nscale_deg;
+	const double m_escale_deg;
+	const GisViewport * m_gisview = nullptr;
+
+	const unsigned int m_skip_factor;
+};
+
+
+
+
+bool LatLonRectCalculator::get_rectangle(const LatLon & counter, QRectF & rect) const
+{
+	LatLon lat_lon = counter;
+	/* TODO_LATER: don't use Coord(lat_lon, coord_mode) if in latlon drawing mode. */
+
+
+	/* Top-left corner of rectangle. */
+	fpixel tl_x;
+	fpixel tl_y;
+	{
+		lat_lon.lat += (this->m_nscale_deg * this->m_skip_factor)/2;
+		lat_lon.lon -= (this->m_escale_deg * this->m_skip_factor)/2;
+		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &tl_x, &tl_y)) {
+			return false;
+		}
+		/* Catch box at borders. */
+		if (tl_x < 0) {
+			tl_x = 0;
+		}
+		if (tl_y < 0) {
+			tl_y = 0;
+		}
+	}
+
+
+	/* Bottom-right corner of rectangle. */
+	fpixel br_x;
+	fpixel br_y;
+	{
+		lat_lon.lat -= this->m_nscale_deg * this->m_skip_factor;
+		lat_lon.lon += this->m_escale_deg * this->m_skip_factor;
+		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &br_x, &br_y)) {
+			return false;
+		}
+	}
+
+
+	const fpixel rect_width = br_x - tl_x;
+	const fpixel rect_height = br_y - tl_y;
+	/* Catch box at borders. */
+	if (rect_width < 0 || rect_height < 0) {
+		/* Skip this as is out of the viewport (e.g. zoomed in so this point is way off screen). */
+		return false;
+	}
+
+
+	rect = QRectF(tl_x, tl_y, rect_width, rect_height);
+	return true;
+}
+
+
+
+
+/* Maybe 'Bounds' is not the best word. Just a class that holds most
+   of constants for drawing DEM in LatLon coordinates. */
+class LatLonBounds {
+public:
+	LatLonBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer);
+
+	unsigned int skip_factor = 0;
+
+	double nscale_deg = 0;
+	double escale_deg = 0;
+
+	double start_lat = 0;
+	double end_lat   = 0;
+	double start_lon = 0;
+	double end_lon   = 0;
+
+	int32_t start_x;
+        int32_t start_y;
+
+	int32_t gradient_skip_factor = 1;
+
+	double min_elevation = 0;
+	double max_elevation = 0;
+
+};
+
+
+
+
+LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer)
+{
+	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
+
+	this->nscale_deg = dem.north_scale / ((double) 3600);
+	this->escale_deg = dem.east_scale / ((double) 3600);
+
+	const LatLonBBox viewport_bbox = gisview.get_bbox();
+	double start_lat_arcsec = std::max(viewport_bbox.south.get_value() * 3600.0, dem.min_north_seconds);
+	double end_lat_arcsec   = std::min(viewport_bbox.north.get_value() * 3600.0, dem.max_north_seconds);
+	double start_lon_arcsec = std::max(viewport_bbox.west.get_value() * 3600.0, dem.min_east_seconds);
+	double end_lon_arcsec   = std::min(viewport_bbox.east.get_value() * 3600.0, dem.max_east_seconds);
+
+	this->start_lat = floor(start_lat_arcsec / dem.north_scale) * nscale_deg;
+	this->end_lat   = ceil(end_lat_arcsec / dem.north_scale) * nscale_deg;
+	this->start_lon = floor(start_lon_arcsec / dem.east_scale) * escale_deg;
+	this->end_lon   = ceil(end_lon_arcsec / dem.east_scale) * escale_deg;
+
+	dem.east_north_to_xy(start_lon_arcsec, start_lat_arcsec, &this->start_x, &this->start_y);
+
+	if (layer.dem_type == DEM_TYPE_GRADIENT) {
+		this->gradient_skip_factor = this->skip_factor;
+	}
+
+	this->min_elevation = layer.min_elev.ll_value();
+	this->max_elevation = layer.max_elev.ll_value();
+}
 
 
 
 
 void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 {
-	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
-
-	double nscale_deg = dem->north_scale / ((double) 3600);
-	double escale_deg = dem->east_scale / ((double) 3600);
-
-	const LatLonBBox viewport_bbox = gisview->get_bbox();
-	double start_lat_as = std::max(viewport_bbox.south.get_value() * 3600.0, dem->min_north_seconds);
-	double end_lat_as   = std::min(viewport_bbox.north.get_value() * 3600.0, dem->max_north_seconds);
-	double start_lon_as = std::max(viewport_bbox.west.get_value() * 3600.0, dem->min_east_seconds);
-	double end_lon_as   = std::min(viewport_bbox.east.get_value() * 3600.0, dem->max_east_seconds);
-
-	double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
-	double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
-	double start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
-	double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
-
-	int32_t start_x;
-        int32_t start_y;
-	dem->east_north_to_xy(start_lon_as, start_lat_as, &start_x, &start_y);
-	int32_t gradient_skip_factor = 1;
-	if (this->dem_type == DEM_TYPE_GRADIENT) {
-		gradient_skip_factor = skip_factor;
-	}
-
-	/* Verify sane elevation range. */
+	/* Ensure sane elevation range. */
 	if (this->max_elev <= this->min_elev) {
 		this->max_elev = this->min_elev + 1;
 	}
-	const double min_elevation = this->min_elev.ll_value();
-	const double max_elevation = this->max_elev.ll_value();
 
-	Coord tmp; /* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
+	const LatLonBounds bounds(*gisview, *dem, *this);
+	const LatLonRectCalculator rect_calculator(gisview->get_coord_mode(), bounds.nscale_deg, bounds.escale_deg, gisview, bounds.skip_factor);
+
 	LatLon counter;
 	int32_t x;
-	for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
+	for (x = bounds.start_x, counter.lon = bounds.start_lon;
+	     counter.lon <= bounds.end_lon + bounds.escale_deg * bounds.skip_factor;
+	     counter.lon += bounds.escale_deg * bounds.skip_factor, x += bounds.skip_factor) {
+
 		/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
 		   the leftmost column does also get drawn, if the center point is out of viewport. */
 		if (x >= dem->n_columns) {
 			break;
 		}
 
-		/* Get previous and next column. Catch out-of-bound. */
-		DEMColumn *column, *prevcolumn, *nextcolumn;
-		{
-			column = dem->columns[x];
-
-			int32_t new_x = x - gradient_skip_factor;
-			if (new_x < 1) {
-				new_x = x + 1;
-			}
-			prevcolumn = dem->columns[new_x];
-
-			new_x = x + gradient_skip_factor;
-			if (new_x >= dem->n_columns) {
-				new_x = x - 1;
-			}
-			nextcolumn = dem->columns[new_x];
-		}
+		const DEMColumn * cur_column = dem->columns[x];
 
 		int32_t y;
-		for (y = start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
-			if (y > column->n_points) {
+		for (y = bounds.start_y, counter.lat = bounds.start_lat;
+		     counter.lat <= bounds.end_lat;
+		     counter.lat += bounds.nscale_deg * bounds.skip_factor, y += bounds.skip_factor) {
+
+			if (y > cur_column->n_points) {
 				break;
 			}
 
-			int16_t elev = column->points[y];
+			int16_t elev = cur_column->points[y];
 			if (elev == DEM_INVALID_ELEVATION) {
 				continue; /* Don't draw it. */
 			}
 
-			/* Calculate bounding box for drawing. */
-			fpixel box_x;
-			fpixel box_y;
-			fpixel box_width;
-			fpixel box_height;
-			LatLon box_c;
-			box_c = counter;
-			box_c.lat += (nscale_deg * skip_factor)/2;
-			box_c.lon -= (escale_deg * skip_factor)/2;
-			tmp = Coord(box_c, viewport_coord_mode);
-			if (sg_ret::ok != gisview->coord_to_screen_pos(tmp, &box_x, &box_y)) {
+			/* Calculate rectangle that will be drawn in viewport pixmap. */
+			QRectF rect;
+			if (!rect_calculator.get_rectangle(counter, rect)) {
 				continue;
-			}
-			/* Catch box at borders. */
-			if (box_x < 0) {
-				box_x = 0;
-			}
-
-			if (box_y < 0) {
-				box_y = 0;
-			}
-
-			box_c.lat -= nscale_deg * skip_factor;
-			box_c.lon += escale_deg * skip_factor;
-			tmp = Coord(box_c, viewport_coord_mode);
-			if (sg_ret::ok != gisview->coord_to_screen_pos(tmp, &box_width, &box_height)) {
-				continue;
-			}
-			box_width -= box_x;
-			box_height -= box_y;
-			/* Catch box at borders. */
-			if (box_width < 0 || box_height < 0) {
-				/* Skip this as is out of the viewport (e.g. zoomed in so this point is way off screen). */
-				continue;
-			}
-
-			bool below_minimum = false;
-			if (this->dem_type == DEM_TYPE_HEIGHT) {
-				if (elev < min_elevation) {
-					/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
-					elev = ceil(min_elevation);
-					below_minimum = true;
-				}
-				if (elev > max_elevation) {
-					elev = max_elevation;
-				}
 			}
 
 			if (this->dem_type == DEM_TYPE_GRADIENT) {
@@ -738,46 +830,63 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 
 				/* Calculate gradient from height points all around the current one. */
 				int32_t new_y;
-				if (y < gradient_skip_factor) {
+				if (y < bounds.gradient_skip_factor) {
 					new_y = y;
 				} else {
-					new_y = y - gradient_skip_factor;
+					new_y = y - bounds.gradient_skip_factor;
 				}
-				change += get_height_difference(elev, prevcolumn->points[new_y]);
-				change += get_height_difference(elev, column->points[new_y]);
-				change += get_height_difference(elev, nextcolumn->points[new_y]);
 
-				change += get_height_difference(elev, prevcolumn->points[y]);
-				change += get_height_difference(elev, nextcolumn->points[y]);
+				const GradientColumns cols(*dem, x, bounds.gradient_skip_factor);
 
-				new_y = y + gradient_skip_factor;
-				if (new_y >= column->n_points) {
+				change += get_height_difference(elev, cols.prev->points[new_y]);
+				change += get_height_difference(elev, cols.cur->points[new_y]);
+				change += get_height_difference(elev, cols.next->points[new_y]);
+
+				change += get_height_difference(elev, cols.prev->points[y]);
+				change += get_height_difference(elev, cols.next->points[y]);
+
+				new_y = y + bounds.gradient_skip_factor;
+				if (new_y >= cols.cur->n_points) {
 					new_y = y;
 				}
-				change += get_height_difference(elev, prevcolumn->points[new_y]);
-				change += get_height_difference(elev, column->points[new_y]);
-				change += get_height_difference(elev, nextcolumn->points[new_y]);
+				change += get_height_difference(elev, cols.prev->points[new_y]);
+				change += get_height_difference(elev, cols.cur->points[new_y]);
+				change += get_height_difference(elev, cols.next->points[new_y]);
 
-				change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); /* FIXME: better calc. */
+				change = change / ((bounds.skip_factor > 1) ? log(bounds.skip_factor) : 0.55); /* FIXME: better calc. */
 
-				if (change < min_elevation) {
+				if (change < bounds.min_elevation) {
 					/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
-					change = ceil(min_elevation);
+					change = ceil(bounds.min_elevation);
 				}
 
-				if (change > max_elevation) {
-					change = max_elevation;
+				if (change > bounds.max_elevation) {
+					change = bounds.max_elevation;
 				}
 
-				int idx = GET_INDEX(change, min_elevation, max_elevation, DEM_N_GRADIENT_COLORS);
-				gisview->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
+				int idx = get_palette_index(change, bounds.min_elevation, bounds.max_elevation, DEM_N_GRADIENT_COLORS);
+				gisview->fill_rectangle(this->gradients[idx], rect);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
+
+				bool below_minimum = false;
+				{
+					if (elev < bounds.min_elevation) {
+						/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
+						elev = ceil(bounds.min_elevation);
+						below_minimum = true;
+					}
+					if (elev > bounds.max_elevation) {
+						elev = bounds.max_elevation;
+					}
+				}
+
+
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
-					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
+					idx = get_palette_index(elev, bounds.min_elevation, bounds.max_elevation, DEM_N_HEIGHT_COLORS);
 				}
-				gisview->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
+				gisview->fill_rectangle(this->colors[idx], rect);
 			} else {
 				; /* No other dem type to process. */
 			}
@@ -857,14 +966,14 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 			continue;
 		}
 
-		const DEMColumn * column = dem->columns[x];
+		const DEMColumn * cur_column = dem->columns[x];
 	        int32_t y;
 		for (y = start_y, counter.m_northing = start_nor; counter.m_northing <= end_nor; counter.m_northing += dem->north_scale * skip_factor, y += skip_factor) {
-			if (y > column->n_points) {
+			if (y > cur_column->n_points) {
 				continue;
 			}
 
-			int16_t elev = column->points[y];
+			int16_t elev = cur_column->points[y];
 			if (elev == DEM_INVALID_ELEVATION) {
 				continue; /* don't draw it */
 			}
@@ -885,7 +994,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
-					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
+					idx = get_palette_index(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
 				gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);

@@ -192,6 +192,17 @@ void ViewportPixmap::fill_rectangle(const QColor & color, fpixel pos_x, fpixel p
 
 
 /**
+   @reviewed-on 2020-01-13
+*/
+void ViewportPixmap::fill_rectangle(const QColor & color, const QRectF & rect)
+{
+	this->painter.fillRect(rect, color);
+}
+
+
+
+
+/**
    @reviewed-on 2019-07-19
 */
 void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, fpixel pos_x, fpixel pos_y, QString const & text)
