@@ -87,9 +87,9 @@ namespace SlavGPS {
 		QString get_tooltip(void) const;
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);
-		void draw_dem(GisViewport * gisview, DEM * dem);
-		void draw_dem_ll(GisViewport * gisview, DEM * dem);
-		void draw_dem_utm(GisViewport * gisview, DEM * dem);
+		void draw_dem(GisViewport * gisview, const DEM & dem);
+		void draw_dem_ll(GisViewport * gisview, const DEM & dem);
+		void draw_dem_utm(GisViewport * gisview, const DEM & dem);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 

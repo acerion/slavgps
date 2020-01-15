@@ -96,14 +96,14 @@ namespace SlavGPS {
 		int16_t get_east_north_shepard_interpolation(double east_seconds, double north_seconds);
 		// int16_t vik_dem_get_best_interpol(DEM * dem, double east_seconds, double north_seconds);
 
-		void east_north_to_xy(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const;
+		void east_north_to_col_row(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const;
 
 		bool get_ref_points_elevation_distance(double east_seconds,
 						       double north_seconds,
 						       int16_t * elevations,
 						       int16_t * distances);
 
-		bool intersect(const LatLonBBox & other_bbox);
+		bool intersect(const LatLonBBox & other_bbox) const;
 
 		int32_t n_columns;
 		std::vector<DEMColumn *> columns;

@@ -558,14 +558,14 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 
 
 
-void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
+void LayerDEM::draw_dem(GisViewport * gisview, const DEM & dem)
 {
 	/* If given DEM is loaded into application, we want to know whether the DEM and
 	   current viewport overlap, so that we know whether we should draw it in
 	   viewport or not. We do this check every time a viewport has been changed
 	   (moved or re-zoomed). */
 	const LatLonBBox viewport_bbox = gisview->get_bbox();
-	if (!dem->intersect(viewport_bbox)) {
+	if (!dem.intersect(viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "DEM does not overlap with viewport, not drawing the DEM";
 		return;
 	}
@@ -585,7 +585,7 @@ void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
 	*/
 	draw_loaded_dem_box(gisview);
 
-	switch (dem->horiz_units) {
+	switch (dem.horiz_units) {
 	case VIK_DEM_HORIZ_LL_ARCSECONDS:
 		this->draw_dem_ll(gisview, dem);
 		break;
@@ -593,7 +593,7 @@ void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
 		this->draw_dem_utm(gisview, dem);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected DEM horiz units" << (int) dem->horiz_units;
+		qDebug() << SG_PREFIX_E << "Unexpected DEM horiz units" << (int) dem.horiz_units;
 		break;
 	}
 
@@ -650,15 +650,15 @@ GradientColumns::GradientColumns(const DEM & dem, int32_t x, int32_t gradient_sk
 
 class LatLonRectCalculator {
 public:
-	LatLonRectCalculator(const CoordMode & viewport_coord_mode, double nscale_deg, double escale_deg, const GisViewport * gisview, unsigned int skip_factor)
-		: m_coord_mode(viewport_coord_mode), m_nscale_deg(nscale_deg), m_escale_deg(escale_deg), m_gisview(gisview), m_skip_factor(skip_factor) {}
+	LatLonRectCalculator(const CoordMode & viewport_coord_mode, double north_scale_deg, double east_scale_deg, const GisViewport * gisview, unsigned int skip_factor)
+		: m_coord_mode(viewport_coord_mode), m_north_scale_deg(north_scale_deg), m_east_scale_deg(east_scale_deg), m_gisview(gisview), m_skip_factor(skip_factor) {}
 
 	bool get_rectangle(const LatLon & counter, QRectF & rect) const;
 
 private:
 	const CoordMode m_coord_mode;
-	const double m_nscale_deg;
-	const double m_escale_deg;
+	const double m_north_scale_deg;
+	const double m_east_scale_deg;
 	const GisViewport * m_gisview = nullptr;
 
 	const unsigned int m_skip_factor;
@@ -677,8 +677,8 @@ bool LatLonRectCalculator::get_rectangle(const LatLon & counter, QRectF & rect) 
 	fpixel tl_x;
 	fpixel tl_y;
 	{
-		lat_lon.lat += (this->m_nscale_deg * this->m_skip_factor)/2;
-		lat_lon.lon -= (this->m_escale_deg * this->m_skip_factor)/2;
+		lat_lon.lat += (this->m_north_scale_deg * this->m_skip_factor)/2;
+		lat_lon.lon -= (this->m_east_scale_deg * this->m_skip_factor)/2;
 		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &tl_x, &tl_y)) {
 			return false;
 		}
@@ -696,8 +696,8 @@ bool LatLonRectCalculator::get_rectangle(const LatLon & counter, QRectF & rect) 
 	fpixel br_x;
 	fpixel br_y;
 	{
-		lat_lon.lat -= this->m_nscale_deg * this->m_skip_factor;
-		lat_lon.lon += this->m_escale_deg * this->m_skip_factor;
+		lat_lon.lat -= this->m_north_scale_deg * this->m_skip_factor;
+		lat_lon.lon += this->m_east_scale_deg * this->m_skip_factor;
 		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &br_x, &br_y)) {
 			return false;
 		}
@@ -728,16 +728,16 @@ public:
 
 	unsigned int skip_factor = 0;
 
-	double nscale_deg = 0;
-	double escale_deg = 0;
+	double north_scale_deg = 0;
+	double east_scale_deg = 0;
 
 	double start_lat = 0;
 	double end_lat   = 0;
 	double start_lon = 0;
 	double end_lon   = 0;
 
-	int32_t start_x;
-        int32_t start_y;
+	int32_t start_col;
+        int32_t start_row;
 
 	int32_t gradient_skip_factor = 1;
 
@@ -753,8 +753,8 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 {
 	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
 
-	this->nscale_deg = dem.north_scale / ((double) 3600);
-	this->escale_deg = dem.east_scale / ((double) 3600);
+	this->north_scale_deg = dem.north_scale / ((double) 3600);
+	this->east_scale_deg = dem.east_scale / ((double) 3600);
 
 	const LatLonBBox viewport_bbox = gisview.get_bbox();
 	double start_lat_arcsec = std::max(viewport_bbox.south.get_value() * 3600.0, dem.min_north_seconds);
@@ -762,12 +762,12 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 	double start_lon_arcsec = std::max(viewport_bbox.west.get_value() * 3600.0, dem.min_east_seconds);
 	double end_lon_arcsec   = std::min(viewport_bbox.east.get_value() * 3600.0, dem.max_east_seconds);
 
-	this->start_lat = floor(start_lat_arcsec / dem.north_scale) * nscale_deg;
-	this->end_lat   = ceil(end_lat_arcsec / dem.north_scale) * nscale_deg;
-	this->start_lon = floor(start_lon_arcsec / dem.east_scale) * escale_deg;
-	this->end_lon   = ceil(end_lon_arcsec / dem.east_scale) * escale_deg;
+	this->start_lat = floor(start_lat_arcsec / dem.north_scale) * north_scale_deg;
+	this->end_lat   = ceil(end_lat_arcsec / dem.north_scale) * north_scale_deg;
+	this->start_lon = floor(start_lon_arcsec / dem.east_scale) * east_scale_deg;
+	this->end_lon   = ceil(end_lon_arcsec / dem.east_scale) * east_scale_deg;
 
-	dem.east_north_to_xy(start_lon_arcsec, start_lat_arcsec, &this->start_x, &this->start_y);
+	dem.east_north_to_col_row(start_lon_arcsec, start_lat_arcsec, &this->start_col, &this->start_row);
 
 	if (layer.dem_type == DEM_TYPE_GRADIENT) {
 		this->gradient_skip_factor = this->skip_factor;
@@ -780,47 +780,48 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 
 
 
-void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
+class LatLonIter {
+public:
+	void begin_x(const LatLonBounds & bounds)                  { this->col = bounds.start_col;          this->lat_lon.lon = bounds.start_lon; }
+	/* NOTE: (iter.lat_lon.lon <= bounds.end_lon + bounds.east_scale_deg * bounds.skip_factor) is neccessary so in high zoom modes,
+	   the leftmost column does also get drawn, if the center point is out of viewport. */
+	bool valid_x(const LatLonBounds & bounds, const DEM & dem) { return (this->col < dem.n_columns) && (this->lat_lon.lon <= bounds.end_lon + bounds.east_scale_deg * bounds.skip_factor); }
+	void inc_x(const LatLonBounds & bounds)                    { this->col += bounds.skip_factor;       this->lat_lon.lon += bounds.east_scale_deg * bounds.skip_factor; }
+
+	void begin_y(const LatLonBounds & bounds)                  { this->row = bounds.start_row;                             this->lat_lon.lat = bounds.start_lat; }
+	bool valid_y(const LatLonBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->n_points) && (this->lat_lon.lat <= bounds.end_lat); }
+	void inc_y(const LatLonBounds & bounds)                    { this->row += bounds.skip_factor;                          this->lat_lon.lat += bounds.north_scale_deg * bounds.skip_factor; }
+
+	LatLon lat_lon;
+	int32_t col = 0;
+	int32_t row = 0;
+};
+
+
+
+
+void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 {
 	/* Ensure sane elevation range. */
 	if (this->max_elev <= this->min_elev) {
 		this->max_elev = this->min_elev + 1;
 	}
 
-	const LatLonBounds bounds(*gisview, *dem, *this);
-	const LatLonRectCalculator rect_calculator(gisview->get_coord_mode(), bounds.nscale_deg, bounds.escale_deg, gisview, bounds.skip_factor);
+	const LatLonBounds bounds(*gisview, dem, *this);
+	const LatLonRectCalculator rect_calculator(gisview->get_coord_mode(), bounds.north_scale_deg, bounds.east_scale_deg, gisview, bounds.skip_factor);
 
-	LatLon counter;
-	int32_t x;
-	for (x = bounds.start_x, counter.lon = bounds.start_lon;
-	     counter.lon <= bounds.end_lon + bounds.escale_deg * bounds.skip_factor;
-	     counter.lon += bounds.escale_deg * bounds.skip_factor, x += bounds.skip_factor) {
+	LatLonIter iter;
+	for (iter.begin_x(bounds); iter.valid_x(bounds, dem); iter.inc_x(bounds)) {
+		for (iter.begin_y(bounds); iter.valid_y(bounds, dem); iter.inc_y(bounds)) {
 
-		/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
-		   the leftmost column does also get drawn, if the center point is out of viewport. */
-		if (x >= dem->n_columns) {
-			break;
-		}
-
-		const DEMColumn * cur_column = dem->columns[x];
-
-		int32_t y;
-		for (y = bounds.start_y, counter.lat = bounds.start_lat;
-		     counter.lat <= bounds.end_lat;
-		     counter.lat += bounds.nscale_deg * bounds.skip_factor, y += bounds.skip_factor) {
-
-			if (y > cur_column->n_points) {
-				break;
-			}
-
-			int16_t elev = cur_column->points[y];
+			int16_t elev = dem.columns[iter.col]->points[iter.row];
 			if (elev == DEM_INVALID_ELEVATION) {
 				continue; /* Don't draw it. */
 			}
 
 			/* Calculate rectangle that will be drawn in viewport pixmap. */
 			QRectF rect;
-			if (!rect_calculator.get_rectangle(counter, rect)) {
+			if (!rect_calculator.get_rectangle(iter.lat_lon, rect)) {
 				continue;
 			}
 
@@ -830,24 +831,24 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 
 				/* Calculate gradient from height points all around the current one. */
 				int32_t new_y;
-				if (y < bounds.gradient_skip_factor) {
-					new_y = y;
+				if (iter.row < bounds.gradient_skip_factor) {
+					new_y = iter.row;
 				} else {
-					new_y = y - bounds.gradient_skip_factor;
+					new_y = iter.row - bounds.gradient_skip_factor;
 				}
 
-				const GradientColumns cols(*dem, x, bounds.gradient_skip_factor);
+				const GradientColumns cols(dem, iter.col, bounds.gradient_skip_factor);
 
 				change += get_height_difference(elev, cols.prev->points[new_y]);
 				change += get_height_difference(elev, cols.cur->points[new_y]);
 				change += get_height_difference(elev, cols.next->points[new_y]);
 
-				change += get_height_difference(elev, cols.prev->points[y]);
-				change += get_height_difference(elev, cols.next->points[y]);
+				change += get_height_difference(elev, cols.prev->points[iter.row]);
+				change += get_height_difference(elev, cols.next->points[iter.row]);
 
-				new_y = y + bounds.gradient_skip_factor;
+				new_y = iter.row + bounds.gradient_skip_factor;
 				if (new_y >= cols.cur->n_points) {
-					new_y = y;
+					new_y = iter.row;
 				}
 				change += get_height_difference(elev, cols.prev->points[new_y]);
 				change += get_height_difference(elev, cols.cur->points[new_y]);
@@ -899,108 +900,144 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 
 
 
-void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
+class UTMBounds {
+public:
+	UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer);
+
+	unsigned int skip_factor = 0;
+
+	double start_eas = 0;
+	double end_eas   = 0;
+	double start_nor = 0;
+	double end_nor   = 0;
+
+	int32_t start_col = 0;
+	int32_t start_row = 0;
+
+	double min_elevation = 0;
+	double max_elevation = 0;
+};
+
+
+
+
+class UTMIter {
+public:
+	UTMIter(const DEM & dem)
+	{
+		/* TODO_LATER: smarter handling of invalid band letter
+		   value. In theory the source object should be valid and for
+		   sure contain valid band letter. */
+		this->utm = UTM(NAN, NAN, dem.utm.get_zone(), dem.utm.get_band_letter());
+	}
+
+	/* TODO_LATER: verify "iter.col >= 0 && iter.col < dem.n_columns", compare it with condition in viking. */
+	void begin_x(const UTMBounds & bounds)                  { this->col = bounds.start_col;                             this->utm.set_easting(bounds.start_eas); }
+	bool valid_x(const UTMBounds & bounds, const DEM & dem) { return (this->col >= 0 && this->col < dem.n_columns)  && (this->utm.get_easting() <= bounds.end_eas); }
+	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.east_scale * bounds.skip_factor); }
+
+	void begin_y(const UTMBounds & bounds)                  { this->row = bounds.start_row;                             this->utm.set_northing(bounds.start_nor); }
+	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->n_points) && (this->utm.get_northing() <= bounds.end_nor); }
+	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.north_scale * bounds.skip_factor);  }
+
+	UTM utm;
+	int32_t col = 0;
+	int32_t row = 0;
+};
+
+
+
+
+UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer)
 {
-	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 10); /* TODO_LATER: smarter calculation. */
+	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 10); /* TODO_LATER: smarter calculation. */
 
-	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
-	Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
-	Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
-	Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
-
+	Coord coord_ul = gisview.screen_pos_to_coord(ScreenPosition::UpperLeft);
+	Coord coord_ur = gisview.screen_pos_to_coord(ScreenPosition::UpperRight);
+	Coord coord_bl = gisview.screen_pos_to_coord(ScreenPosition::BottomLeft);
+	Coord coord_br = gisview.screen_pos_to_coord(ScreenPosition::BottomRight);
 	coord_ul.recalculate_to_mode(CoordMode::UTM);
 	coord_ur.recalculate_to_mode(CoordMode::UTM);
 	coord_bl.recalculate_to_mode(CoordMode::UTM);
 	coord_br.recalculate_to_mode(CoordMode::UTM);
 
-	double max_nor = std::max(coord_ul.utm.get_northing(), coord_ur.utm.get_northing());
-	double min_nor = std::min(coord_bl.utm.get_northing(), coord_br.utm.get_northing());
-	double max_eas = std::max(coord_br.utm.get_easting(),  coord_ur.utm.get_easting());
-	double min_eas = std::min(coord_bl.utm.get_easting(),  coord_ul.utm.get_easting());
+	const double max_nor = std::max(coord_ul.utm.get_northing(), coord_ur.utm.get_northing());
+	const double min_nor = std::min(coord_bl.utm.get_northing(), coord_br.utm.get_northing());
+	const double max_eas = std::max(coord_br.utm.get_easting(),  coord_ur.utm.get_easting());
+	const double min_eas = std::min(coord_bl.utm.get_easting(),  coord_ul.utm.get_easting());
 
-	double start_eas, end_eas;
-	double start_nor = std::max(min_nor, dem->min_north_seconds);
-	double end_nor   = std::min(max_nor, dem->max_north_seconds);
-	if (UTM::is_the_same_zone(coord_ul.utm, dem->utm) && UTM::is_the_same_zone(coord_bl.utm, dem->utm)
-	    && UTM::is_northern_hemisphere(coord_ul.utm) == UTM::is_northern_hemisphere(dem->utm)
-	    && UTM::is_northern_hemisphere(coord_bl.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	this->start_nor = std::max(min_nor, dem.min_north_seconds);
+	this->end_nor   = std::min(max_nor, dem.max_north_seconds);
+	if (UTM::is_the_same_zone(coord_ul.utm, dem.utm) && UTM::is_the_same_zone(coord_bl.utm, dem.utm)
+	    && UTM::is_northern_hemisphere(coord_ul.utm) == UTM::is_northern_hemisphere(dem.utm)
+	    && UTM::is_northern_hemisphere(coord_bl.utm) == UTM::is_northern_hemisphere(dem.utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		start_eas = std::max(min_eas, dem->min_east_seconds);
+		this->start_eas = std::max(min_eas, dem.min_east_seconds);
 	} else {
-		start_eas = dem->min_east_seconds;
+		this->start_eas = dem.min_east_seconds;
 	}
 
-	if (UTM::is_the_same_zone(coord_ur.utm, dem->utm) && UTM::is_the_same_zone(coord_br.utm, dem->utm)
-	    && UTM::is_northern_hemisphere(coord_ur.utm) == UTM::is_northern_hemisphere(dem->utm)
-	    && UTM::is_northern_hemisphere(coord_br.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	if (UTM::is_the_same_zone(coord_ur.utm, dem.utm) && UTM::is_the_same_zone(coord_br.utm, dem.utm)
+	    && UTM::is_northern_hemisphere(coord_ur.utm) == UTM::is_northern_hemisphere(dem.utm)
+	    && UTM::is_northern_hemisphere(coord_br.utm) == UTM::is_northern_hemisphere(dem.utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		end_eas = std::min(max_eas, dem->max_east_seconds);
+		this->end_eas = std::min(max_eas, dem.max_east_seconds);
 	} else {
-		end_eas = dem->max_east_seconds;
+		this->end_eas = dem.max_east_seconds;
 	}
 
-	start_nor = floor(start_nor / dem->north_scale) * dem->north_scale;
-	end_nor   = ceil(end_nor / dem->north_scale) * dem->north_scale;
-	start_eas = floor(start_eas / dem->east_scale) * dem->east_scale;
-	end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
+	this->start_nor = floor(this->start_nor / dem.north_scale) * dem.north_scale;
+	this->end_nor   = ceil(this->end_nor / dem.north_scale) * dem.north_scale;
+	this->start_eas = floor(this->start_eas / dem.east_scale) * dem.east_scale;
+	this->end_eas   = ceil(this->end_eas / dem.east_scale) * dem.east_scale;
 
-	int32_t start_x;
-	int32_t start_y;
-	dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
 
-	/* TODO_LATER: why start_x and start_y are -1 -- rounding error from above? */
+	dem.east_north_to_col_row(start_eas, start_nor, &this->start_col, &this->start_row);
 
+	this->min_elevation = layer.min_elev.ll_value();
+	this->max_elevation = layer.max_elev.ll_value();
+}
+
+
+
+
+void LayerDEM::draw_dem_utm(GisViewport * gisview, const DEM & dem)
+{
+	const UTMBounds bounds(*gisview, dem, *this);
 	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
+	UTMIter iter(dem);
 
-	/* TODO_LATER: smarter handling of invalid band letter
-	   value. In theory the source object should be valid and for
-	   sure contain valid band letter. */
-	UTM counter(NAN, NAN, dem->utm.get_zone(), dem->utm.get_band_letter());
+	for (iter.begin_x(bounds); iter.valid_x(bounds, dem); iter.inc_x(bounds, dem)) {
+		for (iter.begin_y(bounds); iter.valid_y(bounds, dem); iter.inc_y(bounds, dem)) {
 
-	const double min_elevation = this->min_elev.ll_value();
-	const double max_elevation = this->max_elev.ll_value();
-
-	int32_t x;
-	for (x = start_x, counter.m_easting = start_eas; counter.m_easting <= end_eas; counter.m_easting += dem->east_scale * skip_factor, x += skip_factor) {
-		if (x <= 0 || x >= dem->n_columns) { /* TODO_LATER: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
-			continue;
-		}
-
-		const DEMColumn * cur_column = dem->columns[x];
-	        int32_t y;
-		for (y = start_y, counter.m_northing = start_nor; counter.m_northing <= end_nor; counter.m_northing += dem->north_scale * skip_factor, y += skip_factor) {
-			if (y > cur_column->n_points) {
-				continue;
-			}
-
-			int16_t elev = cur_column->points[y];
+			int16_t elev = dem.columns[iter.col]->points[iter.row];
 			if (elev == DEM_INVALID_ELEVATION) {
 				continue; /* don't draw it */
 			}
 
 
-			if (elev < min_elevation) {
-				elev = min_elevation;
+			if (elev < bounds.min_elevation) {
+				elev = bounds.min_elevation;
 			}
-			if (elev > max_elevation) {
-				elev = max_elevation;
+			if (elev > bounds.max_elevation) {
+				elev = bounds.max_elevation;
 			}
 
 
 			{
 				/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 				ScreenPos pos;
-				gisview->coord_to_screen_pos(Coord(counter, viewport_coord_mode), pos);
+				gisview->coord_to_screen_pos(Coord(iter.utm, viewport_coord_mode), pos);
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
-					idx = get_palette_index(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
+					idx = get_palette_index(elev, bounds.min_elevation, bounds.max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
 				gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);
 			}
-		} /* for y= */
-	} /* for x= */
+		}
+	}
 
 	return;
 }
@@ -1125,7 +1162,7 @@ void LayerDEM::draw_tree_item(GisViewport * gisview, __attribute__((unused)) boo
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
 			qDebug() << SG_PREFIX_I << "Got file" << dem_file_path << "from cache, will now draw it";
-			this->draw_dem(gisview, dem);
+			this->draw_dem(gisview, *dem);
 		} else {
 			qDebug() << SG_PREFIX_E << "Failed to get file" << dem_file_path << "from cache, not drawing";
 		}
