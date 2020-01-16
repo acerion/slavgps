@@ -100,12 +100,12 @@ static ParameterScale<double> scale_max_elev_iu(1.0, 30000.0, scale_max_elev_ini
 
 static WidgetIntEnumerationData dem_source_enum = {
 	{
-		SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), DEM_SOURCE_SRTM),
+		SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), (int) DEMSource::SRTM),
 #ifdef VIK_CONFIG_DEM24K
-		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         DEM_SOURCE_DEM24K),
+		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         (int)DEMSource::DEM24k),
 #endif
 	},
-	DEM_SOURCE_SRTM,
+	(int) DEMSource::SRTM,
 };
 
 
@@ -113,10 +113,10 @@ static WidgetIntEnumerationData dem_source_enum = {
 
 static WidgetIntEnumerationData dem_type_enum = {
 	{
-		SGLabelID(QObject::tr("Absolute height"), DEM_TYPE_HEIGHT),
-		SGLabelID(QObject::tr("Height gradient"), DEM_TYPE_GRADIENT),
+		SGLabelID(QObject::tr("Absolute height"), (int) DEMType::Height),
+		SGLabelID(QObject::tr("Height gradient"), (int) DEMType::Gradient),
 	},
-	DEM_TYPE_HEIGHT,
+	(int) DEMType::Height,
 };
 
 
@@ -384,11 +384,11 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 		break;
 
 	case PARAM_SOURCE:
-		this->source = param_value.u.val_enumeration;
+		this->dem_source = (DEMSource) param_value.u.val_enumeration;
 		break;
 
 	case PARAM_TYPE:
-		this->dem_type = param_value.u.val_int;
+		this->dem_type = (DEMType) param_value.u.val_int;
 		break;
 
 	case PARAM_MIN_ELEV:
@@ -490,7 +490,7 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 
 	case PARAM_SOURCE:
-		rv = SGVariant((int32_t) this->source, dem_layer_param_specs[PARAM_SOURCE].type_id);
+		rv = SGVariant((int32_t) this->dem_source, dem_layer_param_specs[PARAM_SOURCE].type_id);
 		break;
 
 	case PARAM_TYPE:
@@ -603,11 +603,19 @@ void LayerDEM::draw_dem(GisViewport * gisview, const DEM & dem)
 
 
 
+struct DEMMinMax {
+	double min_elevation = 0;
+	double max_elevation = 0;
+};
+
+
+
+
 /* Get index to array of colors or gradients for given value 'value' of elevation or gradient. */
-int get_palette_index(int16_t value, double min_elev, double max_elev, int palette_size)
+int get_palette_index(int16_t value, const DEMMinMax & min_max, int palette_size)
 {
-	const double relative_value = value - min_elev;
-	const double total_elev_range = max_elev - min_elev;
+	const double relative_value = value - min_max.min_elevation;
+	const double total_elev_range = min_max.max_elevation - min_max.min_elevation;
 
 	const int something = ((int) floor((relative_value/total_elev_range) * (palette_size - 2)));
 
@@ -617,41 +625,14 @@ int get_palette_index(int16_t value, double min_elev, double max_elev, int palet
 
 
 
-struct GradientColumns {
-	GradientColumns(const DEM & dem, int32_t x, int32_t gradient_skip_factor);
-	DEMColumn * cur = nullptr;
-	DEMColumn * prev = nullptr;
-	DEMColumn * next = nullptr;
-};
-
-
-
-
-GradientColumns::GradientColumns(const DEM & dem, int32_t x, int32_t gradient_skip_factor)
-{
-	/* Get previous and next column. Catch out-of-bound. */
-	this->cur = dem.columns[x];
-
-	int32_t new_x = x - gradient_skip_factor;
-	if (new_x < 1) {
-		new_x = x + 1;
-	}
-	this->prev = dem.columns[new_x];
-
-	new_x = x + gradient_skip_factor;
-	if (new_x >= dem.n_columns) {
-		new_x = x - 1;
-	}
-	this->next = dem.columns[new_x];
-}
-
-
-
-
 class LatLonRectCalculator {
 public:
 	LatLonRectCalculator(const CoordMode & viewport_coord_mode, double north_scale_deg, double east_scale_deg, const GisViewport * gisview, unsigned int skip_factor)
-		: m_coord_mode(viewport_coord_mode), m_north_scale_deg(north_scale_deg), m_east_scale_deg(east_scale_deg), m_gisview(gisview), m_skip_factor(skip_factor) {}
+		: m_coord_mode(viewport_coord_mode),
+		  m_north_scale_deg(north_scale_deg),
+		  m_east_scale_deg(east_scale_deg),
+		  m_gisview(gisview),
+		  m_skip_factor(skip_factor) {}
 
 	bool get_rectangle(const LatLon & counter, QRectF & rect) const;
 
@@ -741,9 +722,7 @@ public:
 
 	int32_t gradient_skip_factor = 1;
 
-	double min_elevation = 0;
-	double max_elevation = 0;
-
+	DEMMinMax min_max;
 };
 
 
@@ -769,12 +748,12 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 
 	dem.east_north_to_col_row(start_lon_arcsec, start_lat_arcsec, &this->start_col, &this->start_row);
 
-	if (layer.dem_type == DEM_TYPE_GRADIENT) {
+	if (layer.dem_type == DEMType::Gradient) {
 		this->gradient_skip_factor = this->skip_factor;
 	}
 
-	this->min_elevation = layer.min_elev.ll_value();
-	this->max_elevation = layer.max_elev.ll_value();
+	this->min_max.min_elevation = layer.min_elev.ll_value();
+	this->min_max.max_elevation = layer.max_elev.ll_value();
 }
 
 
@@ -800,6 +779,118 @@ public:
 
 
 
+class ElevationCalculator {
+public:
+	static int16_t calculate_elevation(int16_t elev, const DEMMinMax & min_max);
+};
+
+
+
+
+int16_t ElevationCalculator::calculate_elevation(int16_t elev, const DEMMinMax & min_max)
+{
+	int16_t result = elev;
+
+	/* Prevent value from being too small/too large, so it can
+	   safely be used as array index. */
+	if (result < min_max.min_elevation) {
+		result = ceil(min_max.min_elevation);
+	}
+	if (result > min_max.max_elevation) {
+		result = min_max.max_elevation;
+	}
+
+	return result;
+}
+
+
+
+
+class GradientCalculator {
+public:
+	class Columns {
+	public:
+		Columns(const DEM & dem, int32_t col, int32_t gradient_skip_factor)
+		{
+			/* Get previous and next column. Catch out-of-bound. */
+			this->cur_column = dem.columns[col];
+
+
+			int32_t prev_col = col - gradient_skip_factor;
+			if (prev_col < 1) { /* TODO_LATER: is this correct? Shouldn't it be "< 0"? */
+				prev_col = col + 1;
+			}
+			this->prev_column = dem.columns[prev_col];
+
+
+			int32_t next_col = col + gradient_skip_factor;
+			if (next_col >= dem.n_columns) {
+				next_col = col - 1;
+			}
+			this->next_column = dem.columns[next_col];
+		}
+
+		DEMColumn * cur_column = nullptr;
+		DEMColumn * prev_column = nullptr;
+		DEMColumn * next_column = nullptr;
+	};
+
+	/* Calculate and sum gradient in all directions. */
+	static int16_t calculate_gradient(int16_t elev, const DEM & dem, int32_t row, int32_t col, const LatLonBounds & bounds);
+};
+
+
+
+
+int16_t GradientCalculator::calculate_gradient(int16_t elev, const DEM & dem, int32_t row, int32_t col, const LatLonBounds & bounds)
+{
+	int16_t result = 0;
+	const GradientCalculator::Columns cols(dem, col, bounds.gradient_skip_factor);
+
+	/* Calculate gradient from height points all around the current one. */
+	{
+		int32_t prev_row;
+		if (row < bounds.gradient_skip_factor) {
+			prev_row = row;
+		} else {
+			prev_row = row - bounds.gradient_skip_factor;
+		}
+		result += get_height_difference(elev, cols.prev_column->points[prev_row]);
+		result += get_height_difference(elev, cols.cur_column->points[prev_row]);
+		result += get_height_difference(elev, cols.next_column->points[prev_row]);
+	}
+
+	{
+		result += get_height_difference(elev, cols.prev_column->points[row]);
+		result += get_height_difference(elev, cols.next_column->points[row]);
+	}
+
+	{
+		int32_t next_row = row + bounds.gradient_skip_factor;
+		if (next_row >= cols.cur_column->n_points) {
+			next_row = row;
+		}
+		result += get_height_difference(elev, cols.prev_column->points[next_row]);
+		result += get_height_difference(elev, cols.cur_column->points[next_row]);
+		result += get_height_difference(elev, cols.next_column->points[next_row]);
+	}
+
+	result = result / ((bounds.skip_factor > 1) ? log(bounds.skip_factor) : 0.55); /* FIXME: better calc. */
+
+	/* Prevent value to be too small/too large, so it can safely be used as array index. */
+	if (result < bounds.min_max.min_elevation) {
+		result = ceil(bounds.min_max.min_elevation);
+	}
+	if (result > bounds.min_max.max_elevation) {
+		result = bounds.min_max.max_elevation;
+	}
+
+	return result;
+}
+
+
+
+
 void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 {
 	/* Ensure sane elevation range. */
@@ -816,7 +907,7 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 
 			int16_t elev = dem.columns[iter.col]->points[iter.row];
 			if (elev == DEM_INVALID_ELEVATION) {
-				continue; /* Don't draw it. */
+				continue; /* Don't draw invalid elevation. */
 			}
 
 			/* Calculate rectangle that will be drawn in viewport pixmap. */
@@ -825,67 +916,20 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 				continue;
 			}
 
-			if (this->dem_type == DEM_TYPE_GRADIENT) {
-				/* Calculate and sum gradient in all directions. */
-				int16_t change = 0;
+			if (this->dem_type == DEMType::Gradient) {
 
-				/* Calculate gradient from height points all around the current one. */
-				int32_t new_y;
-				if (iter.row < bounds.gradient_skip_factor) {
-					new_y = iter.row;
-				} else {
-					new_y = iter.row - bounds.gradient_skip_factor;
-				}
+				int16_t change = GradientCalculator::calculate_gradient(elev, dem, iter.row, iter.col, bounds);
 
-				const GradientColumns cols(dem, iter.col, bounds.gradient_skip_factor);
-
-				change += get_height_difference(elev, cols.prev->points[new_y]);
-				change += get_height_difference(elev, cols.cur->points[new_y]);
-				change += get_height_difference(elev, cols.next->points[new_y]);
-
-				change += get_height_difference(elev, cols.prev->points[iter.row]);
-				change += get_height_difference(elev, cols.next->points[iter.row]);
-
-				new_y = iter.row + bounds.gradient_skip_factor;
-				if (new_y >= cols.cur->n_points) {
-					new_y = iter.row;
-				}
-				change += get_height_difference(elev, cols.prev->points[new_y]);
-				change += get_height_difference(elev, cols.cur->points[new_y]);
-				change += get_height_difference(elev, cols.next->points[new_y]);
-
-				change = change / ((bounds.skip_factor > 1) ? log(bounds.skip_factor) : 0.55); /* FIXME: better calc. */
-
-				if (change < bounds.min_elevation) {
-					/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
-					change = ceil(bounds.min_elevation);
-				}
-
-				if (change > bounds.max_elevation) {
-					change = bounds.max_elevation;
-				}
-
-				int idx = get_palette_index(change, bounds.min_elevation, bounds.max_elevation, DEM_N_GRADIENT_COLORS);
+				int idx = get_palette_index(change, bounds.min_max, DEM_N_GRADIENT_COLORS);
 				gisview->fill_rectangle(this->gradients[idx], rect);
 
-			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
+			} else if (this->dem_type == DEMType::Height) {
 
-				bool below_minimum = false;
-				{
-					if (elev < bounds.min_elevation) {
-						/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
-						elev = ceil(bounds.min_elevation);
-						below_minimum = true;
-					}
-					if (elev > bounds.max_elevation) {
-						elev = bounds.max_elevation;
-					}
-				}
-
+				elev = ElevationCalculator::calculate_elevation(elev, bounds.min_max);
 
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
-				if (elev > 0 && !below_minimum) {
-					idx = get_palette_index(elev, bounds.min_elevation, bounds.max_elevation, DEM_N_HEIGHT_COLORS);
+				if (elev > 0) {
+					idx = get_palette_index(elev, bounds.min_max, DEM_N_HEIGHT_COLORS);
 				}
 				gisview->fill_rectangle(this->colors[idx], rect);
 			} else {
@@ -914,8 +958,7 @@ public:
 	int32_t start_col = 0;
 	int32_t start_row = 0;
 
-	double min_elevation = 0;
-	double max_elevation = 0;
+	DEMMinMax min_max;
 };
 
 
@@ -994,8 +1037,8 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 
 	dem.east_north_to_col_row(start_eas, start_nor, &this->start_col, &this->start_row);
 
-	this->min_elevation = layer.min_elev.ll_value();
-	this->max_elevation = layer.max_elev.ll_value();
+	this->min_max.min_elevation = layer.min_elev.ll_value();
+	this->min_max.max_elevation = layer.max_elev.ll_value();
 }
 
 
@@ -1012,30 +1055,20 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, const DEM & dem)
 
 			int16_t elev = dem.columns[iter.col]->points[iter.row];
 			if (elev == DEM_INVALID_ELEVATION) {
-				continue; /* don't draw it */
+				continue; /* Don't draw invalid elevation. */
 			}
 
+			/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+			ScreenPos pos;
+			gisview->coord_to_screen_pos(Coord(iter.utm, viewport_coord_mode), pos);
 
-			if (elev < bounds.min_elevation) {
-				elev = bounds.min_elevation;
+			elev = ElevationCalculator::calculate_elevation(elev, bounds.min_max);
+
+			int idx = 0; /* Default index for color of 'sea'. */
+			if (elev > 0) {
+				idx = get_palette_index(elev, bounds.min_max, DEM_N_HEIGHT_COLORS);
 			}
-			if (elev > bounds.max_elevation) {
-				elev = bounds.max_elevation;
-			}
-
-
-			{
-				/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-				ScreenPos pos;
-				gisview->coord_to_screen_pos(Coord(iter.utm, viewport_coord_mode), pos);
-
-				int idx = 0; /* Default index for color of 'sea'. */
-				if (elev > 0) {
-					idx = get_palette_index(elev, bounds.min_elevation, bounds.max_elevation, DEM_N_HEIGHT_COLORS);
-				}
-				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-				gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);
-			}
+			gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);
 		}
 	}
 
@@ -1134,10 +1167,10 @@ static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 void LayerDEM::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
 	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
-	if (this->source == DEM_SOURCE_SRTM) {
+	if (this->dem_source == DEMSource::SRTM) {
 		srtm_draw_existence(gisview);
 #ifdef VIK_CONFIG_DEM24K
-	} else if (this->source == DEM_SOURCE_DEM24K) {
+	} else if (this->dem_source == DEMSource::DEM24k) {
 		dem24k_draw_existence(gisview);
 #endif
 	}
@@ -1179,8 +1212,6 @@ LayerDEM::LayerDEM()
 	this->m_kind = LayerKind::DEM;
 	strcpy(this->debug_string, "LayerKind::DEM");
 	this->interface = &vik_dem_layer_interface;
-
-	this->dem_type = 0;
 
 	this->colors.reserve(DEM_N_HEIGHT_COLORS);
 	this->gradients.reserve(DEM_N_GRADIENT_COLORS);
@@ -1225,7 +1256,7 @@ DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon 
 
 	this->dest_file_path = new_dest_file_path;
 	this->lat_lon = new_lat_lon;
-	this->source = layer_dem->source;
+	this->dem_source = layer_dem->dem_source;
 
 	connect(this, SIGNAL (download_job_completed(const QString &)), layer_dem, SLOT (handle_downloaded_file_cb(const QString &)));
 }
@@ -1493,10 +1524,10 @@ void DEMDownloadJob::run(void)
 {
 	qDebug() << SG_PREFIX_I << "download thread";
 
-	if (this->source == DEM_SOURCE_SRTM) {
+	if (this->dem_source == DEMSource::SRTM) {
 		srtm_dem_download_thread(this);
 #ifdef VIK_CONFIG_DEM24K
-	} else if (this->source == DEM_SOURCE_DEM24K) {
+	} else if (this->dem_source == DEMSource::DEM24k) {
 		dem24k_dem_download_thread(this);
 #endif
 	} else {
@@ -1609,7 +1640,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 			const Time ts(stat_buf.st_mtime, TimeType::Unit::internal_unit());
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(ts.strftime_utc("%c"));
 		} else {
-			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
+			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg((int) this->dem_source).arg(cache_file_path);
 		}
 	} else {
 		message = tr("Source: %1\n\nNo local DEM File!").arg(remote_location);
@@ -1631,11 +1662,11 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << lat_lon;
 
 	QString cache_file_name;
-	if (this->source == DEM_SOURCE_SRTM) {
+	if (this->dem_source == DEMSource::SRTM) {
 		cache_file_name = srtm_lat_lon_to_cache_file_name(lat_lon);
 		qDebug() << SG_PREFIX_I << "cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
-	} else if (this->source == DEM_SOURCE_DEM24K) {
+	} else if (this->dem_source == DEMSource::DEM24k) {
 		cache_file_name = dem24k_lat_lon_to_cache_file_name(lat_lon);
 #endif
 	}

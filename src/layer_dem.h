@@ -51,16 +51,16 @@ namespace SlavGPS {
 
 
 
-	enum {
-		DEM_SOURCE_SRTM,
+	enum class DEMSource {
+		SRTM,
 #ifdef VIK_CONFIG_DEM24K
-		DEM_SOURCE_DEM24K,
+		DEM24k,
 #endif
 	};
 
-	enum {
-		DEM_TYPE_HEIGHT = 0,
-		DEM_TYPE_GRADIENT,
+	enum class DEMType {
+		Height = 0,
+		Gradient,
 	};
 
 
@@ -103,8 +103,8 @@ namespace SlavGPS {
 		Altitude max_elev{0.0, AltitudeType::Unit::E::Metres};
 
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
-		int source = DEM_SOURCE_SRTM;    /* Signed int because this is a generic enum ID. */
-		int dem_type = DEM_TYPE_HEIGHT;  /* Signed int because this is a generic enum ID. */
+		DEMSource dem_source = DEMSource::SRTM;
+		DEMType dem_type = DEMType::Height;
 
 
 	public slots:
@@ -159,7 +159,7 @@ namespace SlavGPS {
 		QString dest_file_path;
 		LatLon lat_lon;
 
-		unsigned int source;
+		DEMSource dem_source;
 
 	signals:
 		void download_job_completed(const QString & file_full_path);
