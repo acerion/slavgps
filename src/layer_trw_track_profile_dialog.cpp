@@ -416,7 +416,7 @@ Altitude ProfileView<Distance, Altitude>::get_tp_aux_value_uu(const Trackpoint &
 {
 	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
 	   when we do it for every TP on every redraw of view. */
-	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(Altitude::Unit::user_unit());
+	return DEMCache::get_elev_by_coord(tp.coord, DEMInterpolation::Simple).convert_to_unit(Altitude::Unit::user_unit());
 }
 
 
@@ -427,7 +427,7 @@ Altitude ProfileView<Time, Altitude>::get_tp_aux_value_uu(const Trackpoint & tp)
 {
 	/* TODO_MAYBE: Getting elevation from DEM cache may be slow
 	   when we do it for every TP on every redraw of view. */
-	return DEMCache::get_elev_by_coord(tp.coord, DemInterpolation::Simple).convert_to_unit(AltitudeType::Unit::user_unit());
+	return DEMCache::get_elev_by_coord(tp.coord, DEMInterpolation::Simple).convert_to_unit(AltitudeType::Unit::user_unit());
 }
 
 

@@ -114,8 +114,8 @@ static WidgetIntEnumerationData dem_source_enum = {
 
 static WidgetIntEnumerationData dem_drawing_type_enum = {
 	{
-		SGLabelID(QObject::tr("Absolute height"), (int) DEMDrawingType::Elevation),
-		SGLabelID(QObject::tr("Height gradient"), (int) DEMDrawingType::Gradient),
+		SGLabelID(QObject::tr("Elevation"), (int) DEMDrawingType::Elevation),
+		SGLabelID(QObject::tr("Gradient"), (int) DEMDrawingType::Gradient),
 	},
 	(int) DEMDrawingType::Elevation,
 };
@@ -728,8 +728,8 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 {
 	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
 
-	this->north_scale_deg = dem.north_sample_distance_arcsec / 3600.0;
-	this->east_scale_deg = dem.east_sample_distance_arcsec / 3600.0;
+	this->north_scale_deg = dem.scale.y / 3600.0;
+	this->east_scale_deg = dem.scale.x / 3600.0;
 
 	const LatLonBBox viewport_bbox = gisview.get_bbox();
 	double start_lat_arcsec = std::max(viewport_bbox.south.get_value() * 3600.0, dem.min_north_seconds);
@@ -737,10 +737,10 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 	double start_lon_arcsec = std::max(viewport_bbox.west.get_value() * 3600.0, dem.min_east_seconds);
 	double end_lon_arcsec   = std::min(viewport_bbox.east.get_value() * 3600.0, dem.max_east_seconds);
 
-	this->start_lat = floor(start_lat_arcsec / dem.north_sample_distance_arcsec) * north_scale_deg;
-	this->end_lat   = ceil(end_lat_arcsec / dem.north_sample_distance_arcsec) * north_scale_deg;
-	this->start_lon = floor(start_lon_arcsec / dem.east_sample_distance_arcsec) * east_scale_deg;
-	this->end_lon   = ceil(end_lon_arcsec / dem.east_sample_distance_arcsec) * east_scale_deg;
+	this->start_lat = floor(start_lat_arcsec / dem.scale.y) * north_scale_deg;
+	this->end_lat   = ceil(end_lat_arcsec / dem.scale.y) * north_scale_deg;
+	this->start_lon = floor(start_lon_arcsec / dem.scale.x) * east_scale_deg;
+	this->end_lon   = ceil(end_lon_arcsec / dem.scale.x) * east_scale_deg;
 
 	dem.east_north_to_col_row(start_lon_arcsec, start_lat_arcsec, &this->start_col, &this->start_row);
 
@@ -973,11 +973,11 @@ public:
 	/* TODO_LATER: verify "iter.col >= 0 && iter.col < dem.n_columns", compare it with condition in viking. */
 	void begin_x(const UTMBounds & bounds)                  { this->col = bounds.start_col;                             this->utm.set_easting(bounds.start_eas); }
 	bool valid_x(const UTMBounds & bounds, const DEM & dem) { return (this->col >= 0 && this->col < dem.n_columns)  && (this->utm.get_easting() <= bounds.end_eas); }
-	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.east_sample_distance_arcsec * bounds.skip_factor); }
+	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.scale.x * bounds.skip_factor); }
 
 	void begin_y(const UTMBounds & bounds)                  { this->row = bounds.start_row;                             this->utm.set_northing(bounds.start_nor); }
 	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->m_size) && (this->utm.get_northing() <= bounds.end_nor); }
-	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.north_sample_distance_arcsec * bounds.skip_factor);  }
+	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.scale.y * bounds.skip_factor);  }
 
 	UTM utm;
 	int32_t col = 0;
@@ -1025,10 +1025,10 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 		this->end_eas = dem.max_east_seconds;
 	}
 
-	this->start_nor = floor(this->start_nor / dem.north_sample_distance_arcsec) * dem.north_sample_distance_arcsec;
-	this->end_nor   = ceil(this->end_nor / dem.north_sample_distance_arcsec) * dem.north_sample_distance_arcsec;
-	this->start_eas = floor(this->start_eas / dem.east_sample_distance_arcsec) * dem.east_sample_distance_arcsec;
-	this->end_eas   = ceil(this->end_eas / dem.east_sample_distance_arcsec) * dem.east_sample_distance_arcsec;
+	this->start_nor = floor(this->start_nor / dem.scale.y) * dem.scale.y;
+	this->end_nor   = ceil(this->end_nor / dem.scale.y) * dem.scale.y;
+	this->start_eas = floor(this->start_eas / dem.scale.x) * dem.scale.x;
+	this->end_eas   = ceil(this->end_eas / dem.scale.x) * dem.scale.x;
 
 
 	dem.east_north_to_col_row(start_eas, start_nor, &this->start_col, &this->start_row);

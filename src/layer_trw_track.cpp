@@ -1560,7 +1560,7 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 			/* TODO_LATER: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
-			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
+			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DEMInterpolation::Best);
 			if (elev.is_valid()) {
 				(*iter)->altitude = elev;
 				num++;
@@ -1585,7 +1585,7 @@ void Track::apply_dem_data_last_trackpoint()
 
 	/* As in apply_dem_data() - use 'best' interpolation method. */
 	auto last = std::prev(this->trackpoints.end());
-	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DemInterpolation::Best);
+	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DEMInterpolation::Best);
 	if (elev.is_valid()) {
 		(*last)->altitude = elev;
 	}

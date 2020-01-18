@@ -39,7 +39,12 @@ using namespace SlavGPS;
 
 
 
-class LoadedDEM {
+#define SG_MODULE "DEM Cache"
+
+
+
+
+class LoadedDEM { /* TODO_LATER: to be replaced with smart pointer. */
 public:
 	LoadedDEM(DEM * dem);
 	~LoadedDEM();
@@ -47,16 +52,6 @@ public:
 	DEM * dem = NULL;
 	unsigned int ref_count = 0;
 };
-
-
-
-
-
-typedef struct {
-	const Coord * coord;
-	DemInterpolation method;
-	int elev;
-} CoordElev;
 
 
 
@@ -81,7 +76,6 @@ static std::unordered_map<QString, LoadedDEM *, MyQHasher> loaded_dems;
 
 
 static void dem_cache_unref(const QString & file_path);
-static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
 
 
 
@@ -226,47 +220,8 @@ void DEMCache::unload_from_cache(QStringList & file_paths)
 
 
 
-static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
-{
-	DEM * dem = ldem->dem;
-	double lat, lon;
-
-	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		const LatLon ll_tmp = ce->coord->get_lat_lon();
-		lat = ll_tmp.lat * 3600;
-		lon = ll_tmp.lon * 3600;
-	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		static UTM utm_tmp;
-		if (!UTM::is_the_same_zone(utm_tmp, dem->utm)) {
-			return false;
-		}
-		utm_tmp = ce->coord->get_utm();
-		lat = utm_tmp.get_northing();
-		lon = utm_tmp.get_easting();
-	} else {
-		return false;
-	}
-
-	switch (ce->method) {
-	case DemInterpolation::None:
-		ce->elev = dem->get_elev_at_east_north_no_interpolation(lon, lat);
-		break;
-	case DemInterpolation::Simple:
-		ce->elev = dem->get_elev_at_east_north_simple_interpolation(lon, lat);
-		break;
-	case DemInterpolation::Best:
-		ce->elev = dem->get_elev_at_east_north_shepard_interpolation(lon, lat);
-		break;
-	default: break;
-	}
-	return (ce->elev != DEM::invalid_elevation);
-}
-
-
-
-
 /* TODO_MAYBE: keep a (sorted) linked list of DEMs and select the best resolution one. */
-Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation method)
+Altitude DEMCache::get_elev_by_coord(const Coord & coord, DEMInterpolation method)
 {
 	Altitude result; /* Invalid by default. */
 
@@ -274,16 +229,23 @@ Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation metho
 		return result;
 	}
 
-	CoordElev ce;
-	ce.coord = &coord;
-	ce.method = method;
-	ce.elev = DEM::invalid_elevation;
-
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
-		if (calculate_elev_by_coord((*iter).second, &ce)) {
-			result = Altitude(ce.elev, AltitudeType::Unit::E::Metres); /* This is DEM, so meters. */
+		int16_t elev = DEM::invalid_elevation;
+
+		if (sg_ret::ok != (*iter).second->dem->get_elev_by_coord(coord, method, elev)) {
+			/* Some logic error that is certain to repeat
+			   in next iteration. */
+			qDebug() << SG_PREFIX_E << "Can't find elevation by coordinates";
 			break;
 		}
+		if (DEM::invalid_elevation == elev) {
+			/* These coordinates aren't covered by this
+			   DEM, try next DEM. */
+			continue;
+		}
+
+		result = Altitude(elev, AltitudeType::Unit::E::Metres); /* This is DEM, so meters. */
+		break;
 	}
 
 	return result;

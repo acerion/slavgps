@@ -36,7 +36,7 @@
 
 
 
-#include "coords.h"
+#include "coord.h"
 
 
 
@@ -58,6 +58,15 @@ namespace SlavGPS {
 
 
 	class LatLonBBox;
+
+
+
+
+	enum class DEMInterpolation {
+		None = 0,
+		Simple,
+		Best,
+	};
 
 
 
@@ -100,10 +109,14 @@ namespace SlavGPS {
 		static DEMSource recognize_source_type(const QString & file_full_path);
 		virtual sg_ret read_from_file(const QString & file_full_path) = 0;
 
+		/**
+		   @brief Try to find given @param coord in this DEM, and return its elevation
 
-		int16_t get_elev_at_east_north_no_interpolation(double east_seconds, double north_seconds);
-		int16_t get_elev_at_east_north_simple_interpolation(double east_seconds, double north_seconds);
-		int16_t get_elev_at_east_north_shepard_interpolation(double east_seconds, double north_seconds);
+		   @return sg_ret::ok on logic errors
+		   @return sg_ret::ok if no logic errors occurred (doesn't imply that a coordinate matched this DEM)
+		   @return through @param elev: DEM::invalid_elevation on errors or if coordinate was not found in this DEM
+		*/
+		sg_ret get_elev_by_coord(const Coord & coord, DEMInterpolation method, int16_t & elev) const;
 
 		void east_north_to_col_row(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const;
 
@@ -115,9 +128,21 @@ namespace SlavGPS {
 		uint8_t horiz_units;
 		uint8_t orig_vert_units; /* Original, always converted to meters when loading. */
 
-		/* 1-arc-sec resolution or 3-arc-sec resolution (distance between samples). */
-		double east_sample_distance_arcsec;
-		double north_sample_distance_arcsec;
+		/*
+		  Distance between samples.
+
+		  For SRTM data this will be in arc seconds (LatLon
+		  coord mode): either 1-arc-sec resolution or
+		  3-arc-sec resolution.
+
+		  For DEM24k data this may be either arc seconds
+		  (LatLon) or meters (UTM).
+		*/
+		struct {
+			double x;
+			double y;
+		} scale = { 0.0, 0.0 };
+
 
 		double min_east_seconds;
 		double min_north_seconds;
@@ -131,17 +156,12 @@ namespace SlavGPS {
 		static const int16_t invalid_elevation;
 
 	private:
-		bool read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip);
-		bool read_other(const QString & full_path);
+		int16_t get_elev_at_east_north_no_interpolation(double east_seconds, double north_seconds) const;
+		int16_t get_elev_at_east_north_simple_interpolation(double east_seconds, double north_seconds) const;
+		int16_t get_elev_at_east_north_shepard_interpolation(double east_seconds, double north_seconds) const;
+		int16_t get_elev_at_col_row(int32_t col, int32_t row) const;
 
-		int16_t get_elev_at_col_row(int32_t col, int32_t row);
-
-		bool get_ref_points_elevation_distance(double east_seconds,
-						       double north_seconds,
-						       int16_t * elevations,
-						       int16_t * distances);
-
-
+		bool get_ref_points_elevation_distance(double east_seconds, double north_seconds, int16_t * elevations, int16_t * distances) const;
 	};
 
 

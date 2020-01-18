@@ -180,12 +180,12 @@ bool DEM24k::parse_header(char * buffer)
 
 	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		this->east_sample_distance_arcsec = 10.0; /* meters */
-		this->north_sample_distance_arcsec = 10.0;
+		this->scale.x = 10.0; /* meters */
+		this->scale.y = 10.0;
 		this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
 	} else {
-		this->east_sample_distance_arcsec = 3.0; /* arcseconds */
-		this->north_sample_distance_arcsec = 3.0;
+		this->scale.x = 3.0; /* arcseconds */
+		this->scale.y = 3.0;
 		this->orig_vert_units = VIK_DEM_VERT_METERS;
 	}
 
@@ -301,7 +301,7 @@ void DEM24k::parse_block_as_header(char * buffer, int32_t * cur_column, int32_t 
 	(*cur_column)++;
 
 	/* empty spaces for things before that were skipped */
-	(*cur_row) = (south - this->min_north_seconds) / this->north_sample_distance_arcsec;
+	(*cur_row) = (south - this->min_north_seconds) / this->scale.y;
 	if (south > this->max_north_seconds || (*cur_row) < 0) {
 		(*cur_row) = 0;
 	}
@@ -453,8 +453,8 @@ sg_ret DEMSRTM::read_from_file(const QString & file_full_path)
 
 	const int32_t num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
 	const int32_t num_cols = num_rows;
-	this->east_sample_distance_arcsec = arcsec;
-	this->north_sample_distance_arcsec = arcsec;
+	this->scale.x = arcsec;
+	this->scale.y = arcsec;
 
 	this->columns.reserve(num_cols);
 	for (int col = 0; col < num_cols; col++) {
@@ -550,13 +550,13 @@ sg_ret DEM24k::read_from_file(const QString & file_full_path)
 
 	/* 24k scale */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {
-		this->east_sample_distance_arcsec = this->columns[1]->m_east - this->columns[0]->m_east;
-		this->north_sample_distance_arcsec = this->east_sample_distance_arcsec;
+		this->scale.x = this->columns[1]->m_east - this->columns[0]->m_east;
+		this->scale.y = this->scale.x;
 
 	}
 
 	/* FIXME bug in 10m DEM's */
-	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->north_sample_distance_arcsec == 10) {
+	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->scale.y == 10) {
 		this->min_east_seconds -= 100;
 		this->min_north_seconds += 200;
 	}
@@ -580,7 +580,7 @@ DEM::~DEM()
 /**
    \reviewed 2019-01-29
 */
-int16_t DEM::get_elev_at_col_row(int32_t col, int32_t row)
+int16_t DEM::get_elev_at_col_row(int32_t col, int32_t row) const
 {
 	if (col < this->n_columns) {
 		if (row < this->columns[col]->m_size) {
@@ -593,7 +593,7 @@ int16_t DEM::get_elev_at_col_row(int32_t col, int32_t row)
 
 
 
-int16_t DEM::get_elev_at_east_north_no_interpolation(double east_seconds, double north_seconds)
+int16_t DEM::get_elev_at_east_north_no_interpolation(double east_seconds, double north_seconds) const
 {
 	if (east_seconds > this->max_east_seconds
 	    || east_seconds < this->min_east_seconds
@@ -603,8 +603,8 @@ int16_t DEM::get_elev_at_east_north_no_interpolation(double east_seconds, double
 		return DEM::invalid_elevation;
 	}
 
-	const int32_t col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->east_sample_distance_arcsec);
-	const int32_t row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->north_sample_distance_arcsec);
+	const int32_t col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->scale.x);
+	const int32_t row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->scale.y);
 
 	return this->get_elev_at_col_row(col, row);
 }
@@ -612,10 +612,7 @@ int16_t DEM::get_elev_at_east_north_no_interpolation(double east_seconds, double
 
 
 
-bool DEM::get_ref_points_elevation_distance(double east_seconds,
-					    double north_seconds,
-					    int16_t * elevations,
-					    int16_t * distances)
+bool DEM::get_ref_points_elevation_distance(double east_seconds, double north_seconds, int16_t * elevations, int16_t * distances) const
 {
 	int32_t cols[4];
 	int32_t rows[4];
@@ -633,24 +630,24 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds,
 
 	/* order of the data: sw, nw, ne, se */
 	/* sw */
-	cols[0] = (int32_t) floor((east_seconds - this->min_east_seconds) / this->east_sample_distance_arcsec);
-	rows[0] = (int32_t) floor((north_seconds - this->min_north_seconds) / this->north_sample_distance_arcsec);
-	ll[0].lon = (this->min_east_seconds + this->east_sample_distance_arcsec * cols[0]) / 3600;
-	ll[0].lat = (this->min_north_seconds + this->north_sample_distance_arcsec * rows[0]) / 3600;
+	cols[0] = (int32_t) floor((east_seconds - this->min_east_seconds) / this->scale.x);
+	rows[0] = (int32_t) floor((north_seconds - this->min_north_seconds) / this->scale.y);
+	ll[0].lon = (this->min_east_seconds + this->scale.x * cols[0]) / 3600;
+	ll[0].lat = (this->min_north_seconds + this->scale.y * rows[0]) / 3600;
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
 	ll[1].lon = ll[0].lon;
-	ll[1].lat = ll[0].lat + (double) this->north_sample_distance_arcsec / 3600;
+	ll[1].lat = ll[0].lat + this->scale.y / 3600.0;
 	/* ne */
 	cols[2] = cols[0] + 1;
 	rows[2] = rows[0] + 1;
-	ll[2].lon = ll[0].lon + (double) this->east_sample_distance_arcsec / 3600;
-	ll[2].lat = ll[0].lat + (double) this->north_sample_distance_arcsec / 3600;
+	ll[2].lon = ll[0].lon + this->scale.x / 3600.0;
+	ll[2].lat = ll[0].lat + this->scale.y / 3600.0;
 	/* se */
 	cols[3] = cols[0] + 1;
 	rows[3] = rows[0];
-	ll[3].lon = ll[0].lon + (double) this->east_sample_distance_arcsec / 3600;
+	ll[3].lon = ll[0].lon + this->scale.x / 3600.0;
 	ll[3].lat = ll[0].lat;
 
 	for (int i = 0; i < 4; i++) {
@@ -674,7 +671,7 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds,
 
 
 
-int16_t DEM::get_elev_at_east_north_simple_interpolation(double east_seconds, double north_seconds)
+int16_t DEM::get_elev_at_east_north_simple_interpolation(double east_seconds, double north_seconds) const
 {
 	int16_t elevations[4] = { 0 };
 	int16_t distances[4] = { 0 };
@@ -706,7 +703,7 @@ int16_t DEM::get_elev_at_east_north_simple_interpolation(double east_seconds, do
 
 
 
-int16_t DEM::get_elev_at_east_north_shepard_interpolation(double east_seconds, double north_seconds)
+int16_t DEM::get_elev_at_east_north_shepard_interpolation(double east_seconds, double north_seconds) const
 {
 	int16_t elevations[4] = { 0 };
 	int16_t distances[4] = { 0 };
@@ -753,8 +750,8 @@ int16_t DEM::get_elev_at_east_north_shepard_interpolation(double east_seconds, d
 
 void DEM::east_north_to_col_row(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const
 {
-	*col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->east_sample_distance_arcsec);
-	*row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->north_sample_distance_arcsec);
+	*col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->scale.x);
+	*row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->scale.y);
 }
 
 
@@ -823,4 +820,51 @@ DEMColumn::~DEMColumn()
 {
 	free(this->m_points);
 	this->m_points = nullptr;
+}
+
+
+
+
+
+sg_ret DEM::get_elev_by_coord(const Coord & coord, DEMInterpolation method, int16_t & elev) const
+{
+	double lat = 0.0;
+	double lon = 0.0;
+
+	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+		const LatLon searched_lat_lon = coord.get_lat_lon();
+		lat = searched_lat_lon.lat * 3600;
+		lon = searched_lat_lon.lon * 3600;
+	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+		const UTM searched_utm = coord.get_utm();
+		if (!UTM::is_the_same_zone(searched_utm, this->utm)) {
+			elev = DEM::invalid_elevation;
+			return sg_ret::ok;
+		}
+		lat = searched_utm.get_northing();
+		lon = searched_utm.get_easting();
+	} else {
+		qDebug() << SG_PREFIX_E << "Unexpected horizontal unit" << (int) this->horiz_units;
+		elev = DEM::invalid_elevation;
+		return sg_ret::err;
+	}
+
+	switch (method) {
+	case DEMInterpolation::None:
+		elev = this->get_elev_at_east_north_no_interpolation(lon, lat);
+		return sg_ret::ok;
+
+	case DEMInterpolation::Simple:
+		elev = this->get_elev_at_east_north_simple_interpolation(lon, lat);
+		return sg_ret::ok;
+
+	case DEMInterpolation::Best:
+		elev = this->get_elev_at_east_north_shepard_interpolation(lon, lat);
+		return sg_ret::ok;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected interpolation method" << (int) method;
+		elev = DEM::invalid_elevation;
+		return sg_ret::err;
+	}
 }

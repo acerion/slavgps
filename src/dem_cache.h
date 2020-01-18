@@ -50,15 +50,6 @@ namespace SlavGPS {
 
 
 
-	enum class DemInterpolation {
-		None = 0,
-		Simple,
-		Best,
-	};
-
-
-
-
 	class DEMCache {
 	public:
 		static void uninit(void); /* For module deinitialization. */
@@ -68,7 +59,7 @@ namespace SlavGPS {
 
 		static DEM * get(const QString & file_path);
 
-		static Altitude get_elev_by_coord(const Coord & coord, DemInterpolation method);
+		static Altitude get_elev_by_coord(const Coord & coord, DEMInterpolation method);
 	};
 
 

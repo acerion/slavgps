@@ -1809,13 +1809,13 @@ void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 
 	/* Change interpolate method according to scale. */
 	const double zoom = this->get_viking_scale().get_x();
-	DemInterpolation interpol_method;
+	DEMInterpolation interpol_method;
 	if (zoom > 2.0) {
-		interpol_method = DemInterpolation::None;
+		interpol_method = DEMInterpolation::None;
 	} else if (zoom >= 1.0) {
-		interpol_method = DemInterpolation::Simple;
+		interpol_method = DEMInterpolation::Simple;
 	} else {
-		interpol_method = DemInterpolation::Best;
+		interpol_method = DEMInterpolation::Best;
 	}
 	Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
 	if (altitude.is_valid()) {

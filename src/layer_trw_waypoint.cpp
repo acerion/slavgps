@@ -268,7 +268,7 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 		return false;
 	}
 
-	const Altitude elev = DEMCache::get_elev_by_coord(this->m_coord, DemInterpolation::Best);
+	const Altitude elev = DEMCache::get_elev_by_coord(this->m_coord, DEMInterpolation::Best);
 	if (!elev.is_valid()) {
 		return true;
 	}

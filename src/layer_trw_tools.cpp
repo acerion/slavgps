@@ -1021,7 +1021,7 @@ LayerTool::Status LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseE
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		const Coord cursor_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::Best);
+		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DEMInterpolation::Best);
 		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new.is_valid()) {
 			if (last_tpt->altitude.is_valid()) {
