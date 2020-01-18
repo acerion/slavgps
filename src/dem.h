@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2008, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,8 +46,6 @@ namespace SlavGPS {
 
 
 
-#define DEM_INVALID_ELEVATION -32768
-
 /* Unit codes. */
 #define VIK_DEM_HORIZ_UTM_METERS 2
 #define VIK_DEM_HORIZ_LL_ARCSECONDS  3
@@ -63,21 +62,31 @@ namespace SlavGPS {
 
 
 
+	enum class DEMSource {
+		SRTM,
+#ifdef VIK_CONFIG_DEM24K
+		DEM24k,
+#endif
+		Unknown
+	};
+
+
+
+
 	class DEMColumn {
 
 	public:
-		DEMColumn(double east_west, double south, int32_t n_points);
+		DEMColumn(double east, double south, int32_t size);
 		~DEMColumn();
 
 		/* East-West coordinate for ALL items in the column. */
-		double east_west;
+		double m_east = 0.0;
 
 		/* Coordinate of northern and southern boundaries. */
-		double south;
-		// double north;
+		double m_south = 0.0;
 
-		int32_t n_points;
-		int16_t * points;
+		int32_t m_size = 0;
+		int16_t * m_points = nullptr;
 	};
 
 
@@ -86,22 +95,17 @@ namespace SlavGPS {
 
 	class DEM {
 	public:
-		~DEM();
+		virtual ~DEM();
 
-		bool read_from_file(const QString & file_full_path);
+		static DEMSource recognize_source_type(const QString & file_full_path);
+		virtual sg_ret read_from_file(const QString & file_full_path) = 0;
 
-		int16_t get_xy(int x, int y);
-		int16_t get_east_north_no_interpolation(double east_seconds, double north_seconds);
-		int16_t get_east_north_simple_interpolation(double east_seconds, double north_seconds);
-		int16_t get_east_north_shepard_interpolation(double east_seconds, double north_seconds);
-		// int16_t vik_dem_get_best_interpol(DEM * dem, double east_seconds, double north_seconds);
+
+		int16_t get_elev_at_east_north_no_interpolation(double east_seconds, double north_seconds);
+		int16_t get_elev_at_east_north_simple_interpolation(double east_seconds, double north_seconds);
+		int16_t get_elev_at_east_north_shepard_interpolation(double east_seconds, double north_seconds);
 
 		void east_north_to_col_row(double east_seconds, double north_seconds, int32_t * col, int32_t * row) const;
-
-		bool get_ref_points_elevation_distance(double east_seconds,
-						       double north_seconds,
-						       int16_t * elevations,
-						       int16_t * distances);
 
 		bool intersect(const LatLonBBox & other_bbox) const;
 
@@ -110,8 +114,10 @@ namespace SlavGPS {
 
 		uint8_t horiz_units;
 		uint8_t orig_vert_units; /* Original, always converted to meters when loading. */
-		double east_scale; /* Gap between samples. */
-		double north_scale;
+
+		/* 1-arc-sec resolution or 3-arc-sec resolution (distance between samples). */
+		double east_sample_distance_arcsec;
+		double north_sample_distance_arcsec;
 
 		double min_east_seconds;
 		double min_north_seconds;
@@ -122,17 +128,47 @@ namespace SlavGPS {
 
 		const char type_string[30] = "DEM object";
 
+		static const int16_t invalid_elevation;
 
 	private:
 		bool read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip);
 		bool read_other(const QString & full_path);
 
+		int16_t get_elev_at_col_row(int32_t col, int32_t row);
+
+		bool get_ref_points_elevation_distance(double east_seconds,
+						       double north_seconds,
+						       int16_t * elevations,
+						       int16_t * distances);
+
+
+	};
+
+
+
+
+	class DEMSRTM : public DEM {
+	public:
+		sg_ret read_from_file(const QString & file_full_path) override;
+	};
+
+
+
+
+	class DEM24k : public DEM {
+	public:
+		sg_ret read_from_file(const QString & file_full_path) override;
+
+	private:
 		bool parse_header(char * buffer);
 		void parse_block(char * buffer, int32_t * cur_column, int * cur_row);
 		void parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * cur_row);
 		void parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * cur_row);
-	};
 
+		void fix_exponentiation(char * buffer);
+		bool get_int_and_continue(char ** buffer, int * result, const char * msg);
+		bool get_double_and_continue(char ** buffer, double * result, const char * msg);
+	};
 
 
 

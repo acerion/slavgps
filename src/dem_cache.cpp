@@ -138,11 +138,32 @@ DEM * DEMCache::load_file_into_cache(const QString & file_full_path)
 		(*iter).second->ref_count++;
 		return (*iter).second->dem;
 	} else {
-		DEM * dem = new DEM();
-		if (!dem->read_from_file(file_full_path)) {
-			delete dem;
-			return NULL;
+		DEM * dem = nullptr;
+
+		const DEMSource source = DEM::recognize_source_type(file_full_path);
+		switch (source) {
+		case DEMSource::SRTM:
+			dem = new DEMSRTM();
+			break;
+#ifdef VIK_CONFIG_DEM24K
+		case DEMSource::DEM24k:
+			dem = new DEM24K();
+			break;
+#endif
+		default:
+			dem = nullptr;
+			break;
+		};
+
+		if (nullptr == dem) {
+			return nullptr;
 		}
+
+		if (sg_ret::ok != dem->read_from_file(file_full_path)) {
+			delete dem;
+			return nullptr;
+		}
+
 		LoadedDEM * ldem = new LoadedDEM(dem);
 		loaded_dems[file_full_path] = ldem;
 		return dem;
@@ -228,17 +249,17 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 
 	switch (ce->method) {
 	case DemInterpolation::None:
-		ce->elev = dem->get_east_north_no_interpolation(lon, lat);
+		ce->elev = dem->get_elev_at_east_north_no_interpolation(lon, lat);
 		break;
 	case DemInterpolation::Simple:
-		ce->elev = dem->get_east_north_simple_interpolation(lon, lat);
+		ce->elev = dem->get_elev_at_east_north_simple_interpolation(lon, lat);
 		break;
 	case DemInterpolation::Best:
-		ce->elev = dem->get_east_north_shepard_interpolation(lon, lat);
+		ce->elev = dem->get_elev_at_east_north_shepard_interpolation(lon, lat);
 		break;
 	default: break;
 	}
-	return (ce->elev != DEM_INVALID_ELEVATION);
+	return (ce->elev != DEM::invalid_elevation);
 }
 
 
@@ -256,7 +277,7 @@ Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation metho
 	CoordElev ce;
 	ce.coord = &coord;
 	ce.method = method;
-	ce.elev = DEM_INVALID_ELEVATION;
+	ce.elev = DEM::invalid_elevation;
 
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
 		if (calculate_elev_by_coord((*iter).second, &ce)) {
@@ -306,26 +327,24 @@ GList * a_dems_list_copy(GList * dems)
 int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coord * coord)
 {
 	static UTM utm_tmp;
-	LatLon ll_tmp;
 	auto iter = file_paths->begin();
-	DEM * dem;
-	int elev;
 
 	while (iter != file_paths->end()) {
-		dem = DEMCache::get(*iter);
+		DEM * dem = DEMCache::get(*iter);
 		if (dem) {
 			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-				ll_tmp = coord->get_latlon();
-				ll_tmp.lat *= 3600;
-				ll_tmp.lon *= 3600;
-				elev = dem->get_east_north_no_interpolation(ll_tmp.lon, ll_tmp.lat);
-				if (elev != DEM_INVALID_ELEVATION) {
+				LatLon lat_lon = coord->get_latlon();
+				lat_lon.lat *= 3600;
+				lat_lon.lon *= 3600;
+				int16_t elev = dem->get_elev_at_east_north_no_interpolation(lat_lon.lon, lat_lon.lat);
+				if (elev != DEM::invalid_elevation) {
 					return elev;
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+				int16_t elev = 0;
 				utm_tmp = coord->get_utm();
 				if (utm_tmp.zone == dem->utm.zone
-				    && (elev = dem->get_east_north_no_interpolation(utm_tmp.get_easting(), utm_tmp.get_northing())) != DEM_INVALID_ELEVATION) {
+				    && (elev = dem->get_elev_at_east_north_no_interpolation(utm_tmp.get_easting(), utm_tmp.get_northing())) != DEM::invalid_elevation) {
 
 					return elev;
 				}
@@ -333,7 +352,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 		}
 		iter++;
 	}
-	return DEM_INVALID_ELEVATION;
+	return DEM::invalid_elevation;
 }
 
 

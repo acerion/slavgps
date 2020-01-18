@@ -52,15 +52,8 @@ namespace SlavGPS {
 
 
 
-	enum class DEMSource {
-		SRTM,
-#ifdef VIK_CONFIG_DEM24K
-		DEM24k,
-#endif
-	};
-
-	enum class DEMType {
-		Height = 0,
+	enum class DEMDrawingType {
+		Elevation = 0,
 		Gradient,
 	};
 
@@ -116,7 +109,7 @@ namespace SlavGPS {
 
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
 		DEMSource dem_source = DEMSource::SRTM;
-		DEMType dem_type = DEMType::Height;
+		DEMDrawingType dem_drawing_type = DEMDrawingType::Elevation;
 
 
 	public slots:

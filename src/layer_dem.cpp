@@ -112,12 +112,12 @@ static WidgetIntEnumerationData dem_source_enum = {
 
 
 
-static WidgetIntEnumerationData dem_type_enum = {
+static WidgetIntEnumerationData dem_drawing_type_enum = {
 	{
-		SGLabelID(QObject::tr("Absolute height"), (int) DEMType::Height),
-		SGLabelID(QObject::tr("Height gradient"), (int) DEMType::Gradient),
+		SGLabelID(QObject::tr("Absolute height"), (int) DEMDrawingType::Elevation),
+		SGLabelID(QObject::tr("Height gradient"), (int) DEMDrawingType::Gradient),
 	},
-	(int) DEMType::Height,
+	(int) DEMDrawingType::Elevation,
 };
 
 
@@ -135,7 +135,7 @@ enum {
 	PARAM_FILES = 0,
 	PARAM_SOURCE,
 	PARAM_COLOR,
-	PARAM_TYPE,
+	PARAM_DRAWING_TYPE,
 	PARAM_MIN_ELEV,
 	PARAM_MAX_ELEV,
 	NUM_PARAMS
@@ -145,13 +145,13 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::StringList,    PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,                NULL,           "" },
-	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::IntEnumeration,  &dem_source_enum,    NULL,           QObject::tr("Source of DEM data") },
-	{ PARAM_COLOR,      "color",    SGVariantType::Color,         PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                color_default,  "" },
-	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::IntEnumeration,  &dem_type_enum,      NULL,           "" },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::AltitudeWidget,  &scale_min_elev_iu,  NULL,           "" },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::AltitudeWidget,  &scale_max_elev_iu,  NULL,           "" },
-	{ NUM_PARAMS,       "",         SGVariantType::Empty,         PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                NULL,           "" }, /* Guard. */
+	{ PARAM_FILES,        "files",    SGVariantType::StringList,    PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,                   NULL,           "" },
+	{ PARAM_SOURCE,       "source",   SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::IntEnumeration,  &dem_source_enum,       NULL,           QObject::tr("Source of DEM data") },
+	{ PARAM_COLOR,        "color",    SGVariantType::Color,         PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                   color_default,  "" },
+	{ PARAM_DRAWING_TYPE, "type",     SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Drawing Type:"),    WidgetType::IntEnumeration,  &dem_drawing_type_enum, NULL,           "" },
+	{ PARAM_MIN_ELEV,     "min_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::AltitudeWidget,  &scale_min_elev_iu,     NULL,           "" },
+	{ PARAM_MAX_ELEV,     "max_elev", SGVariantType::AltitudeType,  PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::AltitudeWidget,  &scale_max_elev_iu,     NULL,           "" },
+	{ NUM_PARAMS,         "",         SGVariantType::Empty,         PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                   NULL,           "" }, /* Guard. */
 };
 
 
@@ -383,8 +383,8 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 		this->dem_source = (DEMSource) param_value.u.val_enumeration;
 		break;
 
-	case PARAM_TYPE:
-		this->dem_type = (DEMType) param_value.u.val_int;
+	case PARAM_DRAWING_TYPE:
+		this->dem_drawing_type = (DEMDrawingType) param_value.u.val_int;
 		break;
 
 	case PARAM_MIN_ELEV:
@@ -489,8 +489,8 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant((int32_t) this->dem_source, dem_layer_param_specs[PARAM_SOURCE].type_id);
 		break;
 
-	case PARAM_TYPE:
-		rv = SGVariant((int32_t) this->dem_type, dem_layer_param_specs[PARAM_TYPE].type_id);
+	case PARAM_DRAWING_TYPE:
+		rv = SGVariant((int32_t) this->dem_drawing_type, dem_layer_param_specs[PARAM_DRAWING_TYPE].type_id);
 		break;
 
 	case PARAM_COLOR:
@@ -542,12 +542,12 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 
 
 
-static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
+static inline uint16_t get_height_difference(int16_t elev1, int16_t elev2)
 {
-	if (new_elev == DEM_INVALID_ELEVATION) {
+	if (elev1 == DEM::invalid_elevation || elev2 == DEM::invalid_elevation) {
 		return 0;
 	} else {
-		return std::abs(new_elev - elev);
+		return std::abs(elev1 - elev2); /* TODO_LATER: Review this and make sure that no overflow happens. */
 	}
 }
 
@@ -728,8 +728,8 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 {
 	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 80); /* TODO_LATER: smarter calculation. */
 
-	this->north_scale_deg = dem.north_scale / ((double) 3600);
-	this->east_scale_deg = dem.east_scale / ((double) 3600);
+	this->north_scale_deg = dem.north_sample_distance_arcsec / 3600.0;
+	this->east_scale_deg = dem.east_sample_distance_arcsec / 3600.0;
 
 	const LatLonBBox viewport_bbox = gisview.get_bbox();
 	double start_lat_arcsec = std::max(viewport_bbox.south.get_value() * 3600.0, dem.min_north_seconds);
@@ -737,14 +737,14 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 	double start_lon_arcsec = std::max(viewport_bbox.west.get_value() * 3600.0, dem.min_east_seconds);
 	double end_lon_arcsec   = std::min(viewport_bbox.east.get_value() * 3600.0, dem.max_east_seconds);
 
-	this->start_lat = floor(start_lat_arcsec / dem.north_scale) * north_scale_deg;
-	this->end_lat   = ceil(end_lat_arcsec / dem.north_scale) * north_scale_deg;
-	this->start_lon = floor(start_lon_arcsec / dem.east_scale) * east_scale_deg;
-	this->end_lon   = ceil(end_lon_arcsec / dem.east_scale) * east_scale_deg;
+	this->start_lat = floor(start_lat_arcsec / dem.north_sample_distance_arcsec) * north_scale_deg;
+	this->end_lat   = ceil(end_lat_arcsec / dem.north_sample_distance_arcsec) * north_scale_deg;
+	this->start_lon = floor(start_lon_arcsec / dem.east_sample_distance_arcsec) * east_scale_deg;
+	this->end_lon   = ceil(end_lon_arcsec / dem.east_sample_distance_arcsec) * east_scale_deg;
 
 	dem.east_north_to_col_row(start_lon_arcsec, start_lat_arcsec, &this->start_col, &this->start_row);
 
-	if (layer.dem_type == DEMType::Gradient) {
+	if (layer.dem_drawing_type == DEMDrawingType::Gradient) {
 		this->gradient_skip_factor = this->skip_factor;
 	}
 
@@ -764,7 +764,7 @@ public:
 	void inc_x(const LatLonBounds & bounds)                    { this->col += bounds.skip_factor;       this->lat_lon.lon += bounds.east_scale_deg * bounds.skip_factor; }
 
 	void begin_y(const LatLonBounds & bounds)                  { this->row = bounds.start_row;                             this->lat_lon.lat = bounds.start_lat; }
-	bool valid_y(const LatLonBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->n_points) && (this->lat_lon.lat <= bounds.end_lat); }
+	bool valid_y(const LatLonBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->m_size) && (this->lat_lon.lat <= bounds.end_lat); }
 	void inc_y(const LatLonBounds & bounds)                    { this->row += bounds.skip_factor;                          this->lat_lon.lat += bounds.north_scale_deg * bounds.skip_factor; }
 
 	LatLon lat_lon;
@@ -851,24 +851,24 @@ int16_t GradientCalculator::calculate_gradient(int16_t elev, const DEM & dem, in
 		} else {
 			prev_row = row - bounds.gradient_skip_factor;
 		}
-		result += get_height_difference(elev, cols.prev_column->points[prev_row]);
-		result += get_height_difference(elev, cols.cur_column->points[prev_row]);
-		result += get_height_difference(elev, cols.next_column->points[prev_row]);
+		result += get_height_difference(elev, cols.prev_column->m_points[prev_row]);
+		result += get_height_difference(elev, cols.cur_column->m_points[prev_row]);
+		result += get_height_difference(elev, cols.next_column->m_points[prev_row]);
 	}
 
 	{
-		result += get_height_difference(elev, cols.prev_column->points[row]);
-		result += get_height_difference(elev, cols.next_column->points[row]);
+		result += get_height_difference(elev, cols.prev_column->m_points[row]);
+		result += get_height_difference(elev, cols.next_column->m_points[row]);
 	}
 
 	{
 		int32_t next_row = row + bounds.gradient_skip_factor;
-		if (next_row >= cols.cur_column->n_points) {
+		if (next_row >= cols.cur_column->m_size) {
 			next_row = row;
 		}
-		result += get_height_difference(elev, cols.prev_column->points[next_row]);
-		result += get_height_difference(elev, cols.cur_column->points[next_row]);
-		result += get_height_difference(elev, cols.next_column->points[next_row]);
+		result += get_height_difference(elev, cols.prev_column->m_points[next_row]);
+		result += get_height_difference(elev, cols.cur_column->m_points[next_row]);
+		result += get_height_difference(elev, cols.next_column->m_points[next_row]);
 	}
 
 	result = result / ((bounds.skip_factor > 1) ? log(bounds.skip_factor) : 0.55); /* FIXME: better calc. */
@@ -901,8 +901,8 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 	for (iter.begin_x(bounds); iter.valid_x(bounds, dem); iter.inc_x(bounds)) {
 		for (iter.begin_y(bounds); iter.valid_y(bounds, dem); iter.inc_y(bounds)) {
 
-			int16_t elev = dem.columns[iter.col]->points[iter.row];
-			if (elev == DEM_INVALID_ELEVATION) {
+			int16_t elev = dem.columns[iter.col]->m_points[iter.row];
+			if (elev == DEM::invalid_elevation) {
 				continue; /* Don't draw invalid elevation. */
 			}
 
@@ -912,14 +912,14 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 				continue;
 			}
 
-			if (this->dem_type == DEMType::Gradient) {
+			if (this->dem_drawing_type == DEMDrawingType::Gradient) {
 
 				int16_t change = GradientCalculator::calculate_gradient(elev, dem, iter.row, iter.col, bounds);
 
 				int idx = get_palette_index(change, bounds.min_max, this->gradients.size());
 				gisview->fill_rectangle(this->gradients.m_values[idx], rect);
 
-			} else if (this->dem_type == DEMType::Height) {
+			} else if (this->dem_drawing_type == DEMDrawingType::Elevation) {
 
 				elev = ElevationCalculator::calculate_elevation(elev, bounds.min_max);
 
@@ -973,11 +973,11 @@ public:
 	/* TODO_LATER: verify "iter.col >= 0 && iter.col < dem.n_columns", compare it with condition in viking. */
 	void begin_x(const UTMBounds & bounds)                  { this->col = bounds.start_col;                             this->utm.set_easting(bounds.start_eas); }
 	bool valid_x(const UTMBounds & bounds, const DEM & dem) { return (this->col >= 0 && this->col < dem.n_columns)  && (this->utm.get_easting() <= bounds.end_eas); }
-	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.east_scale * bounds.skip_factor); }
+	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.east_sample_distance_arcsec * bounds.skip_factor); }
 
 	void begin_y(const UTMBounds & bounds)                  { this->row = bounds.start_row;                             this->utm.set_northing(bounds.start_nor); }
-	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->n_points) && (this->utm.get_northing() <= bounds.end_nor); }
-	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.north_scale * bounds.skip_factor);  }
+	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->m_size) && (this->utm.get_northing() <= bounds.end_nor); }
+	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.north_sample_distance_arcsec * bounds.skip_factor);  }
 
 	UTM utm;
 	int32_t col = 0;
@@ -1025,10 +1025,10 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 		this->end_eas = dem.max_east_seconds;
 	}
 
-	this->start_nor = floor(this->start_nor / dem.north_scale) * dem.north_scale;
-	this->end_nor   = ceil(this->end_nor / dem.north_scale) * dem.north_scale;
-	this->start_eas = floor(this->start_eas / dem.east_scale) * dem.east_scale;
-	this->end_eas   = ceil(this->end_eas / dem.east_scale) * dem.east_scale;
+	this->start_nor = floor(this->start_nor / dem.north_sample_distance_arcsec) * dem.north_sample_distance_arcsec;
+	this->end_nor   = ceil(this->end_nor / dem.north_sample_distance_arcsec) * dem.north_sample_distance_arcsec;
+	this->start_eas = floor(this->start_eas / dem.east_sample_distance_arcsec) * dem.east_sample_distance_arcsec;
+	this->end_eas   = ceil(this->end_eas / dem.east_sample_distance_arcsec) * dem.east_sample_distance_arcsec;
 
 
 	dem.east_north_to_col_row(start_eas, start_nor, &this->start_col, &this->start_row);
@@ -1049,8 +1049,8 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, const DEM & dem)
 	for (iter.begin_x(bounds); iter.valid_x(bounds, dem); iter.inc_x(bounds, dem)) {
 		for (iter.begin_y(bounds); iter.valid_y(bounds, dem); iter.inc_y(bounds, dem)) {
 
-			int16_t elev = dem.columns[iter.col]->points[iter.row];
-			if (elev == DEM_INVALID_ELEVATION) {
+			int16_t elev = dem.columns[iter.col]->m_points[iter.row];
+			if (elev == DEM::invalid_elevation) {
 				continue; /* Don't draw invalid elevation. */
 			}
 
