@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,7 +103,7 @@ static WidgetIntEnumerationData dem_source_enum = {
 	{
 		SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), (int) DEMSource::SRTM),
 #ifdef VIK_CONFIG_DEM24K
-		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         (int)DEMSource::DEM24k),
+		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         (int) DEMSource::DEM24k),
 #endif
 	},
 	(int) DEMSource::SRTM,
@@ -165,12 +166,13 @@ static void draw_existence_common(GisViewport * gisview, const QPen & pen, const
 
 
 
+
 /* Height colors.
    The first entry is blue for a default 'sea' color,
    however the value used by the corresponding gc can be configured as part of the DEM layer properties.
    The other colors, shaded from brown to white are used to give an indication of height.
 */
-static char const * dem_height_colors[] = {
+static DEMPalette default_dem_height_palette = DEMPalette({
 	"#0000FF",
 	"#9b793c", "#9c7d40", "#9d8144", "#9e8549", "#9f894d", "#a08d51", "#a29156", "#a3955a", "#a4995e", "#a69d63",
 	"#a89f65", "#aaa267", "#ada569", "#afa76b", "#b1aa6d", "#b4ad6f", "#b6b071", "#b9b373", "#bcb676", "#beb978",
@@ -179,16 +181,13 @@ static char const * dem_height_colors[] = {
 	"#74ac5f", "#7ab063", "#80b467", "#86b86a", "#8cbc6e", "#92c072", "#94c175", "#97c278", "#9ac47c", "#9cc57f",
 	"#9fc682", "#a2c886", "#a4c989", "#a7cb8d", "#aacd91", "#afce99", "#b5d0a1", "#bbd2aa", "#c0d3b2", "#c6d5ba",
 	"#ccd7c3", "#d1d9cb", "#d7dbd4", "#DDDDDD", "#e0e0e0", "#e4e4e4", "#e8e8e8", "#ebebeb", "#efefef", "#f3f3f3",
-	"#f7f7f7", "#fbfbfb", "#ffffff"
-};
-
-static const int32_t DEM_N_HEIGHT_COLORS = sizeof(dem_height_colors)/sizeof(dem_height_colors[0]);
+	"#f7f7f7", "#fbfbfb", "#ffffff"});
 
 
 
 
 /* Gradient colors. */
-static char const * dem_gradient_colors[] = {
+static DEMPalette default_dem_gradient_palette = DEMPalette({
 	"#AAAAAA",
 	"#000000", "#000011", "#000022", "#000033", "#000044", "#00004c", "#000055", "#00005d", "#000066", "#00006e",
 	"#000077", "#00007f", "#000088", "#000090", "#000099", "#0000a1", "#0000aa", "#0000b2", "#0000bb", "#0000c3",
@@ -199,10 +198,7 @@ static char const * dem_gradient_colors[] = {
 	"#22dd00", "#2ad500", "#33cc00", "#3bc400", "#44bb00", "#4cb300", "#55aa00", "#5da200", "#669900", "#6e9100",
 	"#778800", "#7f8000", "#887700", "#906f00", "#996600", "#a15e00", "#aa5500", "#b24d00", "#bb4400", "#c33c00",
 	"#cc3300", "#d42b00", "#dd2200", "#e51a00", "#ee1100", "#f60900", "#ff0000",
-	"#FFFFFF"
-};
-
-static const int32_t DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/sizeof(dem_gradient_colors[0]);
+	"#FFFFFF"});
 
 
 
@@ -268,7 +264,7 @@ Layer * LayerDEMInterface::unmarshall(Pickle & pickle, __attribute__((unused)) G
 	LayerDEM * layer = new LayerDEM();
 
 	/* Overwrite base color configured in constructor. */
-	layer->colors[0] = QColor(layer->base_color);
+	layer->colors.m_values[0] = QColor(layer->base_color);
 
 	layer->unmarshall_params(pickle);
 	return layer;
@@ -380,7 +376,7 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 	switch (param_id) {
 	case PARAM_COLOR:
 		this->base_color = param_value.val_color;
-		this->colors[0] = this->base_color;
+		this->colors.m_values[0] = this->base_color;
 		break;
 
 	case PARAM_SOURCE:
@@ -920,8 +916,8 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 
 				int16_t change = GradientCalculator::calculate_gradient(elev, dem, iter.row, iter.col, bounds);
 
-				int idx = get_palette_index(change, bounds.min_max, DEM_N_GRADIENT_COLORS);
-				gisview->fill_rectangle(this->gradients[idx], rect);
+				int idx = get_palette_index(change, bounds.min_max, this->gradients.size());
+				gisview->fill_rectangle(this->gradients.m_values[idx], rect);
 
 			} else if (this->dem_type == DEMType::Height) {
 
@@ -929,9 +925,9 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
 
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0) {
-					idx = get_palette_index(elev, bounds.min_max, DEM_N_HEIGHT_COLORS);
+					idx = get_palette_index(elev, bounds.min_max, this->colors.size());
 				}
-				gisview->fill_rectangle(this->colors[idx], rect);
+				gisview->fill_rectangle(this->colors.m_values[idx], rect);
 			} else {
 				; /* No other dem type to process. */
 			}
@@ -1066,9 +1062,9 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, const DEM & dem)
 
 			int idx = 0; /* Default index for color of 'sea'. */
 			if (elev > 0) {
-				idx = get_palette_index(elev, bounds.min_max, DEM_N_HEIGHT_COLORS);
+				idx = get_palette_index(elev, bounds.min_max, this->colors.size());
 			}
-			gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);
+			gisview->fill_rectangle(this->colors.m_values[idx], pos.x() - 1, pos.y() - 1, 2, 2);
 		}
 	}
 
@@ -1213,19 +1209,9 @@ LayerDEM::LayerDEM()
 	strcpy(this->debug_string, "LayerKind::DEM");
 	this->interface = &vik_dem_layer_interface;
 
-	this->colors.reserve(DEM_N_HEIGHT_COLORS);
-	this->gradients.reserve(DEM_N_GRADIENT_COLORS);
-
-
-	/* TODO_MAYBE: share ->colors[] between layers. */
-	this->colors[0] = QColor("#0000FF"); /* Ensure the base color is available as soon as possible. */
-	for (int32_t i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
-		this->colors[i] = QColor(dem_height_colors[i]);
-	}
-
-	for (size_t i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		this->gradients[i] = QColor(dem_gradient_colors[i]);
-	}
+	/* TODO_MAYBE: share these two arrays between layers. */
+	this->colors = default_dem_height_palette;
+	this->gradients = default_dem_gradient_palette;
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));

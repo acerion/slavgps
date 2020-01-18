@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,6 +77,17 @@ namespace SlavGPS {
 
 
 
+	class DEMPalette {
+	public:
+		DEMPalette() {};
+		DEMPalette(const std::vector<QColor> & values) : m_values(values) {}
+		int size(void) const { return this->m_values.size(); };
+		std::vector<QColor> m_values;
+	};
+
+
+
+
 	class LayerDEM : public Layer {
 		Q_OBJECT
 	public:
@@ -93,8 +105,8 @@ namespace SlavGPS {
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
-		std::vector<QColor> colors;
-		std::vector<QColor> gradients;
+		DEMPalette colors;
+		DEMPalette gradients;
 
 		QStringList files;
 
