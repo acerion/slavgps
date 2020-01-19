@@ -47,17 +47,27 @@ namespace SlavGPS {
 
 
 /* Unit codes. */
-#define VIK_DEM_HORIZ_UTM_METERS 2
-#define VIK_DEM_HORIZ_LL_ARCSECONDS  3
-
-#define VIK_DEM_VERT_DECIMETERS 2
-
-#define VIK_DEM_VERT_METERS 1 /* Wrong in 250k? */
 
 
 
 
 	class LatLonBBox;
+
+
+
+
+	enum class DEMVerticalUnit {
+		Meters = 1,     /* Wrong in 250k? */
+		Decimeters = 2
+	};
+
+
+
+
+	enum class DEMHorizontalUnit {
+		UTMMeters = 2,
+		LatLonArcSeconds = 3
+	};
 
 
 
@@ -122,11 +132,11 @@ namespace SlavGPS {
 
 		bool intersect(const LatLonBBox & other_bbox) const;
 
-		int32_t n_columns;
+		int32_t n_columns = 0;
 		std::vector<DEMColumn *> columns;
 
-		uint8_t horiz_units;
-		uint8_t orig_vert_units; /* Original, always converted to meters when loading. */
+		DEMHorizontalUnit horiz_units = DEMHorizontalUnit::LatLonArcSeconds;
+		DEMVerticalUnit orig_vert_units = DEMVerticalUnit::Decimeters; /* Original, always converted to meters when loading. */
 
 		/*
 		  Distance between samples.

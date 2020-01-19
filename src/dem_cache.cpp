@@ -294,7 +294,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 	while (iter != file_paths->end()) {
 		DEM * dem = DEMCache::get(*iter);
 		if (dem) {
-			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+			if (dem->horiz_units == DEMHorizontalUnit::LatLonArcSeconds) {
 				LatLon lat_lon = coord->get_latlon();
 				lat_lon.lat *= 3600;
 				lat_lon.lon *= 3600;
@@ -302,7 +302,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 				if (elev != DEM::invalid_elevation) {
 					return elev;
 				}
-			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+			} else if (dem->horiz_units == DEMHorizontalUnit::UTMMeters) {
 				int16_t elev = 0;
 				utm_tmp = coord->get_utm();
 				if (utm_tmp.zone == dem->utm.zone

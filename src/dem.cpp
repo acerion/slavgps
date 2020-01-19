@@ -172,21 +172,22 @@ bool DEM24k::parse_header(char * buffer)
 		}
 	}
 
-	/* number 20 -- horizontal unit code (utm/ll) */
-	DEM24k::get_double_and_continue(&buffer, &val, "horizontal unit code");
-	this->horiz_units = val;
-	DEM24k::get_double_and_continue(&buffer, &val, "orig vert units");
+	/* number 20 -- horizontal unit code (UTM/LatLon) */
+	DEM24k::get_double_and_continue(&buffer, &val, "horizontal unit code"); /* TODO_LATER: do we really want to read double to get horiz unit? */
+	this->horiz_units = (DEMHorizontalUnit) val; /* TODO_LATER: we should somehow validate if val has expected value (2 or 3). */
+
+	DEM24k::get_double_and_continue(&buffer, &val, "orig vert units"); /* TODO_LATER: do we really want to read double to get vert. unit? */
 	/* this->orig_vert_units = val; now done below */
 
 	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
-	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+	if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		this->scale.x = 10.0; /* meters */
 		this->scale.y = 10.0;
-		this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
+		this->orig_vert_units = DEMVerticalUnit::Decimeters;
 	} else {
 		this->scale.x = 3.0; /* arcseconds */
 		this->scale.y = 3.0;
-		this->orig_vert_units = VIK_DEM_VERT_METERS;
+		this->orig_vert_units = DEMVerticalUnit::Meters;
 	}
 
 	/* skip next */
@@ -230,7 +231,7 @@ void DEM24k::parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * 
 	int tmp;
 	while (*cur_row < this->columns[*cur_column]->m_size) {
 		if (DEM24k::get_int_and_continue(&buffer, &tmp, NULL)) {
-			if (this->orig_vert_units == VIK_DEM_VERT_DECIMETERS) {
+			if (this->orig_vert_units == DEMVerticalUnit::Decimeters) {
 				this->columns[*cur_column]->m_points[*cur_row] = (int16_t) (tmp / 10);
 			} else {
 				this->columns[*cur_column]->m_points[*cur_row] = (int16_t) tmp;
@@ -368,8 +369,8 @@ sg_ret DEMSRTM::read_from_file(const QString & file_full_path)
 	const int32_t num_rows_3sec = 1201;
 	const int32_t num_rows_1sec = 3601;
 
-	this->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
-	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
+	this->horiz_units = DEMHorizontalUnit::LatLonArcSeconds;
+	this->orig_vert_units = DEMVerticalUnit::Decimeters;
 
 
 	bool ok;
@@ -549,14 +550,14 @@ sg_ret DEM24k::read_from_file(const QString & file_full_path)
 	file = NULL;
 
 	/* 24k scale */
-	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {
+	if (this->horiz_units == DEMHorizontalUnit::UTMMeters && this->n_columns >= 2) {
 		this->scale.x = this->columns[1]->m_east - this->columns[0]->m_east;
 		this->scale.y = this->scale.x;
 
 	}
 
 	/* FIXME bug in 10m DEM's */
-	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->scale.y == 10) {
+	if (this->horiz_units == DEMHorizontalUnit::UTMMeters && this->scale.y == 10) {
 		this->min_east_seconds -= 100;
 		this->min_north_seconds += 200;
 	}
@@ -616,7 +617,7 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds, double north_se
 {
 	int32_t cols[4];
 	int32_t rows[4];
-	LatLon ll[4];
+	LatLon lat_lon[4];
 
 	if (east_seconds > this->max_east_seconds
 	    || east_seconds < this->min_east_seconds
@@ -632,35 +633,35 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds, double north_se
 	/* sw */
 	cols[0] = (int32_t) floor((east_seconds - this->min_east_seconds) / this->scale.x);
 	rows[0] = (int32_t) floor((north_seconds - this->min_north_seconds) / this->scale.y);
-	ll[0].lon = (this->min_east_seconds + this->scale.x * cols[0]) / 3600;
-	ll[0].lat = (this->min_north_seconds + this->scale.y * rows[0]) / 3600;
+	lat_lon[0].lon = (this->min_east_seconds + this->scale.x * cols[0]) / 3600;
+	lat_lon[0].lat = (this->min_north_seconds + this->scale.y * rows[0]) / 3600;
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
-	ll[1].lon = ll[0].lon;
-	ll[1].lat = ll[0].lat + this->scale.y / 3600.0;
+	lat_lon[1].lon = lat_lon[0].lon;
+	lat_lon[1].lat = lat_lon[0].lat + this->scale.y / 3600.0;
 	/* ne */
 	cols[2] = cols[0] + 1;
 	rows[2] = rows[0] + 1;
-	ll[2].lon = ll[0].lon + this->scale.x / 3600.0;
-	ll[2].lat = ll[0].lat + this->scale.y / 3600.0;
+	lat_lon[2].lon = lat_lon[0].lon + this->scale.x / 3600.0;
+	lat_lon[2].lat = lat_lon[0].lat + this->scale.y / 3600.0;
 	/* se */
 	cols[3] = cols[0] + 1;
 	rows[3] = rows[0];
-	ll[3].lon = ll[0].lon + this->scale.x / 3600.0;
-	ll[3].lat = ll[0].lat;
+	lat_lon[3].lon = lat_lon[0].lon + this->scale.x / 3600.0;
+	lat_lon[3].lat = lat_lon[0].lat;
 
 	for (int i = 0; i < 4; i++) {
 		elevations[i] = this->get_elev_at_col_row(cols[i], rows[i]);
 		if (elevations[i] == DEM::invalid_elevation) {
 			return false;
 		}
-		distances[i] = LatLon::get_distance(pos, ll[i]);
+		distances[i] = LatLon::get_distance(pos, lat_lon[i]);
 	}
 
 #if 0   /* Debug. */
 	for (int i = 0; i < 4; i++) {
-		qDebug() << SG_PREFIX_D << i << ":" << ll[i].lat << ll[i].lon << distances[i] << elevs[i];
+		qDebug() << SG_PREFIX_D << i << ":" << lat_lon[i].lat << lat_lon[i].lon << distances[i] << elevs[i];
 	}
 	qDebug() << SG_PREFIX_D << "north_scale =" this->north_scale;
 #endif
@@ -763,13 +764,13 @@ bool DEM::intersect(const LatLonBBox & other_bbox) const
 	LatLon dem_southwest;
 
 	/* Get min/max lat/lon of DEM data. */
-	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+	if (this->horiz_units == DEMHorizontalUnit::LatLonArcSeconds) {
 		dem_northeast.lat = this->max_north_seconds / 3600.0;
 		dem_northeast.lon = this->max_east_seconds / 3600.0;
 		dem_southwest.lat = this->min_north_seconds / 3600.0;
 		dem_southwest.lon = this->min_east_seconds / 3600.0;
 
-	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+	} else if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		/* TODO_LATER: add smarter error handling of invalid
 		   band letter. In theory the source object should be
 		   valid and for sure contain valid band letter. */
@@ -831,11 +832,11 @@ sg_ret DEM::get_elev_by_coord(const Coord & coord, DEMInterpolation method, int1
 	double lat = 0.0;
 	double lon = 0.0;
 
-	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+	if (this->horiz_units == DEMHorizontalUnit::LatLonArcSeconds) {
 		const LatLon searched_lat_lon = coord.get_lat_lon();
 		lat = searched_lat_lon.lat * 3600;
 		lon = searched_lat_lon.lon * 3600;
-	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+	} else if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		const UTM searched_utm = coord.get_utm();
 		if (!UTM::is_the_same_zone(searched_utm, this->utm)) {
 			elev = DEM::invalid_elevation;

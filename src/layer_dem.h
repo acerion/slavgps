@@ -90,13 +90,14 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
-		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);
 		void draw_dem(GisViewport * gisview, const DEM & dem);
-		void draw_dem_ll(GisViewport * gisview, const DEM & dem);
-		void draw_dem_utm(GisViewport * gisview, const DEM & dem);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
+
+		void draw_dem_lat_lon(GisViewport * gisview, const DEM & dem);
+		void draw_dem_utm(GisViewport * gisview, const DEM & dem);
+		bool download_selected_tile(const QMouseEvent * event, const LayerTool * tool);
 
 		DEMPalette colors;
 		DEMPalette gradients;

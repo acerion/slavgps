@@ -582,10 +582,10 @@ void LayerDEM::draw_dem(GisViewport * gisview, const DEM & dem)
 	draw_loaded_dem_box(gisview);
 
 	switch (dem.horiz_units) {
-	case VIK_DEM_HORIZ_LL_ARCSECONDS:
-		this->draw_dem_ll(gisview, dem);
+	case DEMHorizontalUnit::LatLonArcSeconds:
+		this->draw_dem_lat_lon(gisview, dem);
 		break;
-	case VIK_DEM_HORIZ_UTM_METERS:
+	case DEMHorizontalUnit::UTMMeters:
 		this->draw_dem_utm(gisview, dem);
 		break;
 	default:
@@ -813,15 +813,15 @@ public:
 
 
 			int32_t prev_col = col - gradient_skip_factor;
-			if (prev_col < 1) { /* TODO_LATER: is this correct? Shouldn't it be "< 0"? */
-				prev_col = col + 1;
+			if (prev_col < 0) {
+				prev_col = 0;
 			}
 			this->prev_column = dem.columns[prev_col];
 
 
 			int32_t next_col = col + gradient_skip_factor;
 			if (next_col >= dem.n_columns) {
-				next_col = col - 1;
+				next_col = dem.n_columns - 1;
 			}
 			this->next_column = dem.columns[next_col];
 		}
@@ -887,7 +887,7 @@ int16_t GradientCalculator::calculate_gradient(int16_t elev, const DEM & dem, in
 
 
 
-void LayerDEM::draw_dem_ll(GisViewport * gisview, const DEM & dem)
+void LayerDEM::draw_dem_lat_lon(GisViewport * gisview, const DEM & dem)
 {
 	/* Ensure sane elevation range. */
 	if (this->max_elev <= this->min_elev) {
@@ -970,14 +970,13 @@ public:
 		this->utm = UTM(NAN, NAN, dem.utm.get_zone(), dem.utm.get_band_letter());
 	}
 
-	/* TODO_LATER: verify "iter.col >= 0 && iter.col < dem.n_columns", compare it with condition in viking. */
 	void begin_x(const UTMBounds & bounds)                  { this->col = bounds.start_col;                             this->utm.set_easting(bounds.start_eas); }
 	bool valid_x(const UTMBounds & bounds, const DEM & dem) { return (this->col >= 0 && this->col < dem.n_columns)  && (this->utm.get_easting() <= bounds.end_eas); }
 	void inc_x(const UTMBounds & bounds, const DEM & dem)   { this->col += bounds.skip_factor;                          this->utm.shift_easting_by(dem.scale.x * bounds.skip_factor); }
 
-	void begin_y(const UTMBounds & bounds)                  { this->row = bounds.start_row;                             this->utm.set_northing(bounds.start_nor); }
-	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row < dem.columns[this->col]->m_size) && (this->utm.get_northing() <= bounds.end_nor); }
-	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                          this->utm.shift_northing_by(dem.scale.y * bounds.skip_factor);  }
+	void begin_y(const UTMBounds & bounds)                  { this->row = bounds.start_row;                                             this->utm.set_northing(bounds.start_nor); }
+	bool valid_y(const UTMBounds & bounds, const DEM & dem) { return (this->row >= 0 && this->row < dem.columns[this->col]->m_size) && (this->utm.get_northing() <= bounds.end_nor); }
+	void inc_y(const UTMBounds & bounds, const DEM & dem)   { this->row += bounds.skip_factor;                                          this->utm.shift_northing_by(dem.scale.y * bounds.skip_factor);  }
 
 	UTM utm;
 	int32_t col = 0;
@@ -1577,7 +1576,7 @@ LayerTool::Status LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMou
 		return LayerTool::Status::Ignored;
 	}
 
-	if (((LayerDEM *) layer)->download_release(ev, this)) {
+	if (((LayerDEM *) layer)->download_selected_tile(ev, this)) {
 		return LayerTool::Status::Handled;
 	} else {
 		return LayerTool::Status::Ignored;
@@ -1595,11 +1594,11 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	QMenu * menu = (QMenu *) qa->parentWidget();
 
-	const LatLon ll(menu->property("lat").toDouble(), menu->property("lon").toDouble());
-	qDebug() << SG_PREFIX_I << "will display file info for coordinates" << ll;
+	const LatLon lat_lon(menu->property("lat").toDouble(), menu->property("lon").toDouble());
+	qDebug() << SG_PREFIX_I << "will display file info for coordinates" << lat_lon;
 
-	const int intlat = (int) floor(ll.lat);
-	const int intlon = (int) floor(ll.lon);
+	const int intlat = (int) floor(lat_lon.lat);
+	const int intlon = (int) floor(lat_lon.lon);
 
 	QString remote_location; /* Remote address where this file has been downloaded from. */
 	QString continent_dir;
@@ -1612,9 +1611,9 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	}
 
 #ifdef VIK_CONFIG_DEM24K
-	QString cache_file_name = dem24k_lat_lon_to_cache_file_name(ll);
+	QString cache_file_name = dem24k_lat_lon_to_cache_file_name(lat_lon);
 #else
-	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll);
+	QString cache_file_name = srtm_lat_lon_to_cache_file_name(lat_lon);
 #endif
 	QString cache_file_path = MapCache::get_dir() + cache_file_name;
 
@@ -1640,12 +1639,12 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 
 
 /* Mouse button released when "Download Tool" for DEM layer is active. */
-bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
+bool LayerDEM::download_selected_tile(const QMouseEvent * ev, const LayerTool * tool)
 {
 	const Coord coord = tool->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon lat_lon = coord.get_lat_lon();
 
-	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << lat_lon;
+	qDebug() << SG_PREFIX_I << "received event, processing, lat/lon =" << lat_lon;
 
 	QString cache_file_name;
 	if (this->dem_source == DEMSource::SRTM) {
