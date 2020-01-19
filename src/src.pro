@@ -139,6 +139,8 @@ SOURCES += main.cpp \
     widget_duration.cpp \
     date_time_dialog.cpp \
     dem.cpp \
+    dem_srtm.cpp \
+    dem_24k.cpp \
     dem_cache.cpp \
     srtm_continent.cpp \
     compression.cpp \
@@ -293,6 +295,8 @@ HEADERS += window.h \
     widget_duration.h \
     date_time_dialog.h \
     dem.h \
+    dem_srtm.h \
+    dem_24k.h \
     dem_cache.h \
     compression.h \
     file_utils.h \
