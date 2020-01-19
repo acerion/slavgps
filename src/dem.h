@@ -177,32 +177,6 @@ namespace SlavGPS {
 
 
 
-	class DEMSRTM : public DEM {
-	public:
-		sg_ret read_from_file(const QString & file_full_path) override;
-	};
-
-
-
-
-	class DEM24k : public DEM {
-	public:
-		sg_ret read_from_file(const QString & file_full_path) override;
-
-	private:
-		bool parse_header(char * buffer);
-		void parse_block(char * buffer, int32_t * cur_column, int * cur_row);
-		void parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * cur_row);
-		void parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * cur_row);
-
-		void fix_exponentiation(char * buffer);
-		bool get_int_and_continue(char ** buffer, int * result, const char * msg);
-		bool get_double_and_continue(char ** buffer, double * result, const char * msg);
-	};
-
-
-
-
 } /* namespace SlavGPS */
 
 

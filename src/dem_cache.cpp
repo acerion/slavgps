@@ -29,6 +29,7 @@
 
 
 #include "dem_cache.h"
+#include "dem_srtm.h"
 #include "background.h"
 
 

@@ -25,4 +25,25 @@
 
 
 
+#include "dem.h"
+
+
+
+
+namespace SlavGPS {
+
+
+	class DEMSRTM : public DEM {
+	public:
+		sg_ret read_from_file(const QString & file_full_path) override;
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
 #endif /* #ifndef _SG_DEM_SRTM_H */
