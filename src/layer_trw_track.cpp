@@ -41,7 +41,7 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "application_state.h"
 #include "util.h"
 #include "osm_traces.h"

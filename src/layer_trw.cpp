@@ -57,7 +57,7 @@
 #include "vikutils.h"
 #include "file.h"
 #include "dialog.h"
-#include "dem.h"
+#include "layer_dem_dem.h"
 #include "background.h"
 #include "util.h"
 #include "application_state.h"
@@ -84,7 +84,7 @@
 #ifdef K_INCLUDES
 #include "garmin_symbols.h"
 #include "gpx.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "babel.h"
 #include "layer_trw_import.h"
 #include "external_tools.h"

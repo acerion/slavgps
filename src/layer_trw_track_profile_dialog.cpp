@@ -45,7 +45,7 @@
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_profile_dialog.h"
 #include "viewport_internal.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "vikutils.h"
 #include "util.h"
 #include "ui_util.h"

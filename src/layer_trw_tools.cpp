@@ -54,7 +54,7 @@
 #include "layers_panel.h"
 #include "viewport_internal.h"
 #include "dialog.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "util.h"
 #include "preferences.h"
 #include "routing.h"

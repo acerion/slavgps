@@ -37,7 +37,7 @@
 #include "layer_georef.h"
 #include "layer_interface.h"
 #include "layers_panel.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "map_cache.h"
 #include "download.h"
 #include "background.h"

@@ -40,7 +40,7 @@
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_tools.h"
 #include "garmin_symbols.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "util.h"
 #include "window.h"
 #include "toolbox.h"

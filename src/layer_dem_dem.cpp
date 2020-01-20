@@ -48,7 +48,7 @@
 
 #include "bbox.h"
 #include "coords.h"
-#include "dem.h"
+#include "layer_dem_dem.h"
 #include "file_utils.h"
 #include "globals.h"
 #include "util.h"

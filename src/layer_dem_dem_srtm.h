@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2008, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DEM_CACHE_H_
-#define _SG_DEM_CACHE_H_
+#ifndef _SG_LAYER_DEM_DEM_SRTM_H
+#define _SG_DEM_SRTM_H
 
 
 
 
-#include <cstdint>
-
-
-
-
-#include <QString>
-
-
-
-
-#include "dem.h"
-#include "coord.h"
+#include "layer_dem_dem.h"
 
 
 
@@ -43,23 +33,9 @@
 namespace SlavGPS {
 
 
-
-
-	class BackgroundJob;
-
-
-
-
-	class DEMCache {
+	class DEMSRTM : public DEM {
 	public:
-		static void uninit(void); /* For module deinitialization. */
-
-		static DEM * load_file_into_cache(const QString & file_full_path);
-		static void  unload_from_cache(QStringList & file_paths);
-
-		static DEM * get(const QString & file_path);
-
-		static Altitude get_elev_by_coord(const Coord & coord, DEMInterpolation method);
+		sg_ret read_from_file(const QString & file_full_path) override;
 	};
 
 
@@ -70,4 +46,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DEM_CACHE_H_ */
+#endif /* #ifndef _SG_LAYER_DEM_DEM_SRTM_H */

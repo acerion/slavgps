@@ -19,13 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DEM_24K_H
-#define _SG_DEM_24K_H
+#ifndef _SG_LAYER_DEM_DEM_24K_H
+#define _SG_LAYER_DEM_DEM_24K_H
 
 
 
 
-#include "dem.h"
+#include "layer_dem_dem.h"
 
 
 
@@ -58,4 +58,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DEM_24K_H */
+#endif /* #ifndef _SG_LAYER_DEM_DEM_24K_H */

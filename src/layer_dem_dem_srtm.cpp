@@ -37,7 +37,7 @@
 
 
 #include "compression.h"
-#include "dem_srtm.h"
+#include "layer_dem_dem_srtm.h"
 #include "vikutils.h"
 
 

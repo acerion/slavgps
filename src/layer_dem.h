@@ -40,7 +40,7 @@
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"
-#include "dem.h"
+#include "layer_dem_dem.h"
 #include "background.h"
 #include "measurements.h"
 

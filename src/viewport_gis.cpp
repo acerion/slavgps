@@ -47,7 +47,7 @@
 #include "viewport_zoom.h"
 #include "window.h"
 #include "coords.h"
-#include "dem_cache.h"
+#include "layer_dem_dem_cache.h"
 #include "mapcoord.h"
 #include "toolbox.h"
 #include "preferences.h"

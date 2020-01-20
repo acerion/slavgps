@@ -138,10 +138,10 @@ SOURCES += main.cpp \
     widget_measurement_entry.cpp \
     widget_duration.cpp \
     date_time_dialog.cpp \
-    dem.cpp \
-    dem_srtm.cpp \
-    dem_24k.cpp \
-    dem_cache.cpp \
+    layer_dem_dem.cpp \
+    layer_dem_dem_srtm.cpp \
+    layer_dem_dem_24k.cpp \
+    layer_dem_dem_cache.cpp \
     srtm_continent.cpp \
     compression.cpp \
     file_utils.cpp \
@@ -294,10 +294,10 @@ HEADERS += window.h \
     widget_coord.h \
     widget_duration.h \
     date_time_dialog.h \
-    dem.h \
-    dem_srtm.h \
-    dem_24k.h \
-    dem_cache.h \
+    layer_dem_dem.h \
+    layer_dem_dem_srtm.h \
+    layer_dem_dem_24k.h \
+    layer_dem_dem_cache.h \
     compression.h \
     file_utils.h \
     util.h \
