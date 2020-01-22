@@ -133,13 +133,13 @@ bool DEM24k::parse_header(char * buffer)
 	}
 
 	/* number 20 -- horizontal unit code (UTM/LatLon) */
-	DEM24k::get_double_and_continue(&buffer, &val, "horizontal unit code"); /* TODO_LATER: do we really want to read double to get horiz unit? */
-	this->horiz_units = (DEMHorizontalUnit) val; /* TODO_LATER: we should somehow validate if val has expected value (2 or 3). */
+	DEM24k::get_double_and_continue(&buffer, &val, "horizontal unit code"); /* TODO: do we really want to read double to get horiz unit? */
+	this->horiz_units = (DEMHorizontalUnit) val; /* TODO: we should somehow validate if val has expected value (2 or 3). */
 
-	DEM24k::get_double_and_continue(&buffer, &val, "orig vert units"); /* TODO_LATER: do we really want to read double to get vert. unit? */
+	DEM24k::get_double_and_continue(&buffer, &val, "orig vert units"); /* TODO: do we really want to read double to get vert. unit? */
 	/* this->orig_vert_units = val; now done below */
 
-	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
+	/* TODO: do this for real. these are only for 1:24k and 1:250k USGS */
 	if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		this->scale.x = 10.0; /* meters */
 		this->scale.y = 10.0;
@@ -314,7 +314,7 @@ sg_ret DEM24k::read_from_file(const QString & file_full_path)
 		fclose(file);
 		return sg_ret::err;
 	}
-	/* TODO_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
+	/* TODO: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
 	this->n_columns = 0;
 	/* Use the two variables to record state for ->parse_block(). */
@@ -331,7 +331,7 @@ sg_ret DEM24k::read_from_file(const QString & file_full_path)
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}
 
-	/* TODO_LATER - class C records (right now says 'Invalid' and dies) */
+	/* TODO - class C records (right now says 'Invalid' and dies) */
 
 	fclose(file);
 	file = NULL;
