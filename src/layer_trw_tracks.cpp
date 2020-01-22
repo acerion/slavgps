@@ -1159,5 +1159,19 @@ bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 	   Movement in tree widget is handled elsewhere. */
 
 	return result;
+}
+
+
+
+
+/**
+   Method created to avoid constant casting of LayerTRWTracks::owning_layer
+   to LayerTRW* type.
+
+   @reviewed-on 2020-01-20
+*/
+LayerTRW * LayerTRWTracks::get_parent_layer_trw(void) const
+{
+	return (LayerTRW *) this->owning_layer;
 
 }

@@ -36,18 +36,21 @@
 
 
 
+#include "clipboard.h"
+#include "garmin_symbols.h"
 #include "layer_trw.h"
-#include "layer_trw_waypoint.h"
-#include "layer_trw_waypoints.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_painter.h"
-#include "viewport_internal.h"
-#include "tree_view_internal.h"
-#include "window.h"
+#include "layer_trw_tools.h"
+#include "layer_trw_waypoint.h"
+#include "layer_trw_waypoint_properties.h"
+#include "layer_trw_waypoints.h"
 #include "layers_panel.h"
-#include "clipboard.h"
 #include "thumbnails.h"
-#include "garmin_symbols.h"
+#include "toolbox.h"
+#include "tree_view_internal.h"
+#include "viewport_internal.h"
+#include "window.h"
 
 
 
@@ -116,7 +119,7 @@ SGObjectTypeID LayerTRWWaypoints::type_id(void)
 QString LayerTRWWaypoints::get_tooltip(void) const
 {
 	/* Very simple tooltip - may expand detail in the future. */
-	return tr("Waypoints: %1").arg(this->children_list.size());
+	return tr("Waypoints: %1").arg(this->children.size());
 }
 
 
@@ -124,7 +127,7 @@ QString LayerTRWWaypoints::get_tooltip(void) const
 
 Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		if ((*iter)->get_name().isEmpty()) {
 			if ((*iter)->get_name() == wp_name) {
 				return *iter;
@@ -158,7 +161,7 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & sea
 
 	std::list<TreeItem *> result;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		Waypoint * wp = *iter;
 
 		if (!wp->get_timestamp().is_valid()) {
@@ -179,7 +182,7 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & sea
 
 void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		list.push_back((*iter)->get_uid());
 	}
 }
@@ -190,7 +193,7 @@ void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void) const
 {
 	std::list<Waypoint *> result;
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		result.push_back(*iter);
 	}
 	result.sort(TreeItem::compare_name_ascending);
@@ -210,7 +213,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->children_list.size() <= 1) {
+	if (this->children.size() <= 1) {
 		return NULL;
 	}
 
@@ -233,7 +236,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 
 void LayerTRWWaypoints::set_items_visibility(bool on_off)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		(*iter)->set_visible(on_off);
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
@@ -244,7 +247,7 @@ void LayerTRWWaypoints::set_items_visibility(bool on_off)
 
 void LayerTRWWaypoints::toggle_items_visibility(void)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		(*iter)->toggle_visible();
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
@@ -255,7 +258,7 @@ void LayerTRWWaypoints::toggle_items_visibility(void)
 
 sg_ret LayerTRWWaypoints::get_tree_items(std::list<TreeItem *> & list) const
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		list.push_back(*iter);
 	}
 
@@ -267,7 +270,7 @@ sg_ret LayerTRWWaypoints::get_tree_items(std::list<TreeItem *> & list) const
 
 void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		Waypoint * wp = *iter;
 		if (!wp->is_visible()) {
 			continue;
@@ -322,7 +325,7 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisVie
 {
 	QString found;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 
 		Waypoint * wp = *iter;
 		if (wp->drawn_image_rect.isNull()) {
@@ -358,7 +361,7 @@ QStringList LayerTRWWaypoints::get_list_of_missing_thumbnails(void) const
 {
 	QStringList paths;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		const Waypoint * wp = *iter;
 		if (!wp->image_full_path.isEmpty() && !Thumbnails::thumbnail_exists(wp->image_full_path)) {
 			paths.push_back(wp->image_full_path);
@@ -373,7 +376,7 @@ QStringList LayerTRWWaypoints::get_list_of_missing_thumbnails(void) const
 
 void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		(*iter)->convert(new_mode);
 	}
 }
@@ -451,13 +454,13 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
 
-	if (0 == this->children_list.size()) {
+	if (0 == this->children.size()) {
 		/* E.g. after all waypoints have been removed from TRW layer. */
 		return;
 	}
 
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		const LatLon lat_lon = (*iter)->get_coord().get_lat_lon();
 		this->bbox.expand_with_lat_lon(lat_lon);
 	}
@@ -518,7 +521,7 @@ Time LayerTRWWaypoints::get_earliest_timestamp(void) const
 {
 	Time result;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		const Waypoint * wp = *iter;
 		if (!wp->get_timestamp().is_valid()) {
 			continue;
@@ -542,7 +545,7 @@ Time LayerTRWWaypoints::get_earliest_timestamp(void) const
 
 sg_ret LayerTRWWaypoints::attach_children_to_tree(void)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		Waypoint * wp = *iter;
 		if (wp->is_in_tree()) {
 			continue;
@@ -668,11 +671,11 @@ sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, __attr
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	GisViewport * gisview = ThisApp::get_main_gis_view();
-	const unsigned int n_items = this->children_list.size();
+	const unsigned int n_items = this->children.size();
 
 	if (1 == n_items) {
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
-		const auto iter = this->children_list.begin();
+		const auto iter = this->children.begin();
 		gisview->set_center_coord((*iter)->get_coord());
 
 	} else if (1 < n_items) {
@@ -746,7 +749,7 @@ void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 	}
 
 	int changed_ = 0;
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		changed_ = changed_ + (int) (*iter)->apply_dem_data(skip_existing_elevations);
 	}
 
@@ -800,7 +803,7 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 	const LatLonBBox viewport_bbox = gisview->get_bbox();
 
 	if (this->bbox.intersects_with(viewport_bbox)) {
-		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->m_type_id << (*iter)->get_name();
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
@@ -860,11 +863,11 @@ void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 void LayerTRWWaypoints::clear(void)
 {
 	this->children_map.clear();
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		delete *iter;
 	}
 
-	this->children_list.clear();
+	this->children.clear();
 }
 
 
@@ -872,7 +875,7 @@ void LayerTRWWaypoints::clear(void)
 
 size_t LayerTRWWaypoints::size(void) const
 {
-	return this->children_list.size();
+	return this->children.size();
 }
 
 
@@ -880,7 +883,7 @@ size_t LayerTRWWaypoints::size(void) const
 
 bool LayerTRWWaypoints::empty(void) const
 {
-	return this->children_list.empty();
+	return this->children.empty();
 }
 
 
@@ -890,7 +893,7 @@ sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
 {
 	wp->set_owning_layer(this->get_owning_layer());
 	this->children_map.insert({{ wp->get_uid(), wp }});
-	this->children_list.push_back(wp);
+	this->children.push_back(wp);
 
 	wp->set_new_waypoint_icon();
 
@@ -930,17 +933,17 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 
 
 	TreeItemIdentityPredicate pred(wp);
-	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
-	if (iter != this->children_list.end()) {
+	auto iter = std::find_if(this->children.begin(), this->children.end(), pred);
+	if (iter != this->children.end()) {
 		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
-		this->children_list.erase(iter);
+		this->children.erase(iter);
 	}
 
 #if 0   /* Old code. */
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		qDebug() << SG_PREFIX_I << "Will compare waypoints" << (*iter)->get_name() << "and" << wp->get_name();
 		if (TreeItem::the_same_object(*iter, wp)) {
-			this->children_list.erase(iter);
+			this->children.erase(iter);
 			break;
 		}
 	}
@@ -1074,11 +1077,152 @@ bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
 	Waypoint * wp = (Waypoint *) &child_tree_item;
 
 	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
-	const bool result = move_tree_item_child_algo(this->children_list, wp, up);
+	const bool result = move_tree_item_child_algo(this->children, wp, up);
 	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
 
 	/* In this function we only move children in container of tree items.
 	   Movement in tree widget is handled elsewhere. */
 
 	return result;
+}
+
+
+
+
+/*
+  @reviewed-on 2020-01-21
+*/
+sg_ret LayerTRWWaypoints::move_selection_to_next_child(void)
+{
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
+		if (!g_selected.is_in_set(*iter)) {
+			/* This item is not selected, skip it. */
+			continue;
+		}
+
+		if (std::next(iter) == this->children.end()) {
+			/* Can't move selection to next item. */
+			qDebug() << SG_PREFIX_E << "Can't move selection to next item - given item is already last";
+			return sg_ret::err;
+
+		} else {
+			/* Deselect old and and select new item. */
+
+			g_selected.remove_from_set(*iter);
+
+			Waypoint * cur_wp = *std::next(iter);
+
+			g_selected.add_to_set(cur_wp);
+			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
+			this->tree_view->select_and_expose_tree_item(cur_wp);
+
+			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+			tool->point_properties_dialog->dialog_data_set(cur_wp);
+
+			return sg_ret::ok;
+		}
+	}
+
+	return sg_ret::err; /* No item was selected, so selection was not moved. */
+}
+
+
+
+
+/*
+  @reviewed-on 2020-01-21
+*/
+sg_ret LayerTRWWaypoints::move_selection_to_previous_child(void)
+{
+	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
+		if (!g_selected.is_in_set(*iter)) {
+			/* This item is not selected, skip it. */
+			continue;
+		}
+
+		if (iter == this->children.begin()) {
+			/* Can't move selection to previous item. */
+			qDebug() << SG_PREFIX_E << "Can't move selection to previous item - given item is already first";
+			return sg_ret::err;
+
+		} else {
+			/* Deselect old and and select new item. */
+
+			g_selected.remove_from_set(*iter);
+
+			Waypoint * cur_wp = *std::prev(iter);
+
+			g_selected.add_to_set(cur_wp);
+			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
+			this->tree_view->select_and_expose_tree_item(cur_wp);
+
+			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+			tool->point_properties_dialog->dialog_data_set(cur_wp);
+
+			return sg_ret::ok;
+		}
+	}
+
+	return sg_ret::err; /* No item was selected, so selection was not moved. */
+}
+
+
+
+
+/**
+   Method created to avoid constant casting of LayerTRWWaypoints::owning_layer
+   to LayerTRW* type.
+
+   @reviewed-on 2020-01-20
+*/
+LayerTRW * LayerTRWWaypoints::get_parent_layer_trw(void) const
+{
+	return (LayerTRW *) this->owning_layer;
+
+}
+
+
+
+
+/**
+   @reviewed-on 2020-01-21
+*/
+sg_ret LayerTRWWaypoints::is_first(const TreeItem * item, bool & result) const
+{
+	if (nullptr == item) {
+		qDebug() << SG_PREFIX_E << "Function argument is NULL";
+		return sg_ret::err;
+	}
+
+	auto iter = std::find(this->children.begin(), this->children.end(), item);
+	if (iter == this->children.end()) {
+		qDebug() << SG_PREFIX_E << "Can't find given Waypoint on list of waypoints";
+		return sg_ret::err;
+	}
+
+	result = iter == this->children.begin();
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-01-21
+*/
+sg_ret LayerTRWWaypoints::is_last(const TreeItem * item, bool & result) const
+{
+	if (nullptr == item) {
+		qDebug() << SG_PREFIX_E << "Function argument is NULL";
+		return sg_ret::err;
+	}
+
+	auto iter = std::find(this->children.begin(), this->children.end(), item);
+	if (iter == this->children.end()) {
+		qDebug() << SG_PREFIX_E << "Can't find given Waypoint on list of waypoints";
+		return sg_ret::err;
+	}
+
+	result = std::next(iter) == this->children.end();
+	return sg_ret::ok;
 }

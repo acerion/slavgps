@@ -125,7 +125,10 @@ namespace SlavGPS {
 
 		bool show_properties_dialog(void);
 
-		LayerTRW * get_parent_layer_trw() const;
+		/**
+		   @brief Simple accessor
+		*/
+		LayerTRW * get_parent_layer_trw(void) const;
 
 		void display_debug_info(const QString & reference) const;
 

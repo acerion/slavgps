@@ -206,6 +206,10 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
+		/**
+		   @brief Simple accessor
+		*/
+		LayerTRW * get_parent_layer_trw(void) const;
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);

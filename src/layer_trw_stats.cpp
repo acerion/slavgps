@@ -240,7 +240,7 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 {
 	for (auto iter = this->tree_items.begin(); iter != this->tree_items.end(); iter++) {
 		Track * trk = (Track *) *iter;
-		LayerTRW * trw = trk->get_parent_layer_trw();
+		const LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->m_kind == LayerKind::TRW);
 		qDebug() << SG_PREFIX_I << "Collecting stats with layer/tracks/routes/include visibility:"
 			 << trw->is_visible()

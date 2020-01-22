@@ -216,6 +216,32 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 	this->description_entry->setText(this->current_point->description);
 	this->image_file_selector->preselect_file_full_path(this->current_point->image_full_path);
 
+
+	{
+		LayerTRW * trw = wp->get_parent_layer_trw();
+
+		bool is_first = false;
+		const sg_ret ok1 = trw->get_waypoints_node().is_first(wp, is_first);
+		if (sg_ret::ok == ok1) {
+			this->button_previous_point->setEnabled(!is_first);
+		} else {
+			this->button_previous_point->setEnabled(false);
+		}
+
+		bool is_last = false;
+		sg_ret ok2 = trw->get_waypoints_node().is_last(wp, is_last);
+		if (sg_ret::ok == ok2) {
+			this->button_next_point->setEnabled(!is_last);
+		} else {
+			this->button_next_point->setEnabled(false);
+		}
+
+		if (sg_ret::ok == ok1 && sg_ret::ok == ok2) {
+			this->button_delete_current_point->setEnabled(true);
+		}
+	}
+
+
 	const QString & symbol_name = this->current_point->symbol_name.isEmpty() ? GarminSymbols::none_symbol_name : this->current_point->symbol_name;
 	const int selected_idx = this->symbol_combo->findText(symbol_name);
 	if (selected_idx == -1) {
@@ -250,7 +276,6 @@ void WpPropertiesWidget::clear_widgets(void)
 	this->button_delete_current_point->setEnabled(false);
 	this->button_previous_point->setEnabled(false);
 	this->button_next_point->setEnabled(false);
-
 }
 
 
@@ -526,32 +551,22 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	switch ((WpPropertiesDialog::Action) action) {
 	case WpPropertiesDialog::Action::DeleteSelectedPoint:
-		/* TODO_LATER: implement.
-		trw->delete_selected_wp(wp);
-		*/
+		trw->delete_child_item(wp, false);
 		trw->emit_tree_item_changed("Indicating deletion of waypoint");
 		break;
 
 	case WpPropertiesDialog::Action::NextPoint:
-		/* TODO_LATER: implement
-		if (sg_ret::ok != track->move_selection_to_next_tp()) {
+		if (sg_ret::ok != trw->get_waypoints_node().move_selection_to_next_child()) {
 			break;
 		}
-
-		this->dialog_data_set(wp);
-		track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
-		*/
+		trw->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
 	case WpPropertiesDialog::Action::PreviousPoint:
-		/* TODO_LATER: implement
-		if (sg_ret::ok != track->move_selection_to_previous_tp()) {
+		if (sg_ret::ok != trw->get_waypoints_node().move_selection_to_previous_child()) {
 			break;
 		}
-
-		this->dialog_data_set(wp);
-		track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
-		*/
+		trw->emit_tree_item_changed("Indicating selecting previous waypoint in layer");
 		break;
 
 	default:

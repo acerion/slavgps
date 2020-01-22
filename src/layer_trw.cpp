@@ -1124,7 +1124,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 	Pickle helper_pickle;
 
-	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
+	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
@@ -2150,7 +2150,7 @@ void LayerTRW::deselect_current_trackpoint(Track * trk)
  */
 void LayerTRW::reset_waypoints()
 {
-	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
+	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		Waypoint * wp = *iter;
 		if (wp->symbol_name.isEmpty()) {
 			continue;
@@ -2449,7 +2449,7 @@ void LayerTRW::delete_all_waypoints()
 
 	this->waypoints.name_generator.reset();
 
-	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
+	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(&this->waypoints);

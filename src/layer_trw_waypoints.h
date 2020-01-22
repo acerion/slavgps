@@ -221,6 +221,37 @@ namespace SlavGPS {
 		DefaultNameGenerator name_generator;
 
 
+		/**
+		   @brief Deselect current waypoint, select next trackpoint
+
+		   If it's impossible to change selection, return
+		   value other than sg_ret::ok.
+		*/
+		sg_ret move_selection_to_next_child(void);
+
+		/**
+		   @brief Deselect current waypoint, select previous trackpoint
+
+		   If it's impossible to change selection, return
+		   value other than sg_ret::ok.
+		*/
+		sg_ret move_selection_to_previous_child(void);
+
+		/**
+		   @brief Simple accessor
+		*/
+		LayerTRW * get_parent_layer_trw(void) const;
+
+		/**
+		   @brief See if given item is first on list of children
+		*/
+		sg_ret is_first(const TreeItem * item, bool & result) const;
+
+		/**
+		   @brief See if given item is last on list of children
+		*/
+		sg_ret is_last(const TreeItem * item, bool & result) const;
+
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);
@@ -241,7 +272,7 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
-		std::list<Waypoint *> children_list;
+		std::list<Waypoint *> children;
 		std::unordered_map<sg_uid_t, Waypoint *> children_map;
 	};
 

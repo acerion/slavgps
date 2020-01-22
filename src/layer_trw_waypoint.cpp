@@ -817,11 +817,10 @@ sg_ret Waypoint::delete_tree_item_cb(void)
 
 
 /**
-   Simple accessor
-
-   Created to avoid constant casting of Waypoint::owning_layer to LayerTRW* type.
+   Method created to avoid constant casting of Waypoint::owning_layer
+   to LayerTRW* type.
 */
-LayerTRW * Waypoint::get_parent_layer_trw() const
+LayerTRW * Waypoint::get_parent_layer_trw(void) const
 {
 	return (LayerTRW *) this->owning_layer;
 

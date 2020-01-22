@@ -3170,11 +3170,10 @@ void Track::remove_last_trackpoint(void)
 
 
 /**
-   Simple accessor
-
-   Created to avoid constant casting of Track::owning_layer to LayerTRW* type.
+   Method created to avoid constant casting of Track::owning_layer to
+   LayerTRW* type.
 */
-LayerTRW * Track::get_parent_layer_trw() const
+LayerTRW * Track::get_parent_layer_trw(void) const
 {
 	return (LayerTRW *) this->owning_layer;
 

@@ -226,7 +226,20 @@ namespace SlavGPS {
 		*/
 		bool selected_tp_reset(void);
 
+		/**
+		   @brief Deselect current trackpoint, select next trackpoint
+
+		   If it's impossible to change selection, return
+		   value other than sg_ret::ok.
+		*/
 		sg_ret move_selection_to_next_tp(void);
+
+		/**
+		   @brief Deselect current trackpoint, select previous trackpoint
+
+		   If it's impossible to change selection, return
+		   value other than sg_ret::ok.
+		*/
 		sg_ret move_selection_to_previous_tp(void);
 
 		sg_ret delete_all_selected_tp(void);
@@ -419,7 +432,10 @@ namespace SlavGPS {
 		*/
 		sg_ret selected_tp_set_coord(const Coord & new_coord, bool do_recalculate_bbox);
 
-		LayerTRW * get_parent_layer_trw() const;
+		/**
+		   @brief Simple accessor
+		*/
+		LayerTRW * get_parent_layer_trw(void) const;
 
 		static TreeItemViewFormat get_view_format_header(bool include_parent_layer);
 
