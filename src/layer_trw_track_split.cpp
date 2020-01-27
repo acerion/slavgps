@@ -66,19 +66,24 @@ sg_ret Track::split_at_trackpoint(const TrackpointReference & tp_ref)
 		return sg_ret::err_cond;
 	}
 
-	if (tp_ref.m_iter == this->begin()) {
+
+	bool is_first = true;
+	bool is_last = false;
+	/* This call will also validate if TP is member of the track. */
+	if (sg_ret::ok != this->get_item_position(tp_ref, is_first, is_last)) {
+		qDebug() << SG_PREFIX_E << "Can't get trackpoint's position";
+		return sg_ret::err;
+	}
+	if (is_first) {
 		/* First TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is first trackpoint";
 		return sg_ret::err_cond;
 	}
-
-	if (tp_ref.m_iter == std::prev(this->end())) {
+	if (is_last) {
 		/* Last TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is last trackpoint";
 		return sg_ret::err_cond;
 	}
-
-	/* TODO_LATER: make sure that tp is a member of this track. */
 
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;

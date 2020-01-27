@@ -221,23 +221,14 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 		LayerTRW * trw = wp->get_parent_layer_trw();
 
 		bool is_first = false;
-		const sg_ret ok1 = trw->get_waypoints_node().is_first(wp, is_first);
-		if (sg_ret::ok == ok1) {
+		bool is_last = false;
+		if (sg_ret::ok == trw->tree_view->get_item_position(*wp, is_first, is_last)) {
 			this->button_previous_point->setEnabled(!is_first);
+			this->button_next_point->setEnabled(!is_last);
+			this->button_delete_current_point->setEnabled(true);
 		} else {
 			this->button_previous_point->setEnabled(false);
-		}
-
-		bool is_last = false;
-		sg_ret ok2 = trw->get_waypoints_node().is_last(wp, is_last);
-		if (sg_ret::ok == ok2) {
-			this->button_next_point->setEnabled(!is_last);
-		} else {
 			this->button_next_point->setEnabled(false);
-		}
-
-		if (sg_ret::ok == ok1 && sg_ret::ok == ok2) {
-			this->button_delete_current_point->setEnabled(true);
 		}
 	}
 

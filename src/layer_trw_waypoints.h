@@ -242,17 +242,6 @@ namespace SlavGPS {
 		*/
 		LayerTRW * get_parent_layer_trw(void) const;
 
-		/**
-		   @brief See if given item is first on list of children
-		*/
-		sg_ret is_first(const TreeItem * item, bool & result) const;
-
-		/**
-		   @brief See if given item is last on list of children
-		*/
-		sg_ret is_last(const TreeItem * item, bool & result) const;
-
-
 	public slots:
 		void move_viewport_to_show_all_cb(void);
 

@@ -735,7 +735,7 @@ void LayersPanel::activate_buttons_cb(void)
 	/* Get position among selected item's siblings */
 	bool is_first = false;
 	bool is_last = false;
-	if (sg_ret::ok != this->tree_view->get_position(*selected_item, is_first, is_last)) {
+	if (sg_ret::ok != this->tree_view->get_item_position(*selected_item, is_first, is_last)) {
 		qDebug() << SG_PREFIX_E << "Failed to get position of tree item" << selected_item->get_name();
 		return;
 	}

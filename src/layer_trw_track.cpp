@@ -3922,3 +3922,27 @@ Duration Track::get_diff_time(const Trackpoint * tp, const Trackpoint * tp_prev)
 	result = Duration::get_abs_duration(tp_prev->timestamp, tp->timestamp);
 	return result;
 }
+
+
+
+
+sg_ret Track::get_item_position(const TrackpointReference & tp_ref, bool & is_first, bool & is_last) const
+{
+	if (false == tp_ref.m_iter_valid) {
+		is_first = false;
+		is_last = false;
+		return sg_ret::ok;
+	}
+
+	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *tp_ref.m_iter);
+	if (iter != tp_ref.m_iter) {
+		qDebug() << SG_PREFIX_E << "Invalid trackpoint reference";
+		is_first = false;
+		is_last = false;
+		return sg_ret::err;
+	}
+
+	is_first = iter == this->trackpoints.begin();
+	is_last = std::next(iter) == this->trackpoints.end();
+	return sg_ret::ok;
+}

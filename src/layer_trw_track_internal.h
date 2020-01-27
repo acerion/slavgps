@@ -176,6 +176,21 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
+		/**
+		   @brief Get position of given trackpoint item among its siblings
+
+		   Trackpoint can be first and last at the same time
+		   when it's the only trackpoint in track.
+
+		   The function also checks if given trackpoint is a
+		   member of the track.
+
+		   @return sg_ret::ok on success (function arguments reflecting position of item have been set)
+		   @return sg_ret::err on errors (e.g. because given trackpoint does not belong to the track)
+		*/
+		sg_ret get_item_position(const TrackpointReference & tp_ref, bool & is_first, bool & ist_last) const;
+
+
 
 		/* STL-like container interface. */
 		TrackPoints::iterator begin();

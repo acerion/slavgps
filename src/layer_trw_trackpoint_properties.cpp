@@ -227,15 +227,19 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 
 	this->name_entry->setText(this->current_point->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
-	/* User can insert only if not at the end of track (otherwise use extend track). */
-	this->button_insert_tp_after->setEnabled(std::next(current_point_iter) != this->current_track->end());
+	bool is_first = false;
+	bool is_last = false;
+	if (sg_ret::ok == this->current_track->get_item_position(tp_ref, is_first, is_last)) {
 
-	/* We can only split up a track if it's not an endpoint. */
-	this->button_split_track->setEnabled(std::next(current_point_iter) != this->current_track->end() && current_point_iter != this->current_track->begin());
+		/* User can insert only if not at the end of track (otherwise use extend track). */
+		this->button_insert_tp_after->setEnabled(!is_last);
 
+		/* We can only split up a track if it's not an endpoint. */
+		this->button_split_track->setEnabled(!is_first && !is_last);
 
-	this->button_next_point->setEnabled(std::next(current_point_iter) != this->current_track->end());
-	this->button_previous_point->setEnabled(current_point_iter != this->current_track->begin());
+		this->button_next_point->setEnabled(!is_last);
+		this->button_previous_point->setEnabled(!is_first);
+	}
 
 
 

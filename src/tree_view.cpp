@@ -834,7 +834,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, __attribute__((unus
 
 
 
-sg_ret TreeView::get_position(const TreeItem & item, bool & is_first, bool & is_last)
+sg_ret TreeView::get_item_position(const TreeItem & item, bool & is_first, bool & is_last)
 {
 	QModelIndex parent_index = item.index.parent();
 	if (!parent_index.isValid()) {

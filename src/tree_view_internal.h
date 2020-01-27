@@ -112,7 +112,7 @@ namespace SlavGPS {
 		bool is_editing_in_progress(void) const;
 
 		/* Get position of given tree item among its siblings. */
-		sg_ret get_position(const TreeItem & item, bool & is_first, bool & is_last);
+		sg_ret get_item_position(const TreeItem & item, bool & is_first, bool & is_last);
 
 		TreeModel * get_tree_model(void) const { return this->tree_model; }
 
