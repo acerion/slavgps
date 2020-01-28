@@ -633,20 +633,36 @@ Time LayerTRWTracks::get_earliest_timestamp(void) const
 	Time result;
 	std::list<TreeItem *> tree_items;
 	this->get_tree_items(tree_items);
-
-	/* TODO_LATER: we assume here that all tracks have timestamps. */
-
-	if (!tree_items.empty()) {
-		tree_items.sort(Track::compare_timestamp);
-
-		/* Only need to check the first track as they have been sorted by time. */
-		Track * trk = (Track *) *(tree_items.begin());
-		/* Assume trackpoints already sorted by time. */
-		Trackpoint * tpt = trk->get_tp_first();
-		if (tpt && tpt->timestamp.is_valid()) {
-			result = tpt->timestamp;
-		}
+	if (tree_items.empty()) {
+		return result;
 	}
+
+
+	tree_items.sort(Track::compare_timestamp);
+
+
+	/* Some tracks may have no timestamps. Find first track that
+	   does have timestamps. Since the tracks are sorted by their
+	   timestamps, first track with timestamps should have the
+	   earliest timestamps. */
+	for (auto iter = tree_items.begin(); iter != tree_items.end(); iter++) {
+
+		const Track * trk = (const Track *) *tree_items.begin();
+
+		/* Assume trackpoints in track are sorted by time. */
+		const Trackpoint * tp = trk->get_tp_first();
+		if (nullptr == tp) {
+			continue;
+		}
+		if (!tp->timestamp.is_valid()) {
+			continue;
+		}
+
+		result = tp->timestamp;
+		break;
+	}
+
+
 	return result;
 }
 
