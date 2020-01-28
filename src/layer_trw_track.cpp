@@ -2864,6 +2864,12 @@ static Coord * get_next_coord(const Coord & from, const Coord & to, const LatLon
 
 
 
+/*
+  "fillins" are probably calculated coordinates between two
+  Trackpoints. The coordinates don't really exist in a track, but
+  since the Trackpoints are too far apart, we have to somehow fill the
+  gaps between them.
+*/
 static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, const LatLon & area_span)
 {
 	/* TODO_LATER: handle vertical track (to->lat_lon.lon - from->lat_lon.lon == 0). */
