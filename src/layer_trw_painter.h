@@ -86,7 +86,29 @@ namespace SlavGPS {
 		QColor get_fg_color(const Track * trk) const;
 		QColor get_bg_color(bool do_highlight) const;
 
-		inline bool coord_fits_in_viewport(const Coord & coord) const;
+		/**
+		   @brief See if given coordinate is inside or outside of central part of viewport
+
+		   The method is used to decide if the point should be
+		   drawn or not.
+		*/
+		inline bool point_inside_viewport(const Coord & coord) const;
+
+		/**
+		   @brief See if any part of line specified by its two
+		   ending coordinates crosses central part of viewport
+
+		   When drawing a track, we want to also draw line
+		   between one trackpoint that is within a viewport,
+		   and one that is outside of viewport. Or between two
+		   trackpoints that are outside of viewport, but are
+		   positioned in a way that makes part of the line
+		   cross the viewport.
+
+		   The method is used to decide if the line should be
+		   drawn or not.
+		*/
+		inline bool line_crosses_viewport(const Coord & coord1, const Coord & coord2) const;
 
 		/* Generate new cache object for given image path, but don't add the object to cache. */
 		CachedPixmap generate_wp_cached_pixmap(const QString & image_full_path) const;
@@ -112,10 +134,10 @@ namespace SlavGPS {
 		Window * window = NULL;
 
 		/* Properties of viewport (copied from viewport). */
-		QRect vp_rect;
+		QRect vp_central_rect;
 		double vp_xmpp = 0.0;
 		double vp_ympp = 0.0;
-		Coord vp_center;
+		Coord vp_center_coord;
 		CoordMode vp_coord_mode;    /* UTM or Lat/Lon. */
 		bool vp_is_one_utm_zone = false;  /* GisViewport shows only one UTM zone. */
 

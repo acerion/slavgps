@@ -115,8 +115,8 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 	this->vp_xmpp = this->gisview->get_viking_scale().get_x();
 	this->vp_ympp = this->gisview->get_viking_scale().get_y();
 
-	this->vp_rect = this->gisview->central_get_rect();
-	this->vp_center = this->gisview->get_center_coord();
+	this->vp_central_rect = this->gisview->central_get_rect();
+	this->vp_center_coord = this->gisview->get_center_coord();
 	this->vp_coord_mode = this->gisview->get_coord_mode();
 	this->vp_is_one_utm_zone = this->gisview->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
 
@@ -124,30 +124,29 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 
 	if (this->vp_coord_mode == CoordMode::UTM && this->vp_is_one_utm_zone) {
 
-		/* Leniency -- for tracks. Obviously for waypoints
-		   this SHOULD be a lot smaller. */
-		const int outside_margin = 1600; /* TODO_LATER: magic number. */
+		/* A margin to draw points that are on the edge.
+		   "3 * x", just to be sure. */
+		const int outside_margin = 3 * std::max(this->trackpoint_size, this->wp_marker_size);
 
-		const int width = this->vp_xmpp * (this->vp_rect.width() / 2) + outside_margin / this->vp_xmpp;
-		const int height = this->vp_ympp * (this->vp_rect.height() / 2) + outside_margin / this->vp_ympp;
+		const int width = this->vp_xmpp * (this->vp_central_rect.width() / 2) + outside_margin / this->vp_xmpp;
+		const int height = this->vp_ympp * (this->vp_central_rect.height() / 2) + outside_margin / this->vp_ympp;
 
-
-		this->coord_leftmost = this->vp_center.utm.get_easting() - width;
-		this->coord_rightmost = this->vp_center.utm.get_easting() + width;
-		this->coord_bottommost = this->vp_center.utm.get_northing() - height;
-		this->coord_topmost = this->vp_center.utm.get_northing() + height;
+		this->coord_leftmost = this->vp_center_coord.utm.get_easting() - width;
+		this->coord_rightmost = this->vp_center_coord.utm.get_easting() + width;
+		this->coord_bottommost = this->vp_center_coord.utm.get_northing() - height;
+		this->coord_topmost = this->vp_center_coord.utm.get_northing() + height;
 
 	} else if (this->vp_coord_mode == CoordMode::LatLon) {
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 
-		/* Leniency -- for tracks. Obviously for waypoints
-		   this SHOULD be a lot smaller. */
-		const int outside_margin = 500; /* TODO_LATER: magic number. */
+		/* A margin to draw points that are on the edge.
+		   "3 * x", just to be sure. */
+		const int outside_margin = 3 * std::max(this->trackpoint_size, this->wp_marker_size);
 
-		const Coord upperleft = this->gisview->screen_pos_to_coord(-outside_margin, -outside_margin);
-		const Coord bottomright = this->gisview->screen_pos_to_coord(this->vp_rect.width() + outside_margin, this->vp_rect.height() + outside_margin);
+		const Coord upperleft = this->gisview->screen_pos_to_coord(this->vp_central_rect.x() - outside_margin, this->vp_central_rect.y() - outside_margin);
+		const Coord bottomright = this->gisview->screen_pos_to_coord(this->vp_central_rect.width() + outside_margin, this->vp_central_rect.height() + outside_margin);
 
 		this->coord_leftmost = upperleft.lat_lon.lon;
 		this->coord_rightmost = bottomright.lat_lon.lon;
@@ -603,12 +602,12 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		/* TODO_LATER: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
 		bool first_condition = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 
-		bool second_condition_A = ((!this->vp_is_one_utm_zone) || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm));  /* Only check zones if UTM & one_utm_zone. */
+		bool second_condition_A = ((!this->vp_is_one_utm_zone) || UTM::is_the_same_zone(tp->coord.utm, this->vp_center_coord.utm));  /* Only check zones if UTM & one_utm_zone. */
 
-		const bool fits_into_viewport = this->coord_fits_in_viewport(tp->coord);
+		const bool line_crosses_vp = this->line_crosses_viewport(prev_tp->coord, tp->coord);
+		//const bool fits_into_viewport = this->point_inside_viewport(tp->coord);
 
-
-		bool second_condition = (second_condition_A && fits_into_viewport);
+		bool second_condition = (second_condition_A && line_crosses_vp);
 #ifdef K_OLD_IMPLEMENTATION
 		if ((!this->vp_is_one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
 		    || (((!this->vp_is_one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
@@ -670,7 +669,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (!tp->newsegment && this->draw_track_lines) {
 
 				/* UTM only: zone check. */
-				if (do_draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && !UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
+				if (do_draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && !UTM::is_the_same_zone(tp->coord.utm, this->vp_center_coord.utm)) {
 					draw_utm_skip_insignia(this->gisview, main_pen, curr_pos.x(), curr_pos.y());
 				}
 
@@ -702,7 +701,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		} else {
 
 			if (use_prev_pos && this->draw_track_lines && (!tp->newsegment)) {
-				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
+				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center_coord.utm)) {
 					this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 					if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed)) {
@@ -784,10 +783,9 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 #endif
 
 
-		const bool fits_into_viewport = this->coord_fits_in_viewport(tp->coord);
-
-
-		if (fits_into_viewport) {
+		const bool line_crosses_vp = this->line_crosses_viewport(prev_tp->coord, tp->coord);
+		//const bool fits_into_viewport = this->point_inside_viewport(tp->coord);
+		if (line_crosses_vp) {
 			this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 			if (use_prev_pos && curr_pos == prev_pos) {
@@ -809,7 +807,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 		} else {
 			if (use_prev_pos && this->draw_track_lines && !tp->newsegment) {
-				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
+				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center_coord.utm)) {
 					this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -874,8 +872,8 @@ void LayerTRWPainter::draw_track(Track * trk, GisViewport * a_gisview, bool do_h
 void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	const bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
-		|| ((this->vp_coord_mode == CoordMode::LatLon || UTM::is_the_same_zone(wp->get_coord().utm, this->vp_center.utm)) &&
-		    this->coord_fits_in_viewport(wp->get_coord()));
+		|| ((this->vp_coord_mode == CoordMode::LatLon || UTM::is_the_same_zone(wp->get_coord().utm, this->vp_center_coord.utm)) &&
+		    this->point_inside_viewport(wp->get_coord()));
 
 
 	if (!cond) {
@@ -996,7 +994,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_po
 	}
 
 	/* Draw only those waypoints that are visible in viewport. */
-	if (!this->vp_rect.intersects(target_rect)) {
+	if (!this->vp_central_rect.intersects(target_rect)) {
 		return false;
 	}
 
@@ -1236,7 +1234,7 @@ void LayerTRWPainter::make_wp_pens(void)
 
 
 
-inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
+inline bool LayerTRWPainter::point_inside_viewport(const Coord & coord) const
 {
 	bool fits_horizontally = false;
 	bool fits_vertically = false;
@@ -1256,4 +1254,65 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 	}
 
 	return fits_horizontally && fits_vertically;
+}
+
+
+
+
+inline bool LayerTRWPainter::line_crosses_viewport(const Coord & coord1, const Coord & coord2) const
+{
+	bool result = false;
+
+	switch (this->vp_coord_mode) {
+	case CoordMode::UTM:
+		if (coord1.utm.get_northing() > this->coord_topmost && coord2.utm.get_northing() > this->coord_topmost) {
+			/* Both points are above drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - above";
+			result = false;
+		} else if (coord1.utm.get_northing() < this->coord_bottommost && coord2.utm.get_northing() < this->coord_bottommost) {
+			/* Both points are below drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - below";
+			result = false;
+		} else if (coord1.utm.get_easting() < this->coord_leftmost && coord2.utm.get_easting() < this->coord_leftmost) {
+			/* Both points are on left side of drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - left";
+			result = false;
+		} else if (coord1.utm.get_easting() > this->coord_rightmost && coord2.utm.get_easting() > this->coord_rightmost) {
+			/* Both points are on right side of drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - right";
+			result = false;
+		} else {
+			result = true;
+		}
+		break;
+
+	case CoordMode::LatLon:
+		if (coord1.lat_lon.lat > this->coord_topmost && coord2.lat_lon.lat > this->coord_topmost) {
+			/* Both points are above drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - above";
+			result = false;
+		} else if (coord1.lat_lon.lat < this->coord_bottommost && coord2.lat_lon.lat < this->coord_bottommost) {
+			/* Both points are below drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - below";
+			result = false;
+		} else if (coord1.lat_lon.lon < this->coord_leftmost && coord2.lat_lon.lon < this->coord_leftmost) {
+			/* Both points are on left side of drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - left";
+			result = false;
+		} else if (coord1.lat_lon.lon > this->coord_rightmost && coord2.lat_lon.lon > this->coord_rightmost) {
+			/* Both points are on right side of drawable area. */
+			qDebug() << SG_PREFIX_D << "==== FALSE - right";
+			result = false;
+		} else {
+			result = true;
+		}
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected viewport coordinate mode" << this->vp_coord_mode;
+		result = false;
+		break;
+	}
+
+	return result;
 }
