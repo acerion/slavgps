@@ -898,7 +898,7 @@ TrackProfileDialog::TrackProfileDialog(Track * new_trk, GisViewport * new_main_g
 			qDebug() << SG_PREFIX_E << "Can't find profile" << i << "in loop";
 			continue;
 		}
-		view->generate_initial_track_data_wrapper(trk);
+		view->generate_initial_track_data_wrapper(*this->trk);
 	}
 }
 

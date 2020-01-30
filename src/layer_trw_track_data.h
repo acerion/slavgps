@@ -94,8 +94,7 @@ namespace SlavGPS {
 
 		sg_ret compress_into(TrackData & target, int compressed_n_points) const;
 
-		sg_ret make_track_data_x_over_y(Track * trk, int compressed_n_points); /* Unused. */
-		sg_ret make_track_data_x_over_y(Track * trk);
+		sg_ret make_track_data_x_over_y(const Track & trk);
 
 		/**
 		   Convert all unit-bearing values in the track data to new units.

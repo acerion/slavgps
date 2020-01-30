@@ -192,7 +192,7 @@ namespace SlavGPS { /* Template specializations need to be put inside a namespac
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(const Track & trk)
 {
 	/* No special handling of segments ATM... */
 
@@ -202,14 +202,14 @@ sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
 	DistanceType::LL y_min_ll = 0;
 	DistanceType::LL y_max_ll = 0;
 
-	const Duration duration = trk->get_duration();
+	const Duration duration = trk.get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
 
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	if (tp_count < 1) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
 		return sg_ret::err;
@@ -218,7 +218,7 @@ sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
 
 
 	int i = 0;
-	auto iter = trk->trackpoints.begin();
+	auto iter = trk.trackpoints.begin();
 	this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 	this->m_y_ll[i] = 0;
 	this->m_tps[i] = (*iter);
@@ -226,7 +226,7 @@ sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
 	i++;
 	iter++;
 
-	while (iter != trk->trackpoints.end()) {
+	while (iter != trk.trackpoints.end()) {
 
 		this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 		if (i > 0 && this->m_x_ll[i] <= this->m_x_ll[i - 1]) {
@@ -292,7 +292,7 @@ sg_ret TrackData<Time, Distance>::make_track_data_x_over_y(Track * trk)
 
 
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(const Track & trk)
 {
 	TrackData result;
 
@@ -302,19 +302,19 @@ sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk)
 	AltitudeType::LL y_min_ll = 0;
 	AltitudeType::LL y_max_ll = 0;
 
-	const double total_length = trk->get_length_value_including_gaps();
+	const double total_length = trk.get_length_value_including_gaps();
 	if (total_length <= 0) {
 		return sg_ret::err;
 	}
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	this->allocate(tp_count);
 
 
 	int i = 0;
 	bool y_valid = false;
 
-	auto iter = trk->trackpoints.begin();
+	auto iter = trk.trackpoints.begin();
 	/* Initial step. */
 	{
 		this->m_x_ll[i] = 0; /* Distance at the beginning is zero. */
@@ -330,7 +330,7 @@ sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk)
 	}
 
 
-	while (iter != trk->trackpoints.end()) {
+	while (iter != trk.trackpoints.end()) {
 
 		/* Iterative step. */
 		{
@@ -371,203 +371,12 @@ sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk)
 
 
 
-/**
-   I understood this when I wrote it ... maybe ... Basically it eats up the
-   proper amounts of length on the track and averages elevation over that.
-
-   @reviewed-on tbd
-*/
-template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk, int compressed_n_points)
-{
-	TrackData result;
-
-	bool extremes_initialized = false;
-	DistanceType::LL x_min_ll = 0;
-	DistanceType::LL x_max_ll = 0;
-	AltitudeType::LL y_min_ll = 0;
-	AltitudeType::LL y_max_ll = 0;
-
-	/* TODO_LATER: this function does not set this->m_tps[]. */
-
-
-	const int tp_count = trk->get_tp_count();
-	if (tp_count < 1) {
-		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with size" << tp_count;
-		return sg_ret::err;
-	}
-
-
-	{ /* Test if there's anything worth calculating. */
-
-		bool correct = true;
-		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-			/* Sometimes a GPS device (or indeed any random file) can have stupid numbers for elevations.
-			   Since when is 9.9999e+24 a valid elevation!!
-			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
-			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
-
-			if ((*iter)->altitude.ll_value() > SG_ALTITUDE_RANGE_MAX) {
-				/* TODO_LATER: clamp the invalid values, but still generate vector? */
-				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
-				correct = false;
-				break;
-			}
-		}
-		if (!correct) {
-			return sg_ret::err;
-		}
-	}
-
-	const double total_length = trk->get_length_value_including_gaps();
-	const double delta_d = total_length / (compressed_n_points - 1);
-
-	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash */
-	if (delta_d <= 0) {
-		return sg_ret::err;
-	}
-
-	this->allocate(compressed_n_points);
-
-	double current_dist = 0.0;
-	double current_area_under_curve = 0;
-
-
-	auto iter = trk->trackpoints.begin();
-	double current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
-
-	double altitude1 = (*iter)->altitude.ll_value();
-	double altitude2 = (*std::next(iter))->altitude.ll_value();
-	double dist_along_seg = 0;
-
-	bool ignore_it = false;
-	int current_chunk = 0;
-	while (current_chunk < compressed_n_points) {
-
-		/* Go along current seg. */
-		if (current_seg_length && (current_seg_length - dist_along_seg) > delta_d) {
-			dist_along_seg += delta_d;
-
-			/*        /
-			 *   pt2 *
-			 *      /x       altitude = alt_at_pt_1 + alt_at_pt_2 / 2 = altitude1 + slope * dist_value_of_pt_inbetween_pt1_and_pt2
-			 *     /xx   avg altitude = area under curve / chunk len
-			 *pt1 *xxx   avg altitude = altitude1 + (altitude2-altitude1)/(current_seg_length)*(dist_along_seg + (chunk_len/2))
-			 *   / xxx
-			 *  /  xxx
-			 **/
-
-			if (ignore_it) {
-				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
-				this->m_y_ll[current_chunk] = altitude1;
-				if (current_chunk > 0) {
-					/* TODO_LATER: verify this. */
-					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
-				}
-			} else {
-				this->m_y_ll[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
-				if (current_chunk > 0) {
-					/* TODO_LATER: verify this. */
-					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
-				}
-			}
-			TRW_TRACK_DATA_UPDATE_MIN_MAX(this, current_chunk, true);
-			current_chunk++;
-		} else {
-			/* Finish current seg. */
-			if (current_seg_length) {
-				double altitude_at_dist_along_seg = altitude1 + (altitude2 - altitude1) / (current_seg_length) * dist_along_seg;
-				current_dist = current_seg_length - dist_along_seg;
-				current_area_under_curve = current_dist * (altitude_at_dist_along_seg + altitude2) * 0.5;
-			} else {
-				current_dist = current_area_under_curve = 0;  /* Should only happen if first current_seg_length == 0. */
-			}
-			/* Get intervening segs. */
-			iter++;
-			while (iter != trk->trackpoints.end()
-			       && std::next(iter) != trk->trackpoints.end()) {
-
-				current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
-				altitude1 = (*iter)->altitude.ll_value();
-				altitude2 = (*std::next(iter))->altitude.ll_value();
-				ignore_it = (*std::next(iter))->newsegment;
-
-				if (delta_d - current_dist >= current_seg_length) {
-					current_dist += current_seg_length;
-					current_area_under_curve += current_seg_length * (altitude1 + altitude2) * 0.5;
-					iter++;
-				} else {
-					break;
-				}
-			}
-
-			/* Final seg. */
-			dist_along_seg = delta_d - current_dist;
-			if (ignore_it
-			    || (iter != trk->trackpoints.end()
-				&& std::next(iter) == trk->trackpoints.end())) {
-
-				this->m_y_ll[current_chunk] = current_area_under_curve / current_dist;
-				if (current_chunk > 0) {
-					/* TODO_LATER: verify this. */
-					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
-				}
-				if (std::next(iter) == trk->trackpoints.end()) {
-					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
-						this->m_y_ll[i] = this->m_y_ll[current_chunk];
-						if (current_chunk > 0) {
-							/* TODO_LATER: verify this. */
-							this->m_x_ll[i] = this->m_x_ll[current_chunk - 1] + delta_d;
-						}
-					}
-					break;
-				}
-			} else {
-				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
-				this->m_y_ll[current_chunk] = current_area_under_curve / delta_d;
-				if (current_chunk > 0) {
-					/* TODO_LATER: verify this. */
-					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
-				}
-			}
-
-			TRW_TRACK_DATA_UPDATE_MIN_MAX(this, current_chunk, true);
-
-			current_dist = 0;
-			current_chunk++;
-		}
-	}
-
-#ifdef K_FIXME_RESTORE
-	assert(current_chunk == compressed_n_points);
-#endif
-
-	this->m_valid = true;
-	this->x_domain = GisViewportDomain::DistanceDomain;
-	this->y_domain = GisViewportDomain::ElevationDomain;
-
-	this->x_unit = DistanceType::Unit::internal_unit();
-	this->y_unit = AltitudeType::Unit::internal_unit();
-	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
-
-	this->m_x_min = Distance(x_min_ll, this->x_unit);
-	this->m_x_max = Distance(x_max_ll, this->x_unit);
-	this->m_y_min = Altitude(y_min_ll, this->y_unit);
-	this->m_y_max = Altitude(y_max_ll, this->y_unit);
-
-	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
-
-	return sg_ret::ok;
-}
-
-
-
 
 /**
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Gradient>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Gradient>::make_track_data_x_over_y(const Track & trk)
 {
 	TrackData result;
 
@@ -577,7 +386,7 @@ sg_ret TrackData<Distance, Gradient>::make_track_data_x_over_y(Track * trk)
 	GradientType::LL y_min_ll = 0;
 	GradientType::LL y_max_ll = 0;
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	if (tp_count < 2) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with size" << tp_count;
 		return sg_ret::err;
@@ -648,7 +457,7 @@ sg_ret TrackData<Distance, Gradient>::make_track_data_x_over_y(Track * trk)
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Speed>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Speed>::make_track_data_x_over_y(const Track & trk)
 {
 	TrackData result;
 
@@ -658,14 +467,14 @@ sg_ret TrackData<Time, Speed>::make_track_data_x_over_y(Track * trk)
 	SpeedType::LL y_min_ll = 0;
 	SpeedType::LL y_max_ll = 0;
 
-	const Duration duration = trk->get_duration();
+	const Duration duration = trk.get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
 
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	if (tp_count < 1) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
 		return sg_ret::err;
@@ -747,7 +556,7 @@ sg_ret TrackData<Time, Speed>::make_track_data_x_over_y(Track * trk)
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(const Track & trk)
 {
 	TrackData result;
 
@@ -757,14 +566,14 @@ sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
 	AltitudeType::LL y_min_ll = 0;
 	AltitudeType::LL y_max_ll = 0;
 
-	const Duration duration = trk->get_duration();
+	const Duration duration = trk.get_duration();
 	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
 
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	if (tp_count < 1) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
 		return sg_ret::err;
@@ -773,7 +582,7 @@ sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
 
 
 	int i = 0;
-	auto iter = trk->trackpoints.begin();
+	auto iter = trk.trackpoints.begin();
 	do {
 		this->m_x_ll[i] = (*iter)->timestamp.ll_value();
 		if (i > 0 && this->m_x_ll[i] <= this->m_x_ll[i - 1]) {
@@ -790,7 +599,7 @@ sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
 
 		i++;
 		iter++;
-	} while (iter != trk->trackpoints.end());
+	} while (iter != trk.trackpoints.end());
 
 
 	assert (i == tp_count);
@@ -825,7 +634,7 @@ sg_ret TrackData<Time, Altitude>::make_track_data_x_over_y(Track * trk)
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Speed>::make_track_data_x_over_y(Track * trk)
+sg_ret TrackData<Distance, Speed>::make_track_data_x_over_y(const Track & trk)
 {
 	TrackData result;
 
@@ -835,12 +644,12 @@ sg_ret TrackData<Distance, Speed>::make_track_data_x_over_y(Track * trk)
 	SpeedType::LL y_min_ll = 0;
 	SpeedType::LL y_max_ll = 0;
 
-	const double total_length = trk->get_length_value_including_gaps();
+	const double total_length = trk.get_length_value_including_gaps();
 	if (total_length <= 0) {
 		return sg_ret::err;
 	}
 
-	const int tp_count = trk->get_tp_count();
+	const int tp_count = trk.get_tp_count();
 	TrackData<Time, Distance> data_dt;
 	data_dt.make_track_data_x_over_y(trk);
 
@@ -904,3 +713,200 @@ sg_ret TrackData<Distance, Speed>::make_track_data_x_over_y(Track * trk)
 
 
 } /* namespace SlavGPS */
+
+
+
+
+#if 0 /* Unused code */
+
+/**
+   I understood this when I wrote it ... maybe ... Basically it eats up the
+   proper amounts of length on the track and averages elevation over that.
+
+   @reviewed-on tbd
+*/
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Distance, Altitude>::make_track_data_x_over_y(Track * trk, int compressed_n_points)
+{
+	TrackData result;
+
+	bool extremes_initialized = false;
+	DistanceType::LL x_min_ll = 0;
+	DistanceType::LL x_max_ll = 0;
+	AltitudeType::LL y_min_ll = 0;
+	AltitudeType::LL y_max_ll = 0;
+
+	/* TODO_MAYBE: this function does not set this->m_tps[]. */
+
+
+	const int tp_count = trk->get_tp_count();
+	if (tp_count < 1) {
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with size" << tp_count;
+		return sg_ret::err;
+	}
+
+
+	{ /* Test if there's anything worth calculating. */
+
+		bool correct = true;
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
+			/* Sometimes a GPS device (or indeed any random file) can have stupid numbers for elevations.
+			   Since when is 9.9999e+24 a valid elevation!!
+			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
+			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
+
+			if ((*iter)->altitude.ll_value() > SG_ALTITUDE_RANGE_MAX) {
+				/* TODO_MAYBE: clamp the invalid values, but still generate vector? */
+				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
+				correct = false;
+				break;
+			}
+		}
+		if (!correct) {
+			return sg_ret::err;
+		}
+	}
+
+	const double total_length = trk->get_length_value_including_gaps();
+	const double delta_d = total_length / (compressed_n_points - 1);
+
+	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash */
+	if (delta_d <= 0) {
+		return sg_ret::err;
+	}
+
+	this->allocate(compressed_n_points);
+
+	double current_dist = 0.0;
+	double current_area_under_curve = 0;
+
+
+	auto iter = trk->trackpoints.begin();
+	double current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
+
+	double altitude1 = (*iter)->altitude.ll_value();
+	double altitude2 = (*std::next(iter))->altitude.ll_value();
+	double dist_along_seg = 0;
+
+	bool ignore_it = false;
+	int current_chunk = 0;
+	while (current_chunk < compressed_n_points) {
+
+		/* Go along current seg. */
+		if (current_seg_length && (current_seg_length - dist_along_seg) > delta_d) {
+			dist_along_seg += delta_d;
+
+			/*        /
+			 *   pt2 *
+			 *      /x       altitude = alt_at_pt_1 + alt_at_pt_2 / 2 = altitude1 + slope * dist_value_of_pt_inbetween_pt1_and_pt2
+			 *     /xx   avg altitude = area under curve / chunk len
+			 *pt1 *xxx   avg altitude = altitude1 + (altitude2-altitude1)/(current_seg_length)*(dist_along_seg + (chunk_len/2))
+			 *   / xxx
+			 *  /  xxx
+			 **/
+
+			if (ignore_it) {
+				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
+				this->m_y_ll[current_chunk] = altitude1;
+				if (current_chunk > 0) {
+					/* TODO_MAYBE: verify this. */
+					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
+				}
+			} else {
+				this->m_y_ll[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
+				if (current_chunk > 0) {
+					/* TODO_MAYBE: verify this. */
+					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
+				}
+			}
+			TRW_TRACK_DATA_UPDATE_MIN_MAX(this, current_chunk, true);
+			current_chunk++;
+		} else {
+			/* Finish current seg. */
+			if (current_seg_length) {
+				double altitude_at_dist_along_seg = altitude1 + (altitude2 - altitude1) / (current_seg_length) * dist_along_seg;
+				current_dist = current_seg_length - dist_along_seg;
+				current_area_under_curve = current_dist * (altitude_at_dist_along_seg + altitude2) * 0.5;
+			} else {
+				current_dist = current_area_under_curve = 0;  /* Should only happen if first current_seg_length == 0. */
+			}
+			/* Get intervening segs. */
+			iter++;
+			while (iter != trk->trackpoints.end()
+			       && std::next(iter) != trk->trackpoints.end()) {
+
+				current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
+				altitude1 = (*iter)->altitude.ll_value();
+				altitude2 = (*std::next(iter))->altitude.ll_value();
+				ignore_it = (*std::next(iter))->newsegment;
+
+				if (delta_d - current_dist >= current_seg_length) {
+					current_dist += current_seg_length;
+					current_area_under_curve += current_seg_length * (altitude1 + altitude2) * 0.5;
+					iter++;
+				} else {
+					break;
+				}
+			}
+
+			/* Final seg. */
+			dist_along_seg = delta_d - current_dist;
+			if (ignore_it
+			    || (iter != trk->trackpoints.end()
+				&& std::next(iter) == trk->trackpoints.end())) {
+
+				this->m_y_ll[current_chunk] = current_area_under_curve / current_dist;
+				if (current_chunk > 0) {
+					/* TODO_MAYBE: verify this. */
+					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
+				}
+				if (std::next(iter) == trk->trackpoints.end()) {
+					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
+						this->m_y_ll[i] = this->m_y_ll[current_chunk];
+						if (current_chunk > 0) {
+							/* TODO_MAYBE: verify this. */
+							this->m_x_ll[i] = this->m_x_ll[current_chunk - 1] + delta_d;
+						}
+					}
+					break;
+				}
+			} else {
+				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
+				this->m_y_ll[current_chunk] = current_area_under_curve / delta_d;
+				if (current_chunk > 0) {
+					/* TODO_MAYBE: verify this. */
+					this->m_x_ll[current_chunk] = this->m_x_ll[current_chunk - 1] + delta_d;
+				}
+			}
+
+			TRW_TRACK_DATA_UPDATE_MIN_MAX(this, current_chunk, true);
+
+			current_dist = 0;
+			current_chunk++;
+		}
+	}
+
+#ifdef K_FIXME_RESTORE
+	assert(current_chunk == compressed_n_points);
+#endif
+
+	this->m_valid = true;
+	this->x_domain = GisViewportDomain::DistanceDomain;
+	this->y_domain = GisViewportDomain::ElevationDomain;
+
+	this->x_unit = DistanceType::Unit::internal_unit();
+	this->y_unit = AltitudeType::Unit::internal_unit();
+	snprintf(this->m_debug, sizeof (this->m_debug), "%s", "Altitude over Distance");
+
+	this->m_x_min = Distance(x_min_ll, this->x_unit);
+	this->m_x_max = Distance(x_max_ll, this->x_unit);
+	this->m_y_min = Altitude(y_min_ll, this->y_unit);
+	this->m_y_max = Altitude(y_max_ll, this->y_unit);
+
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
+
+	return sg_ret::ok;
+}
+
+
+#endif /* #if 0 / unused code */

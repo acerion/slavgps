@@ -195,7 +195,7 @@ namespace SlavGPS {
 		virtual sg_ret draw_graph_without_crosshairs(Track & trk) = 0;
 		sg_ret draw_crosshairs(const Crosshair2D & selection_ch, const Crosshair2D & hover_ch);
 
-		virtual sg_ret generate_initial_track_data_wrapper(Track * trk) = 0;
+		virtual sg_ret generate_initial_track_data_wrapper(const Track & trk) = 0;
 
 		virtual void configure_controls(void) {};
 
@@ -305,7 +305,7 @@ namespace SlavGPS {
 
 		sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) override;
 
-		sg_ret generate_initial_track_data_wrapper(Track * trk) override;
+		sg_ret generate_initial_track_data_wrapper(const Track & trk) override;
 
 
 		sg_ret draw_function_values(Track & trk);
@@ -1014,7 +1014,7 @@ ProfileView<Tx, Ty>::~ProfileView()
 
 
 template <typename Tx, typename Ty>
-sg_ret ProfileView<Tx, Ty>::generate_initial_track_data_wrapper(Track * trk)
+sg_ret ProfileView<Tx, Ty>::generate_initial_track_data_wrapper(const Track & trk)
 {
 	this->initial_track_data.clear();
 
