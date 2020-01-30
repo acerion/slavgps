@@ -60,10 +60,12 @@ namespace SlavGPS {
 
 		/*
 		  Notice that we don't pass a 'filter with this track'
-		  track through constructor. Such track should be
+		  track through this function. Such track should be
 		  registered with ::set_babel_filter_track().
 		*/
-		LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw);
+		sg_ret set_main_fields(Window * window, GisViewport * gisview, Layer * parent_layer);
+		void set_trw_field(LayerTRW * trw);
+		void clear_all(void);
 
 		/* Add 'filter' entries to context menu for TRW layer. */
 		sg_ret add_babel_filters_for_layer_submenu(QMenu & submenu);
@@ -74,7 +76,8 @@ namespace SlavGPS {
 
 		/**
 		   Sets application-wide track to use with gpsbabel
-		   filter.
+		   filter. @param trk can be used with a TRW layer
+		   other than parent of this @param trk.
 		*/
 		static void set_babel_filter_track(Track * trk);
 

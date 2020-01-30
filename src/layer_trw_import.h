@@ -86,10 +86,28 @@ namespace SlavGPS {
 		AcquireContext(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw, Track * trk)
 			: m_window(window), m_gisview(gisview), m_parent_layer(parent_layer), m_trw(trw), m_trk(trk) {};
 
+		sg_ret set_main_fields(Window * window, GisViewport * gisview, Layer * parent_layer);
+		void set_trw_field(LayerTRW * trw);
+		void set_track_field(Track * trk);
+
+		sg_ret new_trw(const CoordMode & coord_mode, const QString & name);
+		sg_ret delete_trw(void);
+		void clear_all(void);
+
 		void print_debug(const char * function, int line) const;
 
 		AcquireContext & operator=(const AcquireContext & rhs);
 
+		Window * get_window(void) const { return this->m_window; }
+		GisViewport * get_gisview(void) const { return this->m_gisview; }
+		Layer * get_parent_layer(void) const { return this->m_parent_layer; }
+		LayerTRW * get_trw(void) const { return this->m_trw; }
+		Track * get_trk(void) const { return this->m_trk; }
+
+		bool get_trw_is_allocated(void) const { return this->m_trw_is_allocated; }
+
+
+	private:
 		Window * m_window = nullptr;
 		GisViewport * m_gisview = nullptr;
 		Layer * m_parent_layer = nullptr; /* Parent layer of TRW layer. It may be Aggregate layer or GPS layer. */

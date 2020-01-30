@@ -2216,11 +2216,10 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 		LayerTRW * parent_trw = (LayerTRW *) this->get_owning_layer();
 		Layer * parent_layer = parent_trw->get_owning_layer();
 
-		delete parent_trw->layer_trw_filter;
-		parent_trw->layer_trw_filter = new LayerTRWBabelFilter(parent_trw->get_window(),
-								       ThisApp::get_main_gis_view(),
-								       parent_layer,
-								       parent_trw);
+		parent_trw->layer_trw_filter->set_main_fields(parent_trw->get_window(),
+							      ThisApp::get_main_gis_view(),
+							      parent_layer);
+		parent_trw->layer_trw_filter->set_trw_field(parent_trw);
 	}
 
 
@@ -2984,6 +2983,7 @@ void Track::google_route_webpage_cb(void)
 
 void Track::use_with_babel_filter_cb(void)
 {
+	/* This track can be used with a TRW layer different than an owner of this track. */
 	LayerTRWBabelFilter::set_babel_filter_track(this);
 }
 

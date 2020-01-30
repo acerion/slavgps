@@ -45,19 +45,25 @@
 
 
 #include "layer_aggregate.h"
+#include "layer_dem_dem.h"
+#include "layer_gps.h"
+#include "layer_map.h"
+
 #include "layer_trw.h"
-#include "layer_trw_painter.h"
-#include "layer_trw_tools.h"
+#include "layer_trw_babel_filter.h"
 #include "layer_trw_dialogs.h"
-#include "layer_trw_waypoint_properties.h"
+#include "layer_trw_painter.h"
+#include "layer_trw_stats.h"
+#include "layer_trw_tools.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_trackpoint_properties.h"
-#include "layer_map.h"
+#include "layer_trw_waypoint_properties.h"
+
+
 #include "tree_view_internal.h"
 #include "vikutils.h"
 #include "file.h"
 #include "dialog.h"
-#include "layer_dem_dem.h"
 #include "background.h"
 #include "util.h"
 #include "application_state.h"
@@ -71,8 +77,6 @@
 #include "datasources.h"
 #include "statusbar.h"
 #include "osm_traces.h"
-#include "layer_gps.h"
-#include "layer_trw_stats.h"
 #include "astro.h"
 #include "geonames_search.h"
 #ifdef VIK_CONFIG_GEOTAG
@@ -80,18 +84,6 @@
 #include "geotag_exif.h"
 #endif
 
-
-#ifdef K_INCLUDES
-#include "garmin_symbols.h"
-#include "gpx.h"
-#include "layer_dem_dem_cache.h"
-#include "babel.h"
-#include "layer_trw_import.h"
-#include "external_tools.h"
-#include "external_tool_datasources.h"
-#include "ui_util.h"
-#include "routing.h"
-#endif
 
 #include "geojson.h"
 #include "clipboard.h"
@@ -3462,6 +3454,7 @@ LayerTRW::LayerTRW() : Layer()
 	this->waypoints.owning_layer = this;
 
 	this->painter = new LayerTRWPainter(this);
+	this->layer_trw_filter = new LayerTRWBabelFilter();
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
@@ -3501,6 +3494,7 @@ LayerTRW::~LayerTRW()
 {
 	delete this->painter;
 	delete this->layer_trw_importer;
+	delete this->layer_trw_filter;
 }
 
 

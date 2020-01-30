@@ -209,8 +209,7 @@ bool RoutingEngineWeb::find_route(LayerTRW * trw, const LatLon & start, const La
 	babel_options.input_data_format = this->get_format();
 
 	AcquireContext acquire_context;
-	acquire_context.m_trw = trw;
-	acquire_context.m_trw_is_allocated = false; /* False: the layer comes "from outside", we assume that it already exists. */
+	acquire_context.set_trw_field(trw);
 
 	bool ret = LoadStatus::Code::Success == babel_options.import_from_url(acquire_context, &this->dl_options, NULL);
 
@@ -326,8 +325,7 @@ bool RoutingEngineWeb::refine_route(LayerTRW * trw, Track * trk) const
 
 	/* Convert and insert data in model. */
 	AcquireContext acquire_context;
-	acquire_context.m_trw = trw;
-	acquire_context.m_trw_is_allocated = false; /* False: the layer comes "from outside", we assume that it already exists. */
+	acquire_context.set_trw_field(trw);
 	bool ret = LoadStatus::Code::Success == babel_options.import_from_url(acquire_context, &this->dl_options, NULL);
 
 	return ret;

@@ -69,25 +69,6 @@ Track * g_babel_filter_track = nullptr;
 
 
 
-LayerTRWBabelFilter::LayerTRWBabelFilter(Window * window, GisViewport * gisview, Layer * parent_layer, LayerTRW * trw)
-{
-	/* Some tests to detect mixing of function arguments. */
-	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
-		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
-	}
-	if (LayerKind::TRW != trw->m_kind) {
-		qDebug() << SG_PREFIX_E << "'trw' layer has wrong kind" << trw->m_kind;
-	}
-
-	this->ctx.m_window = window;
-	this->ctx.m_gisview = gisview;
-	this->ctx.m_parent_layer = parent_layer;
-	this->ctx.m_trw = trw;
-}
-
-
-
-
 void LayerTRWBabelFilter::apply_babel_filter_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
@@ -172,4 +153,34 @@ sg_ret LayerTRWBabelFilter::register_babel_filter(DataSourceBabelFilter * bfilte
 	g_babel_filters.insert({ bfilter->get_source_id(), bfilter });
 
 	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerTRWBabelFilter::set_main_fields(Window * window, GisViewport * gisview, Layer * parent_layer)
+{
+	/* Some tests to detect mixing of function arguments. */
+	if (LayerKind::Aggregate != parent_layer->m_kind && LayerKind::GPS != parent_layer->m_kind) {
+		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
+		return sg_ret::err;
+	}
+
+	return this->ctx.set_main_fields(window, gisview, parent_layer);
+}
+
+
+
+
+void LayerTRWBabelFilter::set_trw_field(LayerTRW * trw)
+{
+	this->ctx.set_trw_field(trw);
+}
+
+
+
+
+void LayerTRWBabelFilter::clear_all(void)
+{
+	this->ctx.clear_all();
 }

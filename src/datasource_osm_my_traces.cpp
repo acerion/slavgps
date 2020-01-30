@@ -620,7 +620,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 #endif
 
-	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.m_window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
 #ifdef FIXME_RESTORE
 	/* If non thread - show program is 'doing something...' */
@@ -635,10 +635,10 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 	   and so this creation of the layers must be managed here. */
 
 	/* TODO_LATER: it seems that this code has its own mechanism for creating new layer. Make it more in line with AcquireContext. */
-	bool create_new_layer = (!acquire_context.m_trw);
+	bool create_new_layer = (!acquire_context.get_trw());
 
 	/* Only update the screen on the last layer acquired. */
-	LayerTRW * vtl_last = acquire_context.m_trw;
+	LayerTRW * vtl_last = acquire_context.get_trw();
 	bool got_something = false;
 
 	if (selected) {
@@ -649,14 +649,14 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 			if (create_new_layer) {
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
-				target_layer->set_coord_mode(acquire_context.m_gisview->get_coord_mode());
+				target_layer->set_coord_mode(acquire_context.get_gisview()->get_coord_mode());
 				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
 					target_layer->set_name(QObject::tr("My OSM Traces"));
 				}
 			} else {
-				target_layer = acquire_context.m_trw;
+				target_layer = acquire_context.get_trw();
 			}
 
 			LoadStatus convert_result = LoadStatus::Code::GenericError;
@@ -672,16 +672,16 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 				got_something = got_something || (LoadStatus::Code::Success == convert_result);
 				if (LoadStatus::Code::Success != convert_result) {
 					/* Report errors to the status bar. */
-					acquire_context.m_window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->m_acquire_options->source_url));
+					acquire_context.get_window()->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->m_acquire_options->source_url));
 				}
 			}
 
 			if (LoadStatus::Code::Success == convert_result) {
 				/* Can use the layer. */
-				acquire_context.m_parent_layer->add_child_item(target_layer, true);
+				acquire_context.get_parent_layer()->add_child_item(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquire_context.m_gisview, true);
-				target_layer->move_viewport_to_show_all(acquire_context.m_gisview);
+				target_layer->post_read(acquire_context.get_gisview(), true);
+				target_layer->move_viewport_to_show_all(acquire_context.get_gisview());
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {

@@ -118,17 +118,17 @@ SGObjectTypeID DataSourceWikipedia::source_id(void)
 */
 LoadStatus DataSourceWikipedia::acquire_into_layer(AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
-	if (!acquire_context.m_trw) {
+	if (!acquire_context.get_trw()) {
 		qDebug() << SG_PREFIX_E << "Missing target TRW layer";
 		return LoadStatus::Code::InternalLogicError;
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.get_trw();
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.get_gisview();
 
 
 	qDebug() << "---- will generate all geonames list";
-	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context.m_gisview->get_bbox(), progr_dialog);
+	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context.get_gisview()->get_bbox(), progr_dialog);
 	if (0 == all_geonames.size()) {
 		/* Not an error situation. Info for user has been displayed in progr_dialog. */
 		return LoadStatus::Code::Success;
@@ -146,15 +146,15 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(AcquireContext & acquire_cont
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.get_trw();
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.get_gisview();
 
 		const Geoname * geoname = *iter;
-		Waypoint * wp = geoname->create_waypoint(acquire_context.m_trw->get_coord_mode());
-		acquire_context.m_trw->add_waypoint(wp);
+		Waypoint * wp = geoname->create_waypoint(acquire_context.get_trw()->get_coord_mode());
+		acquire_context.get_trw()->add_waypoint(wp);
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.m_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.m_gisview;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context.get_trw();
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context.get_gisview();
 	}
 
 	return LoadStatus::Code::Success;

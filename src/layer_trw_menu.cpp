@@ -88,6 +88,11 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 								ThisApp::get_main_gis_view(),
 								parent_layer,  /* Aggregate layer or GPS layer. */
 								this);         /* Target TRW layer, to which import will occur. */
+
+		this->layer_trw_filter->set_main_fields(parent_layer->get_window(),
+							ThisApp::get_main_gis_view(),
+							parent_layer);
+		this->layer_trw_filter->set_trw_field(this);
 	}
 
 
@@ -230,7 +235,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 
 
 	QMenu * filter_submenu = menu.addMenu(QIcon::fromTheme("TODO - icon"), QObject::tr("&Filter"));
-	this->layer_trw_filter->add_babel_filters_for_layer_submenu(*filter_submenu); /* TODO: where do we create this object? */
+	this->layer_trw_filter->add_babel_filters_for_layer_submenu(*filter_submenu);
 
 
 

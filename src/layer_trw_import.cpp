@@ -83,19 +83,22 @@ sg_ret AcquireWorker::configure_target_layer(TargetLayerMode mode)
 {
 	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
+	bool allocate_trw = false;
+
 	switch (mode) {
 	case TargetLayerMode::CreateNewLayer:
-		this->m_acquire_context.m_trw_is_allocated = true;
+		allocate_trw = true;
 		break;
 
 	case TargetLayerMode::AddToLayer:
-		if (nullptr == this->m_acquire_context.m_trw) {
+		if (nullptr == this->m_acquire_context.get_trw()) {
 			qDebug() << SG_PREFIX_E << "Mode is 'AddToLayer' but existing layer is NULL";
 			return sg_ret::err;
 		}
 		/* Don't create new layer, acquire data into existing
 		   TRW layer. */
-		this->m_acquire_context.m_trw_is_allocated = false;
+
+
 		break;
 
 	case TargetLayerMode::AutoLayerManagement:
@@ -105,7 +108,7 @@ sg_ret AcquireWorker::configure_target_layer(TargetLayerMode mode)
 	case TargetLayerMode::ManualLayerManagement:
 		/* Don't create in acquire - as datasource will
 		   perform the necessary actions. */
-		if (nullptr == this->m_acquire_context.m_trw) {
+		if (nullptr == this->m_acquire_context.get_trw()) {
 			qDebug() << SG_PREFIX_E << "Mode is 'ManualLayerManagement' but existing layer is NULL";
 			return sg_ret::err;
 		}
@@ -116,10 +119,8 @@ sg_ret AcquireWorker::configure_target_layer(TargetLayerMode mode)
 	};
 
 
-	if (this->m_acquire_context.m_trw_is_allocated) {
-		this->m_acquire_context.m_trw = new LayerTRW();
-		this->m_acquire_context.m_trw->set_coord_mode(this->m_acquire_context.m_gisview->get_coord_mode());
-		this->m_acquire_context.m_trw->set_name(this->m_data_source->m_layer_title);
+	if (allocate_trw) {
+		this->m_acquire_context.new_trw(this->m_acquire_context.get_gisview()->get_coord_mode(), this->m_data_source->m_layer_title);
 	}
 
 	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
@@ -137,26 +138,25 @@ void AcquireWorker::finalize_after_success(void)
 {
 	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (this->m_acquire_context.m_trw_is_allocated) {
+	if (this->m_acquire_context.get_trw_is_allocated()) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
-		if (nullptr == this->m_acquire_context.m_trw) {
+		if (nullptr == this->m_acquire_context.get_trw()) {
 			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
 			return;
 		}
 
-		if (this->m_acquire_context.m_trw->is_empty()) {
+		if (this->m_acquire_context.get_trw()->is_empty()) {
 			/* Acquire process ended without errors, but
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			if (this->m_acquire_context.m_trw->is_in_tree()) {
+			if (this->m_acquire_context.get_trw()->is_in_tree()) {
 				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
 			}
 
 			qDebug() << SG_PREFIX_I << "Will now delete target trw";
-			delete this->m_acquire_context.m_trw;
-			this->m_acquire_context.m_trw = nullptr;
+			this->m_acquire_context.delete_trw();
 			return;
 		}
 
@@ -165,11 +165,11 @@ void AcquireWorker::finalize_after_success(void)
 	}
 
 
-	this->m_acquire_context.m_trw->attach_children_to_tree();
-	this->m_acquire_context.m_trw->post_read(this->m_acquire_context.m_gisview, true);
+	this->m_acquire_context.get_trw()->attach_children_to_tree();
+	this->m_acquire_context.get_trw()->post_read(this->m_acquire_context.get_gisview(), true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->m_data_source && this->m_data_source->m_autoview) {
-		this->m_acquire_context.m_trw->move_viewport_to_show_all(this->m_acquire_context.m_gisview);
+		this->m_acquire_context.get_trw()->move_viewport_to_show_all(this->m_acquire_context.get_gisview());
 		// this->m_acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
@@ -183,8 +183,8 @@ void AcquireWorker::finalize_after_failure(void)
 {
 	qDebug() << SG_PREFIX_I;
 
-	if (this->m_acquire_context.m_trw_is_allocated) {
-		delete this->m_acquire_context.m_trw;
+	if (this->m_acquire_context.get_trw_is_allocated()) {
+		this->m_acquire_context.delete_trw();
 	}
 
 	return;
@@ -334,6 +334,34 @@ AcquireContext & AcquireContext::operator=(const AcquireContext & rhs)
 
 
 
+sg_ret AcquireContext::new_trw(const CoordMode & coord_mode, const QString & name)
+{
+	this->m_trw = new LayerTRW();
+	this->m_trw->set_coord_mode(coord_mode);
+	this->m_trw->set_name(name);
+
+	this->m_trw_is_allocated = true;
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret AcquireContext::delete_trw(void)
+{
+	if (this->m_trw_is_allocated) {
+		delete this->m_trw;
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Called the function when the 'is allocated' flag is not set";
+		return sg_ret::err;
+	}
+}
+
+
+
+
 AcquireOptions::~AcquireOptions()
 {
 	delete this->babel_process;
@@ -445,7 +473,7 @@ LoadStatus AcquireOptions::import_from_url(AcquireContext & acquire_context, con
 			file_importer->set_input(this->input_data_format, target_file_full_path);
 			file_importer->set_output("gpx", "-");
 
-			load_status = file_importer->convert_through_gpx(acquire_context.m_trw);
+			load_status = file_importer->convert_through_gpx(acquire_context.get_trw());
 			delete file_importer;
 		} else {
 			/* Process directly the retrieved file. */
@@ -453,7 +481,7 @@ LoadStatus AcquireOptions::import_from_url(AcquireContext & acquire_context, con
 
 			QFile file(target_file_full_path);
 			if (file.open(QIODevice::ReadOnly)) {
-				load_status = GPX::read_layer_from_file(file, acquire_context.m_trw);
+				load_status = GPX::read_layer_from_file(file, acquire_context.get_trw());
 			} else {
 				load_status = LoadStatus::Code::CantOpenFileError;
 				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
@@ -486,8 +514,8 @@ LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context,
 {
 	if (this->babel_process) {
 
-		if (!acquire_context.m_trw->is_in_tree()) {
-			acquire_context.m_parent_layer->add_child_item(acquire_context.m_trw, true);
+		if (!acquire_context.get_trw()->is_in_tree()) {
+			acquire_context.get_parent_layer()->add_child_item(acquire_context.get_trw(), true);
 		}
 
 
@@ -505,7 +533,7 @@ LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context,
 		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
 		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(progr_dialog);
-		const LoadStatus result = importer->convert_through_gpx(acquire_context.m_trw);
+		const LoadStatus result = importer->convert_through_gpx(acquire_context.get_trw());
 
 		delete importer;
 
@@ -532,9 +560,58 @@ LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context,
 void AcquireContext::print_debug(const char * function, int line) const
 {
 	qDebug() << SG_PREFIX_I << "@@@@@@";
-	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->m_trw << function << line;
-	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->m_gisview << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->get_trw() << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->get_gisview() << function << line;
 	qDebug() << SG_PREFIX_I << "@@@@@@";
+}
+
+
+
+
+sg_ret AcquireContext::set_main_fields(Window * window, GisViewport * gisview, Layer * parent_layer)
+{
+	this->m_window = window;
+	this->m_gisview = gisview;
+	this->m_parent_layer = parent_layer;
+
+	return sg_ret::ok;
+}
+
+
+
+
+void AcquireContext::set_trw_field(LayerTRW * trw)
+{
+	this->m_trw = trw;
+
+	/* We assume that the trw is owned by caller. */
+	this->m_trw_is_allocated = false;
+}
+
+
+
+
+void AcquireContext::set_track_field(Track * trk)
+{
+	this->m_trk = trk;
+}
+
+
+
+
+void AcquireContext::clear_all(void)
+{
+	this->m_window = nullptr;
+	this->m_gisview = nullptr;
+	this->m_parent_layer = nullptr;
+
+	if (m_trw_is_allocated) {
+		delete this->m_trw;
+		m_trw_is_allocated = false;
+	}
+	this->m_trw = nullptr;
+
+	this->m_trk = nullptr;
 }
 
 
@@ -547,9 +624,7 @@ LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer
 		qDebug() << SG_PREFIX_E << "Parent layer has wrong kind" << parent_layer->m_kind;
 	}
 
-	this->ctx.m_window = window;
-	this->ctx.m_gisview = gisview;
-	this->ctx.m_parent_layer = parent_layer;
+	this->ctx.set_main_fields(window, gisview, parent_layer);
 }
 
 
@@ -565,10 +640,8 @@ LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer
 		qDebug() << SG_PREFIX_E << "'existing trw' layer has wrong kind" << existing_trw->m_kind;
 	}
 
-	this->ctx.m_window = window;
-	this->ctx.m_gisview = gisview;
-	this->ctx.m_parent_layer = parent_layer;
-	this->ctx.m_trw = existing_trw;
+	this->ctx.set_main_fields(window, gisview, parent_layer);
+	this->ctx.set_trw_field(existing_trw);
 }
 
 
@@ -576,11 +649,11 @@ LayerTRWImporter::LayerTRWImporter(Window * window, GisViewport * gisview, Layer
 
 sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 {
-	if (nullptr == this->ctx.m_trw) {
+	if (nullptr == this->ctx.get_trw()) {
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but existing TRW is not set";
 		return sg_ret::err;
 	}
-	if (nullptr == this->ctx.m_parent_layer) {
+	if (nullptr == this->ctx.get_parent_layer()) {
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but parent layer is not set";
 		return sg_ret::err;
 	}
@@ -593,7 +666,7 @@ sg_ret LayerTRWImporter::import_into_existing_layer(DataSource * data_source)
 
 sg_ret LayerTRWImporter::import_into_new_layer(DataSource * data_source)
 {
-	if (nullptr == this->ctx.m_parent_layer) {
+	if (nullptr == this->ctx.get_parent_layer()) {
 		qDebug() << SG_PREFIX_E << "Trying to import into existing layer, but parent layer is not set";
 		return sg_ret::err;
 	}
@@ -795,10 +868,10 @@ void LayerTRWImporter::import_into_existing_layer_from_file_cb(void) /* Slot. */
 
 void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	Geonames::create_wikipedia_waypoints(this->ctx.m_trw, this->ctx.m_gisview->get_bbox(), this->ctx.m_window);
+	Geonames::create_wikipedia_waypoints(this->ctx.get_trw(), this->ctx.get_gisview()->get_bbox(), this->ctx.get_window());
 
-	this->ctx.m_trw->waypoints.recalculate_bbox();
-	this->ctx.m_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
+	this->ctx.get_trw()->waypoints.recalculate_bbox();
+	this->ctx.get_trw()->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }
 
 
@@ -806,8 +879,8 @@ void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewp
 
 void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	Geonames::create_wikipedia_waypoints(this->ctx.m_trw, this->ctx.m_trw->get_bbox(), this->ctx.m_window);
+	Geonames::create_wikipedia_waypoints(this->ctx.get_trw(), this->ctx.get_trw()->get_bbox(), this->ctx.get_window());
 
-	this->ctx.m_trw->waypoints.recalculate_bbox();
-	this->ctx.m_trw->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
+	this->ctx.get_trw()->waypoints.recalculate_bbox();
+	this->ctx.get_trw()->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }

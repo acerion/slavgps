@@ -81,7 +81,7 @@ sg_ret LayerTRWBabelFilter::add_babel_filters_for_layer_submenu(QMenu & submenu)
 {
 	this->add_babel_filters_to_submenu(submenu, DataSourceBabelFilter::Type::TRWLayer);
 
-	this->ctx.m_trk = g_babel_filter_track;
+	this->ctx.set_track_field(g_babel_filter_track);
 	if (nullptr == g_babel_filter_track) {
 		/* Build empty submenu to suggest to user that it's
 		   possible to select a track and do filtering with

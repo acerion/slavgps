@@ -44,7 +44,7 @@ using namespace SlavGPS;
 
 sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 {
-	if (nullptr == this->ctx.m_trw) {
+	if (nullptr == this->ctx.get_trw()) {
 		qDebug() << SG_PREFIX_E << "Trying to add submenu items when existing TRW is not set";
 		return sg_ret::err;
 	}
@@ -95,7 +95,7 @@ sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_file_cb()));
 	qa->setToolTip(QObject::tr("From &File (With GPSBabel)..."));
 
-	ExternalToolDataSource::add_menu_items(submenu, this->ctx.m_trw->get_window()->get_main_gis_view());
+	ExternalToolDataSource::add_menu_items(submenu, this->ctx.get_trw()->get_window()->get_main_gis_view());
 
 	return sg_ret::ok;
 }
@@ -156,7 +156,7 @@ sg_ret LayerTRWImporter::add_import_into_new_layer_submenu(QMenu & submenu)
 	qa->setToolTip(QObject::tr("Get a file from URL"));
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_url_cb(void)));
 
-	ExternalToolDataSource::add_menu_items(submenu, this->ctx.m_gisview);
+	ExternalToolDataSource::add_menu_items(submenu, this->ctx.get_gisview());
 
 	return sg_ret::ok;
 }

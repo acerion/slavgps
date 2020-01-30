@@ -113,7 +113,7 @@ AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContex
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
-	const LatLonBBoxStrings bbox_strings = acquire_context.m_gisview->get_bbox().values_to_c_strings();
+	const LatLonBBoxStrings bbox_strings = acquire_context.get_gisview()->get_bbox().values_to_c_strings();
 
 	/* Retrieve the specified page number. */
 	const int page = this->spin_box.value();
