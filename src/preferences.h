@@ -147,8 +147,11 @@ namespace SlavGPS {
 		static void uninit();
 		static void register_default_values();
 
-		static void show_window(QWidget * parent = NULL);
-		static bool save_to_file(void);
+		static void show_window(QWidget * parent_widget = nullptr);
+		static sg_ret save_to_file(void);
+
+		/* Call this function if saving of preferences fails. */
+		static void show_save_error_dialog(QWidget * parent_widget = nullptr);
 
 		/*
 		  Must be called first, before calling Preferences::register_parameter_instance().

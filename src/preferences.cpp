@@ -38,18 +38,14 @@
 
 
 
-#include "layer.h"
-#include "preferences.h"
+#include "dialog.h"
 #include "dir.h"
 #include "file.h"
-#include "util.h"
+#include "layer.h"
+#include "preferences.h"
 #include "ui_builder.h"
+#include "util.h"
 #include "vikutils.h"
-
-
-
-
-/* TODO_LATER: Handle variants of type "string list". */
 
 
 
@@ -314,6 +310,7 @@ static bool preferences_load_from_file()
 		}
 
 
+		/* TODO_LATER: Handle variants of type "string list". */
 		if (pref->param_value.type_id == SGVariantType::StringList) {
 			qDebug() << SG_PREFIX_E << "'string list' variant type not implemented, skipping parameter" << key;
 			continue;
@@ -345,16 +342,11 @@ bool Preferences::set_param_value(const QString & param_name, const SGVariant & 
 	if (pref->param_spec.type_id == SGVariantType::Pointer) {
 		return false;
 	}
-	if (pref->param_spec.type_id == SGVariantType::StringList) {
-		qDebug() << SG_PREFIX_E << "'string list' not implemented";
-		return false;
-	}
 	if (new_param_value.type_id != pref->param_spec.type_id) {
 		qDebug() << SG_PREFIX_E << "Mismatch of variant type for parameter" << param_name << new_param_value.type_id << pref->param_spec.type_id;
 		return false;
 	}
 
-	/* [] operator will return modifiable reference.  */
 	pref->param_value = new_param_value;
 
 	qDebug() << SG_PREFIX_I << "Set new value of parameter" << param_name << "=" << new_param_value;
@@ -365,24 +357,20 @@ bool Preferences::set_param_value(const QString & param_name, const SGVariant & 
 
 
 
-/**
-   Returns: true on success.
-
-   TODO_LATER: report errors to end user.
-*/
-bool Preferences::save_to_file(void)
+sg_ret Preferences::save_to_file(void)
 {
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_PREFERENCES_FILE);
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
-	if (!file) {
-		return false;
+	if (nullptr == file) {
+		qDebug() << SG_PREFIX_E << "Can't open preferences file" << full_path;
+		return sg_ret::err;
 	}
 	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
 	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
-		qDebug() << SG_PREFIX_E << "Failed to set permissions on" << full_path;
+		qDebug() << SG_PREFIX_E << "Failed to set permissions on preferences file" << full_path;
 		fclose(file);
-		return false;
+		return sg_ret::err;;
 	}
 
 
@@ -393,19 +381,23 @@ bool Preferences::save_to_file(void)
 			/* Internal preference that should not be saved to file. */
 			continue;
 		}
+
+		/* TODO: since some of preferences are sensitive
+		   (e.g. OSM password), don't forget to disable this
+		   debug. */
 		qDebug() << SG_PREFIX_I << "Saving param" << pref->param_spec.name << "=" << pref->param_value;
 		pref->param_value.write(file, pref->param_spec.name);
 	}
 	fclose(file);
-	file = NULL;
+	file = nullptr;
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
-void Preferences::show_window(QWidget * parent)
+void Preferences::show_window(QWidget * parent_widget)
 {
 	if (!preferences.loaded) {
 		qDebug() << SG_PREFIX_E << "Preferences haven't been loaded until now, this is bad";
@@ -413,7 +405,7 @@ void Preferences::show_window(QWidget * parent)
 		preferences.loaded = true;
 	}
 
-	PropertiesDialog dialog(QObject::tr("Preferences"), parent);
+	PropertiesDialog dialog(QObject::tr("Preferences"), parent_widget);
 	dialog.fill(&preferences);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
@@ -431,7 +423,9 @@ void Preferences::show_window(QWidget * parent)
 
 		Preferences::set_param_value(pref->param_name, new_param_value);
 	}
-	Preferences::save_to_file();
+	if (sg_ret::ok != Preferences::save_to_file()) {
+		Preferences::show_save_error_dialog(parent_widget);
+	}
 }
 
 
@@ -781,4 +775,12 @@ QString Preferences::get_startup_file(void)
 bool Preferences::get_check_version()
 {
 	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "check_version").u.val_bool;
+}
+
+
+
+
+void Preferences::show_save_error_dialog(QWidget * parent_widget)
+{
+	Dialog::error("Failed to properly save program preferences.", parent_widget);
 }

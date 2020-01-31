@@ -511,7 +511,7 @@ SGVariant value_string_to_sgvariant(const char * line, SGVariantType type_id)
 		   by this function. Values of such parameters that we
 		   read from file are added as simple strings to
 		   ::string_lists[], and then saved to layer at the
-		   end of processing of a layer. If we get here, it'
+		   end of processing of a layer. If we get here, it's
 		   an error. */
 		qDebug() << SG_PREFIX_E << "Attempting to process StringList in this function is an error; param value = " << line;
 		break;
@@ -632,7 +632,11 @@ void ReadParser::handle_layer_end(GisViewport * gisview)
 
 		/* Add to the layer any string lists we've accumulated. */
 		this->push_string_lists_to_layer(layer);
-		/* The layer is read, we don't need to store its StringList parameters. */
+
+		/* The layer is read, we don't need to keep its
+		   StringList parameters anymore. It could be even
+		   harmful if the next layer had StringList parameters
+		   with the same names. */
 		this->string_lists.clear();
 
 		qDebug() << "------- EndLayer for pair of first/second = " << this->layers_stack.first->get_name() << this->layers_stack.second->get_name();

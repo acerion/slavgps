@@ -334,7 +334,9 @@ void SGUtils::set_auto_features_on_first_run(void)
 #endif
 
 		/* Ensure settings are saved for next time. */
-		Preferences::save_to_file();
+		if (sg_ret::ok != Preferences::save_to_file()) {
+			Preferences::show_save_error_dialog();
+		}
 	}
 
 	/* Ensure defaults are saved if changed. */

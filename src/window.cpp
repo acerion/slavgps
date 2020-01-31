@@ -1544,7 +1544,9 @@ void Window::set_default_location_cb(void)
 	/* Push center coordinate values to Preferences */
 	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat));
 	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_lat_lon.lon));
-	Preferences::save_to_file();
+	if (sg_ret::ok != Preferences::save_to_file()) {
+		Preferences::show_save_error_dialog(this);
+	}
 }
 
 
