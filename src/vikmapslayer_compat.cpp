@@ -46,5 +46,5 @@ void SlavGPS::maps_layer_register_type(const QString & label, MapTypeID id, VikM
 {
 	assert (id == map_type->uniq_id);
 	VikMapType * object = new VikMapType(*map_type, label.toUtf8().constData());
-	MapSources::register_map_source((MapSource *) object);
+	MapSources::register_map_source_maker((MapSource *) object);
 }

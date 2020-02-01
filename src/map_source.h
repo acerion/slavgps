@@ -247,6 +247,14 @@ namespace SlavGPS {
 
 
 
+	/**
+	   Function returning a freshly allocated MapSource
+	*/
+	typedef MapSource * (* MapSourceMaker)(void);
+
+
+
+
 
 } /* namespace SlavGPS */
 

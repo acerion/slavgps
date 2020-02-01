@@ -122,7 +122,7 @@ static bool SCALE_SMALLER_ZOOM_FIRST = true;
 
 /****** MAP TYPES ******/
 
-static std::map<MapTypeID, MapSource *> map_source_interfaces;
+static std::map<MapTypeID, MapSourceMaker> map_source_makers;
 
 
 
@@ -360,31 +360,26 @@ void LayerMap::init(void)
 
    Override existing one (equality of id).
 */
-void MapSources::register_map_source(MapSource * map_source)
+void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & label)
 {
-	assert (map_source != NULL);
-
-	const MapTypeID map_type_id = map_source->map_type_id;
-	const QString label = map_source->get_label();
+	assert (nullptr != map_source_maker_fn);
 	assert (!label.isEmpty());
 
-	auto iter = map_source_interfaces.find(map_type_id);
-	if (iter == map_source_interfaces.end()) {
+	auto iter = map_source_makers.find(map_type_id);
+	if (iter == map_source_makers.end()) {
 		/* Add the map source as new. */
 
 		map_types_enum.values.push_back(SGLabelID(label, (int) map_type_id));
-		map_source_interfaces[map_type_id] = map_source;
+		map_source_makers[map_type_id] = map_source_maker_fn;
 		/* TODO_LATER: verify in application that properties dialog sees updated list of map types. */
 	} else {
 
 		/* Update (overwrite) existing entry. */
 
-		MapSource * old_map_source = map_source_interfaces[map_type_id];
-		map_source_interfaces[map_type_id] = map_source;
-		if (old_map_source) {
-			delete old_map_source;
-		} else {
-			qDebug() << SG_PREFIX_E << "Old map source was NULL";
+		MapSourceMaker previous = map_source_makers[map_type_id];
+		map_source_makers[map_type_id] = map_source_maker_fn;
+		if (nullptr == previous) {
+			qDebug() << SG_PREFIX_E << "Previous map source maker was NULL";
 		}
 
 		/* TODO_MAYBE: the concept of map types, and of updating it,
@@ -422,6 +417,8 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 	}
 
 	this->map_type_id = new_map_type_id;
+	delete this->m_map_source;
+	this->m_map_source = map_source_makers[this->map_type_id]();
 	return true;
 }
 
@@ -445,7 +442,7 @@ QString LayerMap::get_map_label(void) const
 	if (this->map_type_id == MapTypeID::Initial) {
 		return QObject::tr("Map Layer");
 	} else {
-		return map_source_interfaces[this->map_type_id]->get_label();
+		return this->m_map_source->get_label();
 	}
 }
 
@@ -519,7 +516,7 @@ void LayerMap::set_file_full_path(const QString & new_file_full_path)
 */
 bool MapSource::is_map_type_id_registered(MapTypeID map_type_id)
 {
-	return map_source_interfaces.end() != map_source_interfaces.find(map_type_id);
+	return map_source_makers.end() != map_source_makers.find(map_type_id);
 }
 
 
@@ -553,10 +550,15 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->set_file_full_path(data.val_string);
 		break;
 	case PARAM_MAP_TYPE_ID:
+		delete this->m_map_source;
+		this->m_map_source = nullptr;
+
 		if (!MapSource::is_map_type_id_registered((MapTypeID) data.u.val_int)) {
+			/* TODO_LATER: handle this better. */
 			qDebug() << SG_PREFIX_E << "Unknown map type" << data.u.val_int;
 		} else {
 			this->map_type_id = (MapTypeID) data.u.val_int;
+			this->m_map_source = map_source_makers[this->map_type_id]();
 
 			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
 			if (is_file_operation) {
@@ -565,11 +567,10 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 				/* Call to MapSource::is_map_type_id_registered()
 				   above guarantees that this map
 				   lookup is successful. */
-				const MapSource * map_source = map_source_interfaces[this->map_type_id];
-				if (map_source->get_license() != NULL) {
+				if (this->m_map_source->get_license() != NULL) {
 					/* Check if licence for this map type has been shown before. */
 					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->map_type_id)) {
-						maps_show_license(this->get_window(), map_source);
+						maps_show_license(this->get_window(), this->m_map_source);
 						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->map_type_id);
 					}
 				}
@@ -778,7 +779,7 @@ LayerMap::~LayerMap()
 	MapSourceArgs args;
 	args.sqlite_handle = &this->sqlite_handle;
 
-	map_source_interfaces[this->map_type_id]->close_map_source(args);
+	this->m_map_source->close_map_source(args); /* TODO: delete */
 }
 
 
@@ -786,13 +787,11 @@ LayerMap::~LayerMap()
 
 void LayerMap::post_read(GisViewport * gisview, bool from_file)
 {
-	MapSource * map_source = map_source_interfaces[this->map_type_id];
-
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		if (map_source->get_drawmode() != gisview->get_draw_mode()) {
-			const QString drawmode_name = GisViewportDrawModes::get_label_with_accelerator(map_source->get_drawmode());
+		if (this->m_map_source->get_drawmode() != gisview->get_draw_mode()) {
+			const QString drawmode_name = GisViewportDrawModes::get_label_with_accelerator(this->m_map_source->get_drawmode());
 			const QString msg = QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.").arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
 		}
@@ -805,10 +804,10 @@ void LayerMap::post_read(GisViewport * gisview, bool from_file)
 	args.sqlite_handle = &this->sqlite_handle;
 	args.parent_window = this->get_window();
 
-	map_source->post_read(args);
+	this->m_map_source->post_read(args);
 
 	/* If the on Disk OSM Tile Layout type. */
-	if (map_source->map_type_id == MapTypeID::OSMOnDisk) {
+	if (this->m_map_source->map_type_id == MapTypeID::OSMOnDisk) {
 		/* Copy the directory into filename.
 		   Thus the map cache look up will be unique when using more than one of these map types. */
 		this->file_full_path = this->cache_dir;
@@ -874,18 +873,16 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 	/* Not an error, simply the pixmap was not in a cache. Let's generate the pixmap. */
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
 	MapSourceArgs args;
 	args.sqlite_handle = &this->sqlite_handle;
 	args.map_type_string = map_type_string;
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
-	pixmap = map_source->get_tile_pixmap(map_cache_obj, tile_info, args);
+	pixmap = this->m_map_source->get_tile_pixmap(map_cache_obj, tile_info, args);
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
 
-		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, map_source->map_type_id,
+		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, this->m_map_source->map_type_id,
 					  this->alpha, pixmap_scale, this->file_full_path);
 	}
 
@@ -905,9 +902,8 @@ bool LayerMap::should_start_autodownload(GisViewport * gisview)
 	}
 
 	/* Don't attempt to download unsupported zoom levels. */
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 	const TileZoomLevel tile_zoom_level = gisview->get_viking_scale().to_tile_zoom_level();
-	if (!map_source->is_supported_tile_zoom_level(tile_zoom_level)) {
+	if (!this->m_map_source->is_supported_tile_zoom_level(tile_zoom_level)) {
 		return false;
 	}
 
@@ -1059,10 +1055,9 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	/* GisViewport's corner coordinates -> tiles info. */
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 	const VikingScale viking_scale(xmpp, ympp);
-	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
+	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		qDebug() << SG_PREFIX_E << "Failed to get tile info";
 		return sg_ret::err;
@@ -1085,7 +1080,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 	if ((!existence_only) && this->autodownload  && this->should_start_autodownload(gisview)) {
 		qDebug() << SG_PREFIX_D << "Starting autodownload";
-		if (!this->adl_only_missing && map_source->supports_download_only_new()) {
+		if (!this->adl_only_missing && this->m_map_source->supports_download_only_new()) {
 			/* Try to download newer tiles. */
 			this->start_download_thread(gisview, coord_ul, coord_br, MapDownloadMode::New);
 		} else {
@@ -1101,9 +1096,9 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	   set here. */
 	TileInfo tile_iter = tile_ul;
 
-	const QString map_type_string = map_source->get_map_type_string();
+	const QString map_type_string = this->m_map_source->get_map_type_string();
 	Coord coord;
-	if (map_source->get_tilesize_x() == 0 && !existence_only) {
+	if (this->m_map_source->get_tilesize_x() == 0 && !existence_only) {
 
 		for (tile_iter.x = unordered_tiles_range.x_first; tile_iter.x <= unordered_tiles_range.x_last; tile_iter.x++) {
 			for (tile_iter.y = unordered_tiles_range.y_first; tile_iter.y <= unordered_tiles_range.y_last; tile_iter.y++) {
@@ -1122,7 +1117,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				tile_geometry.width = tile_geometry.pixmap.width();
 				tile_geometry.height = tile_geometry.pixmap.height();
 
-				if (sg_ret::ok != map_source->tile_info_to_center_coord(tile_iter, coord)) {
+				if (sg_ret::ok != this->m_map_source->tile_info_to_center_coord(tile_iter, coord)) {
 					qDebug() << SG_PREFIX_E << "Can't get coord, continue";
 					continue;
 				}
@@ -1136,19 +1131,19 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 			}
 		}
 	} else {
-		const MapCacheObj map_cache_obj(map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
+		const MapCacheObj map_cache_obj(this->m_map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
 
 
 
 		/* Tile size is known, don't have to keep converting coords. */
 		TileGeometry tile_geometry;
-		const double tile_width_f = map_source->get_tilesize_x() * pixmap_scale.x;
-		const double tile_height_f = map_source->get_tilesize_y() * pixmap_scale.y;
+		const double tile_width_f = this->m_map_source->get_tilesize_x() * pixmap_scale.x;
+		const double tile_height_f = this->m_map_source->get_tilesize_y() * pixmap_scale.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		tile_geometry.width = ceil(tile_width_f);
 		tile_geometry.height = ceil(tile_height_f);
 
-		if (sg_ret::ok != map_source->tile_info_to_center_coord(tile_ul, coord)) {
+		if (sg_ret::ok != this->m_map_source->tile_info_to_center_coord(tile_ul, coord)) {
 			qDebug() << SG_PREFIX_E << "Can't get coord, return";
 			return sg_ret::err;
 		}
@@ -1181,7 +1176,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 			for (tile_iter.y = ordered_tiles_range.y_first; tile_iter.y != ordered_tiles_range.y_last; tile_iter.y += delta_y) {
 
 				if (existence_only) {
-					this->draw_existence(gisview, tile_iter, tile_geometry, map_source, map_cache_obj);
+					this->draw_existence(gisview, tile_iter, tile_geometry, map_cache_obj);
 				} else {
 					/* Try correct scale first. */
 					const int scale_factor = 1;
@@ -1252,17 +1247,15 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewpor
 
 void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected)
 {
-	MapSource * map_source = map_source_interfaces[this->map_type_id];
-
-	if (map_source->get_drawmode() != gisview->get_draw_mode()) {
+	if (this->m_map_source->get_drawmode() != gisview->get_draw_mode()) {
 		return;
 	}
 
 	/* Copyright. */
 	const LatLonBBox bbox = gisview->get_bbox();
-	map_source->add_copyright(gisview, bbox, gisview->get_viking_scale());
+	this->m_map_source->add_copyright(gisview, bbox, gisview->get_viking_scale());
 
-	gisview->add_logo(map_source->get_logo());
+	gisview->add_logo(this->m_map_source->get_logo());
 
 	/* Get corner coords. */
 	if (gisview->get_coord_mode() == CoordMode::UTM && ! gisview->get_is_one_utm_zone()) {
@@ -1295,12 +1288,10 @@ void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) boo
 
 void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
-	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) map_source << "map index" << (int) this->map_type_id;
+	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) this->m_map_source << "map index" << (int) this->map_type_id;
 
 	/* Don't ever attempt download on direct access. */
-	if (map_source->is_direct_file_access()) {
+	if (this->m_map_source->is_direct_file_access()) {
 		qDebug() << SG_PREFIX_I << "Not downloading, direct access";
 		return;
 	}
@@ -1308,15 +1299,15 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
-	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
+	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		qDebug() << SG_PREFIX_E << "Conversion coord to tile failed";
 		return;
 	}
 
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, true, map_download_mode);
 
 	if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
 		mdj->n_items = mdj->calculate_tile_count_to_download();
@@ -1325,7 +1316,7 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 	}
 
 	if (mdj->n_items) {
-		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
+		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
@@ -1337,10 +1328,8 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 
 void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
 	/* Don't ever attempt download on direct access. */
-	if (map_source->is_direct_file_access()) {
+	if (this->m_map_source->is_direct_file_access()) {
 		return;
 	}
 
@@ -1352,17 +1341,17 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 	TileInfo tile_ul;
 	TileInfo tile_br;
 
-	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
+	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile_info() failed";
 		return;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, true, map_download_mode);
 
 	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
-		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
+		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
@@ -1416,11 +1405,9 @@ void LayerMap::redownload_new_cb(void)
  */
 void LayerMap::tile_info_cb(void)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
         const VikingScale viking_scale = this->calculate_viking_scale(this->redownload_gisview);
 	TileInfo tile_info;
-	if (!map_source->coord_to_tile_info(this->redownload_ul, viking_scale, tile_info)) {
+	if (!this->m_map_source->coord_to_tile_info(this->redownload_ul, viking_scale, tile_info)) {
 		return;
 	}
 
@@ -1430,7 +1417,7 @@ void LayerMap::tile_info_cb(void)
 
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
 
-	const QStringList tile_info_strings = map_source->get_tile_description(map_cache_obj, tile_info, args);
+	const QStringList tile_info_strings = this->m_map_source->get_tile_description(map_cache_obj, tile_info, args);
 
 	Dialog::info(tr("Tile Information"), tile_info_strings, this->get_window());
 }
@@ -1588,12 +1575,11 @@ LayerTool::Status LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMou
 
 	LayerMap * layer = (LayerMap *) _layer;
 
-	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
 	const VikingScale viking_scale = layer->calculate_viking_scale(this->gisview);
-	if (map_source->get_drawmode() == this->gisview->get_draw_mode()
-	    && map_source->coord_to_tile_info(this->gisview->get_center_coord(),
-					      viking_scale,
-					      tmp)) {
+	if (layer->map_source()->get_drawmode() == this->gisview->get_draw_mode()
+	    && layer->map_source()->coord_to_tile_info(this->gisview->get_center_coord(),
+						       viking_scale,
+						       tmp)) {
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
@@ -1612,9 +1598,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
 	const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
 
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
-	const GisViewportDrawMode map_draw_mode = map_source->get_drawmode();
+	const GisViewportDrawMode map_draw_mode = this->m_map_source->get_drawmode();
 	const GisViewportDrawMode vp_draw_mode = gisview->get_draw_mode();
 
 	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
@@ -1622,8 +1606,8 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	if (map_draw_mode == vp_draw_mode
-	    && map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
-	    && map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
+	    && this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    && this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		this->start_download_thread(gisview, coord_ul, coord_br, map_download_mode);
 
@@ -1666,11 +1650,10 @@ void LayerMap::redownload_all_onscreen_maps_cb(void)
 
 void LayerMap::about_cb(void)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	if (map_source->get_license().isEmpty()) {
-		Dialog::info(map_source->get_label(), this->get_window());
+	if (this->m_map_source->get_license().isEmpty()) {
+		Dialog::info(this->m_map_source->get_label(), this->get_window());
 	} else {
-		maps_show_license(this->get_window(), map_source);
+		maps_show_license(this->get_window(), this->m_map_source);
 	}
 }
 
@@ -1682,9 +1665,7 @@ void LayerMap::about_cb(void)
  */
 int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-
-	if (map_source->is_direct_file_access()) {
+	if (this->m_map_source->is_direct_file_access()) {
 		return 0;
 	}
 
@@ -1695,13 +1676,13 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, cons
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
+	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile_info() failed";
 		return 0;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, false, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, false, map_download_mode);
 	int n_items = 0;
 
 	if (mdj->map_download_mode == MapDownloadMode::All) {
@@ -1903,7 +1884,7 @@ void LayerMap::download_all_cb(void)
 
 void LayerMap::flush_cb(void)
 {
-	MapCache::flush_type(map_source_interfaces[this->map_type_id]->map_type_id);
+	MapCache::flush_type(this->m_map_source->map_type_id);
 }
 
 
@@ -1918,7 +1899,7 @@ sg_ret LayerMap::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_missing_onscreen_maps_cb(void)));
 	menu.addAction(qa);
 
-	if (map_source_interfaces[this->map_type_id]->supports_download_only_new()) {
+	if (this->m_map_source->supports_download_only_new()) {
 		qa = new QAction(QObject::tr("Download &New Onscreen Maps"), this);
 		qa->setIcon(QIcon::fromTheme("edit-redo"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_new_onscreen_maps_cb(void)));
@@ -2142,12 +2123,12 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 
 
-void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj)
+void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj)
 {
 	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
-									map_source->map_type_id,
-									map_source->get_map_type_string(),
-									map_source->get_file_extension());
+									this->m_map_source->map_type_id,
+									this->m_map_source->get_map_type_string(),
+									this->m_map_source->get_file_extension());
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));

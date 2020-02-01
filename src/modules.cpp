@@ -91,10 +91,10 @@ using namespace SlavGPS;
 
 #ifdef K_FIXME_RESTORE
 
-static void modules_register_map_source(VikGobjectBuilder * self, MapSource * map_source)
+static void modules_register_map_source_maker(VikGobjectBuilder * self, MapSource * map_source)
 {
 	qDebug() << SG_PREFIX_D;
-	MapSources::register_map_source(map_source);
+	MapSources::register_map_source_maker(map_source);
 }
 
 

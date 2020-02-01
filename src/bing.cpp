@@ -43,13 +43,26 @@ using namespace SlavGPS;
 
 
 
+static MapSource * map_source_maker_bing(void);
+
+
+
+
 /* Initialization. */
 void Bing::init(void)
 {
 #ifdef VIK_CONFIG_BING
-	MapSources::register_map_source(new MapSourceBing(MapTypeID::BingAerial, QObject::tr("Bing Aerial"), API_KEY));
+	MapSources::register_map_source_maker(map_source_maker_bing, MapTypeID::BingAerial, QObject::tr("Bing Aerial"));
 
 	/* Allow opening web location. */
 	ExternalTools::register_tool(new OnlineService_center(QObject::tr("Bing"), "http://www.bing.com/maps/?v=2&cp=%1~%2&lvl=%3"));
 #endif
+}
+
+
+
+
+MapSource * map_source_maker_bing(void)
+{
+	return new MapSourceBing(MapTypeID::BingAerial, QObject::tr("Bing Aerial"), API_KEY);
 }

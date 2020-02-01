@@ -34,11 +34,29 @@ using namespace SlavGPS;
 
 
 
+#ifdef VIK_CONFIG_TERRASERVER
+MapSource * map_source_maker_terraserver_topos(void)
+{
+	return new MapSourceTerraserver(MapTypeID::TerraserverTopo, "Terraserver Topo");
+}
+MapSource * map_source_maker_terraserver_aerials(void)
+{
+	return new MapSourceTerraserver(MapTypeID::TerraserverAerial, "Terraserver Aerials");
+}
+MapSource * map_source_maker_terraserver_urban(void)
+{
+	return new MapSourceTerraserver(MapTypeID::TerraserverUrban, "Terraserver Urban Areas");
+}
+#endif
+
+
+
+
 void Terraserver::init(void)
 {
 #ifdef VIK_CONFIG_TERRASERVER
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverTopo, "Terraserver Topos"));
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverAerial, "Terraserver Aerials"));
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverUrban, "Terraserver Urban Areas"));
+	MapSources::register_map_source_maker(map_source_maker_terraserver_topos, MapTypeID::TerraserverTopo, "Terraserver Topo");
+	MapSources::register_map_source_maker(map_source_maker_terraserver_aerials, MapTypeID::TerraserverAerial, "Terraserver Aerial");
+	MapSources::register_map_source_maker(map_source_maker_terraserver_urban, MapTypeID::TerraserverUrban, "Terraserver Urban Areas");
 #endif
 }

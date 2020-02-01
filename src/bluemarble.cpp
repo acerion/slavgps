@@ -35,10 +35,9 @@ using namespace SlavGPS;
 
 
 
-/* Initialization. */
-void BlueMarble::init(void)
-{
 #ifdef VIK_CONFIG_BLUEMARBLE
+MapSource * map_source_maker_blue_marble(void)
+{
 	MapSource * bluemarble_type = new MapSourceSlippy(MapTypeID::BlueMarble, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
 	bluemarble_type->set_map_type_string("BlueMarble"); /* Non-translatable. */
 	bluemarble_type->set_supported_tile_zoom_level_range(0, 9);
@@ -49,6 +48,17 @@ void BlueMarble::init(void)
 	/* Credit/Copyright from: http://earthobservatory.nasa.gov/Features/BlueMarble/ */
 	/* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */
 
-	MapSources::register_map_source(bluemarble_type);
+	return bluemarble_type;
+}
+#endif
+
+
+
+
+/* Initialization. */
+void BlueMarble::init(void)
+{
+#ifdef VIK_CONFIG_BLUEMARBLE
+	MapSources::register_map_source_maker(map_source_maker_blue_marble, MapTypeID::BlueMarble, "BlueMarble");
 #endif
 }

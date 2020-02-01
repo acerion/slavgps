@@ -61,65 +61,29 @@ using namespace SlavGPS;
 #define SG_MODULE "OSM"
 
 
+static MapSource * map_source_maker_mapnik(void);
+static MapSource * map_source_maker_cycle(void);
+static MapSource * map_source_maker_transport(void);
+static MapSource * map_source_maker_mapquest(void);
+static MapSource * map_source_maker_humanitarian(void);
+static MapSource * map_source_maker_osm_on_disk(void);
+static MapSource * map_source_maker_mb_tiles(void);
+static MapSource * map_source_maker_osm_meta_tiles(void);
+
+
 
 
 /* Module initialisation. */
 void OSM::init(void)
 {
-	MapSource * mapnik_type = new MapSourceSlippy(MapTypeID::OSMMapnik, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
-	mapnik_type->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
-	mapnik_type->dl_options.check_file_server_time = false;
-	mapnik_type->dl_options.use_etag = true;
-	mapnik_type->set_supported_tile_zoom_level_range(0, 19);
-	mapnik_type->set_copyright("© OpenStreetMap contributors");
-	mapnik_type->set_license("CC-BY-SA");
-	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
-
-	MapSource * cycle_type = new MapSourceSlippy(MapTypeID::OSMCycle, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
-	cycle_type->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
-	cycle_type->dl_options.check_file_server_time = true;
-	cycle_type->dl_options.use_etag = false;
-	cycle_type->set_supported_tile_zoom_level_range(0, 18);
-	cycle_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
-	cycle_type->set_license("CC-BY-SA");
-	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
-
-	MapSource * transport_type = new MapSourceSlippy(MapTypeID::OSMTransport, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
-	transport_type->set_map_type_string("OSM-Transport"); /* Non-translatable. */
-	transport_type->dl_options.check_file_server_time = true;
-	transport_type->dl_options.use_etag = false;
-	transport_type->set_supported_tile_zoom_level_range(0, 18);
-	transport_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
-	transport_type->set_license("CC-BY-SA");
-	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
-
-	MapSource * mapquest_type = new MapSourceSlippy(MapTypeID::MapQuestOSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
-	mapquest_type->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
-	mapquest_type->dl_options.check_file_server_time = true;
-	mapquest_type->dl_options.use_etag = false;
-	mapquest_type->set_supported_tile_zoom_level_range(0, 19);
-	mapquest_type->set_copyright("Tiles Courtesy of MapQuest © OpenStreetMap contributors");
-	mapquest_type->set_license("MapQuest Specific");
-	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
-
-	MapSource * hot_type = new MapSourceSlippy(MapTypeID::OSMHumanitarian, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
-	hot_type->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
-	hot_type->dl_options.check_file_server_time = true;
-	hot_type->dl_options.use_etag = false;
-	hot_type->set_supported_tile_zoom_level_range(0, 20); /* Super detail! */
-	hot_type->set_copyright("© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
-	hot_type->set_license("CC-BY-SA");
-	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
-
-
-	MapSources::register_map_source(mapquest_type);
-	MapSources::register_map_source(mapnik_type);
-	MapSources::register_map_source(cycle_type);
-	MapSources::register_map_source(transport_type);
-	MapSources::register_map_source(hot_type);
-	MapSources::register_map_source(new MapSourceOSMOnDisk());
-	MapSources::register_map_source(new MapSourceMBTiles());
-	MapSources::register_map_source(new MapSourceOSMMetatiles());
+	MapSources::register_map_source_maker(map_source_maker_mapnik, MapTypeID::OSMMapnik, "OpenStreetMap (Mapnik)");
+	MapSources::register_map_source_maker(map_source_maker_cycle, MapTypeID::OSMCycle, "OpenStreetMap (Cycle)");
+	MapSources::register_map_source_maker(map_source_maker_transport, MapTypeID::OSMTransport, "OpenStreetMap (Transport)");
+	MapSources::register_map_source_maker(map_source_maker_mapquest, MapTypeID::MapQuestOSM, "OpenStreetMap (MapQuest)");
+	MapSources::register_map_source_maker(map_source_maker_humanitarian, MapTypeID::OSMHumanitarian, "OpenStreetMap (Humanitarian)");
+	MapSources::register_map_source_maker(map_source_maker_osm_on_disk, MapTypeID::OSMOnDisk, QObject::tr("On Disk OSM Tile Format"));
+	MapSources::register_map_source_maker(map_source_maker_mb_tiles, MapTypeID::MBTiles, QObject::tr("MBTiles File"));
+	MapSources::register_map_source_maker(map_source_maker_osm_meta_tiles, MapTypeID::OSMMetatiles, QObject::tr("OSM Metatiles"));
 
 
 	/* Online Services (formerly Webtools). */
@@ -312,4 +276,108 @@ QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cac
 	tile_info_add_file_info_strings(items, tile_file_full_path);
 
 	return items;
+}
+
+
+
+
+MapSource * map_source_maker_mapnik(void)
+{
+	MapSource * mapnik_type = new MapSourceSlippy(MapTypeID::OSMMapnik, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
+	mapnik_type->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
+	mapnik_type->dl_options.check_file_server_time = false;
+	mapnik_type->dl_options.use_etag = true;
+	mapnik_type->set_supported_tile_zoom_level_range(0, 19);
+	mapnik_type->set_copyright("© OpenStreetMap contributors");
+	mapnik_type->set_license("CC-BY-SA");
+	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
+	return mapnik_type;
+}
+
+
+
+
+MapSource * map_source_maker_cycle(void)
+{
+	MapSource * cycle_type = new MapSourceSlippy(MapTypeID::OSMCycle, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
+	cycle_type->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
+	cycle_type->dl_options.check_file_server_time = true;
+	cycle_type->dl_options.use_etag = false;
+	cycle_type->set_supported_tile_zoom_level_range(0, 18);
+	cycle_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	cycle_type->set_license("CC-BY-SA");
+	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
+	return cycle_type;
+}
+
+
+
+
+MapSource * map_source_maker_transport(void)
+{
+	MapSource * transport_type = new MapSourceSlippy(MapTypeID::OSMTransport, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
+	transport_type->set_map_type_string("OSM-Transport"); /* Non-translatable. */
+	transport_type->dl_options.check_file_server_time = true;
+	transport_type->dl_options.use_etag = false;
+	transport_type->set_supported_tile_zoom_level_range(0, 18);
+	transport_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	transport_type->set_license("CC-BY-SA");
+	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
+	return transport_type;
+}
+
+
+
+
+MapSource * map_source_maker_mapquest(void)
+{
+	MapSource * mapquest_type = new MapSourceSlippy(MapTypeID::MapQuestOSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
+	mapquest_type->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
+	mapquest_type->dl_options.check_file_server_time = true;
+	mapquest_type->dl_options.use_etag = false;
+	mapquest_type->set_supported_tile_zoom_level_range(0, 19);
+	mapquest_type->set_copyright("Tiles Courtesy of MapQuest © OpenStreetMap contributors");
+	mapquest_type->set_license("MapQuest Specific");
+	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
+	return mapquest_type;
+}
+
+
+
+
+MapSource * map_source_maker_humanitarian(void)
+{
+	MapSource * hot_type = new MapSourceSlippy(MapTypeID::OSMHumanitarian, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
+	hot_type->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
+	hot_type->dl_options.check_file_server_time = true;
+	hot_type->dl_options.use_etag = false;
+	hot_type->set_supported_tile_zoom_level_range(0, 20); /* Super detail! */
+	hot_type->set_copyright("© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
+	hot_type->set_license("CC-BY-SA");
+	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
+	return hot_type;
+}
+
+
+
+
+MapSource * map_source_maker_osm_on_disk(void)
+{
+	return new MapSourceOSMOnDisk();
+}
+
+
+
+
+MapSource * map_source_maker_mb_tiles(void)
+{
+	return new MapSourceMBTiles();
+}
+
+
+
+
+MapSource * map_source_maker_osm_meta_tiles(void)
+{
+	return new MapSourceOSMMetatiles();
 }

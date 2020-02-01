@@ -181,6 +181,8 @@ namespace SlavGPS {
 		*/
 		static void draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height);
 
+		MapSource * map_source(void) const { return this->m_map_source; };
+
 
 		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
@@ -224,12 +226,14 @@ namespace SlavGPS {
 		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 
-		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj);
+		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj);
 
 		bool should_start_autodownload(GisViewport * gisview);
 
 		QPixmap get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & scale);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
+
+		MapSource * m_map_source = nullptr;
 
 	public slots:
 		void download_all_cb(void);
@@ -267,7 +271,7 @@ namespace SlavGPS {
 
 	class MapSources {
 	public:
-		static void register_map_source(MapSource * map_source);
+		static void register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & label);
 	};
 
 
