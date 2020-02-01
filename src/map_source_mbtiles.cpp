@@ -30,9 +30,9 @@
 
 
 
-#include "map_source_mbtiles.h"
-#include "globals.h"
 #include "dialog.h"
+#include "globals.h"
+#include "map_source_mbtiles.h"
 #include "map_utils.h"
 
 
@@ -44,6 +44,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+static void get_mbtiles_z_x_y(const TileInfo & tile_info, int & z, int & x, int & y);
 
 
 
@@ -82,27 +87,13 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QPixmap MapSourceMBTiles::get_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	QPixmap result;
 
 #ifdef HAVE_SQLITE3_H
 	if (this->sqlite_handle) {
-
-#if 0
-		const QString statement = QString("SELECT name FROM sqlite_master WHERE type='table';");
-		char *errMsg = nullptr;
-		int ans = sqlite3_exec(this->sqlite_handle, statement.toUtf8().constData(), sql_select_tile_dump_cb, pixmap, &errMsg);
-		if (ans != SQLITE_OK) {
-			// Only to console for information purposes only
-			qDebug() << SG_PREFIX_W << "SQL problem:" << ans << "for" << statement << "- error:" << errMsg;
-			sqlite3_free(errMsg);
-		}
-#endif
-
-		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
-		   Hence this specific function. */
-		result = create_pixmap_sql_exec(tile_info);
+		result = this->create_pixmap_sql_exec(tile_info);
 	}
 #endif
 
@@ -130,15 +121,20 @@ static int sql_select_tile_dump_cb(__attribute__((unused)) void * data, int cols
 
 QPixmap MapSourceMBTiles::create_pixmap_sql_exec(const TileInfo & tile_info) const
 {
-	const int xx = tile_info.x;
-	const int yy = tile_info.y;
-	const int tile_zoom_level = tile_info.get_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
+	/* Reading BLOBS is a bit more involved and so can't use the
+	   simpler sqlite3_exec().  Hence this specific function. */
 
 	QPixmap pixmap;
 
-	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
-	const int flip_y = (int) pow(2, tile_zoom_level) - 1 - yy;
-	const QString statement = QString("SELECT tile_data FROM tiles WHERE zoom_level=%1 AND tile_column=%2 AND tile_row=%3;").arg(tile_zoom_level).arg(xx).arg(flip_y);
+	if (nullptr == this->sqlite_handle) {
+		qDebug() << SG_PREFIX_E << "Called the function for NULL handle";
+		return pixmap;
+	}
+
+	int z, x, y;
+	get_mbtiles_z_x_y(tile_info, z, x, y);
+
+	const QString statement = QString("SELECT tile_data FROM tiles WHERE zoom_level=%1 AND tile_column=%2 AND tile_row=%3;").arg(z).arg(x).arg(y);
 	qDebug() << SG_PREFIX_I << "Statement =" << statement;
 
 	bool finished = false;
@@ -183,7 +179,7 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(const TileInfo & tile_info) con
 			break;
 		}
 	}
-	sqlite3_finalize(sql_stmt); /* TODO_LATER: check returned value? */
+	sqlite3_finalize(sql_stmt);
 
 	return pixmap;
 }
@@ -192,7 +188,7 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(const TileInfo & tile_info) con
 
 
 
-QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
+QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 #ifdef HAVE_SQLITE3_H
 
@@ -202,18 +198,17 @@ QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const
 	}
 	const QString exists = pixmap.isNull() ? QObject::tr("Doesn't exist") : QObject::tr("Exists");
 
+	int z, x, y;
+	get_mbtiles_z_x_y(tile_info, z, x, y);
 
-	const int tile_zoom_level = tile_info.scale.get_tile_zoom_level();
-	const int flip_y = (int) pow(2, tile_zoom_level) - 1 - tile_info.y; /* TODO_LATER: wrap this in function. This calculation appears twice (or more) in this file. */
-	/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
 	QString source = QObject::tr("Source: %1 (%2%3%4%5%6.%7 %8)")
-		.arg(args.tile_file_full_path)
-		.arg(tile_zoom_level)
+		.arg(this->mbtiles_file_full_path)
+		.arg(z)
 		.arg(QDir::separator())
-		.arg(tile_info.x)
+		.arg(x)
 		.arg(QDir::separator())
-		.arg(flip_y)
-		.arg("png")
+		.arg(y)
+		.arg("png") /* TODO_LATER: hardcoded image extension! */
 		.arg(exists);
 #else
 	QString source = QObject::tr("Source: Not available");
@@ -228,13 +223,14 @@ QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const
 
 
 
-sg_ret MapSourceMBTiles::open_map_source(const MapSourceArgs & args, QString & error_message)
+sg_ret MapSourceMBTiles::open_map_source(const MapSourceParameters & source_params, QString & error_message)
 {
-	const int ans = sqlite3_open_v2(args.tile_file_full_path.toUtf8().constData(),
+	const int ans = sqlite3_open_v2(source_params.full_path.toUtf8().constData(),
 					&this->sqlite_handle,
 					SQLITE_OPEN_READONLY,
 					nullptr);
 	if (ans == SQLITE_OK) {
+		this->mbtiles_file_full_path = source_params.full_path;
 		return sg_ret::ok;
 	} else {
 		const QString sqlite_error_string = sqlite3_errmsg(this->sqlite_handle);
@@ -242,7 +238,7 @@ sg_ret MapSourceMBTiles::open_map_source(const MapSourceArgs & args, QString & e
 
 		error_message = QObject::tr("Failed to open MBTiles file.\n"
 					    "Path: %1\n"
-					    "Error: %2").arg(args.tile_file_full_path).arg(sqlite_error_string);
+					    "Error: %2").arg(source_params.full_path).arg(sqlite_error_string);
 
 		this->sqlite_handle = nullptr;
 		return sg_ret::err;
@@ -255,7 +251,10 @@ sg_ret MapSourceMBTiles::open_map_source(const MapSourceArgs & args, QString & e
 sg_ret MapSourceMBTiles::close_map_source(void)
 {
 	if (this->sqlite_handle) {
-		const int ans = sqlite3_close(this->sqlite_handle); /* TODO_LATER: other sqlite functions in this file have v2 postfix, but not this one. Is this ok? */
+		/* Notice that we don't call here sqlite3_close_v2()
+		   as it is (according to documentation in header)
+		   intended for use in garbage-collected languages. */
+		const int ans = sqlite3_close(this->sqlite_handle);
 		if (ans != SQLITE_OK) {
 			/* Only to console for information purposes only. */
 			qDebug() << SG_PREFIX_E << "Failed to properly close map source:" << ans << sqlite3_errmsg(this->sqlite_handle);
@@ -264,4 +263,16 @@ sg_ret MapSourceMBTiles::close_map_source(void)
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+void get_mbtiles_z_x_y(const TileInfo & tile_info, int & z, int & x, int & y)
+{
+	z = tile_info.get_osm_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
+	x = tile_info.x;
+	y = (int) pow(2, z) - 1 - tile_info.y; /* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
+
+	return;
 }

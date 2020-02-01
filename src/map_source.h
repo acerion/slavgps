@@ -39,10 +39,6 @@
 #include "viewport.h"
 #include "lat_lon.h"
 
-#ifdef HAVE_SQLITE3_H
-#include "sqlite3.h"
-#endif
-
 
 
 
@@ -102,10 +98,16 @@ namespace SlavGPS {
 
 
 
-	class MapSourceArgs {
+	class MapSourceParameters {
 	public:
-		QString map_type_string; /* May be an empty string, and may be different than source's type string. */
-		QString tile_file_full_path;
+		/*
+		  If in layer's properties dialog window there is some
+		  path (e.g. to dir or to window), this member should
+		  store it.
+
+		  For now it is used only by MBTiles map source.
+		*/
+		QString full_path;
 	};
 
 
@@ -160,11 +162,11 @@ namespace SlavGPS {
 		uint16_t get_tilesize_y(void) const;
 		GisViewportDrawMode get_drawmode(void) const;
 
-		virtual sg_ret open_map_source(__attribute__((unused)) const MapSourceArgs & args, __attribute__((unused)) QString & error_message) { return sg_ret::ok; }
+		virtual sg_ret open_map_source(__attribute__((unused)) const MapSourceParameters & args, __attribute__((unused)) QString & error_message) { return sg_ret::ok; }
 		virtual sg_ret close_map_source(void) { return sg_ret::ok; };
 
-		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
-		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
+		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const;
+		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const;
 
 
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;

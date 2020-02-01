@@ -25,6 +25,13 @@
 
 
 
+#ifdef HAVE_SQLITE3_H
+#include <sqlite3.h>
+#endif
+
+
+
+
 #include "map_source_slippy.h"
 
 
@@ -41,15 +48,22 @@ namespace SlavGPS {
 		MapSourceMBTiles();
 		~MapSourceMBTiles();
 
-		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
-		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
+		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
+		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
 
-		sg_ret open_map_source(const MapSourceArgs & args, QString & error_message) override;
+		sg_ret open_map_source(const MapSourceParameters & source_params, QString & error_message) override;
 		sg_ret close_map_source(void) override;
 
-
 	private:
+
+		/* Get tile pixmap from opened sqlite database.  Call
+		   the function only when you are sure that the sqlite
+		   is non-null and valid. */
 		QPixmap create_pixmap_sql_exec(const TileInfo & tile_info) const;
+
+		/* Full path to *.mbtiles file - from layer's properties window. */
+		QString mbtiles_file_full_path;
+
 #ifdef HAVE_SQLITE3_H
 		sqlite3 * sqlite_handle = nullptr;
 #endif

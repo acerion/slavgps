@@ -526,7 +526,7 @@ TileZoomLevel VikingScale::to_tile_zoom_level(void) const
 	__attribute__((unused)) const double mpp = this->x;
 
 	const TileScale tile_scale = this->to_tile_scale();
-	int tile_zoom_level = tile_scale.get_tile_zoom_level();
+	int tile_zoom_level = tile_scale.get_osm_tile_zoom_level();
 	if (tile_zoom_level < (int) TileZoomLevels::MaxZoomOut) {
 		tile_zoom_level = (int) TileZoomLevels::Default;
 	}

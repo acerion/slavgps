@@ -618,7 +618,7 @@ sg_ret LayerMapnik::post_read(__attribute__((unused)) GisViewport * gisview, boo
 
 static QString get_pixmap_full_path(const QString dir, int x, int y, const TileScale & scale)
 {
-	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg(scale.get_tile_zoom_level()).arg(x).arg(y));
+	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg(scale.get_osm_tile_zoom_level()).arg(x).arg(y));
 }
 
 

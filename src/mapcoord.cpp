@@ -98,14 +98,14 @@ sg_ret TileInfo::get_itms_lat_lon_ul_br(LatLon & lat_lon_ul, LatLon & lat_lon_br
 
 QDebug SlavGPS::operator<<(QDebug debug, const TileInfo & tile_info)
 {
-	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", zoom level =" << tile_info.get_tile_zoom_level();
+	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", OSM zoom level =" << tile_info.get_osm_tile_zoom_level();
 	return debug;
 }
 
 
 
 
-int TileScale::get_tile_zoom_level(void) const
+int TileScale::get_osm_tile_zoom_level(void) const
 {
 	return MAGIC_SEVENTEEN - this->value;
 }

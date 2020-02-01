@@ -42,10 +42,6 @@
 #include "map_cache.h"
 #include "mapcoord.h"
 
-#ifdef HAVE_SQLITE3_H
-#include "sqlite3.h"
-#endif
-
 
 
 
@@ -214,23 +210,25 @@ namespace SlavGPS {
 		GisViewport * redownload_gisview = NULL;
 		QString file_full_path;
 
-#ifdef HAVE_SQLITE3_H
-		sqlite3 * sqlite_handle = NULL;
-#endif
-
 	private:
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 
-		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string, int scale_factor);
-		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
-		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
+		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, int scale_factor);
+		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale);
+		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale);
 
 		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj);
 
 		bool should_start_autodownload(GisViewport * gisview);
 
-		QPixmap get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & scale);
+		/*
+		  Get pixmap of a tile, either from cache, or (if
+		  pixmap is not found in cache) get it from
+		  source.
+		*/
+		QPixmap get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & scale);
+
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
 
 		MapSource * m_map_source = nullptr;

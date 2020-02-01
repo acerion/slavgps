@@ -503,7 +503,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
+QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	QStringList items;
 
@@ -524,7 +524,7 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, __attribute__((unused)) const MapSourceArgs & args) const
+QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
 										   this->map_type_id,

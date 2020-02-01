@@ -515,7 +515,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 
 	switch (this->layout) {
 	case MapCacheLayout::OSM:
-		tile_zoom_level = tile_info.get_tile_zoom_level(); /* OSM map cache layout, therefore get tile zoom level used by OSM. */
+		tile_zoom_level = tile_info.get_osm_tile_zoom_level(); /* OSM map cache layout, therefore get tile zoom level used by OSM. */
 		if (map_type_string.isEmpty()) {
 			result = QString("%1%2%3%4%5%6%7")
 				.arg(this->dir_full_path)

@@ -134,7 +134,7 @@ sg_ret MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & 
 const QString MapSourceSlippy::get_server_path(const TileInfo & src) const
 {
 	QString uri;
-	const int tile_zoom_level = src.scale.get_tile_zoom_level();
+	const int tile_zoom_level = src.scale.get_osm_tile_zoom_level();
 	if (this->switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
 		uri = QString(this->server_path_format).arg(tile_zoom_level).arg(src.y).arg(src.x);

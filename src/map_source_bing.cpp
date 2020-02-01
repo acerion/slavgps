@@ -183,7 +183,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
-	const QString quadtree = compute_quad_tree(src.scale.get_tile_zoom_level(), src.x, src.y);
+	const QString quadtree = compute_quad_tree(src.scale.get_osm_tile_zoom_level(), src.x, src.y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;
@@ -213,8 +213,8 @@ void MapSourceBing::add_copyright(GisViewport * gisview, const LatLonBBox & bbox
 		const BingImageryProvider * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bbox.south, current->bbox.north, current->bbox.east, current->bbox.west, current->zoom_min, current->zoom_max); */
 		if (bbox.intersects_with(current->bbox) &&
-		    (tile_scale.get_tile_zoom_level()) > current->zoom_min &&
-		    (tile_scale.get_tile_zoom_level()) < current->zoom_max) {
+		    (tile_scale.get_osm_tile_zoom_level()) > current->zoom_min &&
+		    (tile_scale.get_osm_tile_zoom_level()) < current->zoom_max) {
 
 			gisview->add_attribution(current->attribution);
 			qDebug() << SG_PREFIX_D << "Found match:" << current->attribution;

@@ -53,7 +53,7 @@
 #include "window.h"
 #include "map_source.h"
 #include "map_source_slippy.h"
-#include "map_source_mbtiles.h"
+//#include "map_source_mbtiles.h"
 #include "vikutils.h"
 #include "map_utils.h"
 #include "map_cache.h"
@@ -71,10 +71,6 @@
 #include "util.h"
 #include "statusbar.h"
 #include "viewport_internal.h"
-
-#ifdef HAVE_SQLITE3_H
-#include "sqlite3.h"
-#endif
 
 
 
@@ -796,11 +792,11 @@ sg_ret LayerMap::post_read(GisViewport * gisview, bool from_file)
 
 	/* Performed in post read as we now know the map type. */
 
-	MapSourceArgs args;
-	args.tile_file_full_path = this->file_full_path;
+	MapSourceParameters source_params;
+	source_params.full_path = this->file_full_path;
 
 	QString open_err;
-	if (sg_ret::ok != this->m_map_source->open_map_source(args, open_err)) {
+	if (sg_ret::ok != this->m_map_source->open_map_source(source_params, open_err)) {
 		Dialog::error(open_err, this->get_window());
 		/* TODO_LATER: now what? How to handle failure of MapSource::post_read()? */
 		return sg_ret::err;
@@ -862,7 +858,7 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale
 
 
 
-QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & pixmap_scale)
+QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & pixmap_scale)
 {
 	/* Get the thing. */
 	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, pixmap_scale, this->file_full_path);
@@ -874,10 +870,8 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 	/* Not an error, simply the pixmap was not in a cache. Let's generate the pixmap. */
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
-	MapSourceArgs args;
-	args.map_type_string = map_type_string;
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
-	pixmap = this->m_map_source->get_tile_pixmap(map_cache_obj, tile_info, args);
+	pixmap = this->m_map_source->get_tile_pixmap(map_cache_obj, tile_info);
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
@@ -932,8 +926,7 @@ bool LayerMap::should_start_autodownload(GisViewport * gisview)
 
 TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
 					     const TileGeometry & tile_geometry,
-					     const PixmapScale & pixmap_scale,
-					     const QString & map_type_string)
+					     const PixmapScale & pixmap_scale)
 {
 	TileGeometry result;
 
@@ -947,7 +940,7 @@ TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
 		PixmapScale scaled_pixmap_scale = pixmap_scale;
 		scaled_pixmap_scale.scale_down(scale_factor);
 
-		result.pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scaled_pixmap_scale);
+		result.pixmap = this->get_tile_pixmap(scaled_tile_iter, scaled_pixmap_scale);
 		if (!result.pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
 
@@ -971,8 +964,7 @@ TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
 
 TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 					   const TileGeometry & tile_geometry,
-					   const PixmapScale & pixmap_scale,
-					   const QString & map_type_string)
+					   const PixmapScale & pixmap_scale)
 {
 	TileGeometry result;
 
@@ -995,7 +987,7 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				result.pixmap = this->get_tile_pixmap(map_type_string, ulm3, scaled_pixmap_scale);
+				result.pixmap = this->get_tile_pixmap(ulm3, scaled_pixmap_scale);
 				if (!result.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
 
@@ -1096,7 +1088,6 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	   set here. */
 	TileInfo tile_iter = tile_ul;
 
-	const QString map_type_string = this->m_map_source->get_map_type_string();
 	Coord coord;
 	if (this->m_map_source->get_tilesize_x() == 0 && !existence_only) {
 
@@ -1105,7 +1096,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 				TileGeometry tile_geometry;
 
-				tile_geometry.pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
+				tile_geometry.pixmap = this->get_tile_pixmap(tile_iter, pixmap_scale);
 				if (tile_geometry.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_W << "Pixmap not found";
 					continue;
@@ -1187,7 +1178,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 					   scaled_pixmap_scale = scale.scale_down(scale_factor);
 					*/
 
-					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
+					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
 						gisview->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
@@ -1411,12 +1402,9 @@ void LayerMap::tile_info_cb(void)
 		return;
 	}
 
-	MapSourceArgs args;
-	args.tile_file_full_path = this->file_full_path;
-
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
 
-	const QStringList tile_info_strings = this->m_map_source->get_tile_description(map_cache_obj, tile_info, args);
+	const QStringList tile_info_strings = this->m_map_source->get_tile_description(map_cache_obj, tile_info);
 
 	Dialog::info(tr("Tile Information"), tile_info_strings, this->get_window());
 }
@@ -2084,11 +2072,11 @@ void TileGeometry::scale_up(int scale_factor)
 
 
 
-TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string, int scale_factor)
+TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, int scale_factor)
 {
 	TileGeometry result;
 
-	result.pixmap = this->get_tile_pixmap(map_type_string, tile_info, pixmap_scale);
+	result.pixmap = this->get_tile_pixmap(tile_info, pixmap_scale);
 	if (!result.pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
 
@@ -2104,14 +2092,14 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 		/* Otherwise try different scales. */
 		if (SCALE_SMALLER_ZOOM_FIRST) {
-			result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale);
 			if (result.pixmap.isNull()) {
-				result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+				result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale);
 			}
 		} else {
-			result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale);
 			if (result.pixmap.isNull()) {
-				result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+				result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale);
 			}
 		}
 	}
