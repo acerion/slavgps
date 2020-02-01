@@ -3225,7 +3225,7 @@ Time LayerTRW::get_timestamp(void) const
 
 
 
-void LayerTRW::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
+sg_ret LayerTRW::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
 {
 	if (this->tree_view) {
 		this->generate_missing_thumbnails();
@@ -3259,6 +3259,8 @@ void LayerTRW::post_read(__attribute__((unused)) GisViewport * gisview, __attrib
 			this->metadata->iso8601_timestamp = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 

@@ -106,12 +106,6 @@ namespace SlavGPS {
 	public:
 		QString map_type_string; /* May be an empty string, and may be different than source's type string. */
 		QString tile_file_full_path;
-
-		QWidget * parent_window = NULL;
-
-#ifdef HAVE_SQLITE3_H
-		sqlite3 ** sqlite_handle = NULL;
-#endif
 	};
 
 
@@ -166,10 +160,13 @@ namespace SlavGPS {
 		uint16_t get_tilesize_y(void) const;
 		GisViewportDrawMode get_drawmode(void) const;
 
+		virtual sg_ret open_map_source(__attribute__((unused)) const MapSourceArgs & args, __attribute__((unused)) QString & error_message) { return sg_ret::ok; }
+		virtual sg_ret close_map_source(void) { return sg_ret::ok; };
+
 		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
-		virtual void close_map_source(__attribute__((unused)) MapSourceArgs & args) { return; }
-		virtual void post_read(__attribute__((unused)) MapSourceArgs & args) { return; }
+
+
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;
 
 		bool is_direct_file_access(void) const;

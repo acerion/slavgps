@@ -477,9 +477,9 @@ Layer::Layer()
 
 
 
-void Layer::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
+sg_ret Layer::post_read(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool from_file)
 {
-	return;
+	return sg_ret::ok;
 }
 
 

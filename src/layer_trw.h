@@ -116,7 +116,7 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void post_read(GisViewport * gisview, bool from_file);
+		sg_ret post_read(GisViewport * gisview, bool from_file) override;
 		QString get_tooltip(void) const;
 
 

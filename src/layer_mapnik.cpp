@@ -583,12 +583,12 @@ sg_ret LayerMapnik::carto_load(void)
 
 
 
-void LayerMapnik::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
+sg_ret LayerMapnik::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
 {
 	if (this->should_run_carto()) {
 		/* Don't load the XML config if carto load fails. */
 		if (sg_ret::ok != this->carto_load()) {
-			return;
+			return sg_ret::ok;
 		}
 	}
 
@@ -606,8 +606,10 @@ void LayerMapnik::post_read(__attribute__((unused)) GisViewport * gisview, bool 
 			   that yet). */
 			update_desktop_recent_documents(this->get_window(), this->xml_map_file_full_path, g_mapnik_xml_mime_type);
 		}
+		return sg_ret::ok;
 	} else {
 		Dialog::error(tr("Mapnik error during loading configuration file:\n%1").arg(msg), this->get_window());
+		return sg_ret::err;
 	}
 }
 

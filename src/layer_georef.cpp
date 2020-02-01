@@ -476,11 +476,11 @@ bool LayerGeoref::show_properties_dialog(GisViewport * gisview)
 
 
 /* Also known as LayerGeoref::load_image(). */
-void LayerGeoref::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
+sg_ret LayerGeoref::post_read(__attribute__((unused)) GisViewport * gisview, bool from_file)
 {
 	if (this->image_file_full_path.isEmpty()) {
 		qDebug() << SG_PREFIX_I << "Not loading image, file path is empty";
-		return;
+		return sg_ret::ok;
 	}
 	qDebug() << SG_PREFIX_I << "Will try to load image from" << this->image_file_full_path;
 
@@ -506,7 +506,8 @@ void LayerGeoref::post_read(__attribute__((unused)) GisViewport * gisview, bool 
 		}
 	}
 
-	/* Should find length and width here too. */
+	/* TODO: Should find length and width here too. */
+	return sg_ret::ok;
 }
 
 

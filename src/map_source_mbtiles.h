@@ -2,7 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,11 +43,16 @@ namespace SlavGPS {
 
 		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
-		void close_map_source(MapSourceArgs & args) override;
-		void post_read(MapSourceArgs & args) override;
+
+		sg_ret open_map_source(const MapSourceArgs & args, QString & error_message) override;
+		sg_ret close_map_source(void) override;
+
 
 	private:
-		QPixmap create_pixmap_sql_exec(sqlite3 * sqlite_handle, const TileInfo & tile_info) const;
+		QPixmap create_pixmap_sql_exec(const TileInfo & tile_info) const;
+#ifdef HAVE_SQLITE3_H
+		sqlite3 * sqlite_handle = nullptr;
+#endif
 	};
 
 

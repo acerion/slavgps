@@ -70,7 +70,7 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void post_read(GisViewport * gisview, bool from_file);
+		sg_ret post_read(GisViewport * gisview, bool from_file) override;
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;

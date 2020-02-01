@@ -773,19 +773,16 @@ LayerMap::~LayerMap()
 	}
 
 	free(this->last_center);
-	this->last_center = NULL;
+	this->last_center = nullptr;
 
-
-	MapSourceArgs args;
-	args.sqlite_handle = &this->sqlite_handle;
-
-	this->m_map_source->close_map_source(args); /* TODO: delete */
+	delete this->m_map_source;
+	this->m_map_source = nullptr;
 }
 
 
 
 
-void LayerMap::post_read(GisViewport * gisview, bool from_file)
+sg_ret LayerMap::post_read(GisViewport * gisview, bool from_file)
 {
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
@@ -801,10 +798,13 @@ void LayerMap::post_read(GisViewport * gisview, bool from_file)
 
 	MapSourceArgs args;
 	args.tile_file_full_path = this->file_full_path;
-	args.sqlite_handle = &this->sqlite_handle;
-	args.parent_window = this->get_window();
 
-	this->m_map_source->post_read(args);
+	QString open_err;
+	if (sg_ret::ok != this->m_map_source->open_map_source(args, open_err)) {
+		Dialog::error(open_err, this->get_window());
+		/* TODO_LATER: now what? How to handle failure of MapSource::post_read()? */
+		return sg_ret::err;
+	}
 
 	/* If the on Disk OSM Tile Layout type. */
 	if (this->m_map_source->map_type_id == MapTypeID::OSMOnDisk) {
@@ -812,6 +812,7 @@ void LayerMap::post_read(GisViewport * gisview, bool from_file)
 		   Thus the map cache look up will be unique when using more than one of these map types. */
 		this->file_full_path = this->cache_dir;
 	}
+	return sg_ret::ok;
 }
 
 
@@ -874,7 +875,6 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
 	MapSourceArgs args;
-	args.sqlite_handle = &this->sqlite_handle;
 	args.map_type_string = map_type_string;
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
 	pixmap = this->m_map_source->get_tile_pixmap(map_cache_obj, tile_info, args);
@@ -1412,7 +1412,6 @@ void LayerMap::tile_info_cb(void)
 	}
 
 	MapSourceArgs args;
-	args.sqlite_handle = &this->sqlite_handle;
 	args.tile_file_full_path = this->file_full_path;
 
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);

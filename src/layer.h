@@ -118,7 +118,7 @@ namespace SlavGPS {
 		   or properties box is run.  usually used to create
 		   GC's that depend on params, but GC's can also be
 		   created from create() or set_param(). */
-		virtual void post_read(GisViewport * gisview, bool from_file);
+		virtual sg_ret post_read(GisViewport * gisview, bool from_file);
 
 		void draw_tree_item(__attribute__((unused)) GisViewport * gisview, __attribute__((unused)) bool highlight_selected, __attribute__((unused)) bool parent_is_selected) override { return; };
 

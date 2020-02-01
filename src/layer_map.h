@@ -135,7 +135,7 @@ namespace SlavGPS {
 		static void init(void);
 
 		/* Layer interface methods. */
-		void post_read(GisViewport * gisview, bool from_file);
+		sg_ret post_read(GisViewport * gisview, bool from_file) override;
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		sg_ret draw_section(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br);
 		QString get_tooltip(void) const;
