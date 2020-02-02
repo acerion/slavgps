@@ -62,7 +62,6 @@ MapSource::MapSource()
 	fprintf(stderr, "MapSource regular constructor called\n");
 
 	this->map_type_string = QObject::tr("Unknown"); /* I usually write that it's non-translatable, but this is exception. TODO_LATER: maybe this is a sign of bad design. */
-	this->map_type_id = MapTypeID::Initial;
 	this->label = "<no-set>";
 
 	tilesize_x = 256;
@@ -107,7 +106,7 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->logo.logo_id     = other.logo.logo_id;
 
 	this->map_type_string = other.map_type_string;
-	this->map_type_id     = other.map_type_id;
+	this->m_map_type_id   = other.m_map_type_id;
 	this->label           = other.label;
 
 	this->tilesize_x = other.tilesize_x;
@@ -152,7 +151,7 @@ MapSource::MapSource(MapSource & map)
 	this->logo.logo_id     = map.logo.logo_id;
 
 	this->map_type_string = map.map_type_string;
-	this->map_type_id     = map.map_type_id;
+	this->m_map_type_id   = map.m_map_type_id;
 	this->label           = map.label;
 
 	this->tilesize_x = map.tilesize_x;
@@ -196,14 +195,14 @@ void MapSource::set_map_type_string(const QString & new_map_type_string)
 
 
 
-bool MapSource::set_map_type_id(MapTypeID new_map_type_id)
+bool MapSource::set_map_type_id(MapTypeID map_type_id)
 {
-	if (!MapSource::is_map_type_id_registered(new_map_type_id)) {
-		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) new_map_type_id;
+	if (!MapSource::is_map_type_id_registered(map_type_id)) {
+		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) map_type_id;
 		return false;
 	}
 
-	this->map_type_id = new_map_type_id;
+	this->m_map_type_id = map_type_id;
 	return true;
 }
 
@@ -320,10 +319,10 @@ QString MapSource::get_map_type_string(void) const
 
 
 
-MapTypeID MapSource::get_map_type_id(void) const
+MapTypeID MapSource::map_type_id(void) const
 {
-	qDebug() << SG_PREFIX_D << "Returning map type" << (int) this->map_type_id << "for map" << this->label;
-	return this->map_type_id;
+	qDebug() << SG_PREFIX_D << "Returning map type" << (int) this->m_map_type_id << "for map" << this->label;
+	return this->m_map_type_id;
 }
 
 
@@ -508,7 +507,7 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 	QStringList items;
 
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->map_type_id,
+										   this->m_map_type_id,
 										   this->get_map_type_string(),
 										   this->get_file_extension());
 	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(tile_info));
@@ -527,7 +526,7 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->map_type_id,
+										   this->m_map_type_id,
 										   this->get_map_type_string(),
 										   this->get_file_extension());
 

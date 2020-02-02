@@ -50,27 +50,26 @@
 
 
 
-#include "window.h"
+#include "application_state.h"
+#include "dialog.h"
+#include "file.h"
+#include "map_cache.h"
 #include "map_source.h"
 #include "map_source_slippy.h"
-//#include "map_source_mbtiles.h"
-#include "vikutils.h"
 #include "map_utils.h"
-#include "map_cache.h"
-#include "preferences.h"
+#include "layer_defaults.h"
 #include "layer_map.h"
 #include "layer_map_download.h"
 #include "osm_metatile.h"
+#include "preferences.h"
+#include "statusbar.h"
 #include "ui_util.h"
-#include "layer_defaults.h"
-#include "widget_file_entry.h"
-#include "dialog.h"
-#include "file.h"
-#include "application_state.h"
 #include "ui_builder.h"
 #include "util.h"
-#include "statusbar.h"
 #include "viewport_internal.h"
+#include "vikutils.h"
+#include "widget_file_entry.h"
+#include "window.h"
 
 
 
@@ -394,27 +393,16 @@ void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, M
 
 
 
-/**
-   Returns map type id
-*/
-MapTypeID LayerMap::get_map_type_id(void) const
+bool LayerMap::set_map_type_id(MapTypeID map_type_id)
 {
-	return this->map_type_id;
-}
-
-
-
-
-bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
-{
-	if (!MapSource::is_map_type_id_registered(new_map_type_id)) {
-		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) new_map_type_id;
+	if (!MapSource::is_map_type_id_registered(map_type_id)) {
+		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) map_type_id;
 		return false;
 	}
 
-	this->map_type_id = new_map_type_id;
+	this->m_map_type_id = map_type_id;
 	delete this->m_map_source;
-	this->m_map_source = map_source_makers[this->map_type_id]();
+	this->m_map_source = map_source_makers[this->m_map_type_id]();
 	return true;
 }
 
@@ -435,7 +423,7 @@ MapTypeID LayerMap::get_default_map_type_id(void)
 
 QString LayerMap::get_map_label(void) const
 {
-	if (this->map_type_id == MapTypeID::Initial) {
+	if (this->m_map_type_id == MapTypeID::Initial) {
 		return QObject::tr("Map Layer");
 	} else {
 		return this->m_map_source->get_label();
@@ -546,29 +534,24 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->set_file_full_path(data.val_string);
 		break;
 	case PARAM_MAP_TYPE_ID:
-		delete this->m_map_source;
-		this->m_map_source = nullptr;
-
-		if (!MapSource::is_map_type_id_registered((MapTypeID) data.u.val_int)) {
+		if (!this->set_map_type_id((MapTypeID) data.u.val_int)) {
 			/* TODO_LATER: handle this better. */
 			qDebug() << SG_PREFIX_E << "Unknown map type" << data.u.val_int;
-		} else {
-			this->map_type_id = (MapTypeID) data.u.val_int;
-			this->m_map_source = map_source_makers[this->map_type_id]();
+			return false;
+		}
 
-			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
-			if (is_file_operation) {
-				ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->map_type_id);
-			} else {
-				/* Call to MapSource::is_map_type_id_registered()
-				   above guarantees that this map
-				   lookup is successful. */
-				if (this->m_map_source->get_license() != NULL) {
-					/* Check if licence for this map type has been shown before. */
-					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->map_type_id)) {
-						maps_show_license(this->get_window(), this->m_map_source);
-						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->map_type_id);
-					}
+		/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
+		if (is_file_operation) {
+			ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->m_map_type_id);
+		} else {
+			/* Call to MapSource::is_map_type_id_registered()
+			   above guarantees that this map
+			   lookup is successful. */
+			if (this->m_map_source->get_license() != NULL) {
+				/* Check if licence for this map type has been shown before. */
+				if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->m_map_type_id)) {
+					maps_show_license(this->get_window(), this->m_map_source);
+					ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, (int) this->m_map_type_id);
 				}
 			}
 		}
@@ -640,7 +623,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->file_full_path);
 		break;
 	case PARAM_MAP_TYPE_ID:
-		rv = SGVariant((int32_t) this->map_type_id, maps_layer_param_specs[PARAM_MAP_TYPE_ID].type_id);
+		rv = SGVariant((int32_t) this->m_map_type_id, maps_layer_param_specs[PARAM_MAP_TYPE_ID].type_id);
 		break;
 	case PARAM_ALPHA:
 		rv = SGVariant((int32_t) this->alpha, maps_layer_param_specs[PARAM_ALPHA].type_id);
@@ -803,7 +786,7 @@ sg_ret LayerMap::post_read(GisViewport * gisview, bool from_file)
 	}
 
 	/* If the on Disk OSM Tile Layout type. */
-	if (this->m_map_source->map_type_id == MapTypeID::OSMOnDisk) {
+	if (this->m_map_source->map_type_id() == MapTypeID::OSMOnDisk) {
 		/* Copy the directory into filename.
 		   Thus the map cache look up will be unique when using more than one of these map types. */
 		this->file_full_path = this->cache_dir;
@@ -861,7 +844,7 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale
 QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & pixmap_scale)
 {
 	/* Get the thing. */
-	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, pixmap_scale, this->file_full_path);
+	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->m_map_type_id, this->alpha, pixmap_scale, this->file_full_path);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "CACHE HIT";
 		return pixmap;
@@ -876,7 +859,7 @@ QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
 
-		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, this->m_map_source->map_type_id,
+		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, this->m_map_source->map_type_id(),
 					  this->alpha, pixmap_scale, this->file_full_path);
 	}
 
@@ -1279,7 +1262,7 @@ void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) boo
 
 void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
-	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) this->m_map_source << "map index" << (int) this->map_type_id;
+	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) this->m_map_source << "map index" << (int) this->m_map_type_id;
 
 	/* Don't ever attempt download on direct access. */
 	if (this->m_map_source->is_direct_file_access()) {
@@ -1298,9 +1281,9 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 	}
 
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, tile_ul, tile_br, true, map_download_mode);
 
-	if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
+	if (mdj->m_map_download_mode == MapDownloadMode::MissingOnly) {
 		mdj->n_items = mdj->calculate_tile_count_to_download();
 	} else {
 		mdj->n_items = mdj->calculate_total_tile_count_to_download();
@@ -1338,7 +1321,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, tile_ul, tile_br, true, map_download_mode);
 
 	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
@@ -1669,10 +1652,10 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, cons
 		return 0;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, this->m_map_source, tile_ul, tile_br, false, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, tile_ul, tile_br, false, map_download_mode);
 	int n_items = 0;
 
-	if (mdj->map_download_mode == MapDownloadMode::All) {
+	if (mdj->m_map_download_mode == MapDownloadMode::All) {
 		n_items = mdj->calculate_total_tile_count_to_download();
 	} else {
 		n_items = mdj->calculate_tile_count_to_download();
@@ -1871,7 +1854,7 @@ void LayerMap::download_all_cb(void)
 
 void LayerMap::flush_cb(void)
 {
-	MapCache::flush_type(this->m_map_source->map_type_id);
+	MapCache::flush_type(this->m_map_source->map_type_id());
 }
 
 
@@ -2113,7 +2096,7 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj)
 {
 	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
-									this->m_map_source->map_type_id,
+									this->m_map_source->map_type_id(),
 									this->m_map_source->get_map_type_string(),
 									this->m_map_source->get_file_extension());
 

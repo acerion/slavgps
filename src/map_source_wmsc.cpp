@@ -72,9 +72,9 @@ MapSourceWmsc::~MapSourceWmsc()
 
 
 
-MapSourceWmsc::MapSourceWmsc(MapTypeID new_map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
+MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
-	this->map_type_id = new_map_type_id;
+	this->m_map_type_id = map_type_id;
 	this->label = new_label;
 	this->server_hostname = new_server_hostname;
 	this->server_path_format = new_server_path_format;

@@ -156,7 +156,6 @@ namespace SlavGPS {
 
 		static bool is_map_type_id_registered(MapTypeID map_type_id);
 		QString get_map_type_string(void) const;
-		MapTypeID get_map_type_id(void) const;
 		QString get_label(void) const;
 		uint16_t get_tilesize_x(void) const;
 		uint16_t get_tilesize_y(void) const;
@@ -201,6 +200,8 @@ namespace SlavGPS {
 		void set_license_url(const QString & license_url);
 		void set_file_extension(const QString & file_extension);
 
+		MapTypeID map_type_id(void) const;
+
 
 		bool includes_tile(const TileInfo & tile_info) const;
 
@@ -211,7 +212,7 @@ namespace SlavGPS {
 		GisViewportLogo logo;
 
 		QString map_type_string;  /* The name of the map that may be used as the file cache directory. Non-translatable. */
-		MapTypeID map_type_id;    /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
+
 		QString label;            /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */
@@ -233,8 +234,11 @@ namespace SlavGPS {
 	protected:
 		bool is_direct_file_access_flag;
 		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
+		MapTypeID m_map_type_id = MapTypeID::Initial;
 
 	private:
+
+
 		TileZoomLevel tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
 		TileZoomLevel tile_zoom_level_max = TileZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
 

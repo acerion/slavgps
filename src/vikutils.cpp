@@ -584,9 +584,9 @@ void CommandLineOptions::apply(Window * window)
 	if (this->map_type_id != MapTypeID::Initial) {
 		/* Some value selected in command line. */
 
-		MapTypeID the_type_id = this->map_type_id;
-		if (the_type_id == MapTypeID::Default) {
-			the_type_id = LayerMap::get_default_map_type_id();
+		MapTypeID initial_type_id = this->map_type_id;
+		if (initial_type_id == MapTypeID::Default) {
+			initial_type_id = LayerMap::get_default_map_type_id();
 		}
 
 		/* Don't add map layer if one already exists. */
@@ -594,19 +594,19 @@ void CommandLineOptions::apply(Window * window)
 		bool add_map = true;
 
 		for (auto iter = map_layers.begin(); iter != map_layers.end(); iter++) {
-			LayerMap * map = (LayerMap *) *iter;
-			MapTypeID type_id = map->get_map_type_id();
-			if (the_type_id == type_id) {
+			const LayerMap * map = (LayerMap *) *iter;
+			if (initial_type_id == map->map_type_id()) {
+				/* Map of requested type already exists - no need to create another one of the same type. */
 				add_map = false;
 				break;
 			}
 		}
 
-		add_map = add_map && MapSource::is_map_type_id_registered(the_type_id);
+		add_map = add_map && MapSource::is_map_type_id_registered(initial_type_id);
 		if (add_map) {
 			LayerMap * layer = new LayerMap();
 
-			layer->set_map_type_id(the_type_id);
+			layer->set_map_type_id(initial_type_id);
 			layer->set_name(Layer::get_translated_layer_kind_string(layer->m_kind));
 
 			ThisApp::get_layers_panel()->get_top_layer()->add_child_item(layer, true);

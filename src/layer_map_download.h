@@ -52,7 +52,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		MapDownloadJob() {};
-		MapDownloadJob(LayerMap * layer, const MapSource * map_source, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
+		MapDownloadJob(LayerMap * layer, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
 		~MapDownloadJob();
 
 		void cleanup_on_cancel(void);
@@ -67,17 +67,15 @@ namespace SlavGPS {
 		QString file_full_path;
 
 
-		const MapSource * map_source = NULL;
-
-		MapDownloadMode map_download_mode;
-		bool refresh_display = false;
-		LayerMap * layer = NULL;
+		MapDownloadMode m_map_download_mode;
 
 	signals:
 		void download_job_completed(void);
 
 	private:
-		MapTypeID map_type_id;
+		bool m_refresh_display = false;
+		LayerMap * m_layer = nullptr;
+
 		MapCacheObj map_cache;
 
 		/* Tile info variable holding information common for

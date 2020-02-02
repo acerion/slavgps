@@ -53,12 +53,24 @@
 
 
 
+/*
+  OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
+  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+  http://wiki.openstreetmap.org/wiki/TMS
+  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
+*/
+
+
+
+
 using namespace SlavGPS;
 
 
 
 
 #define SG_MODULE "OSM"
+
+
 
 
 static MapSource * map_source_maker_mapnik(void);
@@ -217,7 +229,7 @@ QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_
 	Metatile metatile(map_cache_obj.dir_full_path, tile_info);
 
 	items.push_back(metatile.file_full_path);
-	items.push_back(this->full_path);
+	items.push_back(this->full_path); /* TODO_LATER: this->full_path is not set anywhere. */
 
 	tile_info_add_file_info_strings(items, this->full_path);
 
@@ -230,8 +242,9 @@ QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_
 /* No cache needed for this type. */
 MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk, QObject::tr("On Disk OSM Tile Format"), NULL, NULL)
 {
-	/* For using your own generated data assumed you know the license already! */
-	this->set_copyright("© OpenStreetMap contributors"); // probably
+	/* TODO_LATER: This license string is invalid for
+	   user-generated and user-owned tiles. */
+	this->set_copyright("© OpenStreetMap contributors");
 	this->is_direct_file_access_flag = true;
 
 }
@@ -247,7 +260,7 @@ QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, c
 
 	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info,
-										       this->map_type_id,
+										       this->m_map_type_id,
 										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
 										       this->get_file_extension());
 	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
@@ -267,7 +280,7 @@ QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cac
 	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info, /* ulm */
-										       this->map_type_id,
+										       this->m_map_type_id,
 										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
 										       this->get_file_extension());
 	const QString source = QObject::tr("Source: file://%1").arg(tile_file_full_path);

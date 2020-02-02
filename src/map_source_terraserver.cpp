@@ -101,7 +101,7 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 	const double xmpp = viking_scale.get_x();
 	const double ympp = viking_scale.get_y();
 
-	tile_info.scale.set_scale_value(mpp_to_scale(xmpp, this->map_type_id));
+	tile_info.scale.set_scale_value(mpp_to_scale(xmpp, this->m_map_type_id));
 	if (0 == tile_info.scale.get_scale_value()) {
 		return false;
 	}
@@ -132,7 +132,7 @@ sg_ret MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coo
 
 const QString MapSourceTerraserver::get_server_path(const TileInfo & src) const
 {
-	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src.scale.get_scale_value()).arg(src.x).arg(src.y).arg(src.z);
+	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->m_map_type_id).arg(src.scale.get_scale_value()).arg(src.x).arg(src.y).arg(src.z);
 	return uri;
 }
 
@@ -147,9 +147,9 @@ const QString MapSourceTerraserver::get_server_hostname(void) const
 
 
 
-MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString & new_label)
+MapSourceTerraserver::MapSourceTerraserver(MapTypeID map_type_id, const QString & new_label)
 {
-	switch (new_type_id) {
+	switch (map_type_id) {
 	case MapTypeID::TerraserverAerial:
 		this->copyright = "© DigitalGlobe";
 		break;
@@ -160,11 +160,11 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 		this->copyright = "© DigitalGlobe";
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unknown type" << (int) new_type_id;
+		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) map_type_id;
 	}
 
 	this->label = new_label;
-	this->map_type_id = new_type_id;
+	this->m_map_type_id = map_type_id;
 
 	this->tilesize_x = 200;
 	this->tilesize_y = 200;

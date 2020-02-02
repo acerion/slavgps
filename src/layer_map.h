@@ -146,7 +146,6 @@ namespace SlavGPS {
 		void set_file_full_path(const QString & new_file_full_path);
 
 		bool set_map_type_id(MapTypeID type_id);
-		MapTypeID get_map_type_id(void) const;
 		static MapTypeID get_default_map_type_id(void);
 
 		void start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
@@ -177,10 +176,11 @@ namespace SlavGPS {
 		*/
 		static void draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height);
 
+		MapTypeID map_type_id(void) const { return this->m_map_type_id; };
 		MapSource * map_source(void) const { return this->m_map_source; };
 
 
-		MapTypeID map_type_id = MapTypeID::Initial;
+
 		QString cache_dir;
 		MapCacheLayout cache_layout = MapCacheLayout::Viking;
 		int alpha = 0;
@@ -223,14 +223,14 @@ namespace SlavGPS {
 		bool should_start_autodownload(GisViewport * gisview);
 
 		/*
-		  Get pixmap of a tile, either from cache, or (if
-		  pixmap is not found in cache) get it from
-		  source.
+		  Get pixmap of a tile. If necessary, ask map source
+		  to download the pixmap from remote server, or ask
+		  map source to retrieve the pixmap from local
+		  database.
 		*/
 		QPixmap get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & scale);
 
-		QPixmap create_pixmap_from_file(const QString & file_full_path);
-
+		MapTypeID m_map_type_id = MapTypeID::Initial;
 		MapSource * m_map_source = nullptr;
 
 	public slots:
@@ -305,16 +305,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-/*
-  OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
-  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-  http://wiki.openstreetmap.org/wiki/TMS
-  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
-*/
 
 
 
