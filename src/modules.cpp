@@ -48,9 +48,9 @@
 #include "routing.h"
 
 /* Loadable types */
-#include "map_source_slippy.h"
-#include "map_source_tms.h"
-#include "map_source_wmsc.h"
+#include "layer_map_source_slippy.h"
+#include "layer_map_source_tms.h"
+#include "layer_map_source_wmsc.h"
 #include "webtool_center.h"
 #include "webtool_bounds.h"
 #include "datasource_webtool.h"

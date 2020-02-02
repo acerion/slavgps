@@ -23,7 +23,7 @@
 
 #include "variant.h"
 #include "terraserver.h"
-#include "map_source_terraserver.h"
+#include "layer_map_source_terraserver.h"
 #include "layer_map.h"
 
 

@@ -16,13 +16,19 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SG_TERRASERVER_MAP_SOURCE_H_
-#define _SG_TERRASERVER_MAP_SOURCE_H_
+#ifndef _SG_MAP_SOURCE_SLIPPY_H_
+#define _SG_MAP_SOURCE_SLIPPY_H_
 
 
 
 
-#include "map_source.h"
+#include <QString>
+
+
+
+
+#include "coord.h"
+#include "layer_map_source.h"
 
 
 
@@ -31,19 +37,21 @@ namespace SlavGPS {
 
 
 
-	class MapSourceTerraserver : public MapSource {
-	public:
-		MapSourceTerraserver();
-		MapSourceTerraserver(MapTypeID type, const QString & ui_label);
 
+	class MapSourceSlippy : public MapSource {
+	public:
+		MapSourceSlippy();
+		~MapSourceSlippy();
+		MapSourceSlippy(MapTypeID map_type, const QString & ui_label, const QString & server_hostname, const QString & server_path_format);
 
 		bool coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const override;
 		sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const override;
 
-		const QString get_server_hostname(void) const;
+		bool supports_download_only_new(void) const override;
+
 		const QString get_server_path(const TileInfo & src) const;
 
-		MapTypeID type = MapTypeID::Initial;
+		DownloadStatus download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;
 	};
 
 
@@ -54,4 +62,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_TERRASERVER_MAP_SOURCE_H_ */
+#endif /* _SG_MAP_SOURCE_SLIPPY_H_ */

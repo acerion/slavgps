@@ -23,7 +23,7 @@
 
 
 #include "coord.h"
-#include "map_source.h"
+#include "layer_map_source.h"
 
 
 

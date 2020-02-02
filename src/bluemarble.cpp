@@ -25,7 +25,7 @@
 #include "variant.h"
 #include "bluemarble.h"
 #include "layer_map.h"
-#include "map_source_slippy.h"
+#include "layer_map_source_slippy.h"
 
 
 

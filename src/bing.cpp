@@ -24,7 +24,7 @@
 #include "variant.h"
 #include "bing.h"
 #include "layer_map.h"
-#include "map_source_bing.h"
+#include "layer_map_source_bing.h"
 #include "webtool_center.h"
 #include "external_tools.h"
 #include "util.h"

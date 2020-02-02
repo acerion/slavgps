@@ -24,7 +24,7 @@
 
 
 
-#include "map_source_slippy.h"
+#include "layer_map_source_slippy.h"
 
 
 

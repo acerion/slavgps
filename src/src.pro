@@ -55,12 +55,12 @@ SOURCES += main.cpp \
     bing.cpp \
     google.cpp \
     googlesearch.cpp \
-    map_source_slippy.cpp \
-    map_source_mbtiles.cpp \
-    map_source_bing.cpp \
-    map_source_wmsc.cpp \
-    map_source_tms.cpp \
-    map_source_terraserver.cpp \
+    layer_map_source_slippy.cpp \
+    layer_map_source_mbtiles.cpp \
+    layer_map_source_bing.cpp \
+    layer_map_source_wmsc.cpp \
+    layer_map_source_tms.cpp \
+    layer_map_source_terraserver.cpp \
     terraserver.cpp \
     geojson.cpp \
     kmz.cpp \
@@ -82,7 +82,7 @@ SOURCES += main.cpp \
     print.cpp \
     layer_map.cpp \
     layer_map_download.cpp \
-    map_source.cpp \
+    layer_map_source.cpp \
     map_cache.cpp \
     map_utils.cpp \
     osm_metatile.cpp \
@@ -191,12 +191,12 @@ HEADERS += window.h \
     bing.h \
     google.h \
     googlesearch.h \
-    map_source_slippy.h \
-    map_source_mbtiles.h \
-    map_source_bing.h \
-    map_source_wmsc.h \
-    map_source_tms.h \
-    map_source_terraserver.h \
+    layer_map_source_slippy.h \
+    layer_map_source_mbtiles.h \
+    layer_map_source_bing.h \
+    layer_map_source_wmsc.h \
+    layer_map_source_tms.h \
+    layer_map_source_terraserver.h \
     terraserver.h \
     geojson.h \
     kmz.h \
@@ -230,7 +230,7 @@ HEADERS += window.h \
     print.h \
     layer_map.h \
     layer_map_download.h \
-    map_source.h \
+    layer_map_source.h \
     map_utils.h \
     osm_metatile.h \
     map_cache.h \

@@ -38,7 +38,7 @@
 #include "layer.h"
 #include "layer_tool.h"
 #include "layer_interface.h"
-#include "map_source.h"
+#include "layer_map_source.h"
 #include "map_cache.h"
 #include "mapcoord.h"
 
