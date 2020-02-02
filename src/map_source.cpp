@@ -61,11 +61,11 @@ MapSource::MapSource()
 {
 	fprintf(stderr, "MapSource regular constructor called\n");
 
-	this->map_type_string = QObject::tr("Unknown"); /* I usually write that it's non-translatable, but this is exception. TODO_LATER: maybe this is a sign of bad design. */
-	this->label = "<no-set>";
+	this->m_map_type_string = "< ?? >"; /* Non-translatable. */
+	this->m_ui_label = "< ?? >";
 
-	tilesize_x = 256;
-	tilesize_y = 256;
+	this->m_tilesize_x = 256;
+	this->m_tilesize_y = 256;
 
 	this->drawmode = GisViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
 	this->file_extension = ".png";
@@ -105,12 +105,12 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->logo.logo_pixmap = other.logo.logo_pixmap;
 	this->logo.logo_id     = other.logo.logo_id;
 
-	this->map_type_string = other.map_type_string;
+	this->m_map_type_string = other.m_map_type_string;
 	this->m_map_type_id   = other.m_map_type_id;
-	this->label           = other.label;
+	this->m_ui_label      = other.m_ui_label;
 
-	this->tilesize_x = other.tilesize_x;
-	this->tilesize_y = other.tilesize_y;
+	this->m_tilesize_x = other.m_tilesize_x;
+	this->m_tilesize_y = other.m_tilesize_y;
 
 	this->drawmode   = other.drawmode;
 	this->file_extension = other.file_extension;
@@ -150,12 +150,12 @@ MapSource::MapSource(MapSource & map)
 	this->logo.logo_pixmap = map.logo.logo_pixmap;
 	this->logo.logo_id     = map.logo.logo_id;
 
-	this->map_type_string = map.map_type_string;
+	this->m_map_type_string = map.m_map_type_string;
 	this->m_map_type_id   = map.m_map_type_id;
-	this->label           = map.label;
+	this->m_ui_label      = map.m_ui_label;
 
-	this->tilesize_x = map.tilesize_x;
-	this->tilesize_y = map.tilesize_y;
+	this->m_tilesize_x = map.m_tilesize_x;
+	this->m_tilesize_y = map.m_tilesize_y;
 
 	this->drawmode   = map.drawmode;
 	this->file_extension = map.file_extension;
@@ -182,14 +182,14 @@ MapSource::MapSource(MapSource & map)
 
 
 
-void MapSource::set_map_type_string(const QString & new_map_type_string)
+void MapSource::set_map_type_string(const QString & map_type_string)
 {
-	this->map_type_string = new_map_type_string;
+	this->m_map_type_string = map_type_string;
 
 	/* Sanitize the name here for file usage.
 	   A simple check just to prevent names containing slashes. */
-	this->map_type_string.replace('\\', 'x');
-	this->map_type_string.replace('/', 'x');
+	this->m_map_type_string.replace('\\', 'x');
+	this->m_map_type_string.replace('/', 'x');
 }
 
 
@@ -209,24 +209,24 @@ bool MapSource::set_map_type_id(MapTypeID map_type_id)
 
 
 
-void MapSource::set_label(const QString & new_label)
+void MapSource::set_ui_label(const QString & ui_label)
 {
-	this->label = new_label;
+	this->m_ui_label = ui_label;
 }
 
 
 
 
-void MapSource::set_tilesize_x(uint16_t tilesize_x_)
+void MapSource::set_tilesize_x(uint16_t tilesize_x)
 {
-	tilesize_x = tilesize_x_;
+	this->m_tilesize_x = tilesize_x;
 }
 
 
 
-void MapSource::set_tilesize_y(uint16_t tilesize_y_)
+void MapSource::set_tilesize_y(uint16_t tilesize_y)
 {
-	tilesize_y = tilesize_y_;
+	this->m_tilesize_y = tilesize_y;
 }
 
 
@@ -311,9 +311,9 @@ const GisViewportLogo & MapSource::get_logo(void) const
 
 
 
-QString MapSource::get_map_type_string(void) const
+const QString & MapSource::map_type_string(void) const
 {
-	return this->map_type_string;
+	return this->m_map_type_string;
 }
 
 
@@ -321,32 +321,32 @@ QString MapSource::get_map_type_string(void) const
 
 MapTypeID MapSource::map_type_id(void) const
 {
-	qDebug() << SG_PREFIX_D << "Returning map type" << (int) this->m_map_type_id << "for map" << this->label;
+	qDebug() << SG_PREFIX_D << "Returning map type" << (int) this->m_map_type_id << "for source type" << this->m_ui_label;
 	return this->m_map_type_id;
 }
 
 
 
 
-QString MapSource::get_label(void) const
+const QString & MapSource::ui_label(void) const
 {
-	return this->label;
+	return this->m_ui_label;
 }
 
 
 
 
-uint16_t MapSource::get_tilesize_x(void) const
+uint16_t MapSource::tilesize_x(void) const
 {
-	return tilesize_x;
+	return this->m_tilesize_x;
 }
 
 
 
 
-uint16_t MapSource::get_tilesize_y(void) const
+uint16_t MapSource::tilesize_y(void) const
 {
-	return tilesize_y;
+	return this->m_tilesize_y;
 }
 
 
@@ -481,7 +481,7 @@ const DownloadOptions * MapSource::get_download_options(void) const
 
 
 
-QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_path) const
+QPixmap MapSource::load_tile_pixmap_from_file(const QString & tile_file_full_path) const
 {
 	QPixmap result;
 
@@ -493,7 +493,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 	if (!result.load(tile_file_full_path)) {
 		Window * window = ThisApp::get_main_window();
 		if (window) {
-			window->statusbar_update(StatusBarField::Info, QObject::tr("Couldn't open image file"));
+			window->statusbar_update(StatusBarField::Info, QObject::tr("Couldn't open file with tile pixmap"));
 		}
 	}
 	return result;
@@ -507,8 +507,8 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 	QStringList items;
 
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->m_map_type_id,
-										   this->get_map_type_string(),
+										   this->map_type_id(),
+										   this->map_type_string(),
 										   this->get_file_extension());
 	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(tile_info));
 
@@ -523,14 +523,14 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSource::create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->m_map_type_id,
-										   this->get_map_type_string(),
+										   this->map_type_id(),
+										   this->map_type_string(),
 										   this->get_file_extension());
 
-	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
+	QPixmap pixmap = this->load_tile_pixmap_from_file(tile_file_full_path);
 	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
 
 	return pixmap;

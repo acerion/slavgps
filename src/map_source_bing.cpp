@@ -133,11 +133,11 @@ MapSourceBing::MapSourceBing()
  *
  * Returns: a newly allocated MapSourceBing object.
  */
-MapSourceBing::MapSourceBing(MapTypeID map_type_id, const QString & new_label, const QString & new_key)
+MapSourceBing::MapSourceBing(MapTypeID map_type_id, const QString & ui_label, const QString & new_key)
 {
 	this->m_map_type_id = map_type_id;
-	this->label = new_label;
-	this->map_type_string = "Bing-Aerial"; /* Non-translatable. */
+	this->m_ui_label = ui_label;
+	this->m_map_type_string = "Bing-Aerial"; /* Non-translatable. */
 	this->server_hostname = "ecn.t2.tiles.virtualearth.net";
 	this->server_path_format = "/tiles/a%1.jpeg?g=587";
 	this->bing_api_key = new_key;

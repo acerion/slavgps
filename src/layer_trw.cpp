@@ -3362,7 +3362,7 @@ void LayerTRW::download_map_along_track_cb(void)
 
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		map_layers.push_back((LayerMap *) *iter); /* kamilFIXME: casting const pointer to non-const. */
-		map_labels << ((LayerMap *) *iter)->get_map_label();
+		map_labels << ((LayerMap *) *iter)->get_map_type_ui_label();
 	}
 
 

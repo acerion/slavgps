@@ -421,12 +421,12 @@ MapTypeID LayerMap::get_default_map_type_id(void)
 
 
 
-QString LayerMap::get_map_label(void) const
+QString LayerMap::get_map_type_ui_label(void) const
 {
 	if (this->m_map_type_id == MapTypeID::Initial) {
 		return QObject::tr("Map Layer");
 	} else {
-		return this->m_map_source->get_label();
+		return this->m_map_source->ui_label();
 	}
 }
 
@@ -513,7 +513,7 @@ bool MapSource::is_map_type_id_registered(MapTypeID map_type_id)
 */
 static void maps_show_license(Window * parent, const MapSource * map_source)
 {
-	Dialog::map_license(map_source->get_label(), map_source->get_license(), map_source->get_license_url(), parent);
+	Dialog::map_license(map_source->ui_label(), map_source->get_license(), map_source->get_license_url(), parent);
 }
 
 
@@ -799,7 +799,7 @@ sg_ret LayerMap::post_read(GisViewport * gisview, bool from_file)
 
 QString LayerMap::get_tooltip(void) const
 {
-	return this->get_map_label();
+	return this->get_map_type_ui_label();
 }
 
 
@@ -854,7 +854,7 @@ QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale 
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
 	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
-	pixmap = this->m_map_source->get_tile_pixmap(map_cache_obj, tile_info);
+	pixmap = this->m_map_source->create_tile_pixmap(map_cache_obj, tile_info);
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
@@ -1072,7 +1072,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	TileInfo tile_iter = tile_ul;
 
 	Coord coord;
-	if (this->m_map_source->get_tilesize_x() == 0 && !existence_only) {
+	if (this->m_map_source->tilesize_x() == 0 && !existence_only) {
 
 		for (tile_iter.x = unordered_tiles_range.x_first; tile_iter.x <= unordered_tiles_range.x_last; tile_iter.x++) {
 			for (tile_iter.y = unordered_tiles_range.y_first; tile_iter.y <= unordered_tiles_range.y_last; tile_iter.y++) {
@@ -1111,8 +1111,8 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 		/* Tile size is known, don't have to keep converting coords. */
 		TileGeometry tile_geometry;
-		const double tile_width_f = this->m_map_source->get_tilesize_x() * pixmap_scale.x;
-		const double tile_height_f = this->m_map_source->get_tilesize_y() * pixmap_scale.y;
+		const double tile_width_f = this->m_map_source->tilesize_x() * pixmap_scale.x;
+		const double tile_height_f = this->m_map_source->tilesize_y() * pixmap_scale.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		tile_geometry.width = ceil(tile_width_f);
 		tile_geometry.height = ceil(tile_height_f);
@@ -1290,7 +1290,7 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 	}
 
 	if (mdj->n_items) {
-		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->get_label());
+		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->ui_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
@@ -1325,7 +1325,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 
 	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
-		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->get_label());
+		mdj->set_description(map_download_mode, mdj->n_items, this->m_map_source->ui_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
@@ -1621,7 +1621,7 @@ void LayerMap::redownload_all_onscreen_maps_cb(void)
 void LayerMap::about_cb(void)
 {
 	if (this->m_map_source->get_license().isEmpty()) {
-		Dialog::info(this->m_map_source->get_label(), this->get_window());
+		Dialog::info(this->m_map_source->ui_label(), this->get_window());
 	} else {
 		maps_show_license(this->get_window(), this->m_map_source);
 	}
@@ -1796,7 +1796,7 @@ void LayerMap::download_all_cb(void)
 	smaller_zoom_idx = (larger_zoom_idx >= 2) ? larger_zoom_idx - 2 : larger_zoom_idx;
 
 
-	const QString title = QObject::tr("%1: Download for Zoom Levels").arg(this->get_map_label());
+	const QString title = QObject::tr("%1: Download for Zoom Levels").arg(this->get_map_type_ui_label());
 	DownloadMethodsAndZoomsDialog dialog(title, viking_scales, download_modes, this->get_window());
 	dialog.preselect(smaller_zoom_idx, larger_zoom_idx, download_mode_idx);
 
@@ -2097,7 +2097,7 @@ void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info,
 {
 	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
 									this->m_map_source->map_type_id(),
-									this->m_map_source->get_map_type_string(),
+									this->m_map_source->map_type_string(),
 									this->m_map_source->get_file_extension());
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {

@@ -139,7 +139,12 @@ namespace SlavGPS {
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
-		QString get_map_label(void) const;
+		/**
+		   @brief Get user-facing label (name) of this map's source type
+
+		   Translatable. Visible in GUI.
+		*/
+		QString get_map_type_ui_label(void) const;
 
 		void set_cache_dir(const QString & dir);
 		void mkdir_if_default_dir(void);

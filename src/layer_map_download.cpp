@@ -118,7 +118,7 @@ void MapDownloadJob::run(void)
 
 			this->file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
 											this->m_layer->map_source()->map_type_id(),
-											this->m_layer->map_source()->get_map_type_string(),
+											this->m_layer->map_source()->map_type_string(),
 											this->m_layer->map_source()->get_file_extension());
 
 			donemaps++;
@@ -190,7 +190,7 @@ void MapDownloadJob::run(void)
 				case DownloadStatus::ContentError: {
 					this->failed_downloads++;
 					const QString msg = tr("%1: Failed to download map tile (%2 failed in total)")
-						.arg(this->m_layer->get_map_label())
+						.arg(this->m_layer->get_map_type_ui_label())
 						.arg(this->failed_downloads);
 					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
@@ -198,7 +198,7 @@ void MapDownloadJob::run(void)
 				case DownloadStatus::FileWriteError: {
 					this->failed_saves++;
 					const QString msg = tr("%1: Failed to save map tile (%2 failed in total)")
-						.arg(this->m_layer->get_map_label())
+						.arg(this->m_layer->get_map_type_ui_label())
 						.arg(this->failed_saves);
 					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
@@ -243,7 +243,7 @@ void MapDownloadJob::cleanup_on_cancel(void)
 	/* Remove file that is being / has been now downloaded. */
 	const QString full_path = this->map_cache.get_cache_file_full_path(this->tile_info_in_download,
 									   this->m_layer->map_source()->map_type_id(),
-									   this->m_layer->map_source()->get_map_type_string(),
+									   this->m_layer->map_source()->map_type_string(),
 									   this->m_layer->map_source()->get_file_extension());
 	if (0 == access(full_path.toUtf8().constData(), F_OK)) {
 		qDebug() << SG_PREFIX_D << "Removing file" << full_path << "(cleanup on cancel)";
@@ -284,7 +284,7 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 				   Checking which tile is missing is easy. */
 				tile_file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
 											       this->m_layer->map_source()->map_type_id(),
-											       this->m_layer->map_source()->get_map_type_string(),
+											       this->m_layer->map_source()->map_type_string(),
 											       this->m_layer->map_source()->get_file_extension());
 				if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK)) {
 					n_maps++;
@@ -321,7 +321,7 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 				/* Download missing and bad tiles. */
 				tile_file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
 											       this->m_layer->map_source()->map_type_id(),
-											       this->m_layer->map_source()->get_map_type_string(),
+											       this->m_layer->map_source()->map_type_string(),
 											       this->m_layer->map_source()->get_file_extension());
 				if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK)) {
 					/* Missing. */

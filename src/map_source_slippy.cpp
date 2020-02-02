@@ -79,12 +79,12 @@ MapSourceSlippy::MapSourceSlippy()
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
+MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_id, const QString & ui_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
 	qDebug() << SG_PREFIX_I << "Called VikSlippy constructor with id" << (int) map_type_id;
 
 	this->m_map_type_id = map_type_id;
-	this->label = new_label;
+	this->m_ui_label = ui_label;
 	this->server_hostname = new_server_hostname;
 	this->server_path_format = new_server_path_format;
 }

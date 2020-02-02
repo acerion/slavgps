@@ -191,7 +191,7 @@ MapSourceOSMMetatiles::MapSourceOSMMetatiles() : MapSourceSlippy(MapTypeID::OSMM
 
 
 
-QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSourceOSMMetatiles::create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	QString err_msg;
 	QPixmap pixmap;
@@ -252,7 +252,7 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 
 
-QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSourceOSMOnDisk::create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	if (MapCacheLayout::OSM != map_cache_obj.layout) {
 		qDebug() << SG_PREFIX_W << "Layout mismatch:" << (int) MapCacheLayout::OSM << (int) map_cache_obj.layout;
@@ -263,7 +263,7 @@ QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, c
 										       this->m_map_type_id,
 										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
 										       this->get_file_extension());
-	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
+	QPixmap pixmap = this->load_tile_pixmap_from_file(tile_file_full_path);
 
 	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
 
@@ -296,7 +296,7 @@ QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cac
 
 MapSource * map_source_maker_mapnik(void)
 {
-	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMMapnik, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
+	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMMapnik, QObject::tr("OpenStreetMap (Mapnik)"), "tile.openstreetmap.org", "/%1/%2/%3.png");
 	map_source->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = false;
 	map_source->dl_options.use_etag = true;
@@ -312,7 +312,7 @@ MapSource * map_source_maker_mapnik(void)
 
 MapSource * map_source_maker_cycle(void)
 {
-	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMCycle, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
+	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMCycle, QObject::tr("OpenStreetMap (Cycle)"), "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
 	map_source->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
@@ -328,7 +328,7 @@ MapSource * map_source_maker_cycle(void)
 
 MapSource * map_source_maker_transport(void)
 {
-	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMTransport, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
+	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMTransport, QObject::tr("OpenStreetMap (Transport)"), "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
 	map_source->set_map_type_string("OSM-Transport"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
@@ -344,7 +344,7 @@ MapSource * map_source_maker_transport(void)
 
 MapSource * map_source_maker_mapquest(void)
 {
-	MapSource * map_source = new MapSourceSlippy(MapTypeID::MapQuestOSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
+	MapSource * map_source = new MapSourceSlippy(MapTypeID::MapQuestOSM, QObject::tr("OpenStreetMap (MapQuest)"), "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
 	map_source->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
@@ -360,7 +360,7 @@ MapSource * map_source_maker_mapquest(void)
 
 MapSource * map_source_maker_humanitarian(void)
 {
-	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMHumanitarian, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
+	MapSource * map_source = new MapSourceSlippy(MapTypeID::OSMHumanitarian, QObject::tr("OpenStreetMap (Humanitarian)"), "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
 	map_source->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;

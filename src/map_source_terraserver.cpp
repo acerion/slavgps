@@ -147,7 +147,7 @@ const QString MapSourceTerraserver::get_server_hostname(void) const
 
 
 
-MapSourceTerraserver::MapSourceTerraserver(MapTypeID map_type_id, const QString & new_label)
+MapSourceTerraserver::MapSourceTerraserver(MapTypeID map_type_id, const QString & ui_label)
 {
 	switch (map_type_id) {
 	case MapTypeID::TerraserverAerial:
@@ -163,11 +163,11 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID map_type_id, const QString 
 		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) map_type_id;
 	}
 
-	this->label = new_label;
+	this->m_ui_label = ui_label;
 	this->m_map_type_id = map_type_id;
 
-	this->tilesize_x = 200;
-	this->tilesize_y = 200;
+	this->m_tilesize_x = 200;
+	this->m_tilesize_y = 200;
 	this->drawmode = GisViewportDrawMode::UTM;
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;

@@ -87,7 +87,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSourceMBTiles::create_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
 {
 	QPixmap result;
 
