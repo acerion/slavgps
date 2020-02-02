@@ -39,6 +39,7 @@
 #include "layers_panel.h"
 #include "layer_dem_dem_cache.h"
 #include "map_cache.h"
+#include "mapcoord.h"
 #include "download.h"
 #include "background.h"
 #include "preferences.h"
@@ -155,6 +156,7 @@ int main(int argc, char ** argv)
 	Measurements::unit_tests();
 	Coords::unit_tests();
 	SGVariant::unit_tests();
+	TileZoomLevel::unit_tests();
 
 	MeasurementScale<Duration> aaa(1, 10, 5, 1, DurationType::Unit::E::Seconds, 0);
 

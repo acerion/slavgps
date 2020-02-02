@@ -47,7 +47,7 @@
 
 
 #include "vikutils.h"
-#include "map_source_bing.h"
+#include "layer_map_source_bing.h"
 #include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
@@ -142,7 +142,7 @@ MapSourceBing::MapSourceBing(MapTypeID map_type_id, const QString & ui_label, co
 	this->server_path_format = "/tiles/a%1.jpeg?g=587";
 	this->bing_api_key = new_key;
 	this->dl_options.check_file_server_time = true;
-	this->set_supported_tile_zoom_level_range(0, 19); /* Maximum zoom level may be regionally different rather than the same across the world. */
+	this->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(19)); /* Maximum zoom level may be regionally different rather than the same across the world. */
 	this->copyright = "© 2011 Microsoft Corporation and/or its suppliers";
 	this->license = "Microsoft Bing Maps Specific";
 	this->license_url = "http://www.microsoft.com/maps/assets/docs/terms.aspx";
@@ -158,12 +158,12 @@ MapSourceBing::~MapSourceBing()
 
 
 
-QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
+QString MapSourceBing::compute_quad_tree(const TileZoomLevel & zoom, int tilex, int tiley) const
 {
 	/* Picked from http://trac.openstreetmap.org/browser/applications/editors/josm/plugins/slippymap/src/org/openstreetmap/josm/plugins/slippymap/SlippyMapPreferences.java?rev=24486 */
 	char k[20];
 	int ik = 0;
-	for (int i = zoom; i > 0; i--) {
+	for (int i = zoom.value(); i > 0; i--) {
 		char digit = 48;
 		int mask = 1 << (i - 1);
 		if ((tilex & mask) != 0) {
@@ -183,7 +183,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
-	const QString quadtree = compute_quad_tree(src.scale.get_osm_tile_zoom_level(), src.x, src.y);
+	const QString quadtree = compute_quad_tree(src.scale.osm_tile_zoom_level(), src.x, src.y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;
@@ -213,8 +213,8 @@ void MapSourceBing::add_copyright(GisViewport * gisview, const LatLonBBox & bbox
 		const BingImageryProvider * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bbox.south, current->bbox.north, current->bbox.east, current->bbox.west, current->zoom_min, current->zoom_max); */
 		if (bbox.intersects_with(current->bbox) &&
-		    (tile_scale.get_osm_tile_zoom_level()) > current->zoom_min &&
-		    (tile_scale.get_osm_tile_zoom_level()) < current->zoom_max) {
+		    tile_scale.osm_tile_zoom_level() > current->zoom_min &&
+		    tile_scale.osm_tile_zoom_level() < current->zoom_max) {
 
 			gisview->add_attribution(current->attribution);
 			qDebug() << SG_PREFIX_D << "Found match:" << current->attribution;
@@ -301,12 +301,15 @@ bool XMLHandlerBing::characters(const QString & ch)
 		qDebug() << SG_PREFIX_I << "Attribution =" << this->current_provider->attribution;
 
 	} else if (parent == "CoverageArea") {
+		/* TODO_LATER: we may need to do more validation of
+		   zoom values read from XML, to see whether they are
+		   in valid range. */
 		if (current == "ZoomMin") {
-			this->current_provider->zoom_min = ch.toInt();
-			qDebug() << SG_PREFIX_I << "Zoom Min =" << this->current_provider->zoom_min;
+			this->current_provider->zoom_min = TileZoomLevel(ch.toInt());
+			qDebug() << SG_PREFIX_I << "Zoom Min =" << this->current_provider->zoom_min.value();
 		} else if (current == "ZoomMax") {
-			this->current_provider->zoom_max = ch.toInt();
-			qDebug() << SG_PREFIX_I << "Zoom Max =" << this->current_provider->zoom_max;
+			this->current_provider->zoom_max = TileZoomLevel(ch.toInt());
+			qDebug() << SG_PREFIX_I << "Zoom Max =" << this->current_provider->zoom_max.value();
 		} else {
 			qDebug() << SG_PREFIX_W << "Unexpected tag inside CoverageArea:" << current;
 		}
@@ -368,7 +371,7 @@ sg_ret MapSourceBing::parse_file_for_providers(QFile & tmp_file)
 		for (auto iter = this->providers.begin(); iter != this->providers.end(); iter++) {
 			const BingImageryProvider * p = *iter;
 			qDebug() << SG_PREFIX_D << "Bing Imagery Provider" << p->attribution
-				 << ", zoom from" << p->zoom_min << "to" << p->zoom_max
+				 << ", zoom from" << p->zoom_min.value() << "to" << p->zoom_max.value()
 				 << p->bbox;
 		}
 	}

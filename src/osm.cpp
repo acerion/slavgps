@@ -300,7 +300,7 @@ MapSource * map_source_maker_mapnik(void)
 	map_source->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = false;
 	map_source->dl_options.use_etag = true;
-	map_source->set_supported_tile_zoom_level_range(0, 19);
+	map_source->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(19));
 	map_source->set_copyright("© OpenStreetMap contributors");
 	map_source->set_license("CC-BY-SA");
 	map_source->set_license_url("http://www.openstreetmap.org/copyright");
@@ -316,7 +316,7 @@ MapSource * map_source_maker_cycle(void)
 	map_source->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
-	map_source->set_supported_tile_zoom_level_range(0, 18);
+	map_source->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(18));
 	map_source->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
 	map_source->set_license("CC-BY-SA");
 	map_source->set_license_url("http://www.openstreetmap.org/copyright");
@@ -332,7 +332,7 @@ MapSource * map_source_maker_transport(void)
 	map_source->set_map_type_string("OSM-Transport"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
-	map_source->set_supported_tile_zoom_level_range(0, 18);
+	map_source->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(18));
 	map_source->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
 	map_source->set_license("CC-BY-SA");
 	map_source->set_license_url("http://www.openstreetmap.org/copyright");
@@ -348,7 +348,7 @@ MapSource * map_source_maker_mapquest(void)
 	map_source->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
-	map_source->set_supported_tile_zoom_level_range(0, 19);
+	map_source->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(19));
 	map_source->set_copyright("Tiles Courtesy of MapQuest © OpenStreetMap contributors");
 	map_source->set_license("MapQuest Specific");
 	map_source->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
@@ -364,7 +364,7 @@ MapSource * map_source_maker_humanitarian(void)
 	map_source->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
 	map_source->dl_options.check_file_server_time = true;
 	map_source->dl_options.use_etag = false;
-	map_source->set_supported_tile_zoom_level_range(0, 20); /* Super detail! */
+	map_source->set_supported_tile_zoom_level_range(TileZoomLevel(0), TileZoomLevel(20)); /* Super detail! */
 	map_source->set_copyright("© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
 	map_source->set_license("CC-BY-SA");
 	map_source->set_license_url("http://www.openstreetmap.org/copyright");

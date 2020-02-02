@@ -2244,6 +2244,36 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.ll_value() - expected));
 	}
 
+	{
+		Distance smaller(0.1, DistanceType::Unit::E::Meters);
+		Distance larger(0.2, DistanceType::Unit::E::Meters);
+
+		assert(smaller < larger);
+		assert(smaller <= larger);
+		assert(!(smaller > larger));
+		assert(!(smaller >= larger));
+	}
+
+	{
+		Distance larger(1000, DistanceType::Unit::E::Meters);
+		Distance smaller(999.99, DistanceType::Unit::E::Meters);
+
+		assert(larger > smaller);
+		assert(larger >= smaller);
+		assert(!(larger < smaller));
+		assert(!(larger <= smaller));
+	}
+
+	{
+		Distance equal1(4.0, DistanceType::Unit::E::Meters);
+		Distance equal2(4.0, DistanceType::Unit::E::Meters);
+
+		assert(!(equal1 > equal2));
+		assert(equal1 >= equal2);
+		assert(!(equal1 < equal2));
+		assert(equal1 <= equal2);
+	}
+
 	return true;
 }
 

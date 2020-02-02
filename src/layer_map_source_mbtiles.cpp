@@ -32,7 +32,7 @@
 
 #include "dialog.h"
 #include "globals.h"
-#include "map_source_mbtiles.h"
+#include "layer_map_source_mbtiles.h"
 #include "map_utils.h"
 
 
@@ -270,7 +270,7 @@ sg_ret MapSourceMBTiles::close_map_source(void)
 
 void get_mbtiles_z_x_y(const TileInfo & tile_info, int & z, int & x, int & y)
 {
-	z = tile_info.get_osm_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
+	z = tile_info.osm_tile_zoom_level().value(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
 	x = tile_info.x;
 	y = (int) pow(2, z) - 1 - tile_info.y; /* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
 

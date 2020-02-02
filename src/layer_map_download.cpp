@@ -40,7 +40,7 @@
 
 #include "layer_map_download.h"
 #include "window.h"
-#include "map_source.h"
+#include "layer_map_source.h"
 #include "layer_map.h"
 #include "globals.h"
 #include "statusbar.h"

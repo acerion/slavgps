@@ -119,7 +119,7 @@ Metatile::Metatile(const QString & dir, const TileInfo & tile_info)
 {
 	int x = tile_info.x;
 	int y = tile_info.y;
-	int z = tile_info.get_osm_tile_zoom_level(); /* This is OSM metatile, so use TileInfo::get_osm_tile_zoom_level() directly. */
+	int z = tile_info.osm_tile_zoom_level().value(); /* This is OSM metatile, so use TileInfo::osm_tile_zoom_level() directly. */
 
 	/* Each meta tile winds up in its own file, with several in each leaf directory
 	   the .meta tile name is based on the sub-tile at (0,0). */

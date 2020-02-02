@@ -42,7 +42,7 @@
 
 
 
-#include "map_source_tms.h"
+#include "layer_map_source_tms.h"
 #include "map_utils.h"
 #include "viewport_internal.h"
 

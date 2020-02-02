@@ -98,7 +98,7 @@ QString OnlineService_format::get_url_at_position(GisViewport * a_gisview, const
 
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
+	TileZoomLevel tile_zoom_level(TileZoomLevel::Level::Default); /* Zoomed in by default. */
 	if (a_gisview->get_viking_scale().x_y_is_equal()) {
 		tile_zoom_level = a_gisview->get_viking_scale().to_tile_zoom_level();
 	}

@@ -33,11 +33,12 @@
 
 
 
-#include "coord.h"
 #include "bbox.h"
+#include "coord.h"
 #include "download.h"
-#include "viewport.h"
 #include "lat_lon.h"
+#include "mapcoord.h"
+#include "viewport.h"
 
 
 
@@ -113,31 +114,6 @@ namespace SlavGPS {
 
 
 
-	enum class TileZoomLevels {
-		MaxZoomOut =  0,     /* Maximal zoom out, one tile showing whole world. */
-		Default    = 17,     /* Zoomed in quite a bit. MAGIC_SEVENTEEN. */
-	};
-
-
-
-
-	/* https://wiki.openstreetmap.org/wiki/Zoom_levels */
-	class TileZoomLevel {
-	public:
-		TileZoomLevel(int new_value) : value(new_value) {};
-		TileZoomLevel(TileZoomLevels new_value) : value((int) new_value) {};
-
-		void set_value(int new_value) { this->value = new_value; };
-		int get_value(void) const { return this->value; };
-
-		QString to_string(void) const;
-	private:
-		int value = 0;
-	};
-
-
-
-
 	class MapSource {
 	public:
 		MapSource();
@@ -188,7 +164,7 @@ namespace SlavGPS {
 
 		virtual bool supports_download_only_new(void) const;
 
-		void set_supported_tile_zoom_level_range(int tile_zoom_level_min, int tile_zoom_level_max);
+		void set_supported_tile_zoom_level_range(const TileZoomLevel & tile_zoom_level_min, const TileZoomLevel & tile_zoom_level_max);
 		bool is_supported_tile_zoom_level(const TileZoomLevel & tile_zoom_level) const;
 
 		QString get_file_extension(void) const;
@@ -265,8 +241,8 @@ namespace SlavGPS {
 
 	private:
 
-		TileZoomLevel tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
-		TileZoomLevel tile_zoom_level_max = TileZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
+		TileZoomLevel m_tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
+		TileZoomLevel m_tile_zoom_level_max = TileZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
 
 		double lat_min = SG_LATITUDE_MIN;  /* [degrees] Minimum latitude supported by the map provider. */
 		double lat_max = SG_LATITUDE_MAX;  /* [degrees] Maximum latitude supported by the map provider. */

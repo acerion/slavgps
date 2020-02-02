@@ -97,16 +97,16 @@ QString OnlineService_center::get_url_for_coord(const Coord & a_coord, const Vik
 	const LatLon lat_lon = a_coord.get_lat_lon();
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	TileZoomLevel tile_zoom_level(TileZoomLevels::Default);
+	TileZoomLevel zoom(TileZoomLevel::Level::Default);
 	if (viking_scale.x_y_is_equal()) {
-		tile_zoom_level = viking_scale.to_tile_zoom_level();
+		zoom = viking_scale.to_tile_zoom_level();
 	}
 
 	QString string_lat;
 	QString string_lon;
 	lat_lon.to_strings_raw(string_lat, string_lon);
 
-	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(tile_zoom_level.get_value());
+	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(zoom.value());
 
 	qDebug() << SG_PREFIX_I << "Result URL is" << url;
 

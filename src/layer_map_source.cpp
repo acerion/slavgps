@@ -19,6 +19,7 @@
 
 
 
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -39,7 +40,7 @@
 #include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
-#include "map_source.h"
+#include "layer_map_source.h"
 #include "map_cache.h"
 #include "layer_map.h"
 #include "statusbar.h"
@@ -120,8 +121,8 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->server_hostname    = other.server_hostname;
 	this->server_path_format = other.server_path_format;
 
-	this->tile_zoom_level_min = other.tile_zoom_level_min;
-	this->tile_zoom_level_max = other.tile_zoom_level_max;
+	this->m_tile_zoom_level_min = other.m_tile_zoom_level_min;
+	this->m_tile_zoom_level_max = other.m_tile_zoom_level_max;
 
 	this->lat_min = other.lat_min;
 	this->lat_max = other.lat_max;
@@ -165,8 +166,8 @@ MapSource::MapSource(MapSource & map)
 	this->server_hostname    = map.server_hostname;
 	this->server_path_format = map.server_path_format;
 
-	this->tile_zoom_level_min = map.tile_zoom_level_min;
-	this->tile_zoom_level_max = map.tile_zoom_level_max;
+	this->m_tile_zoom_level_min = map.m_tile_zoom_level_min;
+	this->m_tile_zoom_level_max = map.m_tile_zoom_level_max;
 
 	this->lat_min = map.lat_min;
 	this->lat_max = map.lat_max;
@@ -555,18 +556,77 @@ bool MapSource::includes_tile(const TileInfo & tile_info) const
 
 
 
-QString TileZoomLevel::to_string(void) const
+TileZoomLevel::TileZoomLevel(int value)
 {
-	return QString(this->value);
+	if (value >= (int) TileZoomLevel::Level::Min && value <= (int) TileZoomLevel::Level::Max) {
+		this->m_value = value;
+	} else {
+		qDebug() << SG_PREFIX_E << "Invalid value passed to constructor:" << value;
+		this->m_value = (int) TileZoomLevel::Level::Default;
+	}
 }
 
 
 
 
-void MapSource::set_supported_tile_zoom_level_range(int new_tile_zoom_level_min, int new_tile_zoom_level_max)
+QString TileZoomLevel::to_string(void) const
 {
-	this->tile_zoom_level_min = TileZoomLevel(new_tile_zoom_level_min);
-	this->tile_zoom_level_max = TileZoomLevel(new_tile_zoom_level_max);
+	return QString(this->m_value);
+}
+
+
+
+
+bool TileZoomLevel::unit_tests(void)
+{
+	{
+		TileZoomLevel smaller(0);
+		TileZoomLevel larger(1);
+
+		assert(smaller < larger);
+		assert(smaller <= larger);
+		assert(!(smaller > larger));
+		assert(!(smaller >= larger));
+	}
+
+	{
+		TileZoomLevel larger(5);
+		TileZoomLevel smaller(4);
+
+		assert(larger > smaller);
+		assert(larger >= smaller);
+		assert(!(larger < smaller));
+		assert(!(larger <= smaller));
+	}
+
+	{
+		TileZoomLevel equal1(4);
+		TileZoomLevel equal2(4);
+
+		assert(!(equal1 > equal2));
+		assert(equal1 >= equal2);
+		assert(!(equal1 < equal2));
+		assert(equal1 <= equal2);
+	}
+
+	return true;
+}
+
+
+
+
+bool TileZoomLevel::operator<(const TileZoomLevel & rhs) const { return this->m_value < rhs.m_value; }
+bool TileZoomLevel::operator>(const TileZoomLevel & rhs) const { return rhs < *this; }
+bool TileZoomLevel::operator<=(const TileZoomLevel & rhs) const { return !(*this > rhs); }
+bool TileZoomLevel::operator>=(const TileZoomLevel & rhs) const { return !(*this < rhs); }
+
+
+
+
+void MapSource::set_supported_tile_zoom_level_range(const TileZoomLevel & tile_zoom_level_min, const TileZoomLevel & tile_zoom_level_max)
+{
+	this->m_tile_zoom_level_min = tile_zoom_level_min;
+	this->m_tile_zoom_level_max = tile_zoom_level_max;
 }
 
 
@@ -574,6 +634,5 @@ void MapSource::set_supported_tile_zoom_level_range(int new_tile_zoom_level_min,
 
 bool MapSource::is_supported_tile_zoom_level(const TileZoomLevel & tile_zoom_level) const
 {
-	return tile_zoom_level.get_value() >= this->tile_zoom_level_min.get_value()
-		&& tile_zoom_level.get_value() <= this->tile_zoom_level_max.get_value();
+	return tile_zoom_level >= this->m_tile_zoom_level_min && tile_zoom_level <= this->m_tile_zoom_level_max;
 }

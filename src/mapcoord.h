@@ -44,6 +44,41 @@ namespace SlavGPS {
 
 
 
+	/* https://wiki.openstreetmap.org/wiki/Zoom_levels */
+	class TileZoomLevel {
+	public:
+		enum class Level {
+			Min      =  0,     /* Maximal zoom out, one tile showing whole world. */
+			Default  = 17,     /* Zoomed in quite a bit. MAGIC_SEVENTEEN. */
+			Max      = 20,     /* Maximal zoom in. */
+		};
+
+		explicit TileZoomLevel(int value);
+		TileZoomLevel(TileZoomLevel::Level value) : m_value((int) value) {};
+
+		void set_value(int value) { this->m_value = value; };
+		int value(void) const { return this->m_value; };
+
+		QString to_string(void) const;
+
+		static bool unit_tests(void);
+
+		/* These operators are members of the class to avoid
+		   ambiguity during compilation - compiler indicates
+		   that similar operators from Measurement template
+		   class are potential candidates. */
+		bool operator<(const TileZoomLevel & rhs) const;
+		bool operator>(const TileZoomLevel & rhs) const;
+		bool operator<=(const TileZoomLevel & rhs) const;
+		bool operator>=(const TileZoomLevel & rhs) const;
+	private:
+		int m_value = 0;
+	};
+
+
+
+
+
 	class TilesRange {
 	public:
 		int get_tiles_count(void) const;
@@ -59,7 +94,7 @@ namespace SlavGPS {
 
 	class TileScale {
 	public:
-		int get_osm_tile_zoom_level(void) const;
+		TileZoomLevel osm_tile_zoom_level(void) const;
 		int get_non_osm_scale(void) const;
 		bool is_valid(void) const;
 		double to_so_called_mpp(void) const;
@@ -100,7 +135,7 @@ namespace SlavGPS {
 		int y = 0;
 
 		/* For use in OSM-like context only (0 = max zoomed out; ~18 = max zoomed in). */
-		int get_osm_tile_zoom_level(void) const { return this->scale.get_osm_tile_zoom_level(); }
+		TileZoomLevel osm_tile_zoom_level(void) const { return this->scale.osm_tile_zoom_level(); }
 
 		int z;      /* Zone or anything else. */
 		TileScale scale;

@@ -54,7 +54,7 @@
 
 
 
-#include "map_source_slippy.h"
+#include "layer_map_source_slippy.h"
 #include "map_utils.h"
 #include "globals.h"
 
@@ -134,13 +134,13 @@ sg_ret MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & 
 const QString MapSourceSlippy::get_server_path(const TileInfo & src) const
 {
 	QString uri;
-	const int tile_zoom_level = src.scale.get_osm_tile_zoom_level();
+	const TileZoomLevel zoom = src.scale.osm_tile_zoom_level();
 	if (this->switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(tile_zoom_level).arg(src.y).arg(src.x);
+		uri = QString(this->server_path_format).arg(zoom.value()).arg(src.y).arg(src.x);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(tile_zoom_level).arg(src.x).arg(src.y);
+		uri = QString(this->server_path_format).arg(zoom.value()).arg(src.x).arg(src.y);
 	}
 	return uri;
 }

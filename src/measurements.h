@@ -753,17 +753,17 @@ namespace SlavGPS {
 		return lhs.ll_value() < rhs.ll_value();
 	}
 	template<typename T>
-	bool operator>(const T & lhs, const T & rhs)
+	bool operator>(const Measurement<T> & lhs, const Measurement<T> & rhs)
 	{
 		return rhs < lhs;
 	}
 	template<typename T>
-	bool operator<=(const T & lhs, const T & rhs)
+	bool operator<=(const Measurement<T> & lhs, const Measurement<T> & rhs)
 	{
 		return !(lhs > rhs);
 	}
 	template<typename T>
-	bool operator>=(const T & lhs, const T & rhs)
+	bool operator>=(const Measurement<T> & lhs, const Measurement<T> & rhs)
 	{
 		return !(lhs < rhs);
 	}

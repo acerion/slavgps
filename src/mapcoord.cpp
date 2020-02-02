@@ -37,6 +37,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Map Tile"
+
+
+
+
 TilesRange TileInfo::get_tiles_range(const TileInfo & tile_info_ul, const TileInfo & tile_info_br)
 {
 	TilesRange range;
@@ -98,16 +103,31 @@ sg_ret TileInfo::get_itms_lat_lon_ul_br(LatLon & lat_lon_ul, LatLon & lat_lon_br
 
 QDebug SlavGPS::operator<<(QDebug debug, const TileInfo & tile_info)
 {
-	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", OSM zoom level =" << tile_info.get_osm_tile_zoom_level();
+	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", OSM zoom level =" << tile_info.osm_tile_zoom_level().value();
 	return debug;
 }
 
 
 
 
-int TileScale::get_osm_tile_zoom_level(void) const
+TileZoomLevel TileScale::osm_tile_zoom_level(void) const
 {
-	return MAGIC_SEVENTEEN - this->value;
+	TileZoomLevel result(0);
+	const int recalculated = MAGIC_SEVENTEEN - this->value;
+
+	if (recalculated < (int) TileZoomLevel::Level::Min) {
+		qDebug() << SG_PREFIX_E << "Clipping OSM Zoom Level: too small" << this->value << recalculated;
+		result = TileZoomLevel(TileZoomLevel::Level::Min);
+
+	} else if (recalculated > (int) TileZoomLevel::Level::Max) {
+		qDebug() << SG_PREFIX_E << "Clipping OSM Zoom Level: too large" << this->value << recalculated;
+		result = TileZoomLevel(TileZoomLevel::Level::Max);
+
+	} else {
+		result = TileZoomLevel(recalculated);
+	}
+
+	return result;
 }
 
 

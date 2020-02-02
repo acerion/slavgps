@@ -511,15 +511,15 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 	   Viking's cache. */
 
 	QString result;
-	int tile_zoom_level = 0;
+	TileZoomLevel zoom(0);
 
 	switch (this->layout) {
 	case MapCacheLayout::OSM:
-		tile_zoom_level = tile_info.get_osm_tile_zoom_level(); /* OSM map cache layout, therefore get tile zoom level used by OSM. */
+		zoom = tile_info.osm_tile_zoom_level(); /* OSM map cache layout, therefore get tile zoom level used by OSM. */
 		if (map_type_string.isEmpty()) {
 			result = QString("%1%2%3%4%5%6%7")
 				.arg(this->dir_full_path)
-				.arg(tile_zoom_level)
+				.arg(zoom.value())
 				.arg(QDir::separator())
 				.arg(tile_info.x)
 				.arg(QDir::separator())
@@ -530,7 +530,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				result = QString("%1%2%3%4%5%6%7")
 					.arg(this->dir_full_path)
-					.arg(tile_zoom_level)
+					.arg(zoom.value())
 					.arg(QDir::separator())
 					.arg(tile_info.x)
 					.arg(QDir::separator())
@@ -542,7 +542,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 					.arg(this->dir_full_path)
 					.arg(map_type_string)
 					.arg(QDir::separator())
-					.arg(tile_zoom_level)
+					.arg(zoom.value())
 					.arg(QDir::separator())
 					.arg(tile_info.x)
 					.arg(QDir::separator())

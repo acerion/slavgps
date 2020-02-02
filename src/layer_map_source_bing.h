@@ -48,8 +48,8 @@ namespace SlavGPS {
 	class BingImageryProvider {
 	public:
 		QString attribution;
-		int zoom_min = 0;
-		int zoom_max = 0;
+		TileZoomLevel zoom_min = TileZoomLevel(0);
+		TileZoomLevel zoom_max = TileZoomLevel(0);
 		LatLonBBox bbox;
 	};
 
@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 	private:
 		void async_load_providers(void);
-		QString compute_quad_tree(int zoom, int tilex, int tiley) const;
+		QString compute_quad_tree(const TileZoomLevel & zoom, int tilex, int tiley) const;
 		sg_ret parse_file_for_providers(QFile & file);
 	};
 

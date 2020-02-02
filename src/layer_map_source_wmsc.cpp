@@ -35,7 +35,7 @@
 
 
 
-#include "map_source_wmsc.h"
+#include "layer_map_source_wmsc.h"
 #include "map_utils.h"
 #include "viewport_internal.h"
 #include "viewport_zoom.h"
