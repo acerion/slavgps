@@ -57,7 +57,7 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & tile_info_ul, const TileIn
 
 
 
-void TileInfo::scale_up(int scale_dec, int scale_factor)
+void TileInfo::resize_up(int scale_dec, int scale_factor)
 {
 	this->x = this->x * scale_factor;
 	this->y = this->y * scale_factor;
@@ -67,7 +67,7 @@ void TileInfo::scale_up(int scale_dec, int scale_factor)
 
 
 
-void TileInfo::scale_down(int scale_inc, int scale_factor)
+void TileInfo::resize_down(int scale_inc, int scale_factor)
 {
 	this->x = this->x / scale_factor;
 	this->y = this->y / scale_factor;

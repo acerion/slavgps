@@ -53,7 +53,7 @@ namespace SlavGPS {
 	enum {
 		/* Must be kept as zero for backwards compatibility
 		   reasons. Not a big deal, just don't change it. */
-		LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE = 0,
+		LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL = 0,
 	};
 
 
@@ -67,7 +67,7 @@ namespace SlavGPS {
 
 	class TileGeometry {
 	public:
-		void scale_up(int scale_factor);
+		void resize_up(int scale_factor);
 
 		QPixmap pixmap;
 
@@ -84,14 +84,14 @@ namespace SlavGPS {
 
 
 
-	class PixmapScale {
+	class TilePixmapResize {
 	public:
-		PixmapScale(double x, double y);
-		bool condition_1(void) const;
-		bool condition_2(void) const;
+		TilePixmapResize(double x, double y);
+		bool resize_factors_in_allowed_range(void) const;
+		bool resize_factors_in_existence_only_range(void) const;
 
-		void scale_down(int scale_factor);
-		void scale_up(int scale_factor);
+		void resize_down(int resize_times);
+		void resize_up(int resize_times);
 
 		double x = 0.0;
 		double y = 0.0;
@@ -191,7 +191,7 @@ namespace SlavGPS {
 		int alpha = 0;
 
 
-		int map_zoom_id = LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE; /* This member is used as array index, so make sure to use with non-sparse enum values. */
+		int map_zoom_id = LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL; /* This member is used as array index, so make sure to use with non-sparse enum values. */
 		double map_zoom_x = 0.0;
 		double map_zoom_y = 0.0;
 
@@ -216,16 +216,29 @@ namespace SlavGPS {
 		QString file_full_path;
 
 	private:
+
+		/**
+		   @brief Get viking scale that will be passed to map
+		   tiles source
+
+		   We will want to get from the source the tiles with
+		   that scale.
+
+		   @return true if we have obtained the scale value and can proceed
+		   @return false otherwise
+		*/
+		bool get_desired_viking_scale(const GisViewport * gisview, VikingScale & viking_scale, TilePixmapResize & tile_pixmap_resize, bool & existence_only);
+
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 
-		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, int scale_factor);
-		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale);
-		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale);
+		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize, int scale_factor);
+		TileGeometry find_resized_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
+		TileGeometry find_resized_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
 
 		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj);
 
-		bool should_start_autodownload(GisViewport * gisview);
+		bool should_start_autodownload(const GisViewport * gisview);
 
 		/*
 		  Get pixmap of a tile. If necessary, ask map source
@@ -233,7 +246,7 @@ namespace SlavGPS {
 		  map source to retrieve the pixmap from local
 		  database.
 		*/
-		QPixmap get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & scale);
+		QPixmap get_tile_pixmap_with_stretch(const TileInfo & tile_info, const TilePixmapResize & tile_pixmap_resize);
 
 		MapTypeID m_map_type_id = MapTypeID::Initial;
 		MapSource * m_map_source = nullptr;

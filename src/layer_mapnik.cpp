@@ -706,7 +706,7 @@ void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 
-	MapCache::add_tile_pixmap(pixmap, properties, tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	MapCache::add_tile_pixmap(pixmap, properties, tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 }
 
 
@@ -783,7 +783,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool & rerender) co
 				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 
-			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -799,7 +799,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool & rerender) co
 
 QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 {
-	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	QPixmap pixmap = MapCache::get_tile_pixmap_with_stretch(tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "MAP CACHE HIT";
 		return pixmap;
@@ -1020,7 +1020,7 @@ void LayerMapnik::tile_info_cb(void)
 		return;
 	}
 
-	MapCacheItemProperties properties = MapCache::get_properties(tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	MapCacheItemProperties properties = MapCache::get_properties(tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 
 	const QString file_full_path = get_pixmap_full_path(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
 

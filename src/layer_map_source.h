@@ -53,7 +53,7 @@ namespace SlavGPS {
 	enum class GisViewportDrawMode;
 	class GisViewport;
 	class VikingScale;
-	class PixmapScale;
+	class TilePixmapResize;
 	class TileInfo;
 
 

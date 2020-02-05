@@ -102,11 +102,11 @@ static int MAX_TILES = 1000;
 
 #define VIK_SETTINGS_MAP_MIN_SHRINKFACTOR "maps_min_shrinkfactor"
 #define VIK_SETTINGS_MAP_MAX_SHRINKFACTOR "maps_max_shrinkfactor"
-static double MAX_SHRINKFACTOR = 8.0000001; /* zoom 1 viewing 8-tiles. */
-static double MIN_SHRINKFACTOR = 0.0312499; /* zoom 32 viewing 1-tiles. */
+static double g_max_shrinkfactor = 8.0000001; /* zoom 1 viewing 8-tiles. */
+static double g_min_shrinkfactor = 0.0312499; /* zoom 32 viewing 1-tiles. */
 
 #define VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR "maps_real_min_shrinkfactor"
-static double REAL_MIN_SHRINKFACTOR = 0.0039062499; /* If shrinkfactor is between MAX and REAL_MAX, will only check for existence. */
+static double g_real_min_shrinkfactor = 0.0039062499; /* If shrinkfactor is between MAX and REAL_MAX, will only check for existence. */
 
 #define VIK_SETTINGS_MAP_SCALE_INC_UP "maps_scale_inc_up"
 static unsigned int SCALE_INC_UP = 2;
@@ -134,7 +134,7 @@ static SGVariant map_type_default(void) { return SGVariant(map_types_enum.defaul
 
 static WidgetIntEnumerationData map_zooms_enum = {
 	{
-		SGLabelID(QObject::tr("Use Viking Zoom Level"), LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE),
+		SGLabelID(QObject::tr("Follow Zoom Level of Viewport"), LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL),
 		SGLabelID(QObject::tr("0.25"),       1),
 		SGLabelID(QObject::tr("0.5"),        2),
 		SGLabelID(QObject::tr("1"),          3),
@@ -156,7 +156,7 @@ static WidgetIntEnumerationData map_zooms_enum = {
 		SGLabelID(QObject::tr("USGS 200k"), 19),
 		SGLabelID(QObject::tr("USGS 250k"), 20),
 	},
-	LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE,
+	LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL,
 };
 
 
@@ -231,7 +231,7 @@ static ParameterSpecification maps_layer_param_specs[] = {
 	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
 	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,                sg_variant_true,      "" },
 	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::IntEnumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::IntEnumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level.\n'Follow Zoom Level of Viewport' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
 	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,          NULL,                NULL,                 "" }, /* Guard. */
 };
@@ -312,26 +312,26 @@ void LayerMap::init(void)
 		MAX_TILES = max_tiles;
 	}
 
-	double gdtmp;
-	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MIN_SHRINKFACTOR, &gdtmp)) {
-		MIN_SHRINKFACTOR = gdtmp;
+	double double_val = 0.0;
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MIN_SHRINKFACTOR, &double_val)) {
+		g_min_shrinkfactor = double_val;
 	}
 
-	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MAX_SHRINKFACTOR, &gdtmp)) {
-		MAX_SHRINKFACTOR = gdtmp;
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MAX_SHRINKFACTOR, &double_val)) {
+		g_max_shrinkfactor = double_val;
 	}
 
-	if (ApplicationState::get_double(VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR, &gdtmp)) {
-		REAL_MIN_SHRINKFACTOR = gdtmp;
+	if (ApplicationState::get_double(VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR, &double_val)) {
+		g_real_min_shrinkfactor = double_val;
 	}
 
-	int gitmp = 0;
-	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &gitmp)) {
-		SCALE_INC_UP = gitmp;
+	int int_val = 0;
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &int_val)) {
+		SCALE_INC_UP = int_val;
 	}
 
-	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &gitmp)) {
-		SCALE_INC_DOWN = gitmp;
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &int_val)) {
+		SCALE_INC_DOWN = int_val;
 	}
 
 	bool gbtmp = true;
@@ -824,15 +824,15 @@ Layer * LayerMapInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 
-static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale & pixmap_scale)
+static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const TilePixmapResize & tile_pixmap_resize)
 {
 	/* Apply alpha setting. */
 	if (scale_alpha.is_in_range(alpha)) {
 		ui_pixmap_set_alpha(pixmap, alpha);
 	}
 
-	if (pixmap_scale.x != 1.0 || pixmap_scale.y != 1.0) {
-		ui_pixmap_scale_size_by(pixmap, pixmap_scale.x, pixmap_scale.y);
+	if (tile_pixmap_resize.x != 1.0 || tile_pixmap_resize.y != 1.0) {
+		ui_pixmap_scale_size_by(pixmap, tile_pixmap_resize.x, tile_pixmap_resize.y);
 	}
 
 	return;
@@ -841,10 +841,10 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale
 
 
 
-QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale & pixmap_scale)
+QPixmap LayerMap::get_tile_pixmap_with_stretch(const TileInfo & tile_info, const TilePixmapResize & tile_pixmap_resize)
 {
 	/* Get the thing. */
-	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->m_map_type_id, this->alpha, pixmap_scale, this->file_full_path);
+	QPixmap pixmap = MapCache::get_tile_pixmap_with_stretch(tile_info, this->m_map_type_id, this->alpha, tile_pixmap_resize, this->file_full_path);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "CACHE HIT";
 		return pixmap;
@@ -857,10 +857,10 @@ QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale 
 	pixmap = this->m_map_source->create_tile_pixmap(map_cache_obj, tile_info);
 
 	if (!pixmap.isNull()) {
-		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
+		pixmap_apply_settings(pixmap, this->alpha, tile_pixmap_resize);
 
 		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, this->m_map_source->map_type_id(),
-					  this->alpha, pixmap_scale, this->file_full_path);
+					  this->alpha, tile_pixmap_resize, this->file_full_path);
 	}
 
 	return pixmap;
@@ -869,7 +869,7 @@ QPixmap LayerMap::get_tile_pixmap(const TileInfo & tile_info, const PixmapScale 
 
 
 
-bool LayerMap::should_start_autodownload(GisViewport * gisview)
+bool LayerMap::should_start_autodownload(const GisViewport * gisview)
 {
 	const Coord center = gisview->get_center_coord();
 
@@ -907,30 +907,30 @@ bool LayerMap::should_start_autodownload(GisViewport * gisview)
 
 
 
-TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
-					     const TileGeometry & tile_geometry,
-					     const PixmapScale & pixmap_scale)
+TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_iter,
+					      const TileGeometry & tile_geometry,
+					      const TilePixmapResize & tile_pixmap_resize)
 {
 	TileGeometry result;
 
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
-		int scale_factor = 1 << scale_inc;  /* 2^scale_inc */
+		const int resize_times = 1 << scale_inc;  /* 2^scale_inc */
 
 		TileInfo scaled_tile_iter = tile_iter;
-		scaled_tile_iter.scale_down(scale_inc, scale_factor);
+		scaled_tile_iter.resize_down(scale_inc, resize_times);
 
-		PixmapScale scaled_pixmap_scale = pixmap_scale;
-		scaled_pixmap_scale.scale_down(scale_factor);
+		TilePixmapResize scaled_tile_pixmap_resize = tile_pixmap_resize;
+		scaled_tile_pixmap_resize.resize_down(resize_times);
 
-		result.pixmap = this->get_tile_pixmap(scaled_tile_iter, scaled_pixmap_scale);
+		result.pixmap = this->get_tile_pixmap_with_stretch(scaled_tile_iter, scaled_tile_pixmap_resize);
 		if (!result.pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
 
 			result.dest_x = tile_geometry.dest_x;
 			result.dest_y = tile_geometry.dest_y;
-			result.begin_x = (tile_iter.x % scale_factor) * tile_geometry.width;
-			result.begin_y = (tile_iter.y % scale_factor) * tile_geometry.height;
+			result.begin_x = (tile_iter.x % resize_times) * tile_geometry.width;
+			result.begin_y = (tile_iter.y % resize_times) * tile_geometry.height;
 			result.width = tile_geometry.width;
 			result.height = tile_geometry.height;
 
@@ -945,32 +945,32 @@ TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
 
 
 
-TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
-					   const TileGeometry & tile_geometry,
-					   const PixmapScale & pixmap_scale)
+TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_iter,
+					    const TileGeometry & tile_geometry,
+					    const TilePixmapResize & tile_pixmap_resize)
 {
 	TileGeometry result;
 
 	/* Try with bigger zooms. */
 	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
-		int scale_factor = 1 << scale_dec;  /* 2^scale_dec */
+		const int resize_times = 1 << scale_dec;  /* 2^scale_dec */
 
 		TileInfo scaled_tile_iter = tile_iter;
-		scaled_tile_iter.scale_up(scale_dec, scale_factor);
+		scaled_tile_iter.resize_up(scale_dec, resize_times);
 
-		PixmapScale scaled_pixmap_scale = pixmap_scale;
-		scaled_pixmap_scale.scale_up(scale_factor);
+		TilePixmapResize scaled_tile_pixmap_resize = tile_pixmap_resize;
+		scaled_tile_pixmap_resize.resize_up(resize_times);
 
 		TileGeometry scaled_tile_geometry = tile_geometry;
-		scaled_tile_geometry.scale_up(scale_factor);
+		scaled_tile_geometry.resize_up(resize_times);
 
-		for (int pict_x = 0; pict_x < scale_factor; pict_x++) {
-			for (int pict_y = 0; pict_y < scale_factor; pict_y++) {
+		for (int pict_x = 0; pict_x < resize_times; pict_x++) {
+			for (int pict_y = 0; pict_y < resize_times; pict_y++) {
 				TileInfo ulm3 = scaled_tile_iter;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				result.pixmap = this->get_tile_pixmap(ulm3, scaled_pixmap_scale);
+				result.pixmap = this->get_tile_pixmap_with_stretch(ulm3, scaled_tile_pixmap_resize);
 				if (!result.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
 
@@ -994,43 +994,94 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 
 
 
+bool LayerMap::get_desired_viking_scale(const GisViewport * gisview, VikingScale & viking_scale, TilePixmapResize & tile_pixmap_resize, bool & existence_only)
+{
+	viking_scale = gisview->get_viking_scale();
+
+	if (this->map_zoom_id == LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL) {
+		/* The Viking Scale of drawn tiles should be always
+		   the same as zoom level of viewport, so leave
+		   viking_scale unchanged. */
+		return true;
+	}
+
+	/*
+	  If we get here, then this probably means "Don't look at what
+	  zoom level Z is now currently selected by user in main
+	  viewport (e.g. with mouse scroll up/down) when trying to
+	  find a suitable tile pixmap. Look at zoom level L selected
+	  in layer's properties instead."
+
+	  This probably also mean "when getting tiles from map source,
+	  don't ask source for tiles with the zoom level Z, but with
+	  the zoom level L".
+
+	  If what we have from map source is a tile pixmap
+	  corresponding to zoom level L, but currently viewport is at
+	  level Z, then in order to display that pixmap correctly (in
+	  correct place and with correct size) then we will probably
+	  have to resize it (stretch it).
+	*/
+
+	const double xmpp = gisview->get_viking_scale().get_x();
+	const double ympp = gisview->get_viking_scale().get_y();
+
+	if (this->map_zoom_x == xmpp && this->map_zoom_y == ympp) {
+		/* We need to use zoom specified in Layer's
+		   properties, but luckily current zoom of viewport is
+		   exactly the same as expected zoom level of
+		   tiles. Leave viking_scale unchanged. */
+		return true;
+	}
+
+	/* OK, so user wants to use some specific zoom level. We set
+	   it here. That could be the end of the function, but we have
+	   to do some other stuff below, so don't return yet. */
+	viking_scale = VikingScale(this->map_zoom_x, this->map_zoom_x);/* TODO_LATER: this is setting ympp from map_zoom_x. Verify this. */
+
+
+	/* If the pixmaps that we get from source don't match our
+	   viewport, we will have to resize them by this much. */
+	tile_pixmap_resize = TilePixmapResize(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
+
+
+	/* This par I don't understand yet. */
+	if (!tile_pixmap_resize.resize_factors_in_allowed_range()) {
+		if (tile_pixmap_resize.resize_factors_in_existence_only_range()) {
+			qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
+			existence_only = true;
+		} else {
+			/* Report the reason for not drawing. */
+			Window * window = this->get_window();
+			if (window) {
+				QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0 / g_real_min_shrinkfactor));
+				window->statusbar_update(StatusBarField::Info, msg);
+			}
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+
+
 sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xmpp = gisview->get_viking_scale().get_x();
-	double ympp = gisview->get_viking_scale().get_y();
-
-	PixmapScale pixmap_scale(1.0, 1.0);
-
+	TilePixmapResize tile_pixmap_resize(1.0, 1.0);
+	VikingScale viking_scale;
 	bool existence_only = false;
 
-	if (this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE) {
-		if (this->map_zoom_x != xmpp || this->map_zoom_y != ympp) {
-			pixmap_scale = PixmapScale(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
-			xmpp = this->map_zoom_x;
-			ympp = this->map_zoom_x; /* TODO_LATER: this is setting ympp from map_zoom_x. Verify this. */
-			if (!pixmap_scale.condition_1()) {
-
-				if (pixmap_scale.condition_2()) {
-					qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
-					existence_only = true;
-				} else {
-					/* Report the reason for not drawing. */
-					Window * window = this->get_window();
-					if (window) {
-						QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
-						window->statusbar_update(StatusBarField::Info, msg);
-					}
-					return sg_ret::ok;
-				}
-			}
-		}
+	const bool have_viking_scale = this->get_desired_viking_scale(gisview, viking_scale, tile_pixmap_resize, existence_only);
+	if (!have_viking_scale) {
+		return sg_ret::ok;
 	}
 
 
 	/* GisViewport's corner coordinates -> tiles info. */
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingScale viking_scale(xmpp, ympp);
 	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
@@ -1079,7 +1130,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 				TileGeometry tile_geometry;
 
-				tile_geometry.pixmap = this->get_tile_pixmap(tile_iter, pixmap_scale);
+				tile_geometry.pixmap = this->get_tile_pixmap_with_stretch(tile_iter, tile_pixmap_resize);
 				if (tile_geometry.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_W << "Pixmap not found";
 					continue;
@@ -1111,8 +1162,8 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 		/* Tile size is known, don't have to keep converting coords. */
 		TileGeometry tile_geometry;
-		const double tile_width_f = this->m_map_source->tilesize_x() * pixmap_scale.x;
-		const double tile_height_f = this->m_map_source->tilesize_y() * pixmap_scale.y;
+		const double tile_width_f = this->m_map_source->tilesize_x() * tile_pixmap_resize.x;
+		const double tile_height_f = this->m_map_source->tilesize_y() * tile_pixmap_resize.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		tile_geometry.width = ceil(tile_width_f);
 		tile_geometry.height = ceil(tile_height_f);
@@ -1136,10 +1187,10 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 		const int delta_x = (tile_ul.x == unordered_tiles_range.x_first) ? 1 : -1;
 		const int delta_y = (tile_ul.y == unordered_tiles_range.y_first) ? 1 : -1;
 		TilesRange ordered_tiles_range;
-		ordered_tiles_range.x_first = (delta_x == 1) ? unordered_tiles_range.x_first : unordered_tiles_range.x_last;
-		ordered_tiles_range.y_first = (delta_y == 1) ? unordered_tiles_range.y_first : unordered_tiles_range.y_last;
-		ordered_tiles_range.x_last   = (delta_x == 1) ? (unordered_tiles_range.x_last + 1) : (unordered_tiles_range.x_first - 1);
-		ordered_tiles_range.y_last   = (delta_y == 1) ? (unordered_tiles_range.y_last + 1) : (unordered_tiles_range.y_first - 1);
+		ordered_tiles_range.x_first = (delta_x == 1) ?  unordered_tiles_range.x_first     :  unordered_tiles_range.x_last;
+		ordered_tiles_range.y_first = (delta_y == 1) ?  unordered_tiles_range.y_first     :  unordered_tiles_range.y_last;
+		ordered_tiles_range.x_last  = (delta_x == 1) ? (unordered_tiles_range.x_last + 1) : (unordered_tiles_range.x_first - 1);
+		ordered_tiles_range.y_last  = (delta_y == 1) ? (unordered_tiles_range.y_last + 1) : (unordered_tiles_range.y_first - 1);
 
 
 
@@ -1157,11 +1208,11 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 					/* Since scale_factor == 1, this is not necessary: */
 					/*
-					   PixmapScale scaled_pixmap_scale = scale;
-					   scaled_pixmap_scale = scale.scale_down(scale_factor);
+					   TilePixmapResize scaled_tile_pixmap_resize = scale;
+					   scaled_tile_pixmap_resize = scale.resize_down(scale_factor);
 					*/
 
-					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, scale_factor);
+					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
 						gisview->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
@@ -1993,8 +2044,8 @@ bool LayerMap::is_tile_visible(__attribute__((unused)) const TileInfo & tile_inf
 
 VikingScale LayerMap::calculate_viking_scale(const GisViewport * gisview)
 {
-	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_x : gisview->get_viking_scale().get_x();
-	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_y : gisview->get_viking_scale().get_y();
+	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL ? this->map_zoom_x : gisview->get_viking_scale().get_x();
+	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL ? this->map_zoom_y : gisview->get_viking_scale().get_y();
 	const VikingScale result(xmpp, ympp);
 
 	return result;
@@ -2003,7 +2054,7 @@ VikingScale LayerMap::calculate_viking_scale(const GisViewport * gisview)
 
 
 
-PixmapScale::PixmapScale(double new_x, double new_y)
+TilePixmapResize::TilePixmapResize(double new_x, double new_y)
 {
 	this->x = new_x;
 	this->y = new_y;
@@ -2012,41 +2063,41 @@ PixmapScale::PixmapScale(double new_x, double new_y)
 
 
 
-bool PixmapScale::condition_1(void) const
+bool TilePixmapResize::resize_factors_in_allowed_range(void) const
 {
-	return (this->x > MIN_SHRINKFACTOR && this->x < MAX_SHRINKFACTOR &&
-		this->y > MIN_SHRINKFACTOR && this->y < MAX_SHRINKFACTOR);
+	return (this->x > g_min_shrinkfactor && this->x < g_max_shrinkfactor &&
+		this->y > g_min_shrinkfactor && this->y < g_max_shrinkfactor);
 }
 
 
 
 
-bool PixmapScale::condition_2(void) const
+bool TilePixmapResize::resize_factors_in_existence_only_range(void) const
 {
-	return this->x > REAL_MIN_SHRINKFACTOR && this->y > REAL_MIN_SHRINKFACTOR;
+	return this->x > g_real_min_shrinkfactor && this->y > g_real_min_shrinkfactor;
 }
 
 
 
 
-void PixmapScale::scale_down(int scale_factor)
+void TilePixmapResize::resize_down(int resize_times)
 {
-	this->x *= scale_factor;
-	this->y *= scale_factor;
+	this->x *= resize_times;
+	this->y *= resize_times;
 }
 
 
 
-void PixmapScale::scale_up(int scale_factor)
+void TilePixmapResize::resize_up(int resize_times)
 {
-	this->x /= scale_factor;
-	this->y /= scale_factor;
+	this->x /= resize_times;
+	this->y /= resize_times;
 }
 
 
 
 
-void TileGeometry::scale_up(int scale_factor)
+void TileGeometry::resize_up(int scale_factor)
 {
 	this->width /= scale_factor;
 	this->height /= scale_factor;
@@ -2055,11 +2106,11 @@ void TileGeometry::scale_up(int scale_factor)
 
 
 
-TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, int scale_factor)
+TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize, int scale_factor)
 {
 	TileGeometry result;
 
-	result.pixmap = this->get_tile_pixmap(tile_info, pixmap_scale);
+	result.pixmap = this->get_tile_pixmap_with_stretch(tile_info, tile_pixmap_resize);
 	if (!result.pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
 
@@ -2075,14 +2126,14 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 		/* Otherwise try different scales. */
 		if (SCALE_SMALLER_ZOOM_FIRST) {
-			result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale);
+			result = this->find_resized_down_tile(tile_info, tile_geometry, tile_pixmap_resize);
 			if (result.pixmap.isNull()) {
-				result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale);
+				result = this->find_resized_up_tile(tile_info, tile_geometry, tile_pixmap_resize);
 			}
 		} else {
-			result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale);
+			result = this->find_resized_up_tile(tile_info, tile_geometry, tile_pixmap_resize);
 			if (result.pixmap.isNull()) {
-				result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale);
+				result = this->find_resized_down_tile(tile_info, tile_geometry, tile_pixmap_resize);
 			}
 		}
 	}

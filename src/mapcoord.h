@@ -121,8 +121,8 @@ namespace SlavGPS {
 	public:
 		static TilesRange get_tiles_range(const TileInfo & ulm, const TileInfo & brm);
 
-		void scale_up(int scale_dec, int scale_factor);
-		void scale_down(int scale_inc, int scale_factor);
+		void resize_up(int scale_dec, int scale_factor);
+		void resize_down(int scale_inc, int scale_factor);
 
 		/*
 		  Get Lat/Lon coordinates of two points of iTMS tile:

@@ -212,7 +212,7 @@ void cache_remove_oldest(void)
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
+void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name)
 {
 	/* It doesn't matter much which type of zoom we get here from
 	   ::scale, as long as we use the same type in all functions
@@ -228,7 +228,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
 	std::string key(key_buffer);
 
 	map_cache_mutex.lock();
@@ -261,7 +261,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
+QPixmap MapCache::get_tile_pixmap_with_stretch(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name)
 {
 	QPixmap result;
 
@@ -273,7 +273,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
 	std::string key(key_buffer);
 
 	map_cache_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -289,7 +289,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 
 
-MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
+MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name)
 {
 	MapCacheItemProperties properties;
 
@@ -301,7 +301,7 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
 	std::string key(key_buffer);
 
 	auto iter = maps_cache.find(key);
@@ -371,7 +371,7 @@ void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID ma
 
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn);
 	std::string key(key_buffer);
 
 	flush_matching(key);

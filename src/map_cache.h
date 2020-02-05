@@ -58,7 +58,7 @@ namespace SlavGPS {
 
 
 
-	class PixmapScale;
+	class TilePixmapResize;
 
 
 
@@ -94,9 +94,9 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
-		static QPixmap get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
-		static MapCacheItemProperties get_properties(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
+		static void add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name);
+		static QPixmap get_tile_pixmap_with_stretch(const TileInfo & tile_info, MapTypeID map_type, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name);
+		static MapCacheItemProperties get_properties(const TileInfo & tile_info, MapTypeID map_type, int alpha, const TilePixmapResize & tile_pixmap_resize, const QString & file_name);
 
 
 		/* Get size of map cache in memory (in bytes). */
