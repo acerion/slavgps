@@ -98,7 +98,7 @@ extern bool vik_verbose;
 #define LAYER_MAP_GRID_COLOR "#E6202E" /* Red-ish. */
 
 #define VIK_SETTINGS_MAP_MAX_TILES "maps_max_tiles"
-static int MAX_TILES = 1000;
+static int g_max_tiles = 1000;
 
 #define VIK_SETTINGS_MAP_MIN_SHRINKFACTOR "maps_min_shrinkfactor"
 #define VIK_SETTINGS_MAP_MAX_SHRINKFACTOR "maps_max_shrinkfactor"
@@ -113,9 +113,10 @@ static unsigned int SCALE_INC_UP = 2;
 #define VIK_SETTINGS_MAP_SCALE_INC_DOWN "maps_scale_inc_down"
 static unsigned int SCALE_INC_DOWN = 4;
 #define VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST "maps_scale_smaller_zoom_first"
-static bool SCALE_SMALLER_ZOOM_FIRST = true;
+static bool g_scale_smaller_zoom_first = true;
 
-/****** MAP TYPES ******/
+
+
 
 static std::map<MapTypeID, MapSourceMaker> map_source_makers;
 
@@ -225,15 +226,15 @@ FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::File
 static ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
 	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::IntEnumeration,   &map_types_enum,     NULL,                 "" },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,                directory_default,    "" },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,      NULL,                directory_default,    "" },
 	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::IntEnumeration,   &cache_layout_enum,  NULL,                 QObject::tr("This determines the tile storage layout on disk") },
-	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,                sg_variant_true,      "" },
-	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,     map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,           &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,      NULL,                sg_variant_true,      "" },
+	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,      NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
 	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::IntEnumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level.\n'Follow Zoom Level of Viewport' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,          NULL,                NULL,                 "" }, /* Guard. */
+	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,             NULL,                NULL,                 "" }, /* Guard. */
 };
 
 
@@ -274,15 +275,16 @@ LayerMapInterface::LayerMapInterface()
 
 
 /**
-   @reviewed-on 2019-12-01
+   @reviewed-on 2020-02-05
 */
 LayerToolContainer LayerMapInterface::create_tools(Window * window, GisViewport * gisview)
 {
-	LayerToolContainer tools;
+	static LayerToolContainer tools;
 
 	/* This method should be called only once. */
 	static bool created = false;
 	if (created) {
+		qDebug() << SG_PREFIX_E << "Called the method for (at least) second time";
 		return tools;
 	}
 
@@ -307,45 +309,32 @@ void LayerMap::init(void)
 {
 	Preferences::register_parameter_instance(prefs[0], SGVariant(MapCache::get_default_maps_dir(), prefs[0].type_id));
 
-	int max_tiles = MAX_TILES;
-	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_MAX_TILES, &max_tiles)) {
-		MAX_TILES = max_tiles;
-	}
-
+	int int_val = 0;
 	double double_val = 0.0;
+	bool bool_val = true;
+
+	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_MAX_TILES, &int_val)) {
+		g_max_tiles = int_val;
+	}
 	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MIN_SHRINKFACTOR, &double_val)) {
 		g_min_shrinkfactor = double_val;
 	}
-
 	if (ApplicationState::get_double(VIK_SETTINGS_MAP_MAX_SHRINKFACTOR, &double_val)) {
 		g_max_shrinkfactor = double_val;
 	}
-
 	if (ApplicationState::get_double(VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR, &double_val)) {
 		g_real_min_shrinkfactor = double_val;
 	}
-
-	int int_val = 0;
 	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &int_val)) {
 		SCALE_INC_UP = int_val;
 	}
-
 	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &int_val)) {
 		SCALE_INC_DOWN = int_val;
 	}
-
-	bool gbtmp = true;
-	if (ApplicationState::get_boolean(VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST, &gbtmp)) {
-		SCALE_SMALLER_ZOOM_FIRST = gbtmp;
+	if (ApplicationState::get_boolean(VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST, &bool_val)) {
+		g_scale_smaller_zoom_first = bool_val;
 	}
 }
-
-
-
-
-/***************************************/
-/******** MAP LAYER TYPES **************/
-/***************************************/
 
 
 
@@ -353,27 +342,28 @@ void LayerMap::init(void)
 /**
    \brief Register a new MapSource
 
-   Override existing one (equality of id).
+   Override existing one (recognizing existing instance of map source
+   is done by comparing map type IDs).
 */
-void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & label)
+void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & map_type_ui_label)
 {
 	assert (nullptr != map_source_maker_fn);
-	assert (!label.isEmpty());
+	assert (!map_type_ui_label.isEmpty());
 
 	auto iter = map_source_makers.find(map_type_id);
 	if (iter == map_source_makers.end()) {
 		/* Add the map source as new. */
 
-		map_types_enum.values.push_back(SGLabelID(label, (int) map_type_id));
+		map_types_enum.values.push_back(SGLabelID(map_type_ui_label, (int) map_type_id));
 		map_source_makers[map_type_id] = map_source_maker_fn;
 		/* TODO_LATER: verify in application that properties dialog sees updated list of map types. */
 	} else {
 
 		/* Update (overwrite) existing entry. */
 
-		MapSourceMaker previous = map_source_makers[map_type_id];
+		MapSourceMaker old = map_source_makers[map_type_id];
 		map_source_makers[map_type_id] = map_source_maker_fn;
-		if (nullptr == previous) {
+		if (nullptr == old) {
 			qDebug() << SG_PREFIX_E << "Previous map source maker was NULL";
 		}
 
@@ -381,7 +371,7 @@ void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, M
 		   could be implemented better. */
 		for (int i = 0; i < (int) map_types_enum.values.size(); i++) {
 			if (map_types_enum.values[i].id == (int) map_type_id) {
-				map_types_enum.values[i].label = label;
+				map_types_enum.values[i].label = map_type_ui_label;
 				break;
 			}
 		}
@@ -393,17 +383,17 @@ void MapSources::register_map_source_maker(MapSourceMaker map_source_maker_fn, M
 
 
 
-bool LayerMap::set_map_type_id(MapTypeID map_type_id)
+sg_ret LayerMap::set_map_type_id(MapTypeID map_type_id)
 {
 	if (!MapSource::is_map_type_id_registered(map_type_id)) {
-		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) map_type_id;
-		return false;
+		qDebug() << SG_PREFIX_E << "Map type" << (int) map_type_id << "has not been registered in the program";
+		return sg_ret::err;
 	}
 
 	this->m_map_type_id = map_type_id;
 	delete this->m_map_source;
 	this->m_map_source = map_source_makers[this->m_map_type_id]();
-	return true;
+	return sg_ret::ok;
 }
 
 
@@ -534,7 +524,7 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->set_file_full_path(data.val_string);
 		break;
 	case PARAM_MAP_TYPE_ID:
-		if (!this->set_map_type_id((MapTypeID) data.u.val_int)) {
+		if (sg_ret::ok != this->set_map_type_id((MapTypeID) data.u.val_int)) {
 			/* TODO_LATER: handle this better. */
 			qDebug() << SG_PREFIX_E << "Unknown map type" << data.u.val_int;
 			return false;
@@ -742,9 +732,7 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 
 
-/****************************************/
-/****** CREATING, COPYING, FREEING ******/
-/****************************************/
+
 LayerMap::~LayerMap()
 {
 	if (this->dl_right_click_menu) {
@@ -994,58 +982,34 @@ TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_iter,
 
 
 
-bool LayerMap::get_desired_viking_scale(const GisViewport * gisview, VikingScale & viking_scale, TilePixmapResize & tile_pixmap_resize, bool & existence_only)
+TilePixmapResize LayerMap::get_desired_pixmap_resize(const GisViewport & gisview) const
 {
-	viking_scale = gisview->get_viking_scale();
+	TilePixmapResize result(1.0, 1.0);
 
 	if (this->map_zoom_id == LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL) {
-		/* The Viking Scale of drawn tiles should be always
-		   the same as zoom level of viewport, so leave
-		   viking_scale unchanged. */
-		return true;
+		/* The tiles that we will get from Map Source will
+		   require no resizing (the resizing factor will be
+		   equal to 1.0). Nothing more to do */
+
+	} else {
+		/* User wants to use tile pixmaps with specific scale. If the
+		   pixmaps that we get from source don't match our viewport,
+		   we will have to resize them by this much. */
+		const double xmpp = gisview.get_viking_scale().get_x();
+		const double ympp = gisview.get_viking_scale().get_y();
+		result = TilePixmapResize(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
 	}
 
-	/*
-	  If we get here, then this probably means "Don't look at what
-	  zoom level Z is now currently selected by user in main
-	  viewport (e.g. with mouse scroll up/down) when trying to
-	  find a suitable tile pixmap. Look at zoom level L selected
-	  in layer's properties instead."
-
-	  This probably also mean "when getting tiles from map source,
-	  don't ask source for tiles with the zoom level Z, but with
-	  the zoom level L".
-
-	  If what we have from map source is a tile pixmap
-	  corresponding to zoom level L, but currently viewport is at
-	  level Z, then in order to display that pixmap correctly (in
-	  correct place and with correct size) then we will probably
-	  have to resize it (stretch it).
-	*/
-
-	const double xmpp = gisview->get_viking_scale().get_x();
-	const double ympp = gisview->get_viking_scale().get_y();
-
-	if (this->map_zoom_x == xmpp && this->map_zoom_y == ympp) {
-		/* We need to use zoom specified in Layer's
-		   properties, but luckily current zoom of viewport is
-		   exactly the same as expected zoom level of
-		   tiles. Leave viking_scale unchanged. */
-		return true;
-	}
-
-	/* OK, so user wants to use some specific zoom level. We set
-	   it here. That could be the end of the function, but we have
-	   to do some other stuff below, so don't return yet. */
-	viking_scale = VikingScale(this->map_zoom_x, this->map_zoom_x);/* TODO_LATER: this is setting ympp from map_zoom_x. Verify this. */
+	return result;
+}
 
 
-	/* If the pixmaps that we get from source don't match our
-	   viewport, we will have to resize them by this much. */
-	tile_pixmap_resize = TilePixmapResize(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
 
 
-	/* This par I don't understand yet. */
+bool LayerMap::validate_tile_pixmap_resize(const TilePixmapResize & tile_pixmap_resize, bool & existence_only) const
+{
+	/* This part I don't understand yet. */
+
 	if (!tile_pixmap_resize.resize_factors_in_allowed_range()) {
 		if (tile_pixmap_resize.resize_factors_in_existence_only_range()) {
 			qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
@@ -1069,12 +1033,10 @@ bool LayerMap::get_desired_viking_scale(const GisViewport * gisview, VikingScale
 
 sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br)
 {
-	TilePixmapResize tile_pixmap_resize(1.0, 1.0);
-	VikingScale viking_scale;
+	const TilePixmapResize tile_pixmap_resize = this->get_desired_pixmap_resize(*gisview);
 	bool existence_only = false;
-
-	const bool have_viking_scale = this->get_desired_viking_scale(gisview, viking_scale, tile_pixmap_resize, existence_only);
-	if (!have_viking_scale) {
+	const bool can_continue = this->validate_tile_pixmap_resize(tile_pixmap_resize, existence_only);
+	if (!can_continue) {
 		return sg_ret::ok;
 	}
 
@@ -1082,6 +1044,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	/* GisViewport's corner coordinates -> tiles info. */
 	TileInfo tile_ul;
 	TileInfo tile_br;
+	const VikingScale viking_scale = this->get_desired_viking_scale(*gisview);
 	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
@@ -1099,7 +1062,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	   which can happen when using a small fixed zoom level and viewing large areas.
 	   Also prevents very large number of tile download requests. */
 	const int n_tiles = unordered_tiles_range.get_tiles_count();
-	if (n_tiles > MAX_TILES) {
+	if (n_tiles > g_max_tiles) {
 		qDebug() << SG_PREFIX_D << "existence_only due to wanting too many tiles:" << n_tiles;
 		existence_only = true;
 	}
@@ -1323,7 +1286,7 @@ void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
+	const VikingScale viking_scale = this->get_desired_viking_scale(*gisview);
 	if (!this->m_map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !this->m_map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
@@ -1430,7 +1393,7 @@ void LayerMap::redownload_new_cb(void)
  */
 void LayerMap::tile_info_cb(void)
 {
-        const VikingScale viking_scale = this->calculate_viking_scale(this->redownload_gisview);
+        const VikingScale viking_scale = this->get_desired_viking_scale(*this->redownload_gisview);
 	TileInfo tile_info;
 	if (!this->m_map_source->coord_to_tile_info(this->redownload_ul, viking_scale, tile_info)) {
 		return;
@@ -1596,7 +1559,7 @@ LayerTool::Status LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMou
 
 	LayerMap * layer = (LayerMap *) _layer;
 
-	const VikingScale viking_scale = layer->calculate_viking_scale(this->gisview);
+	const VikingScale viking_scale = layer->get_desired_viking_scale(*this->gisview);
 	if (layer->map_source()->get_drawmode() == this->gisview->get_draw_mode()
 	    && layer->map_source()->coord_to_tile_info(this->gisview->get_center_coord(),
 						       viking_scale,
@@ -1622,7 +1585,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const GisViewportDrawMode map_draw_mode = this->m_map_source->get_drawmode();
 	const GisViewportDrawMode vp_draw_mode = gisview->get_draw_mode();
 
-	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
+	const VikingScale viking_scale = this->get_desired_viking_scale(*gisview);
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
@@ -2042,11 +2005,41 @@ bool LayerMap::is_tile_visible(__attribute__((unused)) const TileInfo & tile_inf
 
 
 
-VikingScale LayerMap::calculate_viking_scale(const GisViewport * gisview)
+VikingScale LayerMap::get_desired_viking_scale(const GisViewport & gisview) const
 {
-	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL ? this->map_zoom_x : gisview->get_viking_scale().get_x();
-	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL ? this->map_zoom_y : gisview->get_viking_scale().get_y();
-	const VikingScale result(xmpp, ympp);
+	VikingScale result;
+
+	if (this->map_zoom_id == LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL) {
+		/*
+		  User wants to get from Map Source the tiles for zoom
+		  level that matches current zoom level of viewport.
+		  So just get the scale from viewport.
+		*/
+		result = gisview.get_viking_scale();
+	} else {
+		/*
+		  If we get here, then this probably means "Don't look
+		  at what zoom level Z is now currently selected by
+		  user in main viewport (e.g. with mouse scroll
+		  up/down) when trying to find a suitable tile pixmap.
+		  Look at zoom level L selected in layer's properties
+		  instead."
+
+		  This probably also mean "when getting tiles from map
+		  source, don't ask source for tiles with the zoom
+		  level Z, but with the zoom level L".
+
+		  If what we have from map source is a tile pixmap
+		  corresponding to zoom level L, but currently
+		  viewport is at level Z, then in order to display
+		  that pixmap correctly (in correct place and with
+		  correct size) then we will probably have to resize
+		  it (stretch it).
+		*/
+		const double xmpp = this->map_zoom_x;
+		const double ympp = this->map_zoom_y;
+		result = VikingScale(xmpp, ympp);
+	}
 
 	return result;
 }
@@ -2125,7 +2118,7 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
 
 		/* Otherwise try different scales. */
-		if (SCALE_SMALLER_ZOOM_FIRST) {
+		if (g_scale_smaller_zoom_first) {
 			result = this->find_resized_down_tile(tile_info, tile_geometry, tile_pixmap_resize);
 			if (result.pixmap.isNull()) {
 				result = this->find_resized_up_tile(tile_info, tile_geometry, tile_pixmap_resize);

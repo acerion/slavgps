@@ -150,7 +150,16 @@ namespace SlavGPS {
 		void mkdir_if_default_dir(void);
 		void set_file_full_path(const QString & new_file_full_path);
 
-		bool set_map_type_id(MapTypeID type_id);
+		/**
+		   @brief Set type of this map layer
+		*/
+		sg_ret set_map_type_id(MapTypeID type_id);
+
+		/**
+		   @brief Get type of this map layer
+		*/
+		MapTypeID map_type_id(void) const { return this->m_map_type_id; };
+
 		static MapTypeID get_default_map_type_id(void);
 
 		void start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
@@ -163,9 +172,18 @@ namespace SlavGPS {
 		   Otherwise redraw of viewport is not needed. */
 		bool is_tile_visible(const TileInfo & tile_info);
 
-		VikingScale calculate_viking_scale(const GisViewport * gisview);
 
+
+		/**
+		   Set default value of parameter telling whether
+		   during first run of the problem user has agreed to
+		   auto-downloading of maps from internet
+		*/
 		static void set_autodownload_default(bool autodownload);
+
+		/**
+		   Set default layout of maps cache
+		*/
 		static void set_cache_default(MapCacheLayout layout);
 
 
@@ -181,10 +199,18 @@ namespace SlavGPS {
 		*/
 		static void draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height);
 
-		MapTypeID map_type_id(void) const { return this->m_map_type_id; };
+
 		MapSource * map_source(void) const { return this->m_map_source; };
 
 
+		/**
+		   @brief Get viking scale that will be passed to map
+		   tiles source
+
+		   We will want to get from the source the tiles with
+		   that scale.
+		*/
+		VikingScale get_desired_viking_scale(const GisViewport & gisview) const;
 
 		QString cache_dir;
 		MapCacheLayout cache_layout = MapCacheLayout::Viking;
@@ -218,16 +244,13 @@ namespace SlavGPS {
 	private:
 
 		/**
-		   @brief Get viking scale that will be passed to map
-		   tiles source
-
-		   We will want to get from the source the tiles with
-		   that scale.
-
-		   @return true if we have obtained the scale value and can proceed
-		   @return false otherwise
+		   @brief Get resizing factor for tile pixmaps that
+		   will be used when resizing of the pixmaps will be
+		   necessary
 		*/
-		bool get_desired_viking_scale(const GisViewport * gisview, VikingScale & viking_scale, TilePixmapResize & tile_pixmap_resize, bool & existence_only);
+		TilePixmapResize get_desired_pixmap_resize(const GisViewport & gisview) const;
+
+		bool validate_tile_pixmap_resize(const TilePixmapResize & tile_pixmap_resize, bool & existence_only) const;
 
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
@@ -247,6 +270,8 @@ namespace SlavGPS {
 		  database.
 		*/
 		QPixmap get_tile_pixmap_with_stretch(const TileInfo & tile_info, const TilePixmapResize & tile_pixmap_resize);
+
+
 
 		MapTypeID m_map_type_id = MapTypeID::Initial;
 		MapSource * m_map_source = nullptr;
@@ -287,7 +312,7 @@ namespace SlavGPS {
 
 	class MapSources {
 	public:
-		static void register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & label);
+		static void register_map_source_maker(MapSourceMaker map_source_maker_fn, MapTypeID map_type_id, const QString & map_type_ui_label);
 	};
 
 
