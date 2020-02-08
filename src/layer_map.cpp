@@ -915,12 +915,12 @@ TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_iter,
 		if (!result.pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
 
-			result.dest_x = tile_geometry.dest_x;
-			result.dest_y = tile_geometry.dest_y;
-			result.begin_x = (tile_iter.x % resize_times) * tile_geometry.width;
-			result.begin_y = (tile_iter.y % resize_times) * tile_geometry.height;
-			result.width = tile_geometry.width;
-			result.height = tile_geometry.height;
+			result.viewport_begin_x = tile_geometry.viewport_begin_x;
+			result.viewport_begin_y = tile_geometry.viewport_begin_y;
+			result.begin_x = (tile_iter.x % resize_times) * tile_geometry.pixmap_width;
+			result.begin_y = (tile_iter.y % resize_times) * tile_geometry.pixmap_height;
+			result.pixmap_width = tile_geometry.pixmap_width;
+			result.pixmap_height = tile_geometry.pixmap_height;
 
 			return result;
 		} else {
@@ -962,12 +962,12 @@ TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_iter,
 				if (!result.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
 
-					result.dest_x = tile_geometry.dest_x + pict_x * scaled_tile_geometry.width;
-					result.dest_y = tile_geometry.dest_y + pict_y * scaled_tile_geometry.height;
+					result.viewport_begin_x = tile_geometry.viewport_begin_x + pict_x * scaled_tile_geometry.pixmap_width;
+					result.viewport_begin_y = tile_geometry.viewport_begin_y + pict_y * scaled_tile_geometry.pixmap_height;
 					result.begin_x = 0;
 					result.begin_y = 0;
-					result.width = scaled_tile_geometry.width;
-					result.height = scaled_tile_geometry.height;
+					result.pixmap_width = scaled_tile_geometry.pixmap_width;
+					result.pixmap_height = scaled_tile_geometry.pixmap_height;
 
 					return result;
 				} else {
@@ -1085,11 +1085,11 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 	   set here. */
 	TileInfo tile_iter = tile_ul;
 
-	Coord coord;
+
 	if (this->m_map_source->tilesize_x() == 0 && !existence_only) {
 
-		for (tile_iter.x = unordered_tiles_range.x_first; tile_iter.x <= unordered_tiles_range.x_last; tile_iter.x++) {
-			for (tile_iter.y = unordered_tiles_range.y_first; tile_iter.y <= unordered_tiles_range.y_last; tile_iter.y++) {
+		for (tile_iter.x = unordered_tiles_range.horiz_first_idx; tile_iter.x <= unordered_tiles_range.horiz_last_idx; tile_iter.x++) {
+			for (tile_iter.y = unordered_tiles_range.vert_first_idx; tile_iter.y <= unordered_tiles_range.vert_last_idx; tile_iter.y++) {
 
 				TileGeometry tile_geometry;
 
@@ -1102,25 +1102,26 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 				tile_geometry.begin_x = 0;
 				tile_geometry.begin_y = 0;
-				tile_geometry.width = tile_geometry.pixmap.width();
-				tile_geometry.height = tile_geometry.pixmap.height();
+				tile_geometry.pixmap_width = tile_geometry.pixmap.width();
+				tile_geometry.pixmap_height = tile_geometry.pixmap.height();
 
-				if (sg_ret::ok != this->m_map_source->tile_info_to_center_coord(tile_iter, coord)) {
-					qDebug() << SG_PREFIX_E << "Can't get coord, continue";
+				/*
+				  Find x/y viewport coordinates for
+				  beginning of this tile - where in
+				  viewport this pixmap should be
+				  drawn.
+				*/
+				if (sg_ret::ok != this->calculate_tile_geometry_viewport_begin(*gisview, tile_iter, tile_geometry.pixmap_width, tile_geometry.pixmap_height, tile_geometry)) {
+					qDebug() << SG_PREFIX_E << "Can't get tile's begin in viewport, continue";
 					continue;
 				}
-				gisview->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
-
-				tile_geometry.dest_x -= (tile_geometry.width / 2);
-				tile_geometry.dest_y -= (tile_geometry.height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
+				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.viewport_begin_x, tile_geometry.viewport_begin_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.pixmap_width, tile_geometry.pixmap_height);
 			}
 		}
 	} else {
 		const MapCacheObj map_cache_obj(this->m_map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
-
 
 
 		/* Tile size is known, don't have to keep converting coords. */
@@ -1128,40 +1129,36 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 		const double tile_width_f = this->m_map_source->tilesize_x() * tile_pixmap_resize.x;
 		const double tile_height_f = this->m_map_source->tilesize_y() * tile_pixmap_resize.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
-		tile_geometry.width = ceil(tile_width_f);
-		tile_geometry.height = ceil(tile_height_f);
+		tile_geometry.pixmap_width = ceil(tile_width_f);
+		tile_geometry.pixmap_height = ceil(tile_height_f);
 
-		if (sg_ret::ok != this->m_map_source->tile_info_to_center_coord(tile_ul, coord)) {
-			qDebug() << SG_PREFIX_E << "Can't get coord, return";
+
+		/* See where in viewport we want to start drawing
+		   tiles.
+		   Use x/y position of upper-left corner of first tile
+		   as a starting point for this and all other tiles
+		   that will be drawn. */
+		if (sg_ret::ok != this->calculate_tile_geometry_viewport_begin(*gisview, tile_ul, tile_width_f, tile_height_f, tile_geometry)) {
+			qDebug() << SG_PREFIX_E << "Can't get first tile's begin in viewport, return";
 			return sg_ret::err;
 		}
-		gisview->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
-
-		const int viewport_x_grid = tile_geometry.dest_x;
-		const int viewport_y_grid = tile_geometry.dest_y;
-
-		/* Using *_f  so tile_geometry.dest_x,tile_geometry.dest_y doubles. this is so shrinkfactors aren't rounded off
-		   e.g. if tile size 128, shrinkfactor 0.333. */
-		tile_geometry.dest_x -= (tile_width_f / 2);
-		const int base_viewport_y = tile_geometry.dest_y - (tile_height_f / 2);
+		const int first_viewport_x = tile_geometry.viewport_begin_x; /* Viewport x-coordinate of first vertical grid line. */
+		const int first_viewport_y = tile_geometry.viewport_begin_y; /* Viewport y-coordinate of first horizontal grid line. */
 
 
-
-		const int delta_x = (tile_ul.x == unordered_tiles_range.x_first) ? 1 : -1;
-		const int delta_y = (tile_ul.y == unordered_tiles_range.y_first) ? 1 : -1;
-		TilesRange ordered_tiles_range;
-		ordered_tiles_range.x_first = (delta_x == 1) ?  unordered_tiles_range.x_first     :  unordered_tiles_range.x_last;
-		ordered_tiles_range.y_first = (delta_y == 1) ?  unordered_tiles_range.y_first     :  unordered_tiles_range.y_last;
-		ordered_tiles_range.x_last  = (delta_x == 1) ? (unordered_tiles_range.x_last + 1) : (unordered_tiles_range.x_first - 1);
-		ordered_tiles_range.y_last  = (delta_y == 1) ? (unordered_tiles_range.y_last + 1) : (unordered_tiles_range.y_first - 1);
-
-
+		TilesRange o_range; /* Ordered range of tiles. */
+		o_range.horiz_delta = (tile_ul.x == unordered_tiles_range.horiz_first_idx) ? 1 : -1;
+		o_range.vert_delta = (tile_ul.y == unordered_tiles_range.vert_first_idx) ? 1 : -1;
+		o_range.horiz_first_idx = (o_range.horiz_delta == 1) ?  unordered_tiles_range.horiz_first_idx     :  unordered_tiles_range.horiz_last_idx;
+		o_range.vert_first_idx  = (o_range.vert_delta == 1)  ?  unordered_tiles_range.vert_first_idx      :  unordered_tiles_range.vert_last_idx;
+		o_range.horiz_last_idx  = (o_range.horiz_delta == 1) ? (unordered_tiles_range.horiz_last_idx + 1) : (unordered_tiles_range.horiz_first_idx - 1);
+		o_range.vert_last_idx   = (o_range.vert_delta == 1)  ? (unordered_tiles_range.vert_last_idx + 1)  : (unordered_tiles_range.vert_first_idx - 1);
 
 		//existence_only = true;
 
-		for (tile_iter.x = ordered_tiles_range.x_first; tile_iter.x != ordered_tiles_range.x_last; tile_iter.x += delta_x) {
-			tile_geometry.dest_y = base_viewport_y;
-			for (tile_iter.y = ordered_tiles_range.y_first; tile_iter.y != ordered_tiles_range.y_last; tile_iter.y += delta_y) {
+		for (tile_iter.x = o_range.horiz_first_idx; tile_iter.x != o_range.horiz_last_idx; tile_iter.x += o_range.horiz_delta) {
+			tile_geometry.viewport_begin_y = first_viewport_y;
+			for (tile_iter.y = o_range.vert_first_idx; tile_iter.y != o_range.vert_last_idx; tile_iter.y += o_range.vert_delta) {
 
 				if (existence_only) {
 					this->draw_existence(gisview, tile_iter, tile_geometry, map_cache_obj);
@@ -1178,13 +1175,13 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
-						gisview->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
+						gisview->draw_pixmap(found_tile.pixmap, found_tile.viewport_begin_x, found_tile.viewport_begin_y, found_tile.begin_x, found_tile.begin_y, found_tile.pixmap_width, found_tile.pixmap_height);
 					}
 				}
 
-				tile_geometry.dest_y += tile_height_f;
+				tile_geometry.viewport_begin_y += tile_height_f;
 			}
-			tile_geometry.dest_x += tile_width_f;
+			tile_geometry.viewport_begin_x += tile_width_f;
 		}
 
 		/* ATM Only show tile grid lines in extreme debug mode. */
@@ -1193,7 +1190,10 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
 			const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-			LayerMap::draw_grid(gisview, pen, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_first, delta_x, ordered_tiles_range.x_last + 1, ordered_tiles_range.y_first, delta_y, ordered_tiles_range.y_last + 1, tile_width_f, tile_height_f);
+			LayerMap::draw_grid(*gisview, pen,
+					    first_viewport_x, first_viewport_y,
+					    tile_width_f, tile_height_f,
+					    o_range);
 		}
 	}
 
@@ -1203,29 +1203,52 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 
 
-void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height)
+sg_ret LayerMap::calculate_tile_geometry_viewport_begin(const GisViewport & gisview, const TileInfo & tile_info, fpixel tile_width, fpixel tile_height, TileGeometry & tile_geometry)
 {
-	/* Draw single grid lines across the whole screen. */
-	const int center_width = gisview->central_get_width();
-	const int center_height = gisview->central_get_height();
-	const int base_viewport_x = viewport_x - (tile_width / 2);
-	const int base_viewport_y = viewport_y - (tile_height / 2);
+	Coord tile_center_coord;
+	if (sg_ret::ok != this->m_map_source->tile_info_to_center_coord(tile_info, tile_center_coord)) {
+		qDebug() << SG_PREFIX_E << "Can't get center coord for tile";
+		return sg_ret::err;
+	}
 
-	viewport_x = base_viewport_x;
-	for (int x = x_begin; x != x_end; x += delta_x) {
-		/* Using 'base_viewport_y as a third arg,
+	fpixel tile_center_x = 0;
+	fpixel tile_center_y = 0;
+	gisview.coord_to_screen_pos(tile_center_coord, &tile_center_x, &tile_center_y);
+
+	/* This moves us from "x/y position of center
+	   of tile" to "x/y position of upper-left
+	   corner of tile". */
+	tile_geometry.viewport_begin_x = tile_center_x - (tile_width / 2);
+	tile_geometry.viewport_begin_y = tile_center_y - (tile_height / 2);
+
+	return sg_ret::ok;
+}
+
+
+
+
+void LayerMap::draw_grid(GisViewport & gisview, const QPen & pen,
+			 fpixel first_viewport_x, fpixel first_viewport_y,
+			 fpixel tile_width, fpixel tile_height, const TilesRange & tiles_range)
+{
+	const int center_width = gisview.central_get_width();
+	const int center_height = gisview.central_get_height();
+
+	int viewport_x = first_viewport_x;
+	for (int horiz_iter = tiles_range.horiz_first_idx; horiz_iter != tiles_range.horiz_last_idx; horiz_iter += tiles_range.horiz_delta) {
+		/* Using first_viewport_y_backup as a third arg,
 		   instead of zero, causes drawing only whole
 		   tiles on top of a map. */
-		gisview->draw_line(pen, viewport_x, base_viewport_y, viewport_x, center_height);
+		gisview.draw_line(pen, viewport_x, first_viewport_y, viewport_x, center_height);
 		viewport_x += tile_width;
 	}
 
-	viewport_y = base_viewport_y;
-	for (int y = y_begin; y != y_end; y += delta_y) {
-		/* Using 'base_viewport_x as a second arg,
+	int viewport_y = first_viewport_y;
+	for (int vert_iter = tiles_range.vert_first_idx; vert_iter != tiles_range.vert_last_idx; vert_iter += tiles_range.vert_delta) {
+		/* Using first_viewport_x_backup as a second arg,
 		   instead of zero, causes drawing only whole
 		   tiles on left size of a map. */
-		gisview->draw_line(pen, base_viewport_x, viewport_y, center_width, viewport_y);
+		gisview.draw_line(pen, first_viewport_x, viewport_y, center_width, viewport_y);
 		viewport_y += tile_height;
 	}
 }
@@ -2092,8 +2115,8 @@ void TilePixmapResize::resize_up(int resize_times)
 
 void TileGeometry::resize_up(int scale_factor)
 {
-	this->width /= scale_factor;
-	this->height /= scale_factor;
+	this->pixmap_width /= scale_factor;
+	this->pixmap_height /= scale_factor;
 }
 
 
@@ -2107,12 +2130,12 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 	if (!result.pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
 
-		result.dest_x = tile_geometry.dest_x;
-		result.dest_y = tile_geometry.dest_y;
-		result.begin_x = (tile_info.x % scale_factor) * tile_geometry.width;
-		result.begin_y = (tile_info.y % scale_factor) * tile_geometry.height;
-		result.width = tile_geometry.width;
-		result.height = tile_geometry.height;
+		result.viewport_begin_x = tile_geometry.viewport_begin_x;
+		result.viewport_begin_y = tile_geometry.viewport_begin_y;
+		result.begin_x = (tile_info.x % scale_factor) * tile_geometry.pixmap_width;
+		result.begin_y = (tile_info.y % scale_factor) * tile_geometry.pixmap_height;
+		result.pixmap_width = tile_geometry.pixmap_width;
+		result.pixmap_height = tile_geometry.pixmap_height;
 
 	} else {
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
@@ -2146,9 +2169,9 @@ void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info,
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		gisview->draw_line(pen, tile_geometry.dest_x + tile_geometry.width,
-				   tile_geometry.dest_y,
-				   tile_geometry.dest_x,
-				   tile_geometry.dest_y + tile_geometry.height);
+		gisview->draw_line(pen, tile_geometry.viewport_begin_x + tile_geometry.pixmap_width,
+				   tile_geometry.viewport_begin_y,
+				   tile_geometry.viewport_begin_x,
+				   tile_geometry.viewport_begin_y + tile_geometry.pixmap_height);
 	}
 }

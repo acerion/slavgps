@@ -46,10 +46,10 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & tile_info_ul, const TileIn
 {
 	TilesRange range;
 
-	range.x_first = std::min(tile_info_ul.x, tile_info_br.x);
-	range.x_last  = std::max(tile_info_ul.x, tile_info_br.x);
-	range.y_first = std::min(tile_info_ul.y, tile_info_br.y);
-	range.y_last  = std::max(tile_info_ul.y, tile_info_br.y);
+	range.horiz_first_idx = std::min(tile_info_ul.x, tile_info_br.x);
+	range.horiz_last_idx  = std::max(tile_info_ul.x, tile_info_br.x);
+	range.vert_first_idx  = std::min(tile_info_ul.y, tile_info_br.y);
+	range.vert_last_idx   = std::max(tile_info_ul.y, tile_info_br.y);
 
 	return range;
 }
@@ -201,5 +201,5 @@ bool TileScale::get_scale_valid(void) const
 
 int TilesRange::get_tiles_count(void) const
 {
-	return (this->x_last - this->x_first + 1) * (this->y_last - this->y_first + 1);
+	return (this->horiz_last_idx - this->horiz_first_idx + 1) * (this->vert_last_idx - this->vert_first_idx + 1);
 }

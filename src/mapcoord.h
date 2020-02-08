@@ -83,10 +83,15 @@ namespace SlavGPS {
 	public:
 		int get_tiles_count(void) const;
 
-		int x_first = 0;
-		int x_last  = 0;
-		int y_first = 0;
-		int y_last  = 0;
+		int horiz_first_idx = 0;
+		int horiz_last_idx  = 0;
+		int vert_first_idx = 0;
+		int vert_last_idx  = 0;
+
+		/* How the tile index values change? Do they increase
+		   (+1) or decrease (-1)? */
+		int horiz_delta = 1;
+		int vert_delta = 1;
 	};
 
 

@@ -71,14 +71,22 @@ namespace SlavGPS {
 
 		QPixmap pixmap;
 
-		/* x/y coordinates in target viewport, where the pixmap will be drawn. */
-		fpixel dest_x = 0.0;
-		fpixel dest_y = 0.0;
+		/*
+		  x/y coordinates in target viewport, from which a
+		  tile pixmap will be drawn (where the upper-left
+		  corner of pixmap will be drawn).
+
+		  These fields match Qt's coordinate system (beginning
+		  in upper-left corner).
+		*/
+		fpixel viewport_begin_x = 0.0;
+		fpixel viewport_begin_y = 0.0;
 
 		fpixel begin_x = 0.0;
 		fpixel begin_y = 0.0;
-		fpixel width = 0.0;
-		fpixel height = 0.0;
+
+		fpixel pixmap_width = 0.0;
+		fpixel pixmap_height = 0.0;
 	};
 
 
@@ -190,14 +198,20 @@ namespace SlavGPS {
 		static QString get_cache_filename(const MapCacheObj & map_cache_obj, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
 
 
-		/*
-		  Draw grid lines at viewport coordinates x/y.  The
-		  grid starts at x_begin/y_begin (inclusive) and ends
-		  and x_end/y_end (exclusive).
+		/**
+		   @brief Draw grid lines for Map Layer
 
-		  The grid lines are drawn at delta_x/delta_y intervals.
+		   The x/y beginning of the lines is at @param
+		   first_viewport_x and @param first_viewport_y.
+
+		   The lines are spaced at @param grid_width and
+		   @param grid_height.
+
+		   Tile ranges (in vertical and horizontal direction)
+		   from @param tiles_range allows for control of how
+		   many grid lines will be drawn.
 		*/
-		static void draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height);
+		static void draw_grid(GisViewport & gisview, const QPen & pen, fpixel first_viewport_x, fpixel first_viewport_y, fpixel tile_width, fpixel tile_height, const TilesRange & tiles_range);
 
 
 		MapSource * map_source(void) const { return this->m_map_source; };
@@ -271,6 +285,15 @@ namespace SlavGPS {
 		*/
 		QPixmap get_tile_pixmap_with_stretch(const TileInfo & tile_info, const TilePixmapResize & tile_pixmap_resize);
 
+
+		/**
+		   @brief Calculate where in viewport should be put a
+		   beginning of pixmap corresponding to given @param
+		   tile_info
+
+		   Calculate TileGeometry::viewport_begin_x and TileGeometry::viewport_begin_y of given @param tile_geometry.
+		*/
+		sg_ret calculate_tile_geometry_viewport_begin(const GisViewport & gisview, const TileInfo & tile_info, fpixel tile_width, fpixel tile_height, TileGeometry & tile_geometry);
 
 
 		MapTypeID m_map_type_id = MapTypeID::Initial;

@@ -865,8 +865,8 @@ void LayerMapnik::draw_tree_item(GisViewport * gisview, __attribute__((unused)) 
 		return;
 	}
 
-	for (tile_iter.x = range.x_first; tile_iter.x <= range.x_last; tile_iter.x++) {
-		for (tile_iter.y = range.y_first; tile_iter.y <= range.y_last; tile_iter.y++) {
+	for (tile_iter.x = range.horiz_first_idx; tile_iter.x <= range.horiz_last_idx; tile_iter.x++) {
+		for (tile_iter.y = range.vert_first_idx; tile_iter.y <= range.vert_last_idx; tile_iter.y++) {
 			this->draw_tile(gisview, tile_iter);
 		}
 	}
@@ -878,8 +878,8 @@ void LayerMapnik::draw_tree_item(GisViewport * gisview, __attribute__((unused)) 
 		   handy guide to tile blocks. */
 
 		/* Reset tile iter to beginning of tiles range. */
-		tile_iter.x = range.x_first;
-		tile_iter.y = range.y_first;
+		tile_iter.x = range.horiz_first_idx;
+		tile_iter.y = range.vert_first_idx;
 
 		this->draw_grid(gisview, range, tile_iter);
 	}
@@ -1223,13 +1223,16 @@ void LayerMapnik::draw_grid(GisViewport * gisview, const TilesRange & range, con
 	const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(tile_info_ul);
 	gisview->coord_to_screen_pos(Coord(lat_lon, CoordMode::LatLon), &viewport_x, &viewport_y);
 
-	const int delta_x = 1;
-	const int delta_y = 1;
-	const int tile_width = this->tile_size_x;
-	const int tile_height = this->tile_size_x; /* Using LayerMapnik::tile_size_x because we don't have LayerMapnik::tile_size_y. */
+
+	const fpixel tile_width = this->tile_size_x;
+	const fpixel tile_height = this->tile_size_x; /* Using LayerMapnik::tile_size_x because we don't have LayerMapnik::tile_size_y. */
+
+	TilesRange range_copy = range;
+	range_copy.horiz_delta = 1;
+	range_copy.vert_delta = 1;
 
 	const QPen pen(QColor(LAYER_MAPNIK_GRID_COLOR));
-	LayerMap::draw_grid(gisview, pen, viewport_x, viewport_y, range.x_first, delta_x, range.x_last + 1, range.y_first, delta_y, range.y_last + 1, tile_width, tile_height);
+	LayerMap::draw_grid(*gisview, pen, viewport_x, viewport_y, tile_width, tile_height, range_copy);
 
 	return;
 }

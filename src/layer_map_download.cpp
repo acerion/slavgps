@@ -104,8 +104,8 @@ void MapDownloadJob::run(void)
 
 	qDebug() << SG_PREFIX_I << "Called";
 
-	for (tile_iter.x = this->range.x_first; tile_iter.x <= this->range.x_last; tile_iter.x++) {
-		for (tile_iter.y = this->range.y_first; tile_iter.y <= this->range.y_last; tile_iter.y++) {
+	for (tile_iter.x = this->range.horiz_first_idx; tile_iter.x <= this->range.horiz_last_idx; tile_iter.x++) {
+		for (tile_iter.y = this->range.vert_first_idx; tile_iter.y <= this->range.vert_last_idx; tile_iter.y++) {
 
 			/* Only attempt to download a tile from areas supported by current map source. */
 			if (!this->m_layer->map_source()->includes_tile(tile_iter)) {
@@ -270,8 +270,8 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 
 	int n_maps = 0;
 
-	for (tile_iter.x = this->range.x_first; tile_iter.x <= this->range.x_last; tile_iter.x++) {
-		for (tile_iter.y = this->range.y_first; tile_iter.y <= this->range.y_last; tile_iter.y++) {
+	for (tile_iter.x = this->range.horiz_first_idx; tile_iter.x <= this->range.horiz_last_idx; tile_iter.x++) {
+		for (tile_iter.y = this->range.vert_first_idx; tile_iter.y <= this->range.vert_last_idx; tile_iter.y++) {
 			/* Only count tiles from supported areas. */
 			if (!this->m_layer->map_source()->includes_tile(tile_iter)) {
 				continue;
