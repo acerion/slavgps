@@ -228,7 +228,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
+	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.horiz_resize, tile_pixmap_resize.vert_resize);
 	std::string key(key_buffer);
 
 	map_cache_mutex.lock();
@@ -273,7 +273,7 @@ QPixmap MapCache::get_tile_pixmap_with_stretch(const TileInfo & tile_info, MapTy
 
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.horiz_resize, tile_pixmap_resize.vert_resize);
 	std::string key(key_buffer);
 
 	map_cache_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -301,7 +301,7 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 
 	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.x, tile_pixmap_resize.y);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, tile_pixmap_resize.horiz_resize, tile_pixmap_resize.vert_resize);
 	std::string key(key_buffer);
 
 	auto iter = maps_cache.find(key);

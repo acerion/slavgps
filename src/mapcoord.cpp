@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,21 +58,39 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & tile_info_ul, const TileIn
 
 
 
-void TileInfo::resize_up(int scale_dec, int scale_factor)
+void TileInfo::zoom_in(int zoom_level_delta)
 {
-	this->x = this->x * scale_factor;
-	this->y = this->y * scale_factor;
-	this->scale.set_scale_value(this->scale.get_scale_value() - scale_dec); /* TODO_LATER: should it be "- scale_dec" or "/ scale_dec"? */
+	const TileZoomLevel before = this->osm_tile_zoom_level();
+
+	/* At different zoom level the tiles' indexes are different,
+	   so... */
+	const int x_y_scale_factor = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
+	this->x = this->x * x_y_scale_factor;
+	this->y = this->y * x_y_scale_factor;
+
+	this->scale.set_scale_value(this->scale.get_scale_value() - zoom_level_delta);
+
+	const TileZoomLevel after = this->osm_tile_zoom_level();
+	qDebug() << SG_PREFIX_D << "Zooming in by" << zoom_level_delta << "changed OSM zoom level from" << before.value() << "to" << after.value();
 }
 
 
 
 
-void TileInfo::resize_down(int scale_inc, int scale_factor)
+void TileInfo::zoom_out(int zoom_level_delta)
 {
-	this->x = this->x / scale_factor;
-	this->y = this->y / scale_factor;
-	this->scale.set_scale_value(this->scale.get_scale_value() + scale_inc); /* TODO_LATER: should it be "+ scale_inc" or "* scale_inc"? */
+	const TileZoomLevel before = this->osm_tile_zoom_level();
+
+	/* At different zoom level the tiles' indexes are different,
+	   so... */
+	const int x_y_scale_factor = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
+	this->x = this->x / x_y_scale_factor;
+	this->y = this->y / x_y_scale_factor;
+
+	this->scale.set_scale_value(this->scale.get_scale_value() + zoom_level_delta);
+
+	const TileZoomLevel after = this->osm_tile_zoom_level();
+	qDebug() << SG_PREFIX_D << "Zooming out by" << zoom_level_delta << "changed OSM zoom level from" << before.value() << "to" << after.value();
 }
 
 
@@ -202,4 +221,22 @@ bool TileScale::get_scale_valid(void) const
 int TilesRange::get_tiles_count(void) const
 {
 	return (this->horiz_last_idx - this->horiz_first_idx + 1) * (this->vert_last_idx - this->vert_first_idx + 1);
+}
+
+
+
+
+TilesRange TilesRange::make_ordered(const TileInfo & ref_tile) const
+{
+	TilesRange result;
+
+	result.horiz_delta = (ref_tile.x == this->horiz_first_idx) ? 1 : -1;
+	result.vert_delta = (ref_tile.y == this->vert_first_idx) ? 1 : -1;
+
+	result.horiz_first_idx = (result.horiz_delta == 1) ?  this->horiz_first_idx     :  this->horiz_last_idx;
+	result.vert_first_idx  = (result.vert_delta == 1)  ?  this->vert_first_idx      :  this->vert_last_idx;
+	result.horiz_last_idx  = (result.horiz_delta == 1) ? (this->horiz_last_idx + 1) : (this->horiz_first_idx - 1);
+	result.vert_last_idx   = (result.vert_delta == 1)  ? (this->vert_last_idx + 1)  : (this->vert_first_idx - 1);
+
+	return result;
 }

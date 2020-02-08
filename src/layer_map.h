@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,11 +83,29 @@ namespace SlavGPS {
 		fpixel viewport_begin_x = 0.0;
 		fpixel viewport_begin_y = 0.0;
 
-		fpixel begin_x = 0.0;
-		fpixel begin_y = 0.0;
+		/*
+		  x/y coordinates of first pixel of the pixmap that
+		  should be drawn. Most of time it will be zero (for
+		  pixmaps that should be drawn somewhat in the center
+		  of viewport), but not always: for some pixmaps that
+		  are in topmost or leftmost row the values may be
+		  non-zero.
 
-		fpixel pixmap_width = 0.0;
-		fpixel pixmap_height = 0.0;
+		  Pixels that are to the left of pixmap_begin_x will
+		  not be drawn.
+
+		  Pixels that are above of pixmap_begin_y will not be
+		  drawn.
+		*/
+		fpixel pixmap_begin_x = 0.0;
+		fpixel pixmap_begin_y = 0.0;
+
+		/*
+		  Size of pixmap. Always full size of pixmap, even if
+		  pixmap_begin_x/y is non-zero.
+		*/
+		fpixel total_pixmap_width = 0.0;
+		fpixel total_pixmap_height = 0.0;
 	};
 
 
@@ -94,15 +113,15 @@ namespace SlavGPS {
 
 	class TilePixmapResize {
 	public:
-		TilePixmapResize(double x, double y);
+		TilePixmapResize(double horiz, double vert);
 		bool resize_factors_in_allowed_range(void) const;
 		bool resize_factors_in_existence_only_range(void) const;
 
 		void resize_down(int resize_times);
 		void resize_up(int resize_times);
 
-		double x = 0.0;
-		double y = 0.0;
+		double horiz_resize = 0.0;
+		double vert_resize = 0.0;
 	};
 
 
@@ -269,8 +288,24 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 
-		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize, int scale_factor);
+		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
+
+		/**
+		   Look for pixmap representing given @param
+		   tile_info. Search in set of tiles that have zoom
+		   level lower than current zoom level of @param
+		   tile_info. If found, the pixmap will be resized
+		   down to match viewport's current zoom level.
+		*/
 		TileGeometry find_resized_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
+
+		/**
+		   Look for pixmap representing given @param
+		   tile_info. Search in set of tiles that have zoom
+		   level higher than current zoom level of @param
+		   tile_info. If found, the pixmap will be resized up
+		   to match viewport's current zoom level.
+		*/
 		TileGeometry find_resized_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
 
 		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj);

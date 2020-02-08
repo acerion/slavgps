@@ -6,6 +6,7 @@
  * Copyright (c) 2013, Rob Norris <rw_norris@hotmail.com>
  * UTM multi-zone stuff by Kit Transue <notlostyet@didactek.com>
  * Dynamic map type by Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,9 +110,11 @@ static double g_min_shrinkfactor = 0.0312499; /* zoom 32 viewing 1-tiles. */
 static double g_real_min_shrinkfactor = 0.0039062499; /* If shrinkfactor is between MAX and REAL_MAX, will only check for existence. */
 
 #define VIK_SETTINGS_MAP_SCALE_INC_UP "maps_scale_inc_up"
-static unsigned int SCALE_INC_UP = 2;
+static int g_biggest_zoom_delta_when_resizing_up = 2;
+
 #define VIK_SETTINGS_MAP_SCALE_INC_DOWN "maps_scale_inc_down"
-static unsigned int SCALE_INC_DOWN = 4;
+static int g_biggest_zoom_delta_when_resizing_down = 4;
+
 #define VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST "maps_scale_smaller_zoom_first"
 static bool g_scale_smaller_zoom_first = true;
 
@@ -326,10 +329,10 @@ void LayerMap::init(void)
 		g_real_min_shrinkfactor = double_val;
 	}
 	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_UP, &int_val)) {
-		SCALE_INC_UP = int_val;
+		g_biggest_zoom_delta_when_resizing_up = int_val;
 	}
 	if (ApplicationState::get_integer(VIK_SETTINGS_MAP_SCALE_INC_DOWN, &int_val)) {
-		SCALE_INC_DOWN = int_val;
+		g_biggest_zoom_delta_when_resizing_down = int_val;
 	}
 	if (ApplicationState::get_boolean(VIK_SETTINGS_MAP_SCALE_SMALLER_ZOOM_FIRST, &bool_val)) {
 		g_scale_smaller_zoom_first = bool_val;
@@ -819,8 +822,8 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const TilePixmapR
 		ui_pixmap_set_alpha(pixmap, alpha);
 	}
 
-	if (tile_pixmap_resize.x != 1.0 || tile_pixmap_resize.y != 1.0) {
-		ui_pixmap_scale_size_by(pixmap, tile_pixmap_resize.x, tile_pixmap_resize.y);
+	if (tile_pixmap_resize.horiz_resize != 1.0 || tile_pixmap_resize.vert_resize != 1.0) {
+		ui_pixmap_scale_size_by(pixmap, tile_pixmap_resize.horiz_resize, tile_pixmap_resize.vert_resize);
 	}
 
 	return;
@@ -895,36 +898,36 @@ bool LayerMap::should_start_autodownload(const GisViewport * gisview)
 
 
 
-TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_iter,
+TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_info,
 					      const TileGeometry & tile_geometry,
 					      const TilePixmapResize & tile_pixmap_resize)
 {
 	TileGeometry result;
 
-	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
+	for (unsigned int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_down; zoom_level_delta++) {
 		/* Try with smaller zooms. */
-		const int resize_times = 1 << scale_inc;  /* 2^scale_inc */
+		const int resize_times = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
 
-		TileInfo scaled_tile_iter = tile_iter;
-		scaled_tile_iter.resize_down(scale_inc, resize_times);
+		TileInfo zoomed_tile_info = tile_info;
+		zoomed_tile_info.zoom_out(zoom_level_delta);
 
 		TilePixmapResize scaled_tile_pixmap_resize = tile_pixmap_resize;
 		scaled_tile_pixmap_resize.resize_down(resize_times);
 
-		result.pixmap = this->get_tile_pixmap_with_stretch(scaled_tile_iter, scaled_tile_pixmap_resize);
+		result.pixmap = this->get_tile_pixmap_with_stretch(zoomed_tile_info, scaled_tile_pixmap_resize);
 		if (!result.pixmap.isNull()) {
-			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
+			qDebug() << SG_PREFIX_I << "Scaled-down pixmap FOUND at resize-times" << resize_times;
 
 			result.viewport_begin_x = tile_geometry.viewport_begin_x;
 			result.viewport_begin_y = tile_geometry.viewport_begin_y;
-			result.begin_x = (tile_iter.x % resize_times) * tile_geometry.pixmap_width;
-			result.begin_y = (tile_iter.y % resize_times) * tile_geometry.pixmap_height;
-			result.pixmap_width = tile_geometry.pixmap_width;
-			result.pixmap_height = tile_geometry.pixmap_height;
+			result.pixmap_begin_x = (tile_info.x % resize_times) * tile_geometry.total_pixmap_width;
+			result.pixmap_begin_y = (tile_info.y % resize_times) * tile_geometry.total_pixmap_height;
+			result.total_pixmap_width  = tile_geometry.total_pixmap_width;
+			result.total_pixmap_height = tile_geometry.total_pixmap_height;
 
 			return result;
 		} else {
-			qDebug() << SG_PREFIX_I << "Pixmap not found";
+			qDebug() << SG_PREFIX_I << "Scaled-down pixmap NOT FOUND at resize-times" << resize_times;
 		}
 	}
 	return result;
@@ -933,18 +936,18 @@ TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_iter,
 
 
 
-TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_iter,
+TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_info,
 					    const TileGeometry & tile_geometry,
 					    const TilePixmapResize & tile_pixmap_resize)
 {
 	TileGeometry result;
 
 	/* Try with bigger zooms. */
-	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
-		const int resize_times = 1 << scale_dec;  /* 2^scale_dec */
+	for (unsigned int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_up; zoom_level_delta++) {
+		const int resize_times = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
 
-		TileInfo scaled_tile_iter = tile_iter;
-		scaled_tile_iter.resize_up(scale_dec, resize_times);
+		TileInfo zoomed_tile_info = tile_info;
+		zoomed_tile_info.zoom_in(zoom_level_delta);
 
 		TilePixmapResize scaled_tile_pixmap_resize = tile_pixmap_resize;
 		scaled_tile_pixmap_resize.resize_up(resize_times);
@@ -954,24 +957,24 @@ TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_iter,
 
 		for (int pict_x = 0; pict_x < resize_times; pict_x++) {
 			for (int pict_y = 0; pict_y < resize_times; pict_y++) {
-				TileInfo ulm3 = scaled_tile_iter;
+				TileInfo ulm3 = zoomed_tile_info;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
 				result.pixmap = this->get_tile_pixmap_with_stretch(ulm3, scaled_tile_pixmap_resize);
 				if (!result.pixmap.isNull()) {
-					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
+					qDebug() << SG_PREFIX_I << "Scaled-up pixmap FOUND at resize-times" << resize_times;
 
-					result.viewport_begin_x = tile_geometry.viewport_begin_x + pict_x * scaled_tile_geometry.pixmap_width;
-					result.viewport_begin_y = tile_geometry.viewport_begin_y + pict_y * scaled_tile_geometry.pixmap_height;
-					result.begin_x = 0;
-					result.begin_y = 0;
-					result.pixmap_width = scaled_tile_geometry.pixmap_width;
-					result.pixmap_height = scaled_tile_geometry.pixmap_height;
+					result.viewport_begin_x = tile_geometry.viewport_begin_x + pict_x * scaled_tile_geometry.total_pixmap_width;
+					result.viewport_begin_y = tile_geometry.viewport_begin_y + pict_y * scaled_tile_geometry.total_pixmap_height;
+					result.pixmap_begin_x = 0;
+					result.pixmap_begin_y = 0;
+					result.total_pixmap_width  = scaled_tile_geometry.total_pixmap_width;
+					result.total_pixmap_height = scaled_tile_geometry.total_pixmap_height;
 
 					return result;
 				} else {
-					qDebug() << SG_PREFIX_I << "Pixmap not found";
+					qDebug() << SG_PREFIX_I << "Scaled-up pixmap NOT FOUND at resize-times" << resize_times;
 				}
 			}
 		}
@@ -1100,10 +1103,10 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				}
 				qDebug() << SG_PREFIX_I << "Pixmap found";
 
-				tile_geometry.begin_x = 0;
-				tile_geometry.begin_y = 0;
-				tile_geometry.pixmap_width = tile_geometry.pixmap.width();
-				tile_geometry.pixmap_height = tile_geometry.pixmap.height();
+				tile_geometry.pixmap_begin_x = 0;
+				tile_geometry.pixmap_begin_y = 0;
+				tile_geometry.total_pixmap_width  = tile_geometry.pixmap.width();
+				tile_geometry.total_pixmap_height = tile_geometry.pixmap.height();
 
 				/*
 				  Find x/y viewport coordinates for
@@ -1111,13 +1114,13 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				  viewport this pixmap should be
 				  drawn.
 				*/
-				if (sg_ret::ok != this->calculate_tile_geometry_viewport_begin(*gisview, tile_iter, tile_geometry.pixmap_width, tile_geometry.pixmap_height, tile_geometry)) {
+				if (sg_ret::ok != this->calculate_tile_geometry_viewport_begin(*gisview, tile_iter, tile_geometry.total_pixmap_width, tile_geometry.total_pixmap_height, tile_geometry)) {
 					qDebug() << SG_PREFIX_E << "Can't get tile's begin in viewport, continue";
 					continue;
 				}
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.viewport_begin_x, tile_geometry.viewport_begin_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.pixmap_width, tile_geometry.pixmap_height);
+				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.viewport_begin_x, tile_geometry.viewport_begin_y, tile_geometry.pixmap_begin_x, tile_geometry.pixmap_begin_y, tile_geometry.total_pixmap_width, tile_geometry.total_pixmap_height);
 			}
 		}
 	} else {
@@ -1126,11 +1129,11 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 		/* Tile size is known, don't have to keep converting coords. */
 		TileGeometry tile_geometry;
-		const double tile_width_f = this->m_map_source->tilesize_x() * tile_pixmap_resize.x;
-		const double tile_height_f = this->m_map_source->tilesize_y() * tile_pixmap_resize.y;
+		const double tile_width_f = this->m_map_source->tilesize_x() * tile_pixmap_resize.horiz_resize;
+		const double tile_height_f = this->m_map_source->tilesize_y() * tile_pixmap_resize.vert_resize;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
-		tile_geometry.pixmap_width = ceil(tile_width_f);
-		tile_geometry.pixmap_height = ceil(tile_height_f);
+		tile_geometry.total_pixmap_width  = ceil(tile_width_f);
+		tile_geometry.total_pixmap_height = ceil(tile_height_f);
 
 
 		/* See where in viewport we want to start drawing
@@ -1145,14 +1148,8 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 		const int first_viewport_x = tile_geometry.viewport_begin_x; /* Viewport x-coordinate of first vertical grid line. */
 		const int first_viewport_y = tile_geometry.viewport_begin_y; /* Viewport y-coordinate of first horizontal grid line. */
 
-
-		TilesRange o_range; /* Ordered range of tiles. */
-		o_range.horiz_delta = (tile_ul.x == unordered_tiles_range.horiz_first_idx) ? 1 : -1;
-		o_range.vert_delta = (tile_ul.y == unordered_tiles_range.vert_first_idx) ? 1 : -1;
-		o_range.horiz_first_idx = (o_range.horiz_delta == 1) ?  unordered_tiles_range.horiz_first_idx     :  unordered_tiles_range.horiz_last_idx;
-		o_range.vert_first_idx  = (o_range.vert_delta == 1)  ?  unordered_tiles_range.vert_first_idx      :  unordered_tiles_range.vert_last_idx;
-		o_range.horiz_last_idx  = (o_range.horiz_delta == 1) ? (unordered_tiles_range.horiz_last_idx + 1) : (unordered_tiles_range.horiz_first_idx - 1);
-		o_range.vert_last_idx   = (o_range.vert_delta == 1)  ? (unordered_tiles_range.vert_last_idx + 1)  : (unordered_tiles_range.vert_first_idx - 1);
+		/* Ordered range of tiles. */
+		TilesRange o_range = unordered_tiles_range.make_ordered(tile_ul);
 
 		//existence_only = true;
 
@@ -1163,19 +1160,10 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				if (existence_only) {
 					this->draw_existence(gisview, tile_iter, tile_geometry, map_cache_obj);
 				} else {
-					/* Try correct scale first. */
-					const int scale_factor = 1;
-
-					/* Since scale_factor == 1, this is not necessary: */
-					/*
-					   TilePixmapResize scaled_tile_pixmap_resize = scale;
-					   scaled_tile_pixmap_resize = scale.resize_down(scale_factor);
-					*/
-
-					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize, scale_factor);
+					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
-						gisview->draw_pixmap(found_tile.pixmap, found_tile.viewport_begin_x, found_tile.viewport_begin_y, found_tile.begin_x, found_tile.begin_y, found_tile.pixmap_width, found_tile.pixmap_height);
+						gisview->draw_pixmap(found_tile.pixmap, found_tile.viewport_begin_x, found_tile.viewport_begin_y, found_tile.pixmap_begin_x, found_tile.pixmap_begin_y, found_tile.total_pixmap_width, found_tile.total_pixmap_height);
 					}
 				}
 
@@ -2070,10 +2058,10 @@ VikingScale LayerMap::get_desired_viking_scale(const GisViewport & gisview) cons
 
 
 
-TilePixmapResize::TilePixmapResize(double new_x, double new_y)
+TilePixmapResize::TilePixmapResize(double horiz, double vert)
 {
-	this->x = new_x;
-	this->y = new_y;
+	this->horiz_resize = horiz;
+	this->vert_resize = vert;
 }
 
 
@@ -2081,8 +2069,8 @@ TilePixmapResize::TilePixmapResize(double new_x, double new_y)
 
 bool TilePixmapResize::resize_factors_in_allowed_range(void) const
 {
-	return (this->x > g_min_shrinkfactor && this->x < g_max_shrinkfactor &&
-		this->y > g_min_shrinkfactor && this->y < g_max_shrinkfactor);
+	return (this->horiz_resize > g_min_shrinkfactor && this->horiz_resize < g_max_shrinkfactor &&
+		this->vert_resize > g_min_shrinkfactor && this->vert_resize < g_max_shrinkfactor);
 }
 
 
@@ -2090,7 +2078,7 @@ bool TilePixmapResize::resize_factors_in_allowed_range(void) const
 
 bool TilePixmapResize::resize_factors_in_existence_only_range(void) const
 {
-	return this->x > g_real_min_shrinkfactor && this->y > g_real_min_shrinkfactor;
+	return this->horiz_resize > g_real_min_shrinkfactor && this->vert_resize > g_real_min_shrinkfactor;
 }
 
 
@@ -2098,33 +2086,34 @@ bool TilePixmapResize::resize_factors_in_existence_only_range(void) const
 
 void TilePixmapResize::resize_down(int resize_times)
 {
-	this->x *= resize_times;
-	this->y *= resize_times;
+	this->horiz_resize *= resize_times;
+	this->vert_resize *= resize_times;
 }
 
 
 
 void TilePixmapResize::resize_up(int resize_times)
 {
-	this->x /= resize_times;
-	this->y /= resize_times;
+	this->horiz_resize /= resize_times;
+	this->vert_resize /= resize_times;
 }
 
 
 
 
-void TileGeometry::resize_up(int scale_factor)
+void TileGeometry::resize_up(int resize_times)
 {
-	this->pixmap_width /= scale_factor;
-	this->pixmap_height /= scale_factor;
+	this->total_pixmap_width /= resize_times;
+	this->total_pixmap_height /= resize_times;
 }
 
 
 
 
-TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize, int scale_factor)
+TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize)
 {
 	TileGeometry result;
+	int resize_times = 1;
 
 	result.pixmap = this->get_tile_pixmap_with_stretch(tile_info, tile_pixmap_resize);
 	if (!result.pixmap.isNull()) {
@@ -2132,10 +2121,10 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 		result.viewport_begin_x = tile_geometry.viewport_begin_x;
 		result.viewport_begin_y = tile_geometry.viewport_begin_y;
-		result.begin_x = (tile_info.x % scale_factor) * tile_geometry.pixmap_width;
-		result.begin_y = (tile_info.y % scale_factor) * tile_geometry.pixmap_height;
-		result.pixmap_width = tile_geometry.pixmap_width;
-		result.pixmap_height = tile_geometry.pixmap_height;
+		result.pixmap_begin_x = (tile_info.x % resize_times) * tile_geometry.total_pixmap_width;
+		result.pixmap_begin_y = (tile_info.y % resize_times) * tile_geometry.total_pixmap_height;
+		result.total_pixmap_width = tile_geometry.total_pixmap_width;
+		result.total_pixmap_height = tile_geometry.total_pixmap_height;
 
 	} else {
 		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
@@ -2169,9 +2158,9 @@ void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info,
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		gisview->draw_line(pen, tile_geometry.viewport_begin_x + tile_geometry.pixmap_width,
+		gisview->draw_line(pen, tile_geometry.viewport_begin_x + tile_geometry.total_pixmap_width,
 				   tile_geometry.viewport_begin_y,
 				   tile_geometry.viewport_begin_x,
-				   tile_geometry.viewport_begin_y + tile_geometry.pixmap_height);
+				   tile_geometry.viewport_begin_y + tile_geometry.total_pixmap_height);
 	}
 }

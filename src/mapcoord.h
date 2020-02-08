@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_TILE_INFO_H_
-#define _SG_TILE_INFO_H_
+#ifndef _SG_LAYER_MAP_TILE_H_
+#define _SG_LAYER_MAP_TILE_H_
 
 
 
@@ -40,6 +41,7 @@ namespace SlavGPS {
 
 
 	class LatLon;
+	class TileInfo;
 
 
 
@@ -82,6 +84,8 @@ namespace SlavGPS {
 	class TilesRange {
 	public:
 		int get_tiles_count(void) const;
+
+		TilesRange make_ordered(const TileInfo & ref_tile) const;
 
 		int horiz_first_idx = 0;
 		int horiz_last_idx  = 0;
@@ -126,8 +130,33 @@ namespace SlavGPS {
 	public:
 		static TilesRange get_tiles_range(const TileInfo & ulm, const TileInfo & brm);
 
-		void resize_up(int scale_dec, int scale_factor);
-		void resize_down(int scale_inc, int scale_factor);
+		/**
+		   @brief Convert the tile's parameters so that it now
+		   represents a tile from higher zoom level
+
+		   Example: if tile has OSM zoom level 10 and @param
+		   zoom_level_delta is 3, then new OSM zoom level will
+		   be 13. TileInfo::x and TileInfo::y will be adjusted
+		   accordingly.
+
+		   @param zoom_level_delta - by how many steps (zoom
+		   levels) to zoom in.
+		*/
+		void zoom_in(int zoom_level_delta);
+
+		/**
+		   @brief Convert the tile's parameters so that it now
+		   represents a tile from lower zoom level
+
+		   Example: if tile has OSM zoom level 12 and @param
+		   zoom_level_delta is 4, then new OSM zoom level will
+		   be 8. TileInfo::x and TileInfo::y will be adjusted
+		   accordingly.
+
+		   @param zoom_level_delta - by how many steps (zoom
+		   levels) to zoom out.
+		*/
+		void zoom_out(int zoom_level_delta);
 
 		/*
 		  Get Lat/Lon coordinates of two points of iTMS tile:
@@ -155,4 +184,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_TILE_INFO_H_ */
+#endif /* #ifndef _SG_LAYER_MAP_TILE_H_ */

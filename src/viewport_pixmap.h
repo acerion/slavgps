@@ -197,7 +197,23 @@ namespace SlavGPS {
 		void fill_ellipse(const QColor & color, const ScreenPos & center, fpixel radius_x, fpixel radius_y);
 		void draw_polygon(const QPen & pen, const ScreenPos * points, int npoints, bool filled);
 
+		/**
+		   @brief Draw pixmap (or its part) into viewport
+
+		   Non-zero values of @param pixmap_x and @param
+		   pixmap_y indicate that we don't want to draw full
+		   pixmap, only part of it. Some upper part of pixmap
+		   and/or some left part of pixmap won't be drawn.
+
+		   @param viewport_x - x coordinate in viewport where drawing should begin
+		   @param viewport_y - y coordinate in viewport where drawing should begin
+		   @param pixmap_x - x coordinate of pixel in pixmap, from which drawing should start
+		   @param pixmap_y - y coordinate of pixel in pixmap, from which drawing should start
+		   @param pixamp_width
+		   @param pixmap_height
+		*/
 		void draw_pixmap(const QPixmap & pixmap, fpixel viewport_x, fpixel viewport_y, fpixel pixmap_x, fpixel pixmap_y, fpixel pixmap_width, fpixel pixmap_height);
+
 		void draw_pixmap(const QPixmap & pixmap, fpixel viewport_x, fpixel viewport_y);
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
