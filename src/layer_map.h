@@ -41,7 +41,7 @@
 #include "layer_interface.h"
 #include "layer_map_source.h"
 #include "map_cache.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 
 
 

@@ -37,7 +37,7 @@
 #include "coord.h"
 #include "download.h"
 #include "lat_lon.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "viewport.h"
 
 

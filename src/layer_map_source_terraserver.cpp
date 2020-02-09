@@ -32,7 +32,7 @@
 
 #include "layer_map_source_terraserver.h"
 #include "coord.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "viewport_internal.h"
 #include "viewport_zoom.h"
 #include "globals.h"

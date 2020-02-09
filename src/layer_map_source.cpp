@@ -38,7 +38,7 @@
 #include "window.h"
 #include "viewport.h"
 #include "coord.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "download.h"
 #include "layer_map_source.h"
 #include "map_cache.h"

@@ -57,7 +57,7 @@
 #include "window.h"
 #include "vikutils.h"
 #include "map_utils.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "map_cache.h"
 #include "dir.h"
 #include "util.h"

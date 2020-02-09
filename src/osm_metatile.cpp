@@ -58,7 +58,7 @@
 
 #include "osm_metatile.h"
 #include "globals.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 
 
 

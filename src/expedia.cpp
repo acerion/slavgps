@@ -37,7 +37,7 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "download.h"
 #include "layer_map.h"
 #include "expedia.h"

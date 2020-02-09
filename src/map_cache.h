@@ -35,7 +35,7 @@
 
 
 
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "layer_map_source.h"
 
 

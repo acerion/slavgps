@@ -38,7 +38,7 @@
 
 
 #include "dialog.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "globals.h"
 
 

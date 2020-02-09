@@ -39,7 +39,7 @@
 #include "layers_panel.h"
 #include "layer_dem_dem_cache.h"
 #include "map_cache.h"
-#include "mapcoord.h"
+#include "layer_map_tile.h"
 #include "download.h"
 #include "background.h"
 #include "preferences.h"

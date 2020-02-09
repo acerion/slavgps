@@ -38,7 +38,7 @@ SOURCES += main.cpp \
     clipboard.cpp \
     preferences.cpp \
     layer_trw_dialogs.cpp \
-    mapcoord.cpp \
+    layer_map_tile.cpp \
     routing.cpp \
     routing_engine.cpp \
     routing_engine_web.cpp \
@@ -229,6 +229,7 @@ HEADERS += window.h \
     layer_mapnik_wrapper.h \
     print.h \
     layer_map.h \
+    layer_map_tile.h \
     layer_map_download.h \
     layer_map_source.h \
     map_utils.h \
