@@ -832,6 +832,35 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const TilePixmapR
 
 
 
+static void pixmap_apply_debug(QPixmap & pixmap, const TileInfo & tile_info)
+{
+	QPainter painter(&pixmap);
+
+	QPen pen;
+	pen.setWidth(2);
+	pen.setColor("blue");
+	painter.setPen(pen);
+
+	const int i = 2 + rand() % 5;
+	const int margin = 4 * i;
+	QRect rect(margin, margin, pixmap.width() - (2 * margin), pixmap.height() - (2 * margin));
+	painter.drawRect(rect);
+
+
+	painter.setFont(QFont("Arial", 30));
+	const QString info = QString("x = %1\ny = %2\nz = %3\n").arg(tile_info.x).arg(tile_info.y).arg(tile_info.osm_tile_zoom_level().value());
+	painter.drawText(rect, Qt::AlignLeft | Qt::AlignTop, info);
+
+#if 0
+	const QString path = QString("x%1_y%2_z%3.png").arg(tile_info.x).arg(tile_info.y).arg(tile_info.osm_tile_zoom_level().value());
+	bool saved = pixmap.save(path);
+	qDebug() << SG_PREFIX_I << "Result of saving path" << path << "=" << saved;
+#endif
+}
+
+
+
+
 QPixmap LayerMap::get_tile_pixmap_with_stretch(const TileInfo & tile_info, const TilePixmapResize & tile_pixmap_resize)
 {
 	/* Get the thing. */
@@ -849,6 +878,7 @@ QPixmap LayerMap::get_tile_pixmap_with_stretch(const TileInfo & tile_info, const
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, tile_pixmap_resize);
+		pixmap_apply_debug(pixmap, tile_info);
 
 		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, this->m_map_source->map_type_id(),
 					  this->alpha, tile_pixmap_resize, this->file_full_path);
@@ -904,7 +934,7 @@ TileGeometry LayerMap::find_resized_down_tile(const TileInfo & tile_info,
 {
 	TileGeometry result;
 
-	for (unsigned int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_down; zoom_level_delta++) {
+	for (int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_down; zoom_level_delta++) {
 		/* Try with smaller zooms. */
 		const int resize_times = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
 
@@ -943,7 +973,7 @@ TileGeometry LayerMap::find_resized_up_tile(const TileInfo & tile_info,
 	TileGeometry result;
 
 	/* Try with bigger zooms. */
-	for (unsigned int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_up; zoom_level_delta++) {
+	for (int zoom_level_delta = 1; zoom_level_delta < g_biggest_zoom_delta_when_resizing_up; zoom_level_delta++) {
 		const int resize_times = 1 << zoom_level_delta;  /* 2^zoom_level_delta */
 
 		TileInfo zoomed_tile_info = tile_info;
@@ -1120,6 +1150,18 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				}
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
+#if 0
+				/* TODO_MAYBE: enable this code to see
+				   how this rectangle overlaps with
+				   grid lines. Use correct tile
+				   size. */
+				QPixmap clear_pixmap(tile_geometry.pixmap.size());
+				clear_pixmap.fill("red");
+				const int r = 2 * (1 + (rand() % 3));
+				ui_pixmap_set_alpha(clear_pixmap, 256 / r);
+				gisview->draw_pixmap(clear_pixmap, tile_geometry.viewport_begin_x, tile_geometry.viewport_begin_y, tile_geometry.pixmap_begin_x, tile_geometry.pixmap_begin_y, tile_geometry.total_pixmap_width, tile_geometry.total_pixmap_height);
+#endif
+
 				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.viewport_begin_x, tile_geometry.viewport_begin_y, tile_geometry.pixmap_begin_x, tile_geometry.pixmap_begin_y, tile_geometry.total_pixmap_width, tile_geometry.total_pixmap_height);
 			}
 		}
@@ -1163,6 +1205,18 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
+
+#if 0
+						/* TODO_MAYBE: enable this code to see
+						   how this rectangle overlaps with
+						   grid lines. */
+						QPixmap clear_pixmap(found_tile.pixmap.size());
+						clear_pixmap.fill("red");
+						const int r = 2 * (1 + (rand() % 3));
+						ui_pixmap_set_alpha(clear_pixmap, 256 / r);
+						gisview->draw_pixmap(clear_pixmap, found_tile.viewport_begin_x, found_tile.viewport_begin_y, found_tile.pixmap_begin_x, found_tile.pixmap_begin_y, found_tile.total_pixmap_width, found_tile.total_pixmap_height);
+#endif
+
 						gisview->draw_pixmap(found_tile.pixmap, found_tile.viewport_begin_x, found_tile.viewport_begin_y, found_tile.pixmap_begin_x, found_tile.pixmap_begin_y, found_tile.total_pixmap_width, found_tile.total_pixmap_height);
 					}
 				}

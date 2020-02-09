@@ -101,10 +101,16 @@ QLabel * SlavGPS::ui_label_new_selectable(QString const & text, QWidget * parent
 void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
 {
 	QImage image(pixmap.size(), QImage::Format_ARGB32_Premultiplied);
+#if 1
+	image.fill(Qt::transparent);
+	QPainter painter(&image);
+#else
 	QPainter painter(&image);
 	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+#endif
 	painter.setOpacity(alpha / 255.0);
 	painter.drawPixmap(0, 0, pixmap);
+	painter.end();
 	pixmap = QPixmap::fromImage(image);
 }
 

@@ -151,6 +151,7 @@ void test_pickle(void)
 
 int main(int argc, char ** argv)
 {
+	srand(time(0));
 	//test_pickle();
 
 	Measurements::unit_tests();
