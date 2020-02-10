@@ -138,6 +138,10 @@ SGVariant LayerDefaults::get_parameter_value(LayerKind layer_kind, const Paramet
 		value = SGVariant(Altitude(variant.toDouble(), AltitudeType::Unit::E::Metres));
 		break;
 
+	case SGVariantType::ImageAlphaType:
+		value = SGVariant(ImageAlpha(variant.toInt()));
+		break;
+
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled value type" << (int) param_spec.type_id;
 		/* We don't set value using constructor, so the value will be invalid. */
@@ -187,6 +191,9 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerKind laye
 		break;
 	case SGVariantType::AltitudeType:
 		variant = QVariant(value.get_altitude().ll_value());
+		break;
+	case SGVariantType::ImageAlphaType:
+		variant = QVariant(value.alpha().value());
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled parameter type" << (int) type_id;

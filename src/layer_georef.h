@@ -44,7 +44,7 @@
 #include "layer_tool.h"
 #include "widget_utm_entry.h"
 #include "widget_lat_lon_entry.h"
-#include "widget_slider.h"
+#include "widget_image_alpha.h"
 
 
 
@@ -100,7 +100,7 @@ namespace SlavGPS {
 		QPushButton * calc_mpp_button = NULL;
 
 
-		SliderWidget * alpha_slider = NULL; /* alpha is represented by int type. */
+		ImageAlphaWidget * alpha_slider = nullptr;
 
 	public slots:
 		void load_world_file_cb(void);
@@ -175,7 +175,7 @@ namespace SlavGPS {
 
 		QString world_file_full_path;
 
-		int alpha = 255;
+		ImageAlpha alpha;
 
 		UTM utm_tl; /* Top Left. */
 		double mpp_easting = 0.0;

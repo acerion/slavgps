@@ -948,7 +948,7 @@ CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_fu
 */
 bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight)
 {
-	if (this->wp_image_alpha == 0) {
+	if (this->wp_image_alpha.value() == 0) {
 		return false;
 	}
 
@@ -966,9 +966,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_po
 
 		if (!cache_object.pixmap.isNull()) {
 			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-			if (this->wp_image_alpha <= 255) {
-				ui_pixmap_set_alpha(cache_object.pixmap, this->wp_image_alpha);
-			}
+			ui_pixmap_set_alpha(cache_object.pixmap, this->wp_image_alpha);
 			this->trw->wp_image_cache_add(cache_object);
 
 			pixmap = cache_object.pixmap;

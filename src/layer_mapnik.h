@@ -134,7 +134,7 @@ namespace SlavGPS {
 		/* Scale at the moment of right-click-and-release. */
 		VikingScale clicked_viking_scale;
 
-		int alpha = 0;
+		ImageAlpha alpha;
 
 		int tile_size_x = 0; /* Y is the same as X ATM. */
 

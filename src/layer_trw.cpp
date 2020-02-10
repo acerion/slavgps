@@ -170,7 +170,6 @@ static WidgetIntEnumerationData wp_symbol_enum = {
 static ParameterScale<int> scale_track_thickness              (              1,               10,                SGVariant((int32_t) 1, SGVariantType::Int),       1,        0); /* PARAM_TRACK_THICKNESS */
 static ParameterScale<int> scale_track_draw_speed_factor      (              0,              100,                      SGVariant(30.0),                            1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
 static ParameterScale<int> scale_wp_image_size                (             16,              128,               SGVariant((int32_t) 64, SGVariantType::Int),       4,        0); /* PARAM_WP_IMAGE_SIZE */
-static ParameterScale<int> scale_wp_image_alpha               (              0,              255,              SGVariant((int32_t) 255, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
 static ParameterScale<int> scale_wp_image_cache_capacity      (              5,              500,              SGVariant((int32_t) 300, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
 static ParameterScale<int> scale_track_bg_thickness           (              0,                8,                SGVariant((int32_t) 0, SGVariantType::Int),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
 static ParameterScale<int> scale_wp_marker_size               (              1,               64,                SGVariant((int32_t) 4, SGVariantType::Int),       1,        0); /* PARAM_WP_MARKER_SIZE */
@@ -321,10 +320,10 @@ static ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_DRAW_WP_SYMBOLS,         "wpsyms",            SGVariantType::Boolean,      PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Symbols:"),           WidgetType::CheckButton,  NULL,                        sg_variant_true,             "" },
 	{ PARAM_WP_SORT_ORDER,           "wpsortorder",       SGVariantType::Enumeration,  PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Waypoint Sort Order:"),             WidgetType::IntEnumeration,  &sort_order_wp_enum,         NULL,                        "" },
 
-	{ PARAM_DRAW_WP_IMAGES,          "drawimages",        SGVariantType::Boolean,      PARAMETER_GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),             WidgetType::CheckButton,  NULL,                        sg_variant_true,             "" },
-	{ PARAM_WP_IMAGE_SIZE,           "image_size",        SGVariantType::Int,          PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Size (pixels):"),    WidgetType::HScale,       &scale_wp_image_size,        NULL,                        "" },
-	{ PARAM_WP_IMAGE_ALPHA,          "image_alpha",       SGVariantType::Int,          PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Alpha:"),            WidgetType::HScale,       &scale_wp_image_alpha,       NULL,                        "" },
-	{ PARAM_WP_IMAGE_CACHE_CAPACITY, "image_cache_size",  SGVariantType::Int,          PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Images' Memory Cache Size (MB):"),WidgetType::HScale,&scale_wp_image_cache_capacity,  NULL,                    "" },
+	{ PARAM_DRAW_WP_IMAGES,          "drawimages",        SGVariantType::Boolean,         PARAMETER_GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),                      WidgetType::CheckButton,       NULL,                            sg_variant_true,             "" },
+	{ PARAM_WP_IMAGE_SIZE,           "image_size",        SGVariantType::Int,             PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Size (pixels):"),             WidgetType::HScale,            &scale_wp_image_size,            NULL,                        "" },
+	{ PARAM_WP_IMAGE_ALPHA,          "image_alpha",       SGVariantType::ImageAlphaType,  PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Alpha:"),                     WidgetType::ImageAlphaWidget,  nullptr,                         NULL,                        "" },
+	{ PARAM_WP_IMAGE_CACHE_CAPACITY, "image_cache_size",  SGVariantType::Int,             PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Images' Memory Cache Size (MB):"),  WidgetType::HScale,            &scale_wp_image_cache_capacity,  NULL,                        "" },
 
 	{ PARAM_MDDESC,                  "metadatadesc",      SGVariantType::String,       PARAMETER_GROUP_METADATA,          QObject::tr("Description"),                      WidgetType::Entry,        NULL,                        string_default,              "" },
 	{ PARAM_MDAUTH,                  "metadataauthor",    SGVariantType::String,       PARAMETER_GROUP_METADATA,          QObject::tr("Author"),                           WidgetType::Entry,        NULL,                        string_default,              "" },
@@ -861,11 +860,9 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, __at
 		}
 		break;
 	case PARAM_WP_IMAGE_ALPHA:
-		if (data.u.val_int >= scale_wp_image_alpha.min && data.u.val_int <= scale_wp_image_alpha.max) {
-			if (data.u.val_int != this->painter->wp_image_alpha) {
-				this->painter->wp_image_alpha = data.u.val_int;
-				this->wp_image_cache_flush();
-			}
+		if (data.alpha().value() != this->painter->wp_image_alpha.value()) {
+			this->painter->wp_image_alpha = data.alpha();
+			this->wp_image_cache_flush();
 		}
 		break;
 
@@ -982,7 +979,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, __attribute__((unused))
 
 	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
 	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size, trw_layer_param_specs[param_id].type_id);       break;
-	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha, trw_layer_param_specs[param_id].type_id);      break;
+	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant(this->painter->wp_image_alpha, trw_layer_param_specs[param_id].type_id);      break;
 	case PARAM_WP_IMAGE_CACHE_CAPACITY: rv = SGVariant((int32_t) this->wp_image_cache.get_capacity_megabytes(), trw_layer_param_specs[param_id].type_id); break;
 
 	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->painter->wp_marker_color);      break;

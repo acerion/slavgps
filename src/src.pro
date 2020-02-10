@@ -137,6 +137,7 @@ SOURCES += main.cpp \
     widget_coord.cpp \
     widget_measurement_entry.cpp \
     widget_duration.cpp \
+    widget_image_alpha.cpp \
     date_time_dialog.cpp \
     layer_dem_dem.cpp \
     layer_dem_dem_srtm.cpp \
@@ -294,6 +295,7 @@ HEADERS += window.h \
     widget_measurement_entry.h \
     widget_coord.h \
     widget_duration.h \
+    widget_image_alpha.h \
     date_time_dialog.h \
     layer_dem_dem.h \
     layer_dem_dem_srtm.h \

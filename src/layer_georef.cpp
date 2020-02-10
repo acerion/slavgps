@@ -111,23 +111,22 @@ private:
    dialog itself) will not be built using parameters specification. */
 
 static ParameterSpecification georef_layer_param_specs[] = {
-	{ PARAM_IMAGE_FILE_FULL_PATH,    "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_CORNER_UTM_EASTING,      "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_CORNER_UTM_NORTHING,     "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_MPP_EASTING,             "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_MPP_NORTHING,            "mpp_northing",         SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_CORNER_UTM_ZONE,         "corner_zone",          SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_CORNER_UTM_BAND_LETTER,  "corner_letter_as_int", SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
-	{ PARAM_ALPHA,                   "alpha",                SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_IMAGE_FILE_FULL_PATH,    "image",                SGVariantType::String,           PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_EASTING,      "corner_easting",       SGVariantType::Double,           PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_NORTHING,     "corner_northing",      SGVariantType::Double,           PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_MPP_EASTING,             "mpp_easting",          SGVariantType::Double,           PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_MPP_NORTHING,            "mpp_northing",         SGVariantType::Double,           PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_ZONE,         "corner_zone",          SGVariantType::Int,              PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_BAND_LETTER,  "corner_letter_as_int", SGVariantType::Int,              PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_ALPHA,                   "alpha",                SGVariantType::ImageAlphaType,   PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
 
-	{ NUM_PARAMS,                    "",                     SGVariantType::Empty,  PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" }, /* Guard. */
+	{ NUM_PARAMS,                    "",                     SGVariantType::Empty,            PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" }, /* Guard. */
 };
 
 
 
 
 LayerGeorefInterface vik_georef_layer_interface;
-static ParameterScale<int> alpha_scale(0, 255, SGVariant(0, SGVariantType::Int), 1, 0);
 
 
 
@@ -253,12 +252,7 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		}
 		break;
 	case PARAM_ALPHA:
-		/* Alpha shall always be of type int. */
-		if (alpha_scale.is_in_range(param_value.u.val_int)) {
-			this->alpha = param_value.u.val_int;
-		} else {
-			qDebug() << SG_PREFIX_E << "Invalid alpha value" << param_value.u.val_int;
-		}
+		this->alpha = param_value.alpha();
 		break;
 	default:
 		break;
@@ -327,8 +321,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		rv = SGVariant((int32_t) this->utm_tl.get_band_as_letter(), SGVariantType::Int);
 		break;
 	case PARAM_ALPHA:
-		/* Alpha shall always be int. Cast to int here, to be sure that it's stored in variant correctly. */
-		rv = SGVariant((int32_t) this->alpha, SGVariantType::Int);
+		rv = SGVariant(this->alpha, georef_layer_param_specs[PARAM_ALPHA].type_id);
 		break;
 	default:
 		break;
@@ -492,7 +485,7 @@ sg_ret LayerGeoref::post_read(__attribute__((unused)) GisViewport * gisview, boo
 		this->image_width = this->image.width();
 		this->image_height = this->image.height();
 
-		if (!this->image.isNull() && alpha_scale.is_in_range(this->alpha)) {
+		if (!this->image.isNull()) {
 			ui_pixmap_set_alpha(this->image, this->alpha);
 		}
 	} else {
@@ -1063,8 +1056,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, __attribute__((u
 	}
 
 
-	alpha_scale.initial = SGVariant((int32_t) this->layer->alpha, SGVariantType::Int);
-	this->alpha_slider = new SliderWidget(alpha_scale, Qt::Horizontal);
+	this->alpha_slider = new ImageAlphaWidget(this->layer->alpha, Qt::Horizontal);
 	this->grid->addWidget(new QLabel(tr("Alpha:")), row, 0);
 	this->grid->addWidget(this->alpha_slider, row, 1);
 	row++;
@@ -1116,13 +1108,11 @@ bool LayerGeoref::run_dialog(GisViewport * gisview, QWidget * parent)
 	this->post_read(gisview, false);
 
 
-	if (alpha_scale.is_in_range(this->alpha)) {
-		if (!this->image.isNull()) {
-			ui_pixmap_set_alpha(this->image, this->alpha);
-		}
-		if (!this->scaled_image.isNull()) {
-			ui_pixmap_set_alpha(this->scaled_image, this->alpha);
-		}
+	if (!this->image.isNull()) {
+		ui_pixmap_set_alpha(this->image, this->alpha);
+	}
+	if (!this->scaled_image.isNull()) {
+		ui_pixmap_set_alpha(this->scaled_image, this->alpha);
 	}
 
 	const int current_coord_mode = dialog.coord_mode_combo->currentData().toInt();
@@ -1138,7 +1128,7 @@ sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
 {
 	this->set_image_file_full_path(dialog.map_image_file_selector->get_selected_file_full_path());
 	this->world_file_full_path = dialog.world_file_selector->get_selected_file_full_path();
-	this->alpha = dialog.alpha_slider->get_value();
+	this->alpha = dialog.alpha_slider->value();
 
 	this->utm_tl = dialog.utm_entry->get_value();
 	this->mpp_easting = dialog.x_scale_spin->value();

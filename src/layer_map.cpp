@@ -174,11 +174,6 @@ static double map_zooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 
 
 
 
-static ParameterScale<int> scale_alpha(0, 255, SGVariant((int32_t) 255, SGVariantType::Int), 3, 0);
-
-
-
-
 static SGVariant directory_default(void)
 {
 	const SGVariant pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir");
@@ -228,16 +223,16 @@ FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::File
 
 static ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::IntEnumeration,   &map_types_enum,     NULL,                 "" },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,      NULL,                directory_default,    "" },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::IntEnumeration,   &cache_layout_enum,  NULL,                 QObject::tr("This determines the tile storage layout on disk") },
-	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,     map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,           &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,      NULL,                sg_variant_true,      "" },
-	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,      NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::IntEnumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level.\n'Follow Zoom Level of Viewport' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::IntEnumeration,   &map_types_enum,     NULL,                 "" },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,          PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,      NULL,                directory_default,    "" },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::IntEnumeration,   &cache_layout_enum,  NULL,                 QObject::tr("This determines the tile storage layout on disk") },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::String,          PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,     map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::ImageAlphaType,  PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::ImageAlphaWidget, nullptr,             nullptr,              QObject::tr("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,         PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,      NULL,                sg_variant_true,      "" },
+	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,         PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,      NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::IntEnumeration,   &map_zooms_enum,     NULL,                 QObject::tr("Determines the method of displaying map tiles for the current zoom level.\n'Follow Zoom Level of Viewport' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,             NULL,                NULL,                 "" }, /* Guard. */
+	{ NUM_PARAMS,          "",               SGVariantType::Empty,           PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,             NULL,                NULL,                 "" }, /* Guard. */
 };
 
 
@@ -550,9 +545,7 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		}
 		break;
 	case PARAM_ALPHA:
-		if (data.u.val_int >= scale_alpha.min && data.u.val_int <= scale_alpha.max) {
-			this->alpha = data.u.val_int;
-		}
+		this->alpha = data.alpha();
 		break;
 	case PARAM_AUTO_DOWNLOAD:
 		this->autodownload = data.u.val_bool;
@@ -619,7 +612,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant((int32_t) this->m_map_type_id, maps_layer_param_specs[PARAM_MAP_TYPE_ID].type_id);
 		break;
 	case PARAM_ALPHA:
-		rv = SGVariant((int32_t) this->alpha, maps_layer_param_specs[PARAM_ALPHA].type_id);
+		rv = SGVariant(this->alpha, maps_layer_param_specs[PARAM_ALPHA].type_id);
 		break;
 	case PARAM_AUTO_DOWNLOAD:
 		rv = SGVariant(this->autodownload); /* kamilkamil: in viking code there is a type mismatch. */
@@ -815,12 +808,10 @@ Layer * LayerMapInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 
 
 
-static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const TilePixmapResize & tile_pixmap_resize)
+static void pixmap_apply_settings(QPixmap & pixmap, const ImageAlpha & alpha, const TilePixmapResize & tile_pixmap_resize)
 {
 	/* Apply alpha setting. */
-	if (scale_alpha.is_in_range(alpha)) {
-		ui_pixmap_set_alpha(pixmap, alpha);
-	}
+	ui_pixmap_set_alpha(pixmap, alpha);
 
 	if (tile_pixmap_resize.horiz_resize != 1.0 || tile_pixmap_resize.vert_resize != 1.0) {
 		ui_pixmap_scale_size_by(pixmap, tile_pixmap_resize.horiz_resize, tile_pixmap_resize.vert_resize);

@@ -51,6 +51,7 @@
 #include "widget_color_button.h"
 #include "widget_file_list.h"
 #include "widget_file_entry.h"
+#include "widget_image_alpha.h"
 #include "widget_radio_group.h"
 #include "widget_slider.h"
 #include "widget_measurement_entry.h"
@@ -148,6 +149,9 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 		break;
 	case WidgetType::AltitudeWidget:
 		result = "Altitude";
+		break;
+	case WidgetType::ImageAlphaWidget:
+		result = "ImageAlpha";
 		break;
 	case WidgetType::None:
 	default:
@@ -583,6 +587,16 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		}
 		break;
 
+	case WidgetType::ImageAlphaWidget:
+		assert (param_spec.type_id == SGVariantType::ImageAlphaType);
+		if (param_spec.type_id == SGVariantType::ImageAlphaType) {
+			ImageAlphaWidget * widget_ = new ImageAlphaWidget(param_value.alpha(), Qt::Horizontal, this);
+			qDebug() << SG_PREFIX_I << "New ImageAlphaWidget with initial value" << param_value.alpha();
+
+			widget = widget_;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -743,6 +757,11 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	case WidgetType::AltitudeWidget:
 		assert (param_spec.type_id == SGVariantType::AltitudeType);
 		rv = ((MeasurementEntryWidget *) widget)->get_value_iu();
+		break;
+
+	case WidgetType::ImageAlphaWidget:
+		assert (param_spec.type_id == SGVariantType::ImageAlphaType);
+		rv = ((ImageAlphaWidget *) widget)->value();
 		break;
 
 	default:

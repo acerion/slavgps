@@ -128,7 +128,6 @@ static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
-static ParameterScale<int> scale_alpha(0,  255, SGVariant(255, SGVariantType::Int), 5, 0);
 static MeasurementScale<Duration> scale_renderer_timeout(0, 1024, 7 * 24, 12, DurationType::Unit::E::Hours, 0);
 static ParameterScale<int> scale_threads(1, 64, SGVariant(1, SGVariantType::Int), 1, 0); /* 64 threads should be enough for anyone... */
 
@@ -150,13 +149,13 @@ FileSelectorWidget::FileTypeFilter file_type_xml[1] = { FileSelectorWidget::File
 
 
 static ParameterSpecification mapnik_layer_param_specs[] = {
-	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("CSS (MML) Config File:"), WidgetType::FileSelector, file_type_css, file_default,       QObject::tr("CartoCSS configuration file") },
-	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("XML Config File:"),       WidgetType::FileSelector, file_type_xml, file_default,       QObject::tr("Mapnik XML configuration file") },
-	{ PARAM_ALPHA,          "alpha",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                 WidgetType::HScale,       &scale_alpha,  NULL,               "" },
-	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Use File Cache:"),        WidgetType::CheckButton,  NULL,          sg_variant_true,    "" },
-	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("File Cache Directory:"),  WidgetType::FolderEntry,  NULL,          cache_dir_default,  "" },
+	{ PARAM_CONFIG_CSS,     "config-file-mml", SGVariantType::String,           PARAMETER_GROUP_GENERIC, QObject::tr("CSS (MML) Config File:"), WidgetType::FileSelector,      file_type_css, file_default,       QObject::tr("CartoCSS configuration file") },
+	{ PARAM_CONFIG_XML,     "config-file-xml", SGVariantType::String,           PARAMETER_GROUP_GENERIC, QObject::tr("XML Config File:"),       WidgetType::FileSelector,      file_type_xml, file_default,       QObject::tr("Mapnik XML configuration file") },
+	{ PARAM_ALPHA,          "alpha",           SGVariantType::ImageAlphaType,   PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                 WidgetType::ImageAlphaWidget,  nullptr,       nullptr,            "" },
+	{ PARAM_USE_FILE_CACHE, "use-file-cache",  SGVariantType::Boolean,          PARAMETER_GROUP_GENERIC, QObject::tr("Use File Cache:"),        WidgetType::CheckButton,       NULL,          sg_variant_true,    "" },
+	{ PARAM_FILE_CACHE_DIR, "file-cache-dir",  SGVariantType::String,           PARAMETER_GROUP_GENERIC, QObject::tr("File Cache Directory:"),  WidgetType::FolderEntry,       NULL,          cache_dir_default,  "" },
 
-	{ NUM_PARAMS,           "",                SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, "",                                    WidgetType::None,         NULL,          NULL,               "" }, /* Guard. */
+	{ NUM_PARAMS,           "",                SGVariantType::Empty,            PARAMETER_GROUP_GENERIC, "",                                    WidgetType::None,              NULL,          NULL,               "" }, /* Guard. */
 };
 
 
@@ -419,9 +418,7 @@ bool LayerMapnik::set_param_value(param_id_t param_id, const SGVariant & data, _
 			this->set_file_xml(data.val_string);
 			break;
 		case PARAM_ALPHA:
-			if (data.u.val_int >= scale_alpha.min && data.u.val_int <= scale_alpha.max) {
-				this->alpha = data.u.val_int;
-			}
+			this->alpha = data.alpha();
 			break;
 		case PARAM_USE_FILE_CACHE:
 			this->use_file_cache = data.u.val_bool;
@@ -477,7 +474,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t param_id, bool is_file_operati
 		break;
 	}
 	case PARAM_ALPHA:
-		param_value = SGVariant((int32_t) this->alpha, mapnik_layer_param_specs[PARAM_ALPHA].type_id);
+		param_value = SGVariant(this->alpha, mapnik_layer_param_specs[PARAM_ALPHA].type_id);
 		break;
 	case PARAM_USE_FILE_CACHE:
 		param_value = SGVariant(this->use_file_cache);
@@ -702,9 +699,7 @@ void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 	}
 	this->possibly_save_pixmap(pixmap, tile_info);
 
-	if (scale_alpha.is_in_range(this->alpha)) {
-		ui_pixmap_scale_alpha(pixmap, this->alpha);
-	}
+	ui_pixmap_scale_alpha(pixmap, this->alpha);
 
 	MapCache::add_tile_pixmap(pixmap, properties, tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 }
@@ -779,9 +774,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool & rerender) co
 		if (!pixmap.load(file_full_path)) {
 			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << file_full_path;
 		} else {
-			if (scale_alpha.is_in_range(this->alpha)) {
-				ui_pixmap_set_alpha(pixmap, this->alpha);
-			}
+			ui_pixmap_set_alpha(pixmap, this->alpha);
 
 			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, MapTypeID::MapnikRender, this->alpha, TilePixmapResize(0.0, 0.0), this->xml_map_file_full_path);
 		}

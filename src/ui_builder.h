@@ -111,6 +111,7 @@ namespace SlavGPS {
 		Latitude,
 		Longitude,
 		AltitudeWidget,
+		ImageAlphaWidget
 	};
 
 	QString widget_type_get_label(WidgetType type_id);

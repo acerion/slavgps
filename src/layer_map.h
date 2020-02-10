@@ -247,7 +247,7 @@ namespace SlavGPS {
 
 		QString cache_dir;
 		MapCacheLayout cache_layout = MapCacheLayout::Viking;
-		int alpha = 0;
+		ImageAlpha alpha;
 
 
 		int map_zoom_id = LAYER_MAP_ZOOM_ID_FOLLOW_VIEWPORT_ZOOM_LEVEL; /* This member is used as array index, so make sure to use with non-sparse enum values. */

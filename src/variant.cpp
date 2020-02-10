@@ -95,6 +95,9 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::DurationType:
 		this->val_duration.set_duration_from_string(str);
 		break;
+	case SGVariantType::ImageAlphaType:
+		this->m_alpha.set_from_string(str);
+		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
 		break;
@@ -145,6 +148,9 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		break;
 	case SGVariantType::DurationType:
 		this->val_duration.set_duration_from_string(str);
+		break;
+	case SGVariantType::ImageAlphaType:
+		this->m_alpha.set_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
@@ -342,6 +348,16 @@ SGVariant::SGVariant(const Duration & duration, SGVariantType type_id_)
 
 
 
+SGVariant::SGVariant(const ImageAlpha & alpha, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::ImageAlphaType);
+	this->type_id = type_id_;
+	this->m_alpha = alpha;
+}
+
+
+
+
 SGVariant::~SGVariant()
 {
 }
@@ -405,6 +421,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::DurationType:
 		debug << value.get_duration();
 		break;
+	case SGVariantType::ImageAlphaType:
+		debug << value.alpha();
+		break;
 	case SGVariantType::Latitude:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_latitude().to_string();
@@ -463,6 +482,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 		break;
 	case SGVariantType::DurationType:
 		debug << "Duration";
+		break;
+	case SGVariantType::ImageAlphaType:
+		debug << "ImageAlpha";
 		break;
 	case SGVariantType::Latitude:
 		debug << "Latitude";
@@ -524,6 +546,9 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 		break;
 	case SGVariantType::DurationType:
 		this->val_duration = other.val_duration;
+		break;
+	case SGVariantType::ImageAlphaType:
+		this->m_alpha = other.m_alpha;
 		break;
 	case SGVariantType::Latitude:
 		this->lat = other.lat;
@@ -588,6 +613,15 @@ Altitude SGVariant::get_altitude(void) const
 
 
 
+ImageAlpha SGVariant::alpha(void) const
+{
+	assert (this->type_id == SGVariantType::ImageAlphaType);
+	return this->m_alpha;
+}
+
+
+
+
 QString SGVariant::to_string() const
 {
 	switch (this->type_id) {
@@ -623,6 +657,9 @@ QString SGVariant::to_string() const
 
 	case SGVariantType::DurationType:
 		return QString("%1").arg(this->get_duration().to_string());
+
+	case SGVariantType::ImageAlphaType:
+		return QString("%1").arg(this->alpha().value());
 
 	case SGVariantType::Latitude:
 		return this->lat.to_string();
@@ -821,6 +858,10 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 
 		case SGVariantType::DurationType:
 			fprintf(file, "%s\n", this->get_duration().value_to_string_for_file().toUtf8().constData());
+			break;
+
+		case SGVariantType::ImageAlphaType:
+			fprintf(file, "%s\n", this->alpha().value_to_string_for_file().toUtf8().constData());
 			break;
 
 		case SGVariantType::Latitude:

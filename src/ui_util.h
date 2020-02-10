@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007-2009, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +27,13 @@
 
 
 #include <QLabel>
-#include <QStandardItem>
 #include <QPixmap>
+#include <QString>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -42,13 +48,42 @@ namespace SlavGPS {
 
 
 
+	class ImageAlpha {
+	public:
+		explicit ImageAlpha(int value = ImageAlpha::max());
+
+		int value(void) const { return this->m_value; }
+		sg_ret set_value(int value);
+
+		sg_ret set_from_string(const char * string);
+		sg_ret set_from_string(const QString & string);
+
+		const QString value_to_string_for_file(void) const;
+
+		/**
+		   @brief Get value in range 0.0 to 1.0
+
+		   Such value is useful e.g. for passing to Qt's
+		   API.
+		*/
+		double fractional_value(void) const;
+
+		static int max(void) { return 255; };
+		static int min(void) { return 0; };
+
+	private:
+		int m_value = ImageAlpha::max();
+	};
+
+
+
+
 	void open_url(const QString & url);
 
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
-	/* @alpha should be in range 0-255 */
-	void ui_pixmap_set_alpha(QPixmap & pixmap, int alpha);
-	void ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha);
+	void ui_pixmap_set_alpha(QPixmap & pixmap, const ImageAlpha & alpha);
+	void ui_pixmap_scale_alpha(QPixmap & pixmap, const ImageAlpha & alpha);
 
 	void ui_pixmap_scale_size_by(QPixmap & pixmap, double scale_x, double scale_y);
 	void ui_pixmap_scale_size_to(QPixmap * pixmap, int width, int height);

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -98,20 +99,23 @@ QLabel * SlavGPS::ui_label_new_selectable(QString const & text, QWidget * parent
 
 
 
-void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
+void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, const ImageAlpha & alpha)
 {
-	QImage image(pixmap.size(), QImage::Format_ARGB32_Premultiplied);
+	if (alpha.value() != ImageAlpha::max()) {
+
+		QImage image(pixmap.size(), QImage::Format_ARGB32_Premultiplied);
 #if 1
-	image.fill(Qt::transparent);
-	QPainter painter(&image);
+		image.fill(Qt::transparent);
+		QPainter painter(&image);
 #else
-	QPainter painter(&image);
-	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+		QPainter painter(&image);
+		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 #endif
-	painter.setOpacity(alpha / 255.0);
-	painter.drawPixmap(0, 0, pixmap);
-	painter.end();
-	pixmap = QPixmap::fromImage(image);
+		painter.setOpacity(alpha.fractional_value());
+		painter.drawPixmap(0, 0, pixmap);
+		painter.end();
+		pixmap = QPixmap::fromImage(image);
+	}
 }
 
 
@@ -143,7 +147,7 @@ void SlavGPS::ui_pixmap_scale_size_to(QPixmap * pixmap, int width, int height)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-void SlavGPS::ui_pixmap_scale_alpha(__attribute__((unused)) QPixmap & pixmap, __attribute__((unused)) int alpha)
+void SlavGPS::ui_pixmap_scale_alpha(__attribute__((unused)) QPixmap & pixmap, __attribute__((unused)) const ImageAlpha & alpha)
 {
 #ifdef K_FIXME_RESTORE
 	unsigned char *pixels;
@@ -209,4 +213,91 @@ void SlavGPS::update_desktop_recent_documents(__attribute__((unused)) Window * w
 	free(recent_data->app_exec);
 	g_slice_free(GtkRecentData, recent_data);
 #endif
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+ImageAlpha::ImageAlpha(int value)
+{
+	if (sg_ret::ok != this->set_value(value)) {
+		qDebug() << SG_PREFIX_E << "Value passed to constructor is invalid";
+	}
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+sg_ret ImageAlpha::set_value(int value)
+{
+	if (value >= ImageAlpha::min() && value <= ImageAlpha::max()) {
+		this->m_value = value;
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Value out of range:" << value;
+		return sg_ret::err;
+	}
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+sg_ret ImageAlpha::set_from_string(const QString & string)
+{
+	bool valid = false;
+	const int val = string.toInt(&valid);
+
+	if (valid) {
+		return this->set_value(val);
+	} else {
+		qDebug() << SG_PREFIX_E << "Value in string is invalid:" << string;
+		return sg_ret::err;
+	}
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+sg_ret ImageAlpha::set_from_string(const char * string)
+{
+	if (nullptr == string) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of alpha from NULL string";
+		return sg_ret::err_arg;
+	} else {
+		return this->set_from_string(QString(string));
+	}
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+const QString ImageAlpha::value_to_string_for_file(void) const
+{
+	return QString("%1").arg(this->m_value);
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-09
+*/
+double ImageAlpha::fractional_value(void) const
+{
+	return (1.0 * this->m_value) / ImageAlpha::max();
 }

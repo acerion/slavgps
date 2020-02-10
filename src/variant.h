@@ -38,6 +38,7 @@
 
 #include "measurements.h"
 #include "lat_lon.h"
+#include "ui_util.h"
 
 
 
@@ -70,7 +71,9 @@ namespace SlavGPS {
 		DurationType, /* Time span. */
 		Latitude,
 		Longitude,
-		AltitudeType
+		AltitudeType,
+		ImageAlphaType,
+
 	};
 
 	QDebug operator<<(QDebug debug, const SGVariantType type_id);
@@ -123,9 +126,10 @@ namespace SlavGPS {
 		SGVariant(const QStringList & sl,     SGVariantType type_id = SGVariantType::StringList);
 		SGVariant(const Latitude & lat,       SGVariantType type_id = SGVariantType::Latitude);
 		SGVariant(const Longitude & lon,      SGVariantType type_id = SGVariantType::Longitude);
-		SGVariant(const Altitude & a,     SGVariantType type_id = SGVariantType::AltitudeType);
-		SGVariant(const Time & timestamp, SGVariantType type_id = SGVariantType::Timestamp);
+		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::AltitudeType);
+		SGVariant(const Time & timestamp,     SGVariantType type_id = SGVariantType::Timestamp);
 		SGVariant(const Duration & duration,  SGVariantType type_id = SGVariantType::DurationType);
+		SGVariant(const ImageAlpha & alpha,   SGVariantType type_id = SGVariantType::ImageAlphaType);
 
 		~SGVariant();
 
@@ -134,6 +138,7 @@ namespace SlavGPS {
 		Latitude get_latitude(void) const;
 		Longitude get_longitude(void) const;
 		Altitude get_altitude(void) const;
+		ImageAlpha alpha(void) const;
 
 		QString to_string() const;
 
@@ -157,6 +162,7 @@ namespace SlavGPS {
 		Latitude lat;
 		Longitude lon;
 		Altitude altitude;
+		ImageAlpha m_alpha;
 	};
 
 

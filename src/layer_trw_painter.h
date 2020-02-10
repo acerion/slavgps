@@ -206,7 +206,7 @@ namespace SlavGPS {
 		font_size_t wp_label_font_size; /* Font size of waypoint's label, in Pango's "absolute size" units. */
 
 		bool draw_wp_images;
-		int wp_image_alpha;
+		ImageAlpha wp_image_alpha;
 		int wp_image_size;
 
 		bool /* GdkFunction */ wpbgand;
