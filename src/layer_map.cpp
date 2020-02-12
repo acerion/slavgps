@@ -166,10 +166,31 @@ static WidgetIntEnumerationData map_zooms_enum = {
 
 
 
-/* Count of elements in each of these two arrays should be the same as
-   count of elements in map_zooms_enum[]. */
-static double map_zooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
-static double map_zooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
+/* Count of elements in this array should be the same as count of
+   elements in map_zooms_enum[]. */
+static double map_zooms_array[] = {
+	   0.0,    /* This value won't be used - just follow zoom level of viewport. */
+	   0.25,
+	   0.5,
+	   1.0,
+	   2.0,
+	   4.0,
+	   8.0,
+	  16.0,
+	  32.0,
+	  64.0,
+	 128.0,
+	 256.0,
+	 512.0,
+	1024.0,
+	   1.016,  /* USGS 10k */
+	   2.4384, /* USGS 24k */
+	   2.54,   /* USGS 25k */
+	   5.08,   /* USGS 50k */
+	  10.16,   /* USGS 100k */
+	  20.32,   /* USGS 200k */
+	  25.4     /* USGS 250k */
+};
 
 
 
@@ -554,13 +575,21 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->adl_only_missing = data.u.val_bool;
 		break;
 	case PARAM_MAP_ZOOM:
-		if (data.u.val_enumeration < (int) map_zooms_enum.values.size()) { /* TODO_LATER: don't compare integers, try to find enum ID in map_zooms_enum */
-			this->map_zoom_id = data.u.val_enumeration;
-			this->map_zoom_x = map_zooms_x[this->map_zoom_id];
-			this->map_zoom_y = map_zooms_y[this->map_zoom_id];
-		} else {
-			qDebug() << SG_PREFIX_W << "Unknown Map Zoom" << data.u.val_enumeration;
-			this->map_zoom_id = map_zooms_enum.default_id;
+		{
+			bool found = false;
+			for (auto iter = map_zooms_enum.values.begin(); iter != map_zooms_enum.values.end(); iter++) {
+				if (data.u.val_enumeration == iter->id) {
+					this->map_zoom_id = data.u.val_enumeration;
+					this->map_zoom_x = map_zooms_array[this->map_zoom_id];
+					this->map_zoom_y = map_zooms_array[this->map_zoom_id];
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				qDebug() << SG_PREFIX_W << "Unknown Map Zoom ID" << data.u.val_enumeration;
+				this->map_zoom_id = map_zooms_enum.default_id;
+			}
 		}
 		break;
 	default:
