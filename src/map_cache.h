@@ -118,15 +118,22 @@ namespace SlavGPS {
 
 
 
-	class MapCacheObj {
+	/* Instances of this class will let us obtain a path to cached
+	   disc file with a tile pixmap. */
+	class MapCachePath {
 	public:
-		MapCacheObj() {}
-		MapCacheObj(MapCacheLayout cache_layout, const QString & cache_dir_full_path) : layout(cache_layout), dir_full_path(cache_dir_full_path) {}
+		MapCachePath() {}
+		MapCachePath(MapCacheLayout layout, const QString & dir_full_path) :
+			m_layout(layout), m_dir_full_path(dir_full_path) {}
 
 		QString get_cache_file_full_path(const TileInfo & tile_info, MapTypeID map_type_id, const QString & map_type_string, const QString & file_extension) const;
 
-		MapCacheLayout layout;
-		QString dir_full_path;
+		MapCacheLayout layout(void) const { return this->m_layout; }
+		const QString & dir_full_path(void) const { return this->m_dir_full_path; }
+
+	private:
+		MapCacheLayout m_layout = MapCacheLayout::OSM;
+		QString m_dir_full_path;
 	};
 
 

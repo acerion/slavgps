@@ -503,14 +503,14 @@ QPixmap MapSource::load_tile_pixmap_from_file(const QString & tile_file_full_pat
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QStringList MapSource::get_tile_description(const MapCachePath & cache_path, const TileInfo & tile_info) const
 {
 	QStringList items;
 
-	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->map_type_id(),
-										   this->map_type_string(),
-										   this->get_file_extension());
+	const QString tile_file_full_path = cache_path.get_cache_file_full_path(tile_info,
+										this->map_type_id(),
+										this->map_type_string(),
+										this->get_file_extension());
 	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(tile_info));
 
 	items.push_back(source);
@@ -524,12 +524,12 @@ QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, c
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QPixmap MapSource::create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSource::create_tile_pixmap(const MapCachePath & cache_path, const TileInfo & tile_info) const
 {
-	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
-										   this->map_type_id(),
-										   this->map_type_string(),
-										   this->get_file_extension());
+	const QString tile_file_full_path = cache_path.get_cache_file_full_path(tile_info,
+										this->map_type_id(),
+										this->map_type_string(),
+										this->get_file_extension());
 
 	QPixmap pixmap = this->load_tile_pixmap_from_file(tile_file_full_path);
 	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");

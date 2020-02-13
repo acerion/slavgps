@@ -76,7 +76,7 @@ namespace SlavGPS {
 		bool m_refresh_display = false;
 		LayerMap * m_layer = nullptr;
 
-		MapCacheObj map_cache;
+		MapCachePath m_map_cache_path;
 
 		/* Tile info variable holding information common for
 		   all tiles downloaded by this job, across all x/y

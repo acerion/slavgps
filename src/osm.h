@@ -46,8 +46,8 @@ namespace SlavGPS {
 	public:
 		MapSourceOSMMetatiles();
 		~MapSourceOSMMetatiles() {}
-		QPixmap create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
-		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
+		QPixmap create_tile_pixmap(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
+		QStringList get_tile_description(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
 
 	private:
 		QString full_path;
@@ -60,8 +60,8 @@ namespace SlavGPS {
 	public:
 		MapSourceOSMOnDisk();
 		~MapSourceOSMOnDisk() {}
-		QPixmap create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
-		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
+		QPixmap create_tile_pixmap(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
+		QStringList get_tile_description(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
 	};
 
 

@@ -48,8 +48,8 @@ namespace SlavGPS {
 		MapSourceMBTiles();
 		~MapSourceMBTiles();
 
-		QPixmap create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
-		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const override;
+		QPixmap create_tile_pixmap(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
+		QStringList get_tile_description(const MapCachePath & cache_path, const TileInfo & tile_info) const override;
 
 		sg_ret open_map_source(const MapSourceParameters & source_params, QString & error_message) override;
 		sg_ret close_map_source(void) override;

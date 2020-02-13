@@ -61,7 +61,7 @@ namespace SlavGPS {
 
 
 	class GisViewport;
-	class MapCacheObj;
+	class MapCachePath;
 
 
 
@@ -214,7 +214,7 @@ namespace SlavGPS {
 		static void set_cache_default(MapCacheLayout layout);
 
 
-		static QString get_cache_filename(const MapCacheObj & map_cache_obj, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
+		static QString get_cache_filename(const MapCachePath & cache_path, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
 
 
 		/**
@@ -308,7 +308,7 @@ namespace SlavGPS {
 		*/
 		TileGeometry find_resized_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const TilePixmapResize & tile_pixmap_resize);
 
-		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj);
+		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCachePath & cache_path);
 
 		bool should_start_autodownload(const GisViewport * gisview);
 

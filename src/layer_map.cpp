@@ -893,8 +893,8 @@ QPixmap LayerMap::get_tile_pixmap_with_stretch(const TileInfo & tile_info, const
 	/* Not an error, simply the pixmap was not in a cache. Let's generate the pixmap. */
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
-	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
-	pixmap = this->m_map_source->create_tile_pixmap(map_cache_obj, tile_info);
+	const MapCachePath cache_path(this->cache_layout, this->cache_dir);
+	pixmap = this->m_map_source->create_tile_pixmap(cache_path, tile_info);
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, tile_pixmap_resize);
@@ -1186,7 +1186,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 			}
 		}
 	} else {
-		const MapCacheObj map_cache_obj(this->m_map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
+		const MapCachePath cache_path(this->m_map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
 
 
 		/* Tile size is known, don't have to keep converting coords. */
@@ -1220,7 +1220,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 			for (tile_iter.y = o_range.vert_first_idx; tile_iter.y != o_range.vert_last_idx; tile_iter.y += o_range.vert_delta) {
 
 				if (existence_only) {
-					this->draw_existence(gisview, tile_iter, tile_geometry, map_cache_obj);
+					this->draw_existence(gisview, tile_iter, tile_geometry, cache_path);
 				} else {
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, tile_pixmap_resize);
 					if (!found_tile.pixmap.isNull()) {
@@ -1484,9 +1484,9 @@ void LayerMap::tile_info_cb(void)
 		return;
 	}
 
-	const MapCacheObj map_cache_obj(this->cache_layout, this->cache_dir);
+	const MapCachePath cache_path(this->cache_layout, this->cache_dir);
 
-	const QStringList tile_info_strings = this->m_map_source->get_tile_description(map_cache_obj, tile_info);
+	const QStringList tile_info_strings = this->m_map_source->get_tile_description(cache_path, tile_info);
 
 	Dialog::info(tr("Tile Information"), tile_info_strings, this->get_window());
 }
@@ -2223,12 +2223,12 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 
 
-void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCacheObj & map_cache_obj)
+void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapCachePath & cache_path)
 {
-	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
-									this->m_map_source->map_type_id(),
-									this->m_map_source->map_type_string(),
-									this->m_map_source->get_file_extension());
+	const QString path_buf = cache_path.get_cache_file_full_path(tile_info,
+								     this->m_map_source->map_type_id(),
+								     this->m_map_source->map_type_string(),
+								     this->m_map_source->get_file_extension());
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));

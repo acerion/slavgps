@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 
 
-	class MapCacheObj;
+	class MapCachePath;
 	enum class MapCacheLayout;
 	enum class GisViewportDrawMode;
 	class GisViewport;
@@ -155,8 +155,8 @@ namespace SlavGPS {
 		virtual sg_ret open_map_source(__attribute__((unused)) const MapSourceParameters & args, __attribute__((unused)) QString & error_message) { return sg_ret::ok; }
 		virtual sg_ret close_map_source(void) { return sg_ret::ok; };
 
-		virtual QPixmap create_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const;
-		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const;
+		virtual QPixmap create_tile_pixmap(const MapCachePath & cache_path, const TileInfo & tile_info) const;
+		virtual QStringList get_tile_description(const MapCachePath & cache_path, const TileInfo & tile_info) const;
 
 
 		bool is_direct_file_access(void) const;

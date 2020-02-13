@@ -87,7 +87,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::create_tile_pixmap(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QPixmap MapSourceMBTiles::create_tile_pixmap(__attribute__((unused)) const MapCachePath & cache_path, const TileInfo & tile_info) const
 {
 	QPixmap result;
 
@@ -188,7 +188,7 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(const TileInfo & tile_info) con
 
 
 
-QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const MapCacheObj & map_cache_obj, const TileInfo & tile_info) const
+QStringList MapSourceMBTiles::get_tile_description(__attribute__((unused)) const MapCachePath & cache_path, const TileInfo & tile_info) const
 {
 #ifdef HAVE_SQLITE3_H
 
