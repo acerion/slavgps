@@ -205,7 +205,7 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 	}
 
 	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
-	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
+	ThisApp::main_window()->tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
 
 	this->name_entry->setText(this->current_point->get_name());
@@ -277,7 +277,7 @@ void WpPropertiesDialog::dialog_data_reset(void)
 
 	this->clear_widgets();
 
-	if (this == ThisApp::get_main_window()->get_tools_dock()->widget()) {
+	if (this == ThisApp::main_window()->tools_dock()->widget()) {
 		/* Set a title that is not specific to any waypoint,
 		   but only when we are sure that the dock still
 		   contains 'waypoint properties' dialog. */
@@ -314,7 +314,7 @@ void WpPropertiesDialog::sync_symbol_combo_to_current_point_cb(int index_in_comb
 
 void WpPropertiesDialog::set_dialog_title(const QString & title)
 {
-	ThisApp::get_main_window()->get_tools_dock()->setWindowTitle(title);
+	ThisApp::main_window()->tools_dock()->setWindowTitle(title);
 }
 
 
@@ -573,7 +573,7 @@ void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT;
 
-	TreeView * tree_view = ThisApp::get_layers_panel()->get_tree_view();
+	TreeView * tree_view = ThisApp::layers_panel()->tree_view();
 	const QAbstractItemView::SelectionMode selection_mode = tree_view->selectionMode();
 	if (QAbstractItemView::SingleSelection != selection_mode) {
 		qDebug() << SG_PREFIX_E << "Unsupported selection mode" << (int) selection_mode;

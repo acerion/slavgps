@@ -492,9 +492,9 @@ QPixmap MapSource::load_tile_pixmap_from_file(const QString & tile_file_full_pat
 	}
 
 	if (!result.load(tile_file_full_path)) {
-		Window * window = ThisApp::get_main_window();
+		Window * window = ThisApp::main_window();
 		if (window) {
-			window->statusbar_update(StatusBarField::Info, QObject::tr("Couldn't open file with tile pixmap"));
+			window->statusbar()->set_message(StatusBarField::Info, QObject::tr("Couldn't open file with tile pixmap"));
 		}
 	}
 	return result;

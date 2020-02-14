@@ -852,8 +852,8 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 	this->recalculate_bbox();
 
 	if (n_items > 0) {
-		ThisApp::get_main_gis_view()->set_bbox(this->get_bbox());
-		ThisApp::get_main_gis_view()->request_redraw("Re-align viewport to show all tracks or routes");
+		ThisApp::main_gisview()->set_bbox(this->get_bbox());
+		ThisApp::main_gisview()->request_redraw("Re-align viewport to show all tracks or routes");
 	}
 }
 
@@ -972,7 +972,7 @@ sg_ret LayerTRWTracks::paste_child_tree_item_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
 	bool dummy = false;
-	return Clipboard::paste(ThisApp::get_layers_panel(), dummy);
+	return Clipboard::paste(ThisApp::layers_panel(), dummy);
 }
 
 

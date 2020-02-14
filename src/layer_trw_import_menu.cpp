@@ -95,7 +95,7 @@ sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_file_cb()));
 	qa->setToolTip(QObject::tr("From &File (With GPSBabel)..."));
 
-	ExternalToolDataSource::add_menu_items(submenu, this->ctx.get_trw()->get_window()->get_main_gis_view());
+	ExternalToolDataSource::add_menu_items(submenu, this->ctx.get_trw()->get_window()->main_gisview());
 
 	return sg_ret::ok;
 }

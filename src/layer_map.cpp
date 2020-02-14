@@ -1072,7 +1072,7 @@ bool LayerMap::validate_tile_pixmap_resize(const TilePixmapResize & tile_pixmap_
 			Window * window = this->get_window();
 			if (window) {
 				QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0 / g_real_min_shrinkfactor));
-				window->statusbar_update(StatusBarField::Info, msg);
+				window->statusbar()->set_message(StatusBarField::Info, msg);
 			}
 			return false;
 		}
@@ -1662,7 +1662,7 @@ LayerTool::Status LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMou
 
 void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
-	GisViewport * gisview = this->get_window()->get_main_gis_view();
+	GisViewport * gisview = this->get_window()->main_gisview();
 
 	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
 	const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
@@ -1853,7 +1853,7 @@ int DownloadMethodsAndZoomsDialog::get_larger_zoom_idx(void) const
  */
 void LayerMap::download_all_cb(void)
 {
-	GisViewport * gisview = this->get_window()->get_main_gis_view();
+	GisViewport * gisview = this->get_window()->main_gisview();
 
 	/* I don't think we should allow users to hammer the servers too much...
 	   Deliberately not allowing lowest zoom levels.

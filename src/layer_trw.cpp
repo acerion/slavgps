@@ -1451,7 +1451,7 @@ void LayerTRW::set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Tra
 
 	Trackpoint * tp = tp_ref.m_iter == track->end() ? NULL : *tp_ref.m_iter;
 	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);
-	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
+	this->get_window()->statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1478,7 +1478,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	} else {
 		msg = tr("%1 | %2").arg(alti_string_uu).arg(coord_string);
 	}
-	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
+	this->get_window()->statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1584,7 +1584,7 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		this->request_new_viewport_center(ThisApp::get_main_gis_view(), coord);
+		this->request_new_viewport_center(ThisApp::main_gisview(), coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1614,7 +1614,7 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_gis_view();
+	GisViewport * gisview = ThisApp::main_gisview();
 	if (this->move_viewport_to_show_all(gisview)) {
 		gisview->request_redraw("Redrawing viewport after re-aligning it to show all of TRW Layer");
 	}
@@ -1709,9 +1709,9 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::get_main_gis_view()->set_center_coord(wp->get_coord());
+			ThisApp::main_gisview()->set_center_coord(wp->get_coord());
 			this->tree_view->select_and_expose_tree_item(wp);
-			ThisApp::get_main_gis_view()->request_redraw("Redrawing items after setting new center in viewport");
+			ThisApp::main_gisview()->request_redraw("Redrawing items after setting new center in viewport");
 
 			break;
 		}
@@ -1814,7 +1814,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 
 	/* Apply settings to transfer to the GPS device. */
-	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_gis_view(), false);
+	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::main_gisview(), false);
 }
 
 
@@ -1824,7 +1824,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	bool visible_with_parents = false;
 
-	if (this->new_waypoint(ThisApp::get_main_gis_view()->get_center_coord(), visible_with_parents, this->get_window())) {
+	if (this->new_waypoint(ThisApp::main_gisview()->get_center_coord(), visible_with_parents, this->get_window())) {
 		this->waypoints.recalculate_bbox();
 		/* We don't have direct access to added waypoint, so
 		   we can't call ::emit_tree_item_changed(). But we
@@ -1976,7 +1976,7 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
-		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
+		ThisApp::layers_panel()->top_layer()->add_child_item(this, true);
 	}
 
 	if (!this->waypoints.is_in_tree()) {
@@ -2022,7 +2022,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
-		ThisApp::get_layers_panel()->get_top_layer()->add_child_item(this, true);
+		ThisApp::layers_panel()->top_layer()->add_child_item(this, true);
 	}
 
 	if (trk->is_route()) {
@@ -3057,8 +3057,8 @@ void LayerTRW::on_wp_properties_dialog_wp_coordinates_changed_cb(void)
 
 void LayerTRW::tp_show_properties_dialog()
 {
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
-	Window * window = ThisApp::get_main_window();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
+	Window * window = ThisApp::main_window();
 
 	/* Signals. */
 	{
@@ -3076,7 +3076,7 @@ void LayerTRW::tp_show_properties_dialog()
 	{
 		const CoordMode coord_mode = this->get_coord_mode();
 		tool->point_properties_dialog->set_coord_mode(coord_mode);
-		window->get_tools_dock()->setWidget(tool->point_properties_dialog);
+		window->tools_dock()->setWidget(tool->point_properties_dialog);
 		window->set_tools_dock_visibility_cb(true);
 	}
 
@@ -3337,8 +3337,8 @@ void LayerTRW::download_map_along_track_cb(void)
 		VikingScale(512),
 		VikingScale(1024) };
 
-	LayersPanel * panel = ThisApp::get_layers_panel();
-	const GisViewport * gisview = ThisApp::get_main_gis_view();
+	LayersPanel * panel = ThisApp::layers_panel();
+	const GisViewport * gisview = ThisApp::main_gisview();
 
 	Track * track = this->selected_track_get();
 	if (!track) {
@@ -3519,7 +3519,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 	g_selected.add_to_set(this);
 
 	/* Set highlight thickness. */
-	ThisApp::get_main_gis_view()->set_highlight_thickness(this->get_track_thickness());
+	ThisApp::main_gisview()->set_highlight_thickness(this->get_track_thickness());
 
 	/* Mark for redraw. */
 	return true;
@@ -3636,7 +3636,7 @@ bool LayerTRW::selected_wp_reset(void)
 
 bool LayerTRW::get_track_creation_in_progress() const
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWNewTrack::tool_id());
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWNewTrack::tool_id());
 	if (NULL == new_track_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewTrack::tool_id();
 		return false;
@@ -3649,7 +3649,7 @@ bool LayerTRW::get_track_creation_in_progress() const
 
 void LayerTRW::reset_track_creation_in_progress()
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWNewTrack::tool_id());
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWNewTrack::tool_id());
 	if (NULL == new_track_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewTrack::tool_id();
 		return;
@@ -3664,7 +3664,7 @@ void LayerTRW::reset_track_creation_in_progress()
 
 bool LayerTRW::get_route_creation_in_progress() const
 {
-	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
+	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
 	if (NULL == new_route_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewRoute::tool_id();
 		return false;
@@ -3677,7 +3677,7 @@ bool LayerTRW::get_route_creation_in_progress() const
 
 void LayerTRW::reset_route_creation_in_progress()
 {
-	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
+	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
 	if (NULL == new_route_tool) {
 		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewRoute::tool_id();
 		return;
@@ -3725,7 +3725,7 @@ sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
 		if (!Dialog::yes_or_no(is_track
 				       ? tr("Are you sure you want to delete the track \"%1\"?")
 				       : tr("Are you sure you want to delete the route \"%1\"?")
-				       .arg(trk->get_name())), ThisApp::get_main_window()) {
+				       .arg(trk->get_name())), ThisApp::main_window()) {
 			return sg_ret::ok;
 		}
 	}
@@ -3757,7 +3757,7 @@ sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
 	if (confirm) {
 		/* Get confirmation from the user. */
 		/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->get_name())), ThisApp::get_main_window()) {
+		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->get_name())), ThisApp::main_window()) {
 			return sg_ret::ok;
 		}
 	}

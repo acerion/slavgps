@@ -97,7 +97,7 @@ bool LayerTool::activate_tool(void)
 	}
 	/* Else: layer specific tool. */
 
-	Layer * layer = this->window->items_tree->get_selected_layer();
+	Layer * layer = this->window->layers_panel()->selected_layer();
 	if (layer) {
 		/* Layer specific tool has a layer that it can operate on. */
 		return true;

@@ -66,7 +66,7 @@ namespace SlavGPS {
 
 		/* If a layer is selected, get the layer.
 		   If a sublayer is selected, get the sublayer's owning/parent layer. */
-		Layer * get_selected_layer();
+		Layer * selected_layer(void) const;
 
 		Layer * get_layer_of_kind(LayerKind layer_kind);
 
@@ -80,11 +80,18 @@ namespace SlavGPS {
 		std::list<const Layer *> get_all_layers_of_kind(LayerKind layer_kind, bool include_invisible) const;
 		bool has_any_layer_of_kind(LayerKind layer_kind);
 
-		void set_visible(bool visible);
-		bool get_visible(void) const;
+		/**
+		   @brief Change visibility of layers panel
+		*/
+		void set_visibility(bool visible);
 
-		LayerAggregate * get_top_layer();
-		TreeView * get_tree_view();
+		/**
+		   @brief Get visibility of layers panel
+		*/
+		bool visibility(void) const;
+
+		LayerAggregate * top_layer(void) const;
+		TreeView * tree_view(void) const;
 
 		sg_ret context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops);
 
@@ -101,9 +108,9 @@ namespace SlavGPS {
 
 		void move_item(bool up);
 
-		LayerAggregate * toplayer = NULL;
-		TreeView * tree_view = NULL;
-		Window * window = NULL; /* Reference. */
+		LayerAggregate * m_toplayer = nullptr;
+		TreeView * m_tree_view = nullptr;
+		Window * m_window = nullptr; /* Reference. */
 
 
 		QAction * qa_layer_add = NULL;

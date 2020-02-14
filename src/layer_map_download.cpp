@@ -192,7 +192,7 @@ void MapDownloadJob::run(void)
 					const QString msg = tr("%1: Failed to download map tile (%2 failed in total)")
 						.arg(this->m_layer->get_map_type_ui_label())
 						.arg(this->failed_downloads);
-					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
+					ThisApp::main_window()->statusbar()->set_message(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::FileWriteError: {
@@ -200,7 +200,7 @@ void MapDownloadJob::run(void)
 					const QString msg = tr("%1: Failed to save map tile (%2 failed in total)")
 						.arg(this->m_layer->get_map_type_ui_label())
 						.arg(this->failed_saves);
-					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
+					ThisApp::main_window()->statusbar()->set_message(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::Success:

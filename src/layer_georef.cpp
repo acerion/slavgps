@@ -648,7 +648,7 @@ void GeorefConfigDialog::load_world_file_cb(void)
 
 void LayerGeoref::export_params_cb(void)
 {
-	Window * window = ThisApp::get_main_window();
+	Window * window = ThisApp::main_window();
 
 	QFileDialog file_selector(window, QObject::tr("Choose World file"));
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
@@ -1144,7 +1144,7 @@ sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
 
 void LayerGeoref::zoom_to_fit_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_gis_view();
+	GisViewport * gisview = ThisApp::main_gisview();
 	gisview->set_viking_scale_x(this->mpp_easting);
 	gisview->set_viking_scale_y(this->mpp_northing);
 	gisview->request_redraw("Redrawing items after setting new zoom level in viewport");
@@ -1155,7 +1155,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 
 void LayerGeoref::goto_center_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_gis_view();
+	GisViewport * gisview = ThisApp::main_gisview();
 	UTM utm = gisview->get_center_coord().get_utm();
 
 	/* TODO_LATER: verify image_width/height - shouldn't they be center pixels? */

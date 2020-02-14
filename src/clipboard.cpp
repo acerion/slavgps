@@ -301,7 +301,7 @@ static bool clip_parse_latlon(__attribute__((unused)) const char * text, __attri
 
 static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 {
-	Layer * selected = panel->get_selected_layer();
+	Layer * selected = panel->selected_layer();
 
 	if (selected && selected->m_kind == LayerKind::TRW) {
 		bool dummy = false;
@@ -309,7 +309,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
 		selected->emit_tree_item_changed("Clipboard - add wp");
 	} else {
-		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), ThisApp::get_main_window());
+		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), ThisApp::main_window());
 	}
 
 }
@@ -323,7 +323,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 
 	fprintf(stderr, "DEBUG: got text: %s\n", text);
 
-	Layer * selected = panel->get_selected_layer();
+	Layer * selected = panel->selected_layer();
 
 	if (selected && selected->tree_view->is_editing_in_progress()) {
 
@@ -446,7 +446,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 void Clipboard::copy_selected(LayersPanel * panel)
 {
 
-	Layer * selected = panel->get_selected_layer();
+	Layer * selected = panel->selected_layer();
 	TreeIndex index;
 	ClipboardDataType type = ClipboardDataType::None;
 	LayerKind layer_kind = LayerKind::Aggregate;

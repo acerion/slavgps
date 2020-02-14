@@ -61,7 +61,6 @@ namespace SlavGPS {
 	class GisViewport;
 	class LayerTRW;
 	class LayerTRWPainter;
-	class LayersPanel;
 	class Track;
 	class TrackpointSearch;
 	class WaypointSearch;

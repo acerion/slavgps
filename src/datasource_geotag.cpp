@@ -149,7 +149,7 @@ LoadStatus DataSourceGeoTag::acquire_into_layer(AcquireContext & acquire_context
 		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context.get_gisview()->get_coord_mode());
 		if (!wp) {
 			qDebug() << SG_PREFIX_W << "Failed to create waypoint from file" << file_full_path;
-			acquire_context.get_window()->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
+			acquire_context.get_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
 			continue;
 		}
 

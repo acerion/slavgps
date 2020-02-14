@@ -85,12 +85,12 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 
 		delete this->layer_trw_importer;
 		this->layer_trw_importer = new LayerTRWImporter(this->get_window(),
-								ThisApp::get_main_gis_view(),
+								ThisApp::main_gisview(),
 								parent_layer,  /* Aggregate layer or GPS layer. */
 								this);         /* Target TRW layer, to which import will occur. */
 
 		this->layer_trw_filter->set_main_fields(parent_layer->get_window(),
-							ThisApp::get_main_gis_view(),
+							ThisApp::main_gisview(),
 							parent_layer);
 		this->layer_trw_filter->set_trw_field(this);
 	}
@@ -248,7 +248,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 	qa->setEnabled((bool) (this->waypoints.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_main_gis_view(), NULL);
+	ExternalTools::add_menu_items(external_submenu, this->get_window()->main_gisview(), NULL);
 
 	return sg_ret::ok;
 }
@@ -258,7 +258,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu * external_submenu)
 {
-	GisViewport * gisview = parent_layer->get_window()->get_main_gis_view();
+	GisViewport * gisview = parent_layer->get_window()->main_gisview();
 
 
 	/* Try adding submenu items with external tools pre-configured

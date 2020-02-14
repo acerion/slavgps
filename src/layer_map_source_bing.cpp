@@ -423,7 +423,7 @@ void MapSourceBingProviders::run(void)
 
 	/* Emit update. As we are on a download thread, it's better to
 	   fire the update from the main loop. */
-	emit ThisApp::get_layers_panel()->items_tree_updated();
+	emit ThisApp::layers_panel()->items_tree_updated();
 
 	return;
 }

@@ -118,7 +118,7 @@ LoadStatus SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * g
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
-	Layer * layer = ThisApp::get_layers_panel()->get_selected_layer();
+	Layer * layer = ThisApp::layers_panel()->selected_layer();
 	LayerTRW * trw = NULL;
 
 	bool create_layer = false;

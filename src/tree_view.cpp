@@ -183,10 +183,10 @@ void TreeView::tree_item_selected_cb(void) /* Slot. */
 	}
 	qDebug() << SG_PREFIX_I << "Selected tree item" << selected_item->get_name();
 
-	Window * main_window = ThisApp::get_main_window();
+	Window * main_window = ThisApp::main_window();
 
 	/* Clear statusbar. */
-	main_window->get_statusbar()->set_message(StatusBarField::Info, "");
+	main_window->statusbar()->set_message(StatusBarField::Info, "");
 
 	/* Activate set of tools relevant to selected item's type. */
 	main_window->handle_selection_of_tree_item(*selected_item);
@@ -197,7 +197,7 @@ void TreeView::tree_item_selected_cb(void) /* Slot. */
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_name();
-		ThisApp::get_layers_panel()->emit_items_tree_updated_cb(selected_item->get_name());
+		ThisApp::layers_panel()->emit_items_tree_updated_cb(selected_item->get_name());
 	}
 }
 
@@ -1146,7 +1146,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 	}
 
 	if (!selected_item->has_properties_dialog) {
-		Dialog::info(tr("This item has no configurable properties."), ThisApp::get_main_window());
+		Dialog::info(tr("This item has no configurable properties."), ThisApp::main_window());
 		qDebug() << SG_PREFIX_I << "Selected item" << selected_item->m_type_id << "has no configurable properties";
 		return true;
 	}

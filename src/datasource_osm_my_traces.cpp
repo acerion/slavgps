@@ -672,7 +672,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 				got_something = got_something || (LoadStatus::Code::Success == convert_result);
 				if (LoadStatus::Code::Success != convert_result) {
 					/* Report errors to the status bar. */
-					acquire_context.get_window()->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->m_acquire_options->source_url));
+					acquire_context.get_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->m_acquire_options->source_url));
 				}
 			}
 

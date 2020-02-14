@@ -46,7 +46,6 @@ namespace SlavGPS {
 
 
 
-	class LayersPanel;
 	class GisViewport;
 	class Window;
 	class LayerTRW;

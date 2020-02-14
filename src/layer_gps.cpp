@@ -1103,8 +1103,8 @@ int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, GisViewport * gisvi
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
 		if (!sess->trw->uniquify()) {
-			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::Info,
-									      QObject::tr("Warning - GPS Upload items may overwrite each other"));
+			sess->trw->get_window()->statusbar()->set_message(StatusBarField::Info,
+									  QObject::tr("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
 
@@ -1196,7 +1196,7 @@ void LayerGPS::gps_upload_cb(void)
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	GisViewport * gisview = this->get_window()->get_main_gis_view();
+	GisViewport * gisview = this->get_window()->main_gisview();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
 	this->upload.run_transfer(trw, NULL, gisview, false);
@@ -1209,7 +1209,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	GisViewport * gisview = this->get_window()->get_main_gis_view();
+	GisViewport * gisview = this->get_window()->main_gisview();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
 	this->download.run_transfer(trw, NULL, gisview,
@@ -1230,7 +1230,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 void LayerGPS::gps_empty_upload_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), ThisApp::get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), ThisApp::main_window())) {
 		return;
 	}
 
@@ -1248,7 +1248,7 @@ void LayerGPS::gps_empty_upload_cb(void)
 void LayerGPS::gps_empty_download_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), ThisApp::get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), ThisApp::main_window())) {
 		return;
 	}
 
@@ -1267,7 +1267,7 @@ void LayerGPS::gps_empty_download_cb(void)
 void LayerGPS::rt_empty_realtime_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::main_window())) {
 		return;
 	}
 
@@ -1286,7 +1286,7 @@ void LayerGPS::rt_empty_realtime_cb(void)
 void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), ThisApp::get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), ThisApp::main_window())) {
 		return;
 	}
 
@@ -1482,7 +1482,7 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 void LayerGPS::rt_update_statusbar(Window * window)
 {
 	const QString msg = vu_trackpoint_formatted_message(this->statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->previous_rt_data.fix.climb);
-	window->get_statusbar()->set_message(StatusBarField::Info, msg);
+	window->statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1510,7 +1510,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 
 	Window * window = this->get_window();
-	GisViewport * gisview = window->get_main_gis_view();
+	GisViewport * gisview = window->main_gisview();
 	bool viewport_shifted = false;
 
 	if ((this->vehicle_position == VehiclePosition::Centered) ||

@@ -1086,5 +1086,5 @@ void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_
 
 bool LayerAggregate::is_top_level_layer(void) const
 {
-	return this == ThisApp::get_layers_panel()->get_top_layer();
+	return this == ThisApp::layers_panel()->top_layer();
 }

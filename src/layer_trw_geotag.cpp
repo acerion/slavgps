@@ -423,7 +423,7 @@ sg_ret GeotagJob::geotag_image_from_waypoint(const QString & file_full_path, con
 	if (this->values.overwrite_gps_exif || !has_gps_exif) {
 		const sg_ret ans = GeotagExif::write_exif_gps(file_full_path, wp_coord, wp_altitude, this->values.no_change_mtime);
 		if (ans != sg_ret::ok) {
-			this->trw->get_window()->statusbar_update(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(file_full_path));
+			this->trw->get_window()->statusbar()->set_message(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(file_full_path));
 		}
 		retv = ans;
 	}
@@ -593,7 +593,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 		if (this->values.write_exif) {
 			const sg_ret ans = GeotagExif::write_exif_gps(file_full_path, this->coord, this->altitude, this->values.no_change_mtime);
 			if (ans != sg_ret::ok) {
-				this->trw->get_window()->statusbar_update(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(file_full_path));
+				this->trw->get_window()->statusbar()->set_message(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(file_full_path));
 			}
 		}
 	}

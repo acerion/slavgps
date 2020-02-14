@@ -454,7 +454,7 @@ sg_ret Waypoint::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, in_tree_view);
 
 
-	if (ThisApp::get_layers_panel()) {
+	if (ThisApp::layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
@@ -512,8 +512,8 @@ bool Waypoint::show_properties_dialog(void)
 bool Waypoint::show_properties_dialog_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+	Window * window = ThisApp::main_window();
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 
 
 	/* Signals. */
@@ -532,7 +532,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 	{
 		const CoordMode coord_mode = parent_layer->get_coord_mode();
 		tool->point_properties_dialog->set_coord_mode(coord_mode);
-		window->get_tools_dock()->setWidget(tool->point_properties_dialog);
+		window->tools_dock()->setWidget(tool->point_properties_dialog);
 		window->set_tools_dock_visibility_cb(true);
 	}
 
@@ -597,9 +597,9 @@ void Waypoint::apply_dem_data_only_missing_cb(void)
 
 void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = ThisApp::get_layers_panel();
+	LayersPanel * panel = ThisApp::layers_panel();
 	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::main_window());
 		return;
 	}
 
@@ -621,7 +621,7 @@ void Waypoint::open_diary_cb(void)
 		const QString date_buf = this->timestamp.strftime_utc("%Y-%m-%d");
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
-		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
+		Dialog::info(tr("This waypoint has no date information."), ThisApp::main_window());
 	}
 }
 
@@ -646,7 +646,7 @@ void Waypoint::open_astro_cb(void)
 		const QString alt_str = QString("%1").arg((int) round(this->altitude.ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
-		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
+		Dialog::info(tr("This waypoint has no date information."), ThisApp::main_window());
 	}
 }
 
@@ -655,7 +655,7 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->m_coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->m_coord);
 }
 
 
@@ -697,7 +697,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 
 	if (parent_layer->waypoints.find_waypoint_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
-		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::get_main_window())) {
+		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::main_window())) {
 			return empty_string;
 		}
 	}
@@ -708,7 +708,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->apply_tree_item_name(this);
 	parent_layer->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
 
-	ThisApp::get_layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming waypoint");
+	ThisApp::layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming waypoint");
 
 	return new_name;
 }
@@ -778,7 +778,7 @@ void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 
 void Waypoint::geotagging_waypoint_cb(void)
 {
-	trw_layer_geotag_dialog(ThisApp::get_main_window(), (LayerTRW *) this->owning_layer, this, NULL);
+	trw_layer_geotag_dialog(ThisApp::main_window(), (LayerTRW *) this->owning_layer, this, NULL);
 }
 #endif
 
@@ -1048,15 +1048,15 @@ void Waypoint::list_dialog(QString const & title, Layer * parent_layer)
 
 sg_ret Waypoint::properties_dialog_set(void)
 {
-	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+	Window * window = ThisApp::main_window();
+	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) window->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 	if (!wp_tool->is_activated()) {
 		/* Someone is asking to fill dialog data with waypoint
 		   when WP edit tool is not active. This is ok, maybe
 		   generic select tool is active and has been used to
 		   select a waypoint? */
 
-		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(LayerToolSelect::tool_id());
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->toolbox()->get_tool(LayerToolSelect::tool_id());
 		if (!select_tool->is_activated()) {
 			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
 			return sg_ret::err;
@@ -1072,8 +1072,8 @@ sg_ret Waypoint::properties_dialog_set(void)
 
 sg_ret Waypoint::properties_dialog_reset(void)
 {
-	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+	Window * window = ThisApp::main_window();
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}

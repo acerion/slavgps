@@ -282,7 +282,7 @@ void TreeItem::set_menu_operation_ids(const StandardMenuOperations & ops)
 
 sg_ret TreeItem::menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, __attribute__((unused)) bool in_tree_view)
 {
-	LayersPanel * layers_panel = ThisApp::get_layers_panel();
+	LayersPanel * layers_panel = ThisApp::layers_panel();
 	return layers_panel->context_menu_add_standard_operations(menu, ops);
 }
 
@@ -462,7 +462,7 @@ bool TreeItem::move_child(__attribute__((unused)) TreeItem & child_tree_item, __
 void TreeItem::emit_tree_item_changed(const QString & where)
 {
 	if (this->visible && this->tree_view) {
-		ThisApp::get_main_window()->set_redraw_trigger(this);
+		ThisApp::main_window()->set_redraw_trigger(this);
 		qDebug() << SG_PREFIX_SIGNAL << "Tree item" << this->m_name << "emits 'layer changed' signal @" << where;
 		emit this->tree_item_changed(this->m_name);
 	}
@@ -479,7 +479,7 @@ void TreeItem::emit_tree_item_changed(const QString & where)
 */
 void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 {
-	ThisApp::get_main_window()->set_redraw_trigger(this);
+	ThisApp::main_window()->set_redraw_trigger(this);
 	qDebug() << SG_PREFIX_SIGNAL << "TreeItem" << this->m_name << "emits 'changed' signal @" << where;
 	emit this->tree_item_changed(this->m_name);
 }

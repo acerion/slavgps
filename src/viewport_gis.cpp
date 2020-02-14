@@ -135,7 +135,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 */
 GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * parent) : ViewportPixmap(left, right, top, bottom, parent)
 {
-	this->window = ThisApp::get_main_window();
+	this->window = ThisApp::main_window();
 
 
 	this->installEventFilter(this);
@@ -1616,7 +1616,7 @@ void GisViewport::mousePressEvent(QMouseEvent * ev)
 {
 	qDebug() << SG_PREFIX_I << "Mouse CLICK event, button" << (int) ev->button();
 
-	this->window->get_toolbox()->handle_mouse_click(ev);
+	this->window->toolbox()->handle_mouse_click(ev);
 
 	ev->accept();
 }
@@ -1634,7 +1634,7 @@ bool GisViewport::eventFilter(__attribute__((unused)) QObject * object, QEvent *
 		qDebug() << SG_PREFIX_I << "Mouse DOUBLE CLICK event, button" << (int) m->button();
 
 		if (m->button() == Qt::LeftButton) {
-			this->window->get_toolbox()->handle_mouse_double_click(m);
+			this->window->toolbox()->handle_mouse_double_click(m);
 			m->accept();
 			return true; /* Eat event. */
 		}
@@ -1653,7 +1653,7 @@ void GisViewport::mouseMoveEvent(QMouseEvent * ev)
 {
 	this->draw_mouse_motion_cb(ev);
 
-	this->window->get_toolbox()->handle_mouse_move(ev);
+	this->window->toolbox()->handle_mouse_move(ev);
 
 	emit this->cursor_moved(this, ev);
 
@@ -1670,7 +1670,7 @@ void GisViewport::mouseReleaseEvent(QMouseEvent * ev)
 {
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 
-	this->window->get_toolbox()->handle_mouse_release(ev);
+	this->window->toolbox()->handle_mouse_release(ev);
 	emit this->button_released(this, ev);
 
 	ev->accept();
@@ -1803,7 +1803,7 @@ void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 
 	/* Get coordinates in viewport's coordinates mode. */
 	const Coord coord = this->screen_pos_to_coord(pos_x, pos_y);
-	this->window->get_statusbar()->set_coord(coord);
+	this->window->statusbar()->set_coord(coord);
 
 
 
@@ -1821,7 +1821,7 @@ void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 	if (altitude.is_valid()) {
 		altitude.convert_to_unit(Preferences::get_unit_height());
 	}
-	this->window->get_statusbar()->set_altitude_uu(altitude);
+	this->window->statusbar()->set_altitude_uu(altitude);
 
 
 
@@ -1884,7 +1884,7 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print pixmap. */
-	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
+	ThisApp::layers_panel()->draw_tree_items(scaled_viewport, true, false);
 
 
 	QPainter printer_painter;

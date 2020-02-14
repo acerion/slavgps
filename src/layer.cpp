@@ -357,7 +357,7 @@ bool Layer::handle_selection_in_tree(void)
 	g_selected.selected_tree_item = this;
 #endif
 
-	return ThisApp::get_main_window()->clear_highlight();
+	return ThisApp::main_window()->clear_highlight();
 }
 
 
@@ -374,7 +374,7 @@ QIcon Layer::get_icon(void)
 /* Returns true if OK was pressed. */
 bool Layer::show_properties_dialog(void)
 {
-	return this->show_properties_dialog(ThisApp::get_main_gis_view());
+	return this->show_properties_dialog(ThisApp::main_gisview());
 }
 
 
@@ -561,7 +561,7 @@ bool Layer::compare_timestamp_descending(const Layer * first, const Layer * seco
 
 Window * Layer::get_window(void) const
 {
-	return ThisApp::get_main_window();
+	return ThisApp::main_window();
 }
 
 

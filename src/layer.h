@@ -57,7 +57,6 @@ namespace SlavGPS {
 	class Window;
 	class LayerTRW;
 	class LayerInterface;
-	class LayersPanel;
 	class SGVariant;
 	class ParameterSpecification;
 

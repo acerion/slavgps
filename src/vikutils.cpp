@@ -566,7 +566,7 @@ void CommandLineOptions::apply(Window * window)
 		return;
 	}
 
-	GisViewport * gisview = window->get_main_gis_view();
+	GisViewport * gisview = window->main_gisview();
 
 	if (this->lat_lon.is_valid()) {
 		gisview->set_center_coord(this->lat_lon);
@@ -590,7 +590,7 @@ void CommandLineOptions::apply(Window * window)
 		}
 
 		/* Don't add map layer if one already exists. */
-		const std::list<const Layer *> map_layers = ThisApp::get_layers_panel()->get_all_layers_of_kind(LayerKind::Map, true);
+		const std::list<const Layer *> map_layers = ThisApp::layers_panel()->get_all_layers_of_kind(LayerKind::Map, true);
 		bool add_map = true;
 
 		for (auto iter = map_layers.begin(); iter != map_layers.end(); iter++) {
@@ -609,7 +609,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_map_type_id(initial_type_id);
 			layer->set_name(Layer::get_translated_layer_kind_string(layer->m_kind));
 
-			ThisApp::get_layers_panel()->get_top_layer()->add_child_item(layer, true);
+			ThisApp::layers_panel()->top_layer()->add_child_item(layer, true);
 			layer->emit_tree_item_changed("Command Line Options - Apply");
 		}
 	}

@@ -473,7 +473,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 		return sg_ret::err;
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
+	this->window->statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
 
 
 
@@ -507,7 +507,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
-	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
+	ThisApp::layers_panel()->draw_tree_items(scaled_viewport, true, false);
 
 	/* Save buffer as file. */
 	const QPixmap pixmap = scaled_viewport->get_pixmap();
@@ -516,7 +516,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	if (pixmap.isNull()) {
 		qDebug() << SG_PREFIX_E << "Failed to get viewport pixmap";
 
-		this->window->get_statusbar()->set_message(StatusBarField::Info, "");
+		this->window->statusbar()->set_message(StatusBarField::Info, "");
 		Dialog::error(QObject::tr("Failed to generate internal image.\n\nTry creating a smaller image."), this->window);
 
 		return sg_ret::err;
@@ -552,7 +552,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 
 
-	this->window->get_statusbar()->set_message(StatusBarField::Info, "");
+	this->window->statusbar()->set_message(StatusBarField::Info, "");
 	if (success) {
 		Dialog::info(QObject::tr("Image file generated."), this->window);
 		return sg_ret::ok;
@@ -630,13 +630,13 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			const QPixmap pixmap = viewport->get_pixmap();
 			if (pixmap.isNull()) {
 				qDebug() << SG_PREFIX_E << "Unable to get viewport pixmap" << file_full_path;
-				this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
+				this->window->statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
 				continue;
 			}
 
 			if (!pixmap.save(file_full_path, extension)) {
 				qDebug() << SG_PREFIX_E << "Unable to write to file" << file_full_path;
-				this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to write to file %1").arg(file_full_path));
+				this->window->statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to write to file %1").arg(file_full_path));
 			} else {
 				; /* Pixmap is valid and has been saved. */
 			}

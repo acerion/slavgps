@@ -2144,7 +2144,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
-	if (ThisApp::get_layers_panel()) {
+	if (ThisApp::layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->is_track() ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
 	}
@@ -2217,7 +2217,7 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 		Layer * parent_layer = parent_trw->get_owning_layer();
 
 		parent_trw->layer_trw_filter->set_main_fields(parent_trw->get_window(),
-							      ThisApp::get_main_gis_view(),
+							      ThisApp::main_gisview(),
 							      parent_layer);
 		parent_trw->layer_trw_filter->set_trw_field(parent_trw);
 	}
@@ -2300,7 +2300,7 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_first()->coord);
+		this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_first()->coord);
 	}
 }
 
@@ -2316,7 +2316,7 @@ void Track::goto_center_cb(void)
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
 	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_layer_->coord_mode);
-	parent_layer_->request_new_viewport_center(ThisApp::get_main_gis_view(), coord);
+	parent_layer_->request_new_viewport_center(ThisApp::main_gisview(), coord);
 }
 
 
@@ -2328,7 +2328,7 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
 }
 
 
@@ -2341,7 +2341,7 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2354,7 +2354,7 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2367,7 +2367,7 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2406,7 +2406,7 @@ bool Track::show_properties_dialog(void)
 
 bool Track::show_properties_dialog_cb(void)
 {
-	return track_properties_dialog(this, ThisApp::get_main_window());
+	return track_properties_dialog(this, ThisApp::main_window());
 }
 
 
@@ -2418,7 +2418,7 @@ void Track::statistics_dialog_cb(void)
 		return;
 	}
 
-	track_statistics_dialog(this, ThisApp::get_main_window());
+	track_statistics_dialog(this, ThisApp::main_window());
 }
 
 
@@ -2430,7 +2430,7 @@ void Track::profile_dialog_cb(void)
 		return;
 	}
 
-	track_profile_dialog(this, ThisApp::get_main_gis_view(), ThisApp::get_main_window());
+	track_profile_dialog(this, ThisApp::main_gisview(), ThisApp::main_window());
 }
 
 
@@ -2444,7 +2444,7 @@ void Track::smooth_it(bool flat)
 	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
 	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, ThisApp::get_main_window());
+	Dialog::info(msg, ThisApp::main_window());
 }
 
 
@@ -2475,8 +2475,8 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	ThisApp::get_main_gis_view()->set_bbox(this->get_bbox());
-	ThisApp::get_main_gis_view()->request_redraw("Re-align viewport to show whole contents of TRW Track");
+	ThisApp::main_gisview()->set_bbox(this->get_bbox());
+	ThisApp::main_gisview()->request_redraw("Re-align viewport to show whole contents of TRW Track");
 }
 
 
@@ -2516,9 +2516,9 @@ QString Track::get_tooltip(void) const
 */
 void Track::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = ThisApp::get_layers_panel();
+	LayersPanel * panel = ThisApp::layers_panel();
 	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::main_window());
 		return;
 	}
 
@@ -2526,7 +2526,7 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 
 	/* Inform user how much was changed. */
 	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, ThisApp::get_main_window());
+	Dialog::info(msg, ThisApp::main_window());
 }
 
 
@@ -2561,7 +2561,7 @@ void Track::export_track_as_gpx_cb(void)
 
 void Track::export_track(const QString & title, const QString & default_file_name, SGFileType file_type)
 {
-	QFileDialog file_selector(ThisApp::get_main_window(), title);
+	QFileDialog file_selector(ThisApp::main_window(), title);
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
@@ -2576,12 +2576,12 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 
 		last_directory_url = file_selector.directoryUrl();
 
-		ThisApp::get_main_window()->set_busy_cursor();
+		ThisApp::main_window()->set_busy_cursor();
 		const SaveStatus export_status = VikFile::export_trw_track(this, output_file_full_path, file_type, true);
-		ThisApp::get_main_window()->clear_busy_cursor();
+		ThisApp::main_window()->clear_busy_cursor();
 
 		if (SaveStatus::Code::Success != export_status) {
-			export_status.show_status_dialog(ThisApp::get_main_window());
+			export_status.show_status_dialog(ThisApp::main_window());
 		}
 	}
 }
@@ -2600,7 +2600,7 @@ void Track::open_diary_cb(void)
 		const QString date_buf = (*this->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
-		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
+		Dialog::info(tr("This track has no date information."), ThisApp::main_window());
 	}
 }
 
@@ -2642,7 +2642,7 @@ void Track::open_astro_cb(void)
 		const QString alt_str = QString("%1").arg((int)round(tp->altitude.ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
-		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
+		Dialog::info(tr("This track has no date information."), ThisApp::main_window());
 	}
 }
 
@@ -2687,7 +2687,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 	if (tracks->find_track_by_name(new_name)) {
 		/* An existing track/route has been found with the requested name. */
-		if (!Dialog::yes_or_no(message, ThisApp::get_main_window())) {
+		if (!Dialog::yes_or_no(message, ThisApp::main_window())) {
 			return empty_string;
 		}
 	}
@@ -2705,7 +2705,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->apply_tree_item_name(this);
 	parent_layer->tree_view->sort_children(tracks, parent_layer->track_sort_order);
 
-	ThisApp::get_layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming track");
+	ThisApp::layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming track");
 
 	return new_name;
 }
@@ -2781,7 +2781,7 @@ void Track::convert_track_route_cb(void)
 		    || (avg.is_valid() && avg.is_positive())) {
 
 			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\n"
-						  "Do you want to continue?"), ThisApp::get_main_window())) {
+						  "Do you want to continue?"), ThisApp::main_window())) {
 				return;
 			}
 		}
@@ -2824,7 +2824,7 @@ void Track::geotagging_track_cb(void)
 
 	/* Set to true so that thumbnails are generate later if necessary. */
 	parent_layer->has_missing_thumbnails = true;
-	trw_layer_geotag_dialog(ThisApp::get_main_window(), parent_layer, NULL, this);
+	trw_layer_geotag_dialog(ThisApp::main_window(), parent_layer, NULL, this);
 }
 
 
@@ -3002,7 +3002,7 @@ void Track::refine_route_cb(void)
 		return;
 	}
 
-	Window * main_window = ThisApp::get_main_window();
+	Window * main_window = ThisApp::main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	/* Check size of the route */
@@ -3546,7 +3546,7 @@ void Track::delete_points_same_position_cb(void)
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
 	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, ThisApp::get_main_window());
+	Dialog::info(msg, ThisApp::main_window());
 
 	this->emit_tree_item_changed("Deleted trackpoints with the same position");
 }
@@ -3567,7 +3567,7 @@ void Track::delete_points_same_time_cb(void)
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
 	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, ThisApp::get_main_window());
+	Dialog::info(msg, ThisApp::main_window());
 
 	this->emit_tree_item_changed("Deleted trackpoints with the same timestamp");
 }
@@ -3577,13 +3577,13 @@ void Track::delete_points_same_time_cb(void)
 
 void Track::extend_track_end_cb(void)
 {
-	Window * window = ThisApp::get_main_window();
+	Window * window = ThisApp::main_window();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(this->is_route() ? LayerToolTRWNewRoute::tool_id() : LayerToolTRWNewTrack::tool_id());
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
 	}
 }
 
@@ -3595,7 +3595,7 @@ void Track::extend_track_end_cb(void)
 */
 void Track::extend_track_end_route_finder_cb(void)
 {
-	Window * window = ThisApp::get_main_window();
+	Window * window = ThisApp::main_window();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(LayerToolTRWExtendedRouteFinder::tool_id());
@@ -3603,7 +3603,7 @@ void Track::extend_track_end_route_finder_cb(void)
 	parent_layer->route_finder_started = true;
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
 	}
 }
 
@@ -3799,14 +3799,14 @@ sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate
 
 sg_ret Track::tp_properties_dialog_set(void)
 {
-	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
+	Window * window = ThisApp::main_window();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
 	if (!tool->is_activated()) {
 		/* Someone is asking to fill dialog data with
 		   trackpoint when TP edit tool is not active. This is
 		   ok, maybe generic select tool is active and has
 		   been used to select a trackpoint? */
-		LayerToolSelect * select_tool = (LayerToolSelect *) window->get_toolbox()->get_tool(LayerToolSelect::tool_id());
+		LayerToolSelect * select_tool = (LayerToolSelect *) window->toolbox()->get_tool(LayerToolSelect::tool_id());
 		if (!select_tool->is_activated()) {
 			qDebug() << SG_PREFIX_E << "Trying to fill 'tp properties' dialog when neither 'tp edit' tool nor 'generic select' tool are active";
 			return sg_ret::err;
@@ -3822,8 +3822,8 @@ sg_ret Track::tp_properties_dialog_set(void)
 
 sg_ret Track::tp_properties_dialog_reset(void)
 {
-	Window * window = ThisApp::get_main_window();
-	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
+	Window * window = ThisApp::main_window();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->toolbox()->get_tool(LayerToolTRWEditTrackpoint::tool_id());
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}

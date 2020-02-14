@@ -273,7 +273,7 @@ void Background::uninit(void)
 void Background::update_status_indication(void)
 {
 	for (auto iter = g_background.main_windows.begin(); iter != g_background.main_windows.end(); iter++) {
-		(*iter)->statusbar_update(StatusBarField::Items, QObject::tr("%n background items", "", g_background.n_items));
+		(*iter)->statusbar()->set_message(StatusBarField::Items, QObject::tr("%n background items", "", g_background.n_items));
 	}
 
 	return;

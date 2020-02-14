@@ -96,17 +96,14 @@ namespace SlavGPS {
 
 		void handle_selection_of_tree_item(TreeItem & tree_item);
 
-		GisViewport * get_main_gis_view(void);
-		LayersPanel * get_items_tree(void);
-		QMenu * get_layer_menu(QMenu * menu);
+		GisViewport * main_gisview(void) const;
+		LayersPanel * layers_panel(void) const;
+		Toolbox * toolbox(void) const;
+		StatusBar * statusbar(void) const;
+		QDockWidget * tools_dock(void) const;
+
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
-		Toolbox * get_toolbox(void);
-		StatusBar * get_statusbar(void);
-		QDockWidget * get_tools_dock(void) const;
 
-		LayersPanel * items_tree = NULL;
-
-		void statusbar_update(StatusBarField field, QString const & message);
 
 		bool save_on_dirty_flag(void);
 		void set_dirty_flag(bool dirty);
@@ -318,27 +315,32 @@ namespace SlavGPS {
 		ScreenPos pan_pos; /* Last recorded position of cursor while panning. */
 		ScreenPos delayed_pan_pos; /* Temporary storage. */
 
-		QMenuBar * menu_bar = NULL;
-		QToolBar * toolbar = NULL;
-		StatusBar * status_bar = NULL;
-		Toolbox * toolbox = NULL;
-		GisViewport * main_gis_vp = NULL;
+		GisViewport * m_main_gisview = nullptr;
+		LayersPanel * m_layers_panel = nullptr;
+		Toolbox * m_toolbox = nullptr;
+		StatusBar * m_statusbar = nullptr;
+		QMenuBar * m_menu_bar = nullptr;
+		QToolBar * m_toolbar = nullptr;
 
-		QDockWidget * layers_panel_dock = NULL;
-		QDockWidget * tools_dock = NULL;
 
-		QMenu * menu_file = NULL;
-		QMenu * menu_edit = NULL;
-		QMenu * menu_view = NULL;
-		QMenu * menu_layers = NULL;
-		QMenu * menu_tools = NULL;
-		QMenu * menu_help = NULL;
 
-		QMenu * submenu_recent_files = NULL;
-		QMenu * submenu_file_acquire = NULL;
+
+
+		QDockWidget * m_layers_panel_dock = nullptr;
+		QDockWidget * m_tools_dock = nullptr;
+
+		QMenu * menu_file = nullptr;
+		QMenu * menu_edit = nullptr;
+		QMenu * menu_view = nullptr;
+		QMenu * menu_layers = nullptr;
+		QMenu * menu_tools = nullptr;
+		QMenu * menu_help = nullptr;
+
+		QMenu * submenu_recent_files = nullptr;
+		QMenu * submenu_file_acquire = nullptr;
 
 		/* Half-drawn update. */
-		TreeItem * redraw_trigger = NULL;
+		TreeItem * redraw_trigger = nullptr;
 		Coord trigger_center;
 
 		QString current_document_full_path;
@@ -385,24 +387,24 @@ namespace SlavGPS {
 
 	class ThisApp {
 	public:
-		void set(Window * new_window, LayersPanel * new_layers_panel, GisViewport * new_gisview)
+		void set(Window * window, LayersPanel * layers_panel, GisViewport * gisview)
 		{
-			this->window = new_window;
-			this->layers_panel = new_layers_panel;
-			this->gisview = new_gisview;
+			this->m_window = window;
+			this->m_layers_panel = layers_panel;
+			this->m_gisview = gisview;
 		}
 
-		static Window * get_main_window(void);
-		static LayersPanel * get_layers_panel(void);
-		static GisViewport * get_main_gis_view(void);
+		static Window * main_window(void);
+		static LayersPanel * layers_panel(void);
+		static GisViewport * main_gisview(void);
 
 		/* The last used directory. */
 		QUrl last_folder_files_url;
 
 	private:
-		Window * window = NULL;
-		LayersPanel * layers_panel = NULL;
-		GisViewport * gisview = NULL;
+		Window * m_window = nullptr;
+		LayersPanel * m_layers_panel = nullptr;
+		GisViewport * m_gisview = nullptr;
 	};
 
 

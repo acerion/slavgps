@@ -629,7 +629,7 @@ sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, __attr
 	QAction * qa = NULL;
 
 
-	if (ThisApp::get_layers_panel()) {
+	if (ThisApp::layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
 	}
@@ -670,7 +670,7 @@ sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, __attr
 */
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	GisViewport * gisview = ThisApp::get_main_gis_view();
+	GisViewport * gisview = ThisApp::main_gisview();
 	const unsigned int n_items = this->children.size();
 
 	if (1 == n_items) {
@@ -742,9 +742,9 @@ void LayerTRWWaypoints::apply_dem_data_only_missing_cb(void)
 
 void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = ThisApp::get_layers_panel();
+	LayersPanel * panel = ThisApp::layers_panel();
 	if (!panel->has_any_layer_of_kind(LayerKind::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::main_window());
 		return;
 	}
 
@@ -817,7 +817,7 @@ sg_ret LayerTRWWaypoints::paste_child_tree_item_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
 	bool dummy = false;
-	return Clipboard::paste(ThisApp::get_layers_panel(), dummy);
+	return Clipboard::paste(ThisApp::layers_panel(), dummy);
 }
 
 
@@ -1116,7 +1116,7 @@ sg_ret LayerTRWWaypoints::move_selection_to_next_child(void)
 			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
 			this->tree_view->select_and_expose_tree_item(cur_wp);
 
-			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 			tool->point_properties_dialog->dialog_data_set(cur_wp);
 
 			return sg_ret::ok;
@@ -1156,7 +1156,7 @@ sg_ret LayerTRWWaypoints::move_selection_to_previous_child(void)
 			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
 			this->tree_view->select_and_expose_tree_item(cur_wp);
 
-			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
+			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 			tool->point_properties_dialog->dialog_data_set(cur_wp);
 
 			return sg_ret::ok;

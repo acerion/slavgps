@@ -55,7 +55,6 @@ namespace SlavGPS {
 	class GisViewport;
 	class LayerTRW;
 	class Window;
-	class LayersPanel;
 	class LayerTRWWaypoints;
 
 

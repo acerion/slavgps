@@ -61,19 +61,19 @@ using namespace SlavGPS;
 LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
 	this->panel_box = new QVBoxLayout;
-	this->window = window_;
+	this->m_window = window_;
 
 	this->setMaximumWidth(300);
 	this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
 
 
 	{
-		this->toplayer = new LayerAggregate();
-		this->toplayer->set_name(tr("Top Layer"));
+		this->m_toplayer = new LayerAggregate();
+		this->m_toplayer->set_name(tr("Top Layer"));
 
-		this->tree_view = new TreeView(this->toplayer, this);
-		this->panel_box->addWidget(this->tree_view);
-		this->tree_view->show();
+		this->m_tree_view = new TreeView(this->m_toplayer, this);
+		this->panel_box->addWidget(this->m_tree_view);
+		this->m_tree_view->show();
 	}
 
 	{
@@ -130,9 +130,9 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->setLayout(this->panel_box);
 
 
-	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(tree_item_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
-	connect(this->tree_view, SIGNAL (tree_item_selected(void)), this, SLOT (activate_buttons_cb(void)));
+	connect(this->m_tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->m_window, SLOT(draw_layer_cb(sg_uid_t)));
+	connect(this->m_toplayer, SIGNAL(tree_item_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
+	connect(this->m_tree_view, SIGNAL (tree_item_selected(void)), this, SLOT (activate_buttons_cb(void)));
 
 
 	this->activate_buttons_cb();
@@ -145,8 +145,8 @@ LayersPanel::~LayersPanel()
 {
 	qDebug() << SG_PREFIX_I;
 
-	delete this->toplayer;
-	delete this->tree_view;
+	delete this->m_toplayer;
+	delete this->m_tree_view;
 	delete this->panel_box;
 	delete this->tool_bar;
 }
@@ -194,7 +194,7 @@ void LayersPanel::keyPressEvent(QKeyEvent * ev)
 sg_ret LayersPanel::context_menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops)
 {
 	if (ops.is_member(StandardMenuOperation::Properties)) {
-		menu.addAction(this->window->qa_tree_item_properties);
+		menu.addAction(this->m_window->qa_tree_item_properties);
 	}
 
 	if (ops.is_member(StandardMenuOperation::Cut)) {
@@ -227,7 +227,7 @@ void LayersPanel::context_menu_add_new_layer_submenu(QMenu & menu)
 {
 	QMenu * layers_submenu = new QMenu(tr("New Layer"), &menu);
 	menu.addMenu(layers_submenu);
-	this->window->new_layers_submenu_add_actions(layers_submenu);
+	this->m_window->new_layers_submenu_add_actions(layers_submenu);
 }
 
 
@@ -261,13 +261,13 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	qDebug() << SG_PREFIX_I << "attempting to add layer named" << layer->get_name();
 
 
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
 		qDebug() << SG_PREFIX_I << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
-		this->toplayer->add_child_item(layer, true);
+		this->m_toplayer->add_child_item(layer, true);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -335,23 +335,23 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 void LayersPanel::move_item(bool up)
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		this->activate_buttons_cb();
 		return;
 	}
 
-	if (TreeItem::the_same_object(selected_item, this->toplayer)) {
+	if (TreeItem::the_same_object(selected_item, this->m_toplayer)) {
 		/* We shouldn't even get here. "Move up/down" buttons
 		   should be disabled for Top Level Layer. */
 		qDebug() << SG_PREFIX_W << "Ignoring attempt to move Top Level Layer";
 		return;
 	}
 
-	this->tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
+	this->m_tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
 	if (selected_item->get_direct_parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
-		this->tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
+		this->m_tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_direct_parent_tree_item()->get_name();
 		this->emit_items_tree_updated_cb(selected_item->get_direct_parent_tree_item()->get_name());
@@ -363,7 +363,7 @@ void LayersPanel::move_item(bool up)
 
 void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	if (!gisview || !this->toplayer->is_visible()) {
+	if (!gisview || !this->m_toplayer->is_visible()) {
 		return;
 	}
 
@@ -372,7 +372,7 @@ void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected
 	   have to call ::get_highlight_usage() themselves. */
 	highlight_selected = highlight_selected && gisview->get_highlight_usage();
 	qDebug() << SG_PREFIX_I << "Calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
-	this->toplayer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
+	this->m_toplayer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
 
 	/* TODO_LATER: layers panel or tree view or aggregate layer should
 	   recognize which layer lays under non-transparent layers,
@@ -385,7 +385,7 @@ void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected
 
 void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (nullptr == selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
@@ -398,7 +398,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		Layer * layer = selected_item->get_immediate_layer();
 		if (layer->m_kind == LayerKind::Aggregate) {
 			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
-				Dialog::info(tr("You cannot cut the Top Layer."), this->window);
+				Dialog::info(tr("You cannot cut the Top Layer."), this->m_window);
 				return;
 			}
 		}
@@ -415,7 +415,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
@@ -431,7 +431,7 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 
 bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
@@ -459,7 +459,7 @@ void LayersPanel::add_layer_cb(void)
 
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (nullptr == selected_item) {
 		this->activate_buttons_cb();
 		/* Nothing to do. */
@@ -471,7 +471,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		Layer * layer = selected_item->get_immediate_layer();
 		if (layer->m_kind == LayerKind::Aggregate) {
 			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
-				Dialog::info(tr("You cannot delete the Top Layer."), this->window);
+				Dialog::info(tr("You cannot delete the Top Layer."), this->m_window);
 				return;
 			}
 		}
@@ -503,9 +503,9 @@ void LayersPanel::move_item_down_cb(void)
 
 
 
-Layer * LayersPanel::get_selected_layer()
+Layer * LayersPanel::selected_layer(void) const
 {
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		return NULL;
 	}
@@ -520,13 +520,13 @@ Layer * LayersPanel::get_selected_layer()
 
 Layer * LayersPanel::get_layer_of_kind(LayerKind layer_kind)
 {
-	Layer * layer = this->get_selected_layer();
+	Layer * layer = this->selected_layer();
 	if (layer && layer->m_kind == layer_kind) {
 		return layer;
 	}
 
-	if (this->toplayer->is_visible()) {
-		return this->toplayer->get_top_visible_layer_of_type(layer_kind);
+	if (this->m_toplayer->is_visible()) {
+		return this->m_toplayer->get_top_visible_layer_of_type(layer_kind);
 	}
 
 	return NULL;
@@ -538,7 +538,7 @@ Layer * LayersPanel::get_layer_of_kind(LayerKind layer_kind)
 std::list<const Layer *> LayersPanel::get_all_layers_of_kind(LayerKind layer_kind, bool include_invisible) const
 {
 	std::list<const Layer *> layers;
-	this->toplayer->get_all_layers_of_kind(layers, layer_kind, include_invisible);
+	this->m_toplayer->get_all_layers_of_kind(layers, layer_kind, include_invisible);
 	return layers;
 }
 
@@ -554,13 +554,13 @@ bool LayersPanel::has_any_layer_of_kind(LayerKind layer_kind)
 
 
 
-LayerAggregate * LayersPanel::get_top_layer()
+LayerAggregate * LayersPanel::top_layer(void) const
 {
-	if (NULL == this->toplayer) {
+	if (nullptr == this->m_toplayer) {
 		qDebug() << SG_PREFIX_E << "Top layer is NULL";
 	}
 
-	return this->toplayer;
+	return this->m_toplayer;
 }
 
 
@@ -568,8 +568,8 @@ LayerAggregate * LayersPanel::get_top_layer()
 
 void LayersPanel::clear(void)
 {
-	if (0 != this->toplayer->get_child_layers_count()) {
-		this->toplayer->clear(); /* Delete all layers. */
+	if (0 != this->m_toplayer->get_child_layers_count()) {
+		this->m_toplayer->clear(); /* Delete all layers. */
 		this->emit_items_tree_updated_cb("Delete all layers through layers panel");
 	}
 }
@@ -579,32 +579,32 @@ void LayersPanel::clear(void)
 
 void LayersPanel::change_coord_mode(CoordMode mode)
 {
-	this->toplayer->change_coord_mode(mode);
+	this->m_toplayer->change_coord_mode(mode);
 }
 
 
 
 
-void LayersPanel::set_visible(bool visible)
+void LayersPanel::set_visibility(bool visible)
 {
-	this->window->set_side_panel_visibility_cb(visible);
+	this->m_window->set_side_panel_visibility_cb(visible);
 	return;
 }
 
 
 
 
-bool LayersPanel::get_visible(void) const
+bool LayersPanel::visibility(void) const
 {
-	return this->window->get_side_panel_visibility();
+	return this->m_window->get_side_panel_visibility();
 }
 
 
 
 
-TreeView * LayersPanel::get_tree_view()
+TreeView * LayersPanel::tree_view(void) const
 {
-	return this->tree_view;
+	return this->m_tree_view;
 }
 
 
@@ -612,7 +612,7 @@ TreeView * LayersPanel::get_tree_view()
 
 void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 {
-	if (!this->tree_view->geometry().contains(ev->pos())) {
+	if (!this->m_tree_view->geometry().contains(ev->pos())) {
 		qDebug() << SG_PREFIX_I << "Context menu event outside tree view";
 		/* We want to handle only events that happen inside of tree view. */
 		return;
@@ -621,8 +621,8 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	qDebug() << SG_PREFIX_I << "Context menu event inside tree view";
 
 	QPoint orig = ev->pos();
-	QPoint v = this->tree_view->pos();
-	QPoint t = this->tree_view->viewport()->pos();
+	QPoint v = this->m_tree_view->pos();
+	QPoint t = this->m_tree_view->viewport()->pos();
 
 	qDebug() << SG_PREFIX_D << "Context menu event: event @" << orig.x() << orig.y();
 	qDebug() << SG_PREFIX_D << "Context menu event: viewport @" << v;
@@ -632,13 +632,13 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	point.setX(orig.x() - v.x() - t.x());
 	point.setY(orig.y() - v.y() - t.y());
 
-	QModelIndex ind = this->tree_view->indexAt(point);
+	QModelIndex ind = this->m_tree_view->indexAt(point);
 
 	if (ind.isValid()) {
 		/* We have clicked on some valid item in tree view. */
 
 		qDebug() << SG_PREFIX_I << "Context menu event: valid tree view index, row =" << ind.row();
-		TreeItem * item = this->tree_view->get_tree_item(QPersistentModelIndex(ind));
+		TreeItem * item = this->m_tree_view->get_tree_item(QPersistentModelIndex(ind));
 		if (nullptr == item) {
 			qDebug() << SG_PREFIX_E << "Tree item is NULL";
 		} else {
@@ -648,7 +648,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		/* We have clicked on empty space, not on tree item.  */
 
 		qDebug() << SG_PREFIX_I << "Context menu event: tree view not hit";
-		if (!this->tree_view->viewport()->geometry().contains(ev->pos())) {
+		if (!this->m_tree_view->viewport()->geometry().contains(ev->pos())) {
 			qDebug() << SG_PREFIX_I << "Context menu event outside of tree view's viewport";
 			return;
 		} else {
@@ -684,7 +684,7 @@ Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerKind expect
 			return NULL; /* Returning invalid layer. */
 		}
 
-		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
+		TreeItem * this_item = this->m_tree_view->get_tree_item(this_index);
 		if (this_item->is_layer()) {
 			if (((Layer *) this_item)->m_kind == expected_layer_kind) {
 				return (Layer *) this_item; /* Returning matching layer. */
@@ -719,14 +719,14 @@ void LayersPanel::activate_buttons_cb(void)
 
 
 
-	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	TreeItem * selected_item = this->m_tree_view->get_selected_tree_item();
 	if (NULL == selected_item) {
 		qDebug() << SG_PREFIX_I << "Leaving all buttons disabled.";
 		return;
 	}
 
 
-	if (TreeItem::the_same_object(selected_item, this->toplayer)) {
+	if (TreeItem::the_same_object(selected_item, this->m_toplayer)) {
 		/* Not an error. Simply don't enable buttons for Top Level Layer. */
 		return;
 	}
@@ -735,7 +735,7 @@ void LayersPanel::activate_buttons_cb(void)
 	/* Get position among selected item's siblings */
 	bool is_first = false;
 	bool is_last = false;
-	if (sg_ret::ok != this->tree_view->get_item_position(*selected_item, is_first, is_last)) {
+	if (sg_ret::ok != this->m_tree_view->get_item_position(*selected_item, is_first, is_last)) {
 		qDebug() << SG_PREFIX_E << "Failed to get position of tree item" << selected_item->get_name();
 		return;
 	}

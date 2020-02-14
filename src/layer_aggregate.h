@@ -48,7 +48,6 @@ namespace SlavGPS {
 
 	/* Forward declarations. */
 	class GisViewport;
-	class LayersPanel;
 	class Track;
 	class Waypoint;
 

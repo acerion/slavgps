@@ -320,7 +320,7 @@ Layer * Toolbox::handle_mouse_event_common(void)
 		return NULL;
 	}
 
-	Layer * layer = this->window->items_tree->get_selected_layer();
+	Layer * layer = this->window->m_layers_panel->selected_layer();
 	if (!layer) {
 		qDebug() << SG_PREFIX_E << "No layer";
 		return NULL;
@@ -380,7 +380,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 	}
 
 	if (LayerTool::Status::HandledGrabFocus == this->active_tool->handle_mouse_move_wrapper(layer, event)) {
-		this->window->get_main_gis_view()->setFocus();
+		this->window->main_gisview()->setFocus();
 	}
 
 	return;

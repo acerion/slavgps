@@ -518,7 +518,7 @@ sg_ret LayerMapnik::carto_load(void)
 	Window * window_ = this->get_window();
 	if (window_) {
 		// char *msg = g_strdup_printf(); // kamil kamil
-		window_->statusbar_update(StatusBarField::Info, tr("Running: %2").arg(command));
+		window_->statusbar()->set_message(StatusBarField::Info, tr("Running: %2").arg(command));
 		window_->set_busy_cursor();
 	}
 
@@ -570,7 +570,7 @@ sg_ret LayerMapnik::carto_load(void)
 			msg = tr("%1 completed").arg(pref_value.val_string);
 			qDebug() << SG_PREFIX_E << "Failed to get duration of 'carto' execution";
 		}
-		window_->statusbar_update(StatusBarField::Info, msg);
+		window_->statusbar()->set_message(StatusBarField::Info, msg);
 		window_->clear_busy_cursor();
 	}
 
@@ -836,7 +836,7 @@ void LayerMapnik::draw_tree_item(GisViewport * gisview, __attribute__((unused)) 
 	}
 
 	if (gisview->get_draw_mode() != GisViewportDrawMode::Mercator) {
-		this->get_window()->get_statusbar()->set_message(StatusBarField::Info, tr("Mapnik Rendering must be in Mercator mode"));
+		this->get_window()->statusbar()->set_message(StatusBarField::Info, tr("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}
 
@@ -898,7 +898,7 @@ void LayerMapnik::flush_map_cache_cb(void)
 
 void LayerMapnik::reload_map_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_gis_view();
+	GisViewport * gisview = ThisApp::main_gisview();
 
 	this->post_read(gisview, false);
 	this->draw_tree_item(gisview, false, false);
@@ -923,7 +923,7 @@ void LayerMapnik::run_carto_cb(void)
 
 	QString msg;
 	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
-		this->draw_tree_item(ThisApp::get_main_gis_view(), false, false);
+		this->draw_tree_item(ThisApp::main_gisview(), false, false);
 	} else {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}

@@ -81,7 +81,7 @@ sg_ret PointPropertiesWidget::build_widgets(CoordMode coord_mode, __attribute__(
 
 	this->coord_widget = new CoordEntryWidget(coord_mode);
 	this->grid->addWidget(this->coord_widget, this->widgets_row, left_col, 1, 2);
-	connect(ThisApp::get_main_window(), SIGNAL(coord_mode_changed(CoordMode)), this, SLOT(set_coord_mode(CoordMode)));
+	connect(ThisApp::main_window(), SIGNAL(coord_mode_changed(CoordMode)), this, SLOT(set_coord_mode(CoordMode)));
 
 	this->widgets_row++;
 

@@ -180,7 +180,7 @@ LayerTool::Status GenericToolRuler::handle_mouse_click(__attribute__((unused)) L
 		this->ruler->set_begin(event->x(), event->y());
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
+	this->window->statusbar()->set_message(StatusBarField::Info, msg);
 
 	return LayerTool::Status::Handled;
 }
@@ -214,7 +214,7 @@ LayerTool::Status GenericToolRuler::handle_mouse_move(__attribute__((unused)) La
 
 
 	const QString msg = ruler->get_msg();
-	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
+	this->window->statusbar()->set_message(StatusBarField::Info, msg);
 
 
 	return LayerTool::Status::Handled;
@@ -580,9 +580,9 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)
 		this->window->set_dirty_flag(true);
 
 		if (event->modifiers() & Qt::ShiftModifier) {
-			this->window->get_main_gis_view()->zoom_out_on_center_pixel();
+			this->window->main_gisview()->zoom_out_on_center_pixel();
 		} else {
-			this->window->get_main_gis_view()->zoom_in_on_center_pixel();
+			this->window->main_gisview()->zoom_in_on_center_pixel();
 		}
 
 		this->window->draw_tree_items(this->gisview);
@@ -591,7 +591,7 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)
 
 	} else if (event->button() == Qt::RightButton) {
 		this->window->set_dirty_flag(true);
-		this->window->get_main_gis_view()->zoom_out_on_center_pixel();
+		this->window->main_gisview()->zoom_out_on_center_pixel();
 		this->window->draw_tree_items(this->gisview);
 
 		return LayerTool::Status::Handled;
@@ -716,9 +716,9 @@ LayerTool::Status LayerToolSelect::handle_mouse_double_click(Layer * layer, QMou
 
 void LayerToolSelect::handle_mouse_click_common(__attribute__((unused)) Layer * layer, QMouseEvent * event)
 {
-	GisViewport * main_gis_view = this->window->get_main_gis_view();
-	TreeView * tree_view = this->window->get_items_tree()->get_tree_view();
-	LayerAggregate * top_layer = this->window->get_items_tree()->get_top_layer();
+	GisViewport * main_gisview = this->window->main_gisview();
+	TreeView * tree_view = this->window->layers_panel()->tree_view();
+	LayerAggregate * top_layer = this->window->layers_panel()->top_layer();
 
 
 	/* TODO_LATER: the code in this function visits (in one way or
@@ -728,10 +728,10 @@ void LayerToolSelect::handle_mouse_click_common(__attribute__((unused)) Layer * 
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
 		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handling double click, looking for layer";
-		handled = top_layer->handle_select_tool_double_click(event, main_gis_view, this);
+		handled = top_layer->handle_select_tool_double_click(event, main_gisview, this);
 	} else {
 		qDebug() << SG_PREFIX_D << this->get_tool_id() << "handle single click, looking for layer";
-		handled = top_layer->handle_select_tool_click(event, main_gis_view, this);
+		handled = top_layer->handle_select_tool_click(event, main_gisview, this);
 	}
 
 
@@ -800,7 +800,7 @@ LayerTool::Status LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEve
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->m_kind == LayerKind::TRW && layer->is_visible()) {
 			/* See if a TRW item is selected, and show menu for the item. */
-			layer->handle_select_tool_context_menu(event, this->window->get_main_gis_view());
+			layer->handle_select_tool_context_menu(event, this->window->main_gisview());
 		}
 	}
 

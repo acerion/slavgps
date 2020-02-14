@@ -142,7 +142,7 @@ LoadStatus DataSourceGeoJSON::acquire_into_layer(AcquireContext & acquire_contex
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquire_context.get_window()->statusbar_update(StatusBarField::Info, QObject::tr("Unable to import from: %1").arg(file_full_path));
+			acquire_context.get_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 

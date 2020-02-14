@@ -732,7 +732,7 @@ void LayerTRWImporter::import_into_new_layer_from_gc_cb(void)
 		return;
 	}
 
-	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
+	this->import_into_new_layer(new DataSourceGeoCache(ThisApp::main_gisview()));
 }
 #endif
 
@@ -828,7 +828,7 @@ void LayerTRWImporter::import_into_existing_layer_from_osm_my_traces_cb(void) /*
  */
 void LayerTRWImporter::import_into_existing_layer_from_geocache_cb(void) /* Slot. */
 {
-	this->import_into_existing_layer(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
+	this->import_into_existing_layer(new DataSourceGeoCache(ThisApp::main_gisview()));
 }
 #endif
 

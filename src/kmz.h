@@ -66,7 +66,7 @@ namespace SlavGPS {
 
 
 	int kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west);
-	KMZOpenResult kmz_open_file(const QString & file_full_path, GisViewport * gisview, LayersPanel * panel);
+	KMZOpenResult kmz_open_file(const QString & file_full_path, GisViewport * gisview, LayersPanel * layers_panel);
 
 
 

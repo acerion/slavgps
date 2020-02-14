@@ -1271,7 +1271,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 
 	QString continent_dir;
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
-		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("No SRTM data available for %1").arg(dl_job->lat_lon.to_string()));
+		ThisApp::main_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("No SRTM data available for %1").arg(dl_job->lat_lon.to_string()));
 		return;
 	}
 
@@ -1287,10 +1287,10 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	switch (result) {
 	case DownloadStatus::ContentError:
 	case DownloadStatus::HTTPError:
-		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM download failure for %1").arg(dl_job->lat_lon.to_string()));
+		ThisApp::main_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("DEM download failure for %1").arg(dl_job->lat_lon.to_string()));
 		break;
 	case DownloadStatus::FileWriteError:
-		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
+		ThisApp::main_window()->statusbar()->set_message(StatusBarField::Info, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
 	case DownloadStatus::Success:
 	case DownloadStatus::DownloadNotRequired:

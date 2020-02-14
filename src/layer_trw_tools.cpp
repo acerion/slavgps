@@ -307,7 +307,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	select_tool->selected_tree_item_type_id = SGObjectTypeID();
 
 	/* Erase info. */
-	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
+	this->get_window()->statusbar()->set_message(StatusBarField::Info, "");
 
 	if (was_selected) {
 		/* Some item was selected, but after resetting of all
@@ -953,7 +953,7 @@ static void statusbar_write(const Distance & total_distance, const Distance & la
 
 	/* Write with full gain/loss information. */
 	const QString msg = QObject::tr("Total %1%2%3").arg(total_distance_string).arg(str_last_step).arg(str_gain_loss);
-	layer->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
+	layer->get_window()->statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1587,7 +1587,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 
 
 		/* Update UI to let user know what's going on. */
-		StatusBar * statusbar = trw->get_window()->get_statusbar();
+		StatusBar * statusbar = trw->get_window()->statusbar();
 
 		QString engine_name;
 		if (false == Routing::get_default_engine_name(engine_name)) {
@@ -1620,7 +1620,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 	} else {
 		trw->selected_track_reset();
 
-		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
+		LayerTool * new_route_tool = trw->get_window()->toolbox()->get_tool(LayerToolTRWNewRoute::tool_id());
 		if (NULL == new_route_tool) {
 			qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LayerToolTRWNewRoute::tool_id();
 			return LayerTool::Status::Error;

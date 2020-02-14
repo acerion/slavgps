@@ -196,11 +196,11 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 
 
 	Layer * parent = nullptr;
-	Layer * existing_layer = ThisApp::get_layers_panel()->get_selected_layer();
+	Layer * existing_layer = ThisApp::layers_panel()->selected_layer();
 	if (existing_layer) {
 		parent = existing_layer->get_owning_layer(); /* Maybe Aggregate layer, or maybe GPS layer. */
 	} else {
-		parent = ThisApp::get_layers_panel()->get_top_layer();
+		parent = ThisApp::layers_panel()->top_layer();
 	}
 
 	switch (existing_layer->m_kind) {
