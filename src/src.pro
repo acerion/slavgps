@@ -25,7 +25,7 @@ SOURCES += main.cpp \
     datasource_geojson.cpp \
     datasource_geotag.cpp \
     datasource_gps.cpp \
-    datasource_osm.cpp \
+    datasource_osm_public_traces.cpp \
     datasource_osm_my_traces.cpp \
     datasource_routing.cpp \
     datasource_url.cpp \
@@ -209,7 +209,7 @@ HEADERS += window.h \
     datasource_geocache.h \
     datasource_gps.h \
     datasource_routing.h \
-    datasource_osm.h \
+    datasource_osm_public_traces.h \
     datasource_osm_my_traces.h \
     datasource_url.h \
     datasource_file.h \

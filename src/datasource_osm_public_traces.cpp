@@ -32,7 +32,7 @@
 
 
 
-#include "datasource_osm.h"
+#include "datasource_osm_public_traces.h"
 #include "viewport_internal.h"
 #include "babel.h"
 #include "gpx.h"

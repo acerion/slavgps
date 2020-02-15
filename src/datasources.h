@@ -29,7 +29,7 @@
 #endif
 
 #include "datasource_file.h"
-#include "datasource_osm.h"
+#include "datasource_osm_public_traces.h"
 #include "datasource_osm_my_traces.h"
 #include "datasource_wikipedia.h"
 #include "datasource_url.h"
