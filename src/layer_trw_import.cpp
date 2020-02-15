@@ -709,9 +709,9 @@ void LayerTRWImporter::import_into_new_layer_from_routing_cb(void)
 
 
 
-void LayerTRWImporter::import_into_new_layer_from_osm_cb(void)
+void LayerTRWImporter::import_into_new_layer_from_osm_public_traces_cb(void)
 {
-	this->import_into_new_layer(new DataSourceOSMTraces());
+	this->import_into_new_layer(new DataSourceOSMPublicTraces());
 }
 
 
@@ -801,11 +801,11 @@ void LayerTRWImporter::import_into_existing_layer_from_url_cb(void) /* Slot. */
 
 
 /*
- * Import into existing TRW Layer from OSM.
+ * Import into existing TRW Layer from OSM's public GPS traces.
  */
-void LayerTRWImporter::import_into_existing_layer_from_osm_cb(void) /* Slot. */
+void LayerTRWImporter::import_into_existing_layer_from_osm_public_traces_cb(void) /* Slot. */
 {
-	this->import_into_existing_layer(new DataSourceOSMTraces());
+	this->import_into_existing_layer(new DataSourceOSMPublicTraces());
 }
 
 

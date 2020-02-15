@@ -63,7 +63,12 @@ using namespace SlavGPS;
 
 
 /**
-   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
+   See https://wiki.openstreetmap.org/wiki/Tiles
+   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces (editing API
+
+   FIXME:
+   Make sure that we are in line with this policy:
+   https://operations.osmfoundation.org/policies/tiles/
 */
 #define DS_OSM_TRACES_GPX_URL_FMT "api.openstreetmap.org/api/0.6/gpx/%1/data"
 #define DS_OSM_TRACES_GPX_FILES "api.openstreetmap.org/api/0.6/user/gpx_files"

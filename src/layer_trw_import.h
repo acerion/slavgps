@@ -213,7 +213,7 @@ namespace SlavGPS {
 		void import_into_new_layer_from_file_cb(void);
 		void import_into_new_layer_from_geojson_cb(void);
 		void import_into_new_layer_from_routing_cb(void);
-		void import_into_new_layer_from_osm_cb(void);
+		void import_into_new_layer_from_osm_public_traces_cb(void);
 		void import_into_new_layer_from_my_osm_cb(void);
 #ifdef VIK_CONFIG_GEOCACHES
 		void import_into_new_layer_from_gc_cb(void);
@@ -230,7 +230,7 @@ namespace SlavGPS {
 
 		void import_into_existing_layer_from_gps_cb(void);
 		void import_into_existing_layer_from_routing_cb(void);
-		void import_into_existing_layer_from_osm_cb(void);
+		void import_into_existing_layer_from_osm_public_traces_cb(void);
 		void import_into_existing_layer_from_osm_my_traces_cb(void);
 		void import_into_existing_layer_from_url_cb(void);
 

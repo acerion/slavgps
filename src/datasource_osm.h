@@ -20,8 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DATASOURCE_OSM_H_
-#define _SG_DATASOURCE_OSM_H_
+#ifndef _SG_DATASOURCE_OSM_PUBLIC_TRACES_H_
+#define _SG_DATASOURCE_OSM_PUBLIC_TRACES_H_
 
 
 
@@ -43,10 +43,10 @@ namespace SlavGPS {
 
 
 
-	class DataSourceOSMTraces : public DataSourceBabel {
+	class DataSourceOSMPublicTraces : public DataSourceBabel {
 	public:
-		DataSourceOSMTraces();
-		~DataSourceOSMTraces() {};
+		DataSourceOSMPublicTraces();
+		~DataSourceOSMPublicTraces() {};
 
 		int run_config_dialog(AcquireContext & acquire_context) override;
 
@@ -57,11 +57,11 @@ namespace SlavGPS {
 
 
 
-	class DataSourceOSMTracesDialog : public DataSourceDialog {
+	class DataSourceOSMPublicTracesDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOSMTracesDialog(const QString & window_title);
-		~DataSourceOSMTracesDialog();
+		DataSourceOSMPublicTracesDialog(const QString & window_title);
+		~DataSourceOSMPublicTracesDialog();
 
 		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		QSpinBox spin_box;
+		QSpinBox m_page_number;
 	};
 
 
@@ -80,4 +80,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DATASOURCE_ROUTING_H_ */
+#endif /* #ifndef _SG_DATASOURCE_OSM_PUBLIC_TRACES__H_ */

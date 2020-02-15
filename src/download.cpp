@@ -649,9 +649,9 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 
 DownloadStatus DownloadHandle::perform_download(const QString & url, const QString & dest_file_path)
 {
-	const DownloadProtocol protocol = SlavGPS::from_url(url);
+	const DownloadProtocol protocol = SlavGPS::protocol_from_url(url);
 	if (protocol == DownloadProtocol::Unknown) {
-		qDebug() << SG_PREFIX_W << "Unsupported protocol in" << url;
+		qDebug() << SG_PREFIX_E << "Unsupported protocol in" << url;
 	}
 
 	return DownloadHandle::perform_download(url, "", dest_file_path, protocol);
@@ -812,7 +812,7 @@ QString SlavGPS::to_string(DownloadProtocol protocol)
 
 
 
-DownloadProtocol SlavGPS::from_url(const QString & url)
+DownloadProtocol SlavGPS::protocol_from_url(const QString & url)
 {
 	DownloadProtocol protocol;
 

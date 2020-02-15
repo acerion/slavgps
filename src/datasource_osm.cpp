@@ -48,28 +48,30 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "DataSource OSM"
+#define SG_MODULE "DataSource OSM Public Traces"
 
 
 
 
 /**
-   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
+   https://wiki.openstreetmap.org/wiki/API_v0.6#URL_.2B_authentication
+   https://wiki.openstreetmap.org/wiki/API_v0.6#GPS_traces
 */
-#define DOWNLOAD_URL_FMT "api.openstreetmap.org/api/0.6/trackpoints?bbox=%1,%2,%3,%4&page=%5"
+#define DOWNLOAD_URL_FMT "https://api.openstreetmap.org/api/0.6/trackpoints?bbox=%1,%2,%3,%4&page=%5"
 
 
 
 
+/* "specifies which group of 5,000 points, or page, to return" */
 static int g_last_page_number = 0;
 
 
 
 
-DataSourceOSMTraces::DataSourceOSMTraces()
+DataSourceOSMPublicTraces::DataSourceOSMPublicTraces()
 {
-	this->m_window_title = QObject::tr("OSM traces");
-	this->m_layer_title = QObject::tr("OSM traces");
+	this->m_window_title = QObject::tr("OSM Public Traces");
+	this->m_layer_title = QObject::tr("OSM Public Traces");
 	this->m_layer_mode = TargetLayerMode::AutoLayerManagement;
 	this->m_autoview = true;
 	this->m_keep_dialog_open_after_success = true;
@@ -78,24 +80,24 @@ DataSourceOSMTraces::DataSourceOSMTraces()
 
 
 
-SGObjectTypeID DataSourceOSMTraces::get_source_id(void) const
+SGObjectTypeID DataSourceOSMPublicTraces::get_source_id(void) const
 {
-	return DataSourceOSMTraces::source_id();
+	return DataSourceOSMPublicTraces::source_id();
 }
-SGObjectTypeID DataSourceOSMTraces::source_id(void)
+SGObjectTypeID DataSourceOSMPublicTraces::source_id(void)
 {
 	/* Using 'static' to ensure that a type ID will be created
 	   only once for this class of objects. */
-	static SGObjectTypeID id("sg.datasource.osm_traces");
+	static SGObjectTypeID id("sg.datasource.osm_public_traces");
 	return id;
 }
 
 
 
 
-int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceOSMPublicTraces::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceOSMTracesDialog config_dialog(this->m_window_title);
+	DataSourceOSMPublicTracesDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -109,17 +111,20 @@ int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceOSMPublicTracesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	const LatLonBBoxStrings bbox_strings = acquire_context.get_gisview()->get_bbox().values_to_c_strings();
 
-	/* Retrieve the specified page number. */
-	const int page = this->spin_box.value();
+	const int page_number = this->m_page_number.value();
 
-	/* Download is of GPX type. */
-	babel_options->source_url = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
+	babel_options->source_url = QString(DOWNLOAD_URL_FMT)
+		.arg(bbox_strings.west)
+		.arg(bbox_strings.south)
+		.arg(bbox_strings.east)
+		.arg(bbox_strings.north)
+		.arg(page_number);
 	/* Don't modify dl_options, use the default download settings. */
 
 	qDebug() << SG_PREFIX_D << "Source URL =" << babel_options->source_url;
@@ -130,34 +135,34 @@ AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContex
 
 
 
-DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title) : DataSourceDialog(window_title)
+DataSourceOSMPublicTracesDialog::DataSourceOSMPublicTracesDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
-	/* Page selector. */
 	QLabel * label = new QLabel(tr("Page Number:"));
 
-	this->spin_box.setMinimum(0);
-	this->spin_box.setMaximum(100);
-	this->spin_box.setSingleStep(1);
-	this->spin_box.setValue(g_last_page_number);
+	this->m_page_number.setMinimum(0);
+	this->m_page_number.setMaximum(100);
+	this->m_page_number.setSingleStep(1);
+	this->m_page_number.setValue(g_last_page_number);
+	this->m_page_number.setToolTip(tr("Specifies which group of 5000 points, or 'page', to download."));
 
 	this->grid->addWidget(label, 0, 0);
-	this->grid->addWidget(&this->spin_box, 0, 1);
+	this->grid->addWidget(&this->m_page_number, 0, 1);
 
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMTracesDialog::accept_cb);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMPublicTracesDialog::accept_cb);
 }
 
 
 
 
-DataSourceOSMTracesDialog::~DataSourceOSMTracesDialog()
+DataSourceOSMPublicTracesDialog::~DataSourceOSMPublicTracesDialog()
 {
 }
 
 
 
 
-void DataSourceOSMTracesDialog::accept_cb(void)
+void DataSourceOSMPublicTracesDialog::accept_cb(void)
 {
-	g_last_page_number = this->spin_box.value();
-	qDebug() << "II: Datasource OSM Traces: dialog result: accepted, page number =" << g_last_page_number;
+	g_last_page_number = this->m_page_number.value();
+	qDebug() << SG_PREFIX_I << "Dialog result: accepted, page number =" << g_last_page_number;
 }

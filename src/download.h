@@ -62,7 +62,7 @@ namespace SlavGPS {
 		Unknown
 	};
 	QString to_string(DownloadProtocol protocol);
-	DownloadProtocol from_url(const QString & url);
+	DownloadProtocol protocol_from_url(const QString & url);
 
 
 

@@ -59,8 +59,8 @@ sg_ret LayerTRWImporter::add_import_into_existing_layer_submenu(QMenu & submenu)
 	qa = submenu.addAction(QObject::tr("From &Directions..."));
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_routing_cb()));
 
-	qa = submenu.addAction(QObject::tr("From &OSM Traces..."));
-	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_osm_cb()));
+	qa = submenu.addAction(QObject::tr("From &OSM Public Traces..."));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_osm_public_traces_cb()));
 
 	qa = submenu.addAction(QObject::tr("From &My OSM Traces..."));
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_existing_layer_from_osm_my_traces_cb()));
@@ -125,9 +125,9 @@ sg_ret LayerTRWImporter::add_import_into_new_layer_submenu(QMenu & submenu)
 	qa->setToolTip(QObject::tr("Import GeoJSON file"));
 	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_geojson_cb(void)));
 
-	qa = submenu.addAction(QObject::tr("&OSM Traces..."));
-	qa->setToolTip(QObject::tr("Get traces from OpenStreetMap"));
-	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_osm_cb(void)));
+	qa = submenu.addAction(QObject::tr("&OSM Public Traces..."));
+	qa->setToolTip(QObject::tr("Get public traces from OpenStreetMap"));
+	QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_into_new_layer_from_osm_public_traces_cb(void)));
 
 	qa = submenu.addAction(QObject::tr("&My OSM Traces..."));
 	qa->setToolTip(QObject::tr("Get Your Own Traces from OpenStreetMap"));

@@ -58,6 +58,12 @@
   http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
   http://wiki.openstreetmap.org/wiki/TMS
   http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
+
+
+  See https://wiki.openstreetmap.org/wiki/Tiles
+
+  FIXME: Make sure that we are in line with this policy:
+  https://operations.osmfoundation.org/policies/tiles/
 */
 
 
