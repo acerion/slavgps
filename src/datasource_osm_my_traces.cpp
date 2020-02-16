@@ -63,12 +63,8 @@ using namespace SlavGPS;
 
 
 /**
-   See https://wiki.openstreetmap.org/wiki/Tiles
-   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces (editing API
-
-   FIXME:
-   Make sure that we are in line with this policy:
-   https://operations.osmfoundation.org/policies/tiles/
+   Editing API
+   See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
 */
 #define DS_OSM_TRACES_GPX_URL_FMT "api.openstreetmap.org/api/0.6/gpx/%1/data"
 #define DS_OSM_TRACES_GPX_FILES "api.openstreetmap.org/api/0.6/user/gpx_files"
@@ -76,9 +72,9 @@ using namespace SlavGPS;
 
 
 
-DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * new_gisview)
+DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * gisview)
 {
-	this->gisview = new_gisview;
+	this->m_gisview = gisview;
 
 	this->m_window_title = QObject::tr("OSM My Traces");
 	this->m_layer_title = QObject::tr("OSM My Traces");
@@ -121,24 +117,7 @@ SGObjectTypeID DataSourceOSMMyTraces::source_id(void)
 
 int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceOSMMyTracesDialog config_dialog(this->m_window_title, this->gisview);
-
-	/* Keep reference to viewport. */
-	config_dialog.gisview = this->gisview;
-
-
-	QLabel * user_label = new QLabel(QObject::tr("Username:"));
-	config_dialog.user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
-	config_dialog.grid->addWidget(user_label, 0, 0);
-	config_dialog.grid->addWidget(&config_dialog.user_entry, 0, 1);
-
-
-	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	config_dialog.password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
-	config_dialog.grid->addWidget(password_label, 1, 0);
-	config_dialog.grid->addWidget(&config_dialog.password_entry, 1, 1);
-
-	OSMTraces::fill_credentials_widgets(config_dialog.user_entry, config_dialog.password_entry);
+	DataSourceOSMMyTracesConfigDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -151,12 +130,13 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMMyTracesDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
+
+AcquireOptions * DataSourceOSMMyTracesConfigDialog::create_acquire_options(__attribute__((unused)) AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	/* Overwrite authentication info. */
-	OSMTraces::save_current_credentials(this->user_entry.text(), this->password_entry.text());
+	OSMTraces::save_current_credentials(this->m_user_name_entry.text(), this->m_password_entry.text());
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
@@ -190,7 +170,7 @@ public:
 	QString name;
 	QString visibility;
 	QString description;
-	LatLon ll;
+	LatLon lat_lon;
 	bool in_current_view = false; /* Is the track LatLon start within the current viewport.
 				 This is useful in deciding whether to download a track or not. */
 	/* ATM Only used for display - may want to convert to a time_t for other usage. */
@@ -212,18 +192,17 @@ static void free_gpx_meta_data_list(std::list<GPXMetaData *> & list)
 
 
 
-static GPXMetaData * copy_gpx_meta_data_t(GPXMetaData * src)
+static GPXMetaData * gpx_meta_data_make_copy(GPXMetaData * src)
 {
 	GPXMetaData * dest = new GPXMetaData();
 
-	dest->id = src->id;
-	dest->name = src->name;
-	dest->visibility  = src->visibility;
-	dest->description = src->description;
-	dest->ll.lat = src->ll.lat;
-	dest->ll.lon = src->ll.lon;
+	dest->id              = src->id;
+	dest->name            = src->name;
+	dest->visibility      = src->visibility;
+	dest->description     = src->description;
+	dest->lat_lon         = src->lat_lon;
 	dest->in_current_view = src->in_current_view;
-	dest->timestamp = src->timestamp;
+	dest->timestamp       = src->timestamp;
 
 	return dest;
 }
@@ -310,13 +289,13 @@ static void gpx_meta_data_start(xml_data * xd, const char * element, const char 
 		if ((tmp = get_attr(attributes, "lat"))) {
 			strncpy(buf, tmp, sizeof (buf));
 			buf[sizeof (buf) - 1] = '\0';
-			xd->current_gpx_meta_data->ll.lat = SGUtils::c_to_double(buf);
+			xd->current_gpx_meta_data->lat_lon.lat = SGUtils::c_to_double(buf);
 		}
 
 		if ((tmp = get_attr(attributes, "lon"))) {
 			strncpy(buf, tmp, sizeof (buf));
 			buf[sizeof (buf) - 1] = '\0';
-			xd->current_gpx_meta_data->ll.lon = SGUtils::c_to_double(buf);
+			xd->current_gpx_meta_data->lat_lon.lon = SGUtils::c_to_double(buf);
 		}
 
 		if ((tmp = get_attr(attributes, "visibility"))) {
@@ -350,7 +329,7 @@ static void gpx_meta_data_end(xml_data *xd, const char * element)
 	case XTagID::GPXFile: {
 		/* End of the individual file metadata, thus save what we have read in to the list.
 		   Copy it so we can reference it. */
-		GPXMetaData * current = copy_gpx_meta_data_t(xd->current_gpx_meta_data);
+		GPXMetaData * current = gpx_meta_data_make_copy(xd->current_gpx_meta_data);
 		/* Stick in the list. */
 		xd->list_of_gpx_meta_data.push_front(current);
 		g_string_erase(xd->c_cdata, 0, -1);
@@ -427,7 +406,7 @@ static LoadStatus read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 
 
 
-static std::list<GPXMetaData *> * select_from_list(Window * parent, __attribute__((unused)) std::list<GPXMetaData *> & list, const char *title, const char *msg)
+static std::list<GPXMetaData *> * select_from_list(Window * parent, __attribute__((unused)) std::list<GPXMetaData *> & list, const QString & title, const QString & msg)
 {
 	BasicDialog * dialog = new BasicDialog(parent);
 
@@ -532,7 +511,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, __attribute_
 					/* I believe the name of these items to be always unique. */
 					for (auto iter = list.begin(); iter != list.end(); iter++) {
 						if (!strcmp ((*iter)->name, name)) {
-							GPXMetaData * copied = copy_gpx_meta_data_t(*iter);
+							GPXMetaData * copied = gpx_meta_data_make_copy(*iter);
 							selected->push_front(copied);
 							break;
 						}
@@ -559,16 +538,35 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, __attribute_
 
 
 
+DataSourceOSMMyTracesConfigDialog::DataSourceOSMMyTracesConfigDialog(const QString & window_title) : DataSourceDialog(window_title)
+{
+	QLabel * user_name_label = new QLabel(QObject::tr("Username:"));
+	this->m_user_name_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
+	this->grid->addWidget(user_name_label, 0, 0);
+	this->grid->addWidget(&this->m_user_name_entry, 0, 1);
+
+
+	QLabel * password_label = new QLabel(QObject::tr("Password:"));
+	this->m_password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
+	this->grid->addWidget(password_label, 1, 0);
+	this->grid->addWidget(&this->m_password_entry, 1, 1);
+
+	OSMTraces::fill_credentials_widgets(this->m_user_name_entry, this->m_password_entry);
+}
+
+
+
+
 /**
    For each track - mark whether the start is in within the viewport.
 */
-void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
+void DataSourceOSMMyTraces::update_tracks_metadata_property(std::list<GPXMetaData *> & tracks_metadata)
 {
-	const LatLonBBox viewport_bbox = this->gisview->get_bbox();
+	const LatLonBBox viewport_bbox = this->m_gisview->get_bbox();
 
-	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		GPXMetaData * gmd = *iter;
-		gmd->in_current_view = viewport_bbox.contains_point(gmd->ll);
+	for (auto iter = tracks_metadata.begin(); iter != tracks_metadata.end(); iter++) {
+		GPXMetaData * metadata = *iter;
+		metadata->in_current_view = viewport_bbox.contains_point(metadata->lat_lon);
 	}
 }
 
@@ -621,11 +619,10 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
-#ifdef FIXME_RESTORE
-	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
-#endif
+	this->update_tracks_metadata_property(xd->list_of_gpx_meta_data);
 
-	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.get_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+
+	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.get_window(), xd->list_of_gpx_meta_data, QObject::tr("Select GPS Traces"), QObject::tr("Select the GPS traces you want to add."));
 
 #ifdef FIXME_RESTORE
 	/* If non thread - show program is 'doing something...' */

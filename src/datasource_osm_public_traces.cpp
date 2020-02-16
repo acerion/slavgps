@@ -97,7 +97,7 @@ SGObjectTypeID DataSourceOSMPublicTraces::source_id(void)
 
 int DataSourceOSMPublicTraces::run_config_dialog(AcquireContext & acquire_context)
 {
-	DataSourceOSMPublicTracesDialog config_dialog(this->m_window_title);
+	DataSourceOSMPublicTracesConfigDialog config_dialog(this->m_window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -111,7 +111,7 @@ int DataSourceOSMPublicTraces::run_config_dialog(AcquireContext & acquire_contex
 
 
 
-AcquireOptions * DataSourceOSMPublicTracesDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceOSMPublicTracesConfigDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
@@ -135,7 +135,7 @@ AcquireOptions * DataSourceOSMPublicTracesDialog::create_acquire_options(Acquire
 
 
 
-DataSourceOSMPublicTracesDialog::DataSourceOSMPublicTracesDialog(const QString & window_title) : DataSourceDialog(window_title)
+DataSourceOSMPublicTracesConfigDialog::DataSourceOSMPublicTracesConfigDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	QLabel * label = new QLabel(tr("Page Number:"));
 
@@ -148,20 +148,20 @@ DataSourceOSMPublicTracesDialog::DataSourceOSMPublicTracesDialog(const QString &
 	this->grid->addWidget(label, 0, 0);
 	this->grid->addWidget(&this->m_page_number, 0, 1);
 
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMPublicTracesDialog::accept_cb);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMPublicTracesConfigDialog::accept_cb);
 }
 
 
 
 
-DataSourceOSMPublicTracesDialog::~DataSourceOSMPublicTracesDialog()
+DataSourceOSMPublicTracesConfigDialog::~DataSourceOSMPublicTracesConfigDialog()
 {
 }
 
 
 
 
-void DataSourceOSMPublicTracesDialog::accept_cb(void)
+void DataSourceOSMPublicTracesConfigDialog::accept_cb(void)
 {
 	g_last_page_number = this->m_page_number.value();
 	qDebug() << SG_PREFIX_I << "Dialog result: accepted, page number =" << g_last_page_number;

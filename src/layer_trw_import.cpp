@@ -719,7 +719,7 @@ void LayerTRWImporter::import_into_new_layer_from_osm_public_traces_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
 {
-	this->import_into_new_layer(new DataSourceOSMMyTraces());
+	this->import_into_new_layer(new DataSourceOSMMyTraces(ThisApp::main_gisview()));
 }
 
 
@@ -816,7 +816,7 @@ void LayerTRWImporter::import_into_existing_layer_from_osm_public_traces_cb(void
  */
 void LayerTRWImporter::import_into_existing_layer_from_osm_my_traces_cb(void) /* Slot. */
 {
-	this->import_into_existing_layer(new DataSourceOSMMyTraces());
+	this->import_into_existing_layer(new DataSourceOSMMyTraces(ThisApp::main_gisview()));
 }
 
 

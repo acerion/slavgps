@@ -57,11 +57,13 @@ namespace SlavGPS {
 
 
 
-	class DataSourceOSMPublicTracesDialog : public DataSourceDialog {
+	/* Dialog used to specify (configure) parameters of accessing
+	   "OSM public traces" feature of OSM. */
+	class DataSourceOSMPublicTracesConfigDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOSMPublicTracesDialog(const QString & window_title);
-		~DataSourceOSMPublicTracesDialog();
+		DataSourceOSMPublicTracesConfigDialog(const QString & window_title);
+		~DataSourceOSMPublicTracesConfigDialog();
 
 		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 

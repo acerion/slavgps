@@ -55,7 +55,6 @@ namespace SlavGPS {
 
 	class DataSourceOSMMyTraces : public DataSource {
 	public:
-		DataSourceOSMMyTraces() {};
 		DataSourceOSMMyTraces(GisViewport * gisview);
 		~DataSourceOSMMyTraces() {};
 
@@ -66,25 +65,27 @@ namespace SlavGPS {
 		SGObjectTypeID get_source_id(void) const override;
 		static SGObjectTypeID source_id(void);
 
-		GisViewport * gisview = NULL;
+	private:
+		void update_tracks_metadata_property(std::list<GPXMetaData *> & tracks_metadata);
+
+		GisViewport * m_gisview = nullptr;
 	};
 
 
 
 
-	class DataSourceOSMMyTracesDialog : public DataSourceDialog {
+	/* Dialog used to specify (configure) parameters of accessing
+	   "My OSM traces" feature of OSM. */
+	class DataSourceOSMMyTracesConfigDialog : public DataSourceDialog {
 	public:
-		DataSourceOSMMyTracesDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title) { this->gisview = new_gisview; };
+		DataSourceOSMMyTracesConfigDialog(const QString & window_title);
 
 		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) override;
 
-		void set_in_current_view_property(std::list<GPXMetaData *> & list);
-
+	private:
 		/* Actual user and password values are stored in oms-traces.c. */
-		QLineEdit user_entry;
-		QLineEdit password_entry;
-
-		GisViewport * gisview = NULL;
+		QLineEdit m_user_name_entry;
+		QLineEdit m_password_entry;
 	};
 
 
