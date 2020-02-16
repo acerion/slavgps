@@ -138,20 +138,22 @@ void AcquireWorker::finalize_after_success(void)
 {
 	this->m_acquire_context.print_debug(__FUNCTION__, __LINE__);
 
+	LayerTRW * target_trw = this->m_acquire_context.get_trw();
+
 	if (this->m_acquire_context.get_trw_is_allocated()) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
-		if (nullptr == this->m_acquire_context.get_trw()) {
+		if (nullptr == target_trw) {
 			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
 			return;
 		}
 
-		if (this->m_acquire_context.get_trw()->is_empty()) {
+		if (target_trw->is_empty()) {
 			/* Acquire process ended without errors, but
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			if (this->m_acquire_context.get_trw()->is_in_tree()) {
+			if (target_trw->is_in_tree()) {
 				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
 			}
 
@@ -162,14 +164,22 @@ void AcquireWorker::finalize_after_success(void)
 
 
 		qDebug() << SG_PREFIX_I << "New layer is non-empty, will now process the layer";
+
+		/* Attach newly created TRW layer and its children to tree. */
+		Layer * parent = this->m_acquire_context.get_parent_layer();
+		parent->add_child_item(target_trw, true);
+		target_trw->attach_to_tree_under_parent(parent, TreeViewAttachMode::Back, nullptr);
+	} else {
+		/* Target layer is already attached to tree, but its
+		   children (at least those freshly acquired) are not.
+		   This function will attach the new children to tree. */
+		target_trw->attach_children_to_tree();
 	}
 
-
-	this->m_acquire_context.get_trw()->attach_children_to_tree();
-	this->m_acquire_context.get_trw()->post_read(this->m_acquire_context.get_gisview(), true);
+	target_trw->post_read(this->m_acquire_context.get_gisview(), true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->m_data_source && this->m_data_source->m_autoview) {
-		this->m_acquire_context.get_trw()->move_viewport_to_show_all(this->m_acquire_context.get_gisview());
+		target_trw->move_viewport_to_show_all(this->m_acquire_context.get_gisview());
 		// this->m_acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
@@ -719,7 +729,7 @@ void LayerTRWImporter::import_into_new_layer_from_osm_public_traces_cb(void)
 
 void LayerTRWImporter::import_into_new_layer_from_my_osm_cb(void)
 {
-	this->import_into_new_layer(new DataSourceOSMMyTraces(ThisApp::main_gisview()));
+	this->import_into_new_layer(new DataSourceOSMMyTraces());
 }
 
 
@@ -816,7 +826,7 @@ void LayerTRWImporter::import_into_existing_layer_from_osm_public_traces_cb(void
  */
 void LayerTRWImporter::import_into_existing_layer_from_osm_my_traces_cb(void) /* Slot. */
 {
-	this->import_into_existing_layer(new DataSourceOSMMyTraces(ThisApp::main_gisview()));
+	this->import_into_existing_layer(new DataSourceOSMMyTraces());
 }
 
 

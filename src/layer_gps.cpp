@@ -1018,7 +1018,7 @@ void GPSSession::run(void)
 		importer->set_options(this->babel_opts);
 		importer->set_input("", this->transfer.serial_port); /* TODO_LATER: type of input? */
 
-		acquire_context.set_main_fields(nullptr, nullptr, this->trw->get_owning_layer());
+		acquire_context.set_main_fields(nullptr, nullptr, this->trw->parent_layer());
 		acquire_context.set_trw_field(this->trw);
 
 		importer->set_acquire_context(acquire_context);
@@ -1030,7 +1030,7 @@ void GPSSession::run(void)
 		exporter->set_options(this->babel_opts);
 		exporter->set_output("", this->transfer.serial_port); /* TODO_LATER: type of output? */
 
-		acquire_context.set_main_fields(nullptr, nullptr, this->trw->get_owning_layer());
+		acquire_context.set_main_fields(nullptr, nullptr, this->trw->parent_layer());
 		acquire_context.set_trw_field(this->trw);
 		acquire_context.set_track_field(this->trk);
 

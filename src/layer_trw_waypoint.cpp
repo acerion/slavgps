@@ -221,7 +221,7 @@ sg_ret Waypoint::set_coord(const Coord & new_coord, bool do_recalculate_bbox, bo
 {
 	this->m_coord = new_coord;
 	if (do_recalculate_bbox) {
-		LayerTRW * trw = this->get_parent_layer_trw();
+		LayerTRW * trw = this->owner_trw_layer();
 		trw->waypoints.recalculate_bbox();
 	}
 
@@ -450,13 +450,14 @@ sg_ret Waypoint::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 {
 	QAction * qa = NULL;
 
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
-	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, in_tree_view);
+	this->sublayer_menu_waypoint_misc(parent_trw, menu, in_tree_view);
 
 
 	if (ThisApp::layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), parent_trw, SLOT (new_waypoint_cb()));
 	}
 
 
@@ -478,7 +479,7 @@ sg_ret Waypoint::menu_add_type_specific_operations(QMenu & menu, bool in_tree_vi
 	}
 
 
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(parent_trw, external_submenu);
 
 
 	QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QObject::tr("&Transform"));
@@ -511,7 +512,7 @@ bool Waypoint::show_properties_dialog(void)
 
 bool Waypoint::show_properties_dialog_cb(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 	Window * window = ThisApp::main_window();
 	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
 
@@ -524,13 +525,13 @@ bool Waypoint::show_properties_dialog_cb(void)
 		tool->point_properties_dialog->disconnect();
 
 		/* Make new connections to current TRW layer. */
-		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
+		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_trw, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 	}
 
 
 	/* Show properties dialog. */
 	{
-		const CoordMode coord_mode = parent_layer->get_coord_mode();
+		const CoordMode coord_mode = parent_trw->get_coord_mode();
 		tool->point_properties_dialog->set_coord_mode(coord_mode);
 		window->tools_dock()->setWidget(tool->point_properties_dialog);
 		window->set_tools_dock_visibility_cb(true);
@@ -539,7 +540,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 
 	/* Fill properties dialog with current point. */
 	{
-		const Waypoint * wp = parent_layer->selected_wp_get();
+		const Waypoint * wp = parent_trw->selected_wp_get();
 		if (nullptr == wp) {
 			qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
 			tool->point_properties_dialog->dialog_data_reset();
@@ -603,10 +604,10 @@ void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 		return;
 	}
 
-	LayerTRW * trw = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 	int changed = (int) this->apply_dem_data(skip_existing_elevations);
 
-	trw->wp_changed_message(changed);
+	parent_trw->wp_changed_message(changed);
 }
 
 
@@ -619,7 +620,7 @@ void Waypoint::open_diary_cb(void)
 {
 	if (this->timestamp.is_valid()) {
 		const QString date_buf = this->timestamp.strftime_utc("%Y-%m-%d");
-		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
+		this->owner_trw_layer()->diary_open(date_buf);
 	} else {
 		Dialog::info(tr("This waypoint has no date information."), ThisApp::main_window());
 	}
@@ -633,7 +634,7 @@ void Waypoint::open_diary_cb(void)
 */
 void Waypoint::open_astro_cb(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	Window * main_window = ThisApp::main_window();
 
 	if (this->timestamp.is_valid()) {
 
@@ -644,9 +645,9 @@ void Waypoint::open_astro_cb(void)
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
 		const QString alt_str = QString("%1").arg((int) round(this->altitude.ll_value()));
-		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
+		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, main_window);
 	} else {
-		Dialog::info(tr("This waypoint has no date information."), ThisApp::main_window());
+		Dialog::info(tr("This waypoint has no date information."), main_window);
 	}
 }
 
@@ -655,7 +656,7 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->m_coord);
+	this->owner_trw_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->m_coord);
 }
 
 
@@ -686,7 +687,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 {
 	static const QString empty_string("");
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	/* No actual change to the name supplied. */
 	if (!this->get_name().isEmpty()) {
@@ -695,7 +696,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 		}
 	}
 
-	if (parent_layer->waypoints.find_waypoint_by_name(new_name)) {
+	if (parent_trw->waypoints.find_waypoint_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
 		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::main_window())) {
 			return empty_string;
@@ -705,8 +706,8 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	/* Update WP name and refresh the tree view. */
 	this->set_name(new_name);
 
-	parent_layer->tree_view->apply_tree_item_name(this);
-	parent_layer->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
+	parent_trw->tree_view->apply_tree_item_name(this);
+	parent_trw->tree_view->sort_children(&parent_trw->waypoints, parent_trw->wp_sort_order);
 
 	ThisApp::layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming waypoint");
 
@@ -718,12 +719,12 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 
 bool Waypoint::handle_selection_in_tree(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
-	parent_layer->set_statusbar_msg_info_wpt(this);
+	parent_trw->set_statusbar_msg_info_wpt(this);
 
-	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->selected_wp_set(this); /* But this tree item is selected. */
+	parent_trw->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
+	parent_trw->selected_wp_set(this); /* But this tree item is selected. */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -750,8 +751,8 @@ void Waypoint::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 	SelectedTreeItems::print_draw_mode(*this, parent_is_selected);
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	parent_layer->painter->draw_waypoint(this, gisview, item_is_selected && highlight_selected);
+	LayerTRW * parent_trw = this->owner_trw_layer();
+	parent_trw->painter->draw_waypoint(this, gisview, item_is_selected && highlight_selected);
 }
 
 
@@ -778,7 +779,7 @@ void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 
 void Waypoint::geotagging_waypoint_cb(void)
 {
-	trw_layer_geotag_dialog(ThisApp::main_window(), (LayerTRW *) this->owning_layer, this, NULL);
+	trw_layer_geotag_dialog(ThisApp::main_window(), this->owner_trw_layer(), this, NULL);
 }
 #endif
 
@@ -787,8 +788,8 @@ void Waypoint::geotagging_waypoint_cb(void)
 
 sg_ret Waypoint::cut_tree_item_cb(void)
 {
-	Layer * layer = this->owning_layer;
-	return layer->cut_child_item(this);
+	LayerTRW * parent_trw = this->owner_trw_layer();
+	return parent_trw->cut_child_item(this);
 }
 
 
@@ -796,8 +797,8 @@ sg_ret Waypoint::cut_tree_item_cb(void)
 
 sg_ret Waypoint::copy_tree_item_cb(void)
 {
-	Layer * layer = this->owning_layer;
-	return layer->copy_child_item(this);
+	LayerTRW * parent_trw = this->owner_trw_layer();
+	return parent_trw->copy_child_item(this);
 }
 
 
@@ -808,9 +809,9 @@ sg_ret Waypoint::copy_tree_item_cb(void)
 */
 sg_ret Waypoint::delete_tree_item_cb(void)
 {
-	Layer * layer = this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 	/* false: don't require confirmation in callbacks. */
-	return layer->delete_child_item(this, false);
+	return parent_trw->delete_child_item(this, false);
 }
 
 
@@ -820,10 +821,37 @@ sg_ret Waypoint::delete_tree_item_cb(void)
    Method created to avoid constant casting of Waypoint::owning_layer
    to LayerTRW* type.
 */
-LayerTRW * Waypoint::get_parent_layer_trw(void) const
+LayerTRW * Waypoint::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owning_layer;
+	return (LayerTRW *) this->owner_tree_item();
 
+}
+
+
+
+
+sg_ret Waypoint::set_parent_and_owner_tree_item(TreeItem * parent)
+{
+	if (nullptr == parent) {
+		qDebug() << SG_PREFIX_E << "parent is NULL";
+		return sg_ret::err;
+	}
+
+	/* A parent is always a parent. */
+	this->m_parent_tree_item = parent;
+
+	/* @param parent in case of Waypoint is TRWWaypoints
+	   container. However the real owner of a waypoint is a TRW
+	   layer (a parent of TRWWaypoints container). Let's find the
+	   TRW layer. */
+	TreeItem * grandparent = parent->parent_tree_item();
+	if (nullptr == grandparent) {
+		qDebug() << SG_PREFIX_E << "grandparent is NULL";
+		return sg_ret::err;
+	}
+	this->m_owner_tree_item = grandparent;
+
+	return sg_ret::ok;
 }
 
 
@@ -837,7 +865,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 	const QString tooltip(this->description);
 	QString date_time_string;
 
-	LayerTRW * trw = this->get_parent_layer_trw();
+	LayerTRW * trw = this->owner_trw_layer();
 
 	bool a_visible = trw->is_visible() && this->visible;
 	a_visible = a_visible && trw->get_waypoints_visibility();
@@ -931,7 +959,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 
 void Waypoint::display_debug_info(const QString & reference) const
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	qDebug() << SG_PREFIX_D << "@" << reference;
 	qDebug() << SG_PREFIX_D << "               Type ID =" << this->m_type_id;
@@ -940,9 +968,9 @@ void Waypoint::display_debug_info(const QString & reference) const
 	qDebug() << SG_PREFIX_D << "                  Name =" << this->get_name();
 	qDebug() << SG_PREFIX_D << "                   UID =" << this->uid;
 
-	qDebug() << SG_PREFIX_D << "  Parent layer pointer =" << (quintptr) parent_layer;
-	qDebug() << SG_PREFIX_D << "     Parent layer name =" << (parent_layer ? parent_layer->get_name() : "<no parent layer>");
-	//qDebug() << SG_PREFIX_D << "      Parent layer UID =" << (parent_layer ? parent_layer->uid : "<no parent layer>");
+	qDebug() << SG_PREFIX_D << "  Parent layer pointer =" << (quintptr) parent_trw;
+	qDebug() << SG_PREFIX_D << "     Parent layer name =" << (parent_trw ? parent_trw->get_name() : "<no parent layer>");
+	//qDebug() << SG_PREFIX_D << "      Parent layer UID =" << (parent_trw ? parent_trw->uid : "<no parent layer>");
 
 	qDebug() << SG_PREFIX_D << "            Is in tree =" << this->is_in_tree();
 	qDebug() << SG_PREFIX_D << "      Tree index valid =" << this->index.isValid();
@@ -1016,10 +1044,10 @@ sg_ret Waypoint::propagate_new_waypoint_name(void)
 	}
 
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	this->tree_view->apply_tree_item_name(this);
-	this->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
+	this->tree_view->sort_children(&parent_trw->waypoints, parent_trw->wp_sort_order);
 
 	return sg_ret::ok;
 }
@@ -1035,7 +1063,7 @@ void Waypoint::list_dialog(QString const & title, Layer * parent_layer)
 	assert (parent_layer->m_kind == LayerKind::TRW || parent_layer->m_kind == LayerKind::Aggregate);
 
 	const std::list<SGObjectTypeID> wanted_types = { Waypoint::type_id() };
-	TreeItemListDialogWrapper<Waypoint> list_dialog(parent_layer);
+	TreeItemListDialogWrapper<Waypoint> list_dialog(parent_layer, parent_layer->m_kind == LayerKind::Aggregate);
 	if (!list_dialog.find_tree_items(wanted_types)) {
 		Dialog::info(QObject::tr("No Waypoints found"), parent_layer->get_window());
 		return;

@@ -239,7 +239,7 @@ namespace SlavGPS {
 		/**
 		   @brief Simple accessor
 		*/
-		LayerTRW * get_parent_layer_trw(void) const;
+		LayerTRW * owner_trw_layer(void) const;
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);

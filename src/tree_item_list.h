@@ -48,6 +48,7 @@
 #include "measurements.h"
 //#include "tree_item.h"
 #include "layer.h"
+#include "window.h"
 
 
 
@@ -90,7 +91,7 @@ namespace SlavGPS {
 
 		int column_id_to_column_idx(TreeItemPropertyID column_id);
 
-		QWidget * parent = NULL;
+		QWidget * m_parent_widget = nullptr;
 		QDialogButtonBox * button_box = NULL;
 		QVBoxLayout * vbox = NULL;
 
@@ -117,7 +118,7 @@ namespace SlavGPS {
 		/**
 		   Common method for showing a list of tree items with extended information
 		*/
-		void show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent = NULL);
+		void show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent_widget = nullptr);
 
 	private:
 		void build_model(void);
@@ -132,14 +133,14 @@ namespace SlavGPS {
 
 
 	template <class T>
-	void TreeItemListDialogHelper<T>::show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent)
+	void TreeItemListDialogHelper<T>::show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent_widget)
 	{
 		if (items.empty()) {
 			return;
 		}
 		this->tree_items = items;
 
-		this->dialog = new TreeItemListDialog(title, parent);
+		this->dialog = new TreeItemListDialog(title, parent_widget);
 		this->dialog->view_format = view_format;
 
 		this->build_model();
@@ -241,11 +242,12 @@ namespace SlavGPS {
 	template <class T>
 	class TreeItemListDialogWrapper {
 	public:
-		TreeItemListDialogWrapper(Layer * parent_layer) : m_parent_layer(parent_layer) {}
+		TreeItemListDialogWrapper(TreeItem * parent_tree_item, bool add_column_for_parent)
+			: m_add_column_for_parent(add_column_for_parent), m_parent_tree_item(parent_tree_item) {}
 
 		bool find_tree_items(const std::list<SGObjectTypeID> & wanted_types)
 		{
-			this->m_parent_layer->get_tree_items(this->m_tree_items, wanted_types);
+			this->m_parent_tree_item->get_tree_items(this->m_tree_items, wanted_types);
 			if (this->m_tree_items.empty()) {
 				return false;
 			}
@@ -254,17 +256,17 @@ namespace SlavGPS {
 
 		sg_ret show_tree_items(const QString & title)
 		{
-			TreeItemViewFormat view_format = T::get_view_format_header(this->m_parent_layer->m_kind == LayerKind::Aggregate);
+			TreeItemViewFormat view_format = T::get_view_format_header(this->m_add_column_for_parent);
 			TreeItemListDialogHelper<TreeItem *> dialog_helper;
-			Window * window = this->m_parent_layer->get_window();
-			dialog_helper.show_dialog(title, view_format, this->m_tree_items, window);
+			dialog_helper.show_dialog(title, view_format, this->m_tree_items, ThisApp::main_window());
 
 
 			return sg_ret::ok;
 		}
 
 	private:
-		const Layer * m_parent_layer = nullptr;
+		const bool m_add_column_for_parent = false;
+		const TreeItem * m_parent_tree_item = nullptr;
 		std::list<TreeItem *> m_tree_items;
 	};
 

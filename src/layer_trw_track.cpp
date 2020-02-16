@@ -2213,12 +2213,12 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 	QAction * qa = NULL;
 
 	{
-		LayerTRW * parent_trw = (LayerTRW *) this->get_owning_layer();
-		Layer * parent_layer = parent_trw->get_owning_layer();
+		LayerTRW * parent_trw = this->owner_trw_layer();
+		Layer * grandparent_layer = parent_trw->parent_layer();
 
 		parent_trw->layer_trw_filter->set_main_fields(parent_trw->get_window(),
 							      ThisApp::main_gisview(),
-							      parent_layer);
+							      grandparent_layer);
 		parent_trw->layer_trw_filter->set_trw_field(parent_trw);
 	}
 
@@ -2257,10 +2257,10 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 	}
 
 
-	LayerTRW * trw = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 
-	layer_trw_sublayer_menu_all_add_external_tools(trw, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(parent_trw, external_submenu);
 
 
 #ifdef VIK_CONFIG_GOOGLE
@@ -2273,12 +2273,12 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 
 	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), tr("&Upload"));
 
-	this->sublayer_menu_track_route_misc(trw, menu, upload_submenu);
+	this->sublayer_menu_track_route_misc(parent_trw, menu, upload_submenu);
 
 
 	/* Some things aren't usable with routes. */
 	if (this->is_track()) {
-		this->sublayer_menu_track_misc(trw, menu, upload_submenu);
+		this->sublayer_menu_track_misc(parent_trw, menu, upload_submenu);
 	}
 
 
@@ -2287,7 +2287,7 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
-		connect(qa, SIGNAL (triggered(bool)), trw, SLOT (edit_trackpoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), parent_trw, SLOT (edit_trackpoint_cb()));
 	}
 
 
@@ -2300,7 +2300,7 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_first()->coord);
+		this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_first()->coord);
 	}
 }
 
@@ -2313,10 +2313,10 @@ void Track::goto_center_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
-	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_layer_->coord_mode);
-	parent_layer_->request_new_viewport_center(ThisApp::main_gisview(), coord);
+	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_trw->coord_mode);
+	parent_trw->request_new_viewport_center(ThisApp::main_gisview(), coord);
 }
 
 
@@ -2328,7 +2328,7 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
+	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
 }
 
 
@@ -2341,7 +2341,7 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2354,7 +2354,7 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2367,7 +2367,7 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	this->owning_layer->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
 }
 
 
@@ -2598,7 +2598,7 @@ void Track::open_diary_cb(void)
 {
 	if (!this->empty() && (*this->trackpoints.begin())->timestamp.is_valid()) {
 		const QString date_buf = (*this->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
-		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
+		this->owner_trw_layer()->diary_open(date_buf);
 	} else {
 		Dialog::info(tr("This track has no date information."), ThisApp::main_window());
 	}
@@ -2630,9 +2630,8 @@ void Track::open_astro_cb(void)
 		return;
 	}
 
+	Window * main_window = ThisApp::main_window();
 	if (tp->timestamp.is_valid()) {
-		LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
 		const QString date_buf = tp->timestamp.strftime_utc("%Y%m%d");
 		const QString time_buf = tp->timestamp.strftime_utc("%H:%M:%S");
 
@@ -2640,9 +2639,9 @@ void Track::open_astro_cb(void)
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
 		const QString alt_str = QString("%1").arg((int)round(tp->altitude.ll_value()));
-		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
+		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, main_window);
 	} else {
-		Dialog::info(tr("This track has no date information."), ThisApp::main_window());
+		Dialog::info(tr("This track has no date information."), main_window);
 	}
 }
 
@@ -2673,15 +2672,15 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	}
 
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 	LayerTRWTracks * tracks = NULL;
 	QString message;
 
 	if (this->is_track()) {
-		tracks = &parent_layer->tracks;
+		tracks = &parent_trw->tracks;
 		message = tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	} else {
-		tracks = &parent_layer->routes;
+		tracks = &parent_trw->routes;
 		message = tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	}
 
@@ -2702,8 +2701,8 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	this->update_profile_dialog();
 
 
-	parent_layer->tree_view->apply_tree_item_name(this);
-	parent_layer->tree_view->sort_children(tracks, parent_layer->track_sort_order);
+	parent_trw->tree_view->apply_tree_item_name(this);
+	parent_trw->tree_view->sort_children(tracks, parent_trw->track_sort_order);
 
 	ThisApp::layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming track");
 
@@ -2715,14 +2714,14 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 bool Track::handle_selection_in_tree(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 #if 0
 	/* TODO_MAYBE: to be implemented? */
-	parent_layer->set_statusbar_msg_info_trk(this);
+	parent_trw->set_statusbar_msg_info_trk(this);
 #endif
-	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->selected_track_set(this, this->selected_children.references.front()); /* But this tree item is selected (and maybe its trackpoint too). */
+	parent_trw->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
+	parent_trw->selected_track_set(this, this->selected_children.references.front()); /* But this tree item is selected (and maybe its trackpoint too). */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -2747,8 +2746,8 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 	SelectedTreeItems::print_draw_mode(*this, parent_is_selected);
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	parent_layer->painter->draw_track(this, gisview, item_is_selected && highlight_selected);
+	LayerTRW * parent_trw = this->owner_trw_layer();
+	parent_trw->painter->draw_track(this, gisview, item_is_selected && highlight_selected);
 }
 
 
@@ -2756,7 +2755,7 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 
 void Track::upload_to_gps_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->upload_to_gps(this);
+	this->owner_trw_layer()->upload_to_gps(this);
 }
 
 
@@ -2764,7 +2763,7 @@ void Track::upload_to_gps_cb(void)
 
 void Track::upload_to_osm_traces_cb(void)
 {
-	OSMTraces::upload_trw_layer((LayerTRW *) this->owning_layer, this);
+	OSMTraces::upload_trw_layer(this->owner_trw_layer(), this);
 }
 
 
@@ -2787,29 +2786,29 @@ void Track::convert_track_route_cb(void)
 		}
 	}
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 
 	/* Detach from old location. */
-	parent_layer->detach_from_container(this);
-	parent_layer->detach_from_tree(this);
+	parent_trw->detach_from_container(this);
+	parent_trw->detach_from_tree(this);
 
 
 	/* Convert and attach to new location. */
 	this->m_type_id = this->is_route() ? Track::type_id() : Route::type_id();
 	if (this->is_track()) {
-		parent_layer->add_track(this);
+		parent_trw->add_track(this);
 	} else {
 		/* Extra steps when converting to route. */
 		this->merge_segments();
 		this->to_routepoints();
 
-		parent_layer->add_route(this);
+		parent_trw->add_route(this);
 	}
 
 
 	/* Redraw. */
-	parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after converting track <--> route");
+	parent_trw->emit_tree_item_changed("Indicating change to TRW Layer after converting track <--> route");
 }
 
 
@@ -2820,11 +2819,11 @@ void Track::convert_track_route_cb(void)
  */
 void Track::geotagging_track_cb(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	/* Set to true so that thumbnails are generate later if necessary. */
-	parent_layer->has_missing_thumbnails = true;
-	trw_layer_geotag_dialog(ThisApp::main_window(), parent_layer, NULL, this);
+	parent_trw->has_missing_thumbnails = true;
+	trw_layer_geotag_dialog(ThisApp::main_window(), parent_trw, NULL, this);
 }
 
 
@@ -2922,7 +2921,7 @@ std::list<CoordRectangle> Track::get_coord_rectangles(const VikingScale & viking
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
 	/* Seems that ATM the function get_next_coord() works only for LatLon. */
-	if (((LayerTRW *) this->owning_layer)->get_coord_mode() == CoordMode::LatLon) {
+	if (this->owner_trw_layer()->get_coord_mode() == CoordMode::LatLon) {
 
 		/* Fill-ins for far apart points. */
 		std::list<CoordRectangle>::iterator cur_rect;
@@ -3003,7 +3002,7 @@ void Track::refine_route_cb(void)
 	}
 
 	Window * main_window = ThisApp::main_window();
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	/* Check size of the route */
 	const int nb = this->get_tp_count();
@@ -3040,24 +3039,24 @@ void Track::refine_route_cb(void)
 
 		/* Force saving track */
 		/* FIXME: remove or rename this hack */
-		parent_layer->route_finder_check_added_track = true;
+		parent_trw->route_finder_check_added_track = true;
 
 
 		/* The job */
 		main_window->set_busy_cursor();
-		engine->refine_route(parent_layer, this);
+		engine->refine_route(parent_trw, this);
 		main_window->clear_busy_cursor();
 
 
 		/* FIXME: remove or rename this hack */
-		if (parent_layer->route_finder_added_track) {
-			parent_layer->route_finder_added_track->recalculate_bbox();
+		if (parent_trw->route_finder_added_track) {
+			parent_trw->route_finder_added_track->recalculate_bbox();
 		}
 
-		parent_layer->route_finder_added_track = NULL;
-		parent_layer->route_finder_check_added_track = false;
+		parent_trw->route_finder_added_track = NULL;
+		parent_trw->route_finder_check_added_track = false;
 
-		parent_layer->emit_tree_item_changed("TRW - refine route");
+		parent_trw->emit_tree_item_changed("TRW - refine route");
 	}
 }
 
@@ -3116,7 +3115,7 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointReference & other_t
 	   trackpoint which is inserted into the tracklist. */
 	if (other_tp) {
 
-		Trackpoint * new_tp = new Trackpoint(**other_tp_ref.m_iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
+		Trackpoint * new_tp = new Trackpoint(**other_tp_ref.m_iter, *other_tp, this->owner_trw_layer()->coord_mode);
 		/* Insert new point into the appropriate trackpoint list,
 		   either before or after the current trackpoint as directed. */
 
@@ -3135,7 +3134,7 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointReference & other_t
 
 sg_ret Track::cut_tree_item_cb(void)
 {
-	return ((LayerTRW *) this->owning_layer)->cut_child_item(this);
+	return this->owner_trw_layer()->cut_child_item(this);
 }
 
 
@@ -3143,7 +3142,7 @@ sg_ret Track::cut_tree_item_cb(void)
 
 sg_ret Track::copy_tree_item_cb(void)
 {
-	return ((LayerTRW *) this->owning_layer)->copy_child_item(this);
+	return this->owner_trw_layer()->copy_child_item(this);
 }
 
 
@@ -3155,7 +3154,7 @@ sg_ret Track::copy_tree_item_cb(void)
 sg_ret Track::delete_tree_item_cb(void)
 {
 	/* false: don't require confirmation in callbacks. */
-	return ((LayerTRW *) this->owning_layer)->delete_child_item(this, false);
+	return this->owner_trw_layer()->delete_child_item(this, false);
 }
 
 
@@ -3179,10 +3178,36 @@ void Track::remove_last_trackpoint(void)
    Method created to avoid constant casting of Track::owning_layer to
    LayerTRW* type.
 */
-LayerTRW * Track::get_parent_layer_trw(void) const
+LayerTRW * Track::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owning_layer;
+	return (LayerTRW *) this->owner_tree_item();
+}
 
+
+
+
+sg_ret Track::set_parent_and_owner_tree_item(TreeItem * parent)
+{
+	if (nullptr == parent) {
+		qDebug() << SG_PREFIX_E << "parent is NULL";
+		return sg_ret::err;
+	}
+
+	/* A parent is always a parent. */
+	this->m_parent_tree_item = parent;
+
+	/* @param parent in case of Track is TRWTracks
+	   container. However the real owner of a track is a TRW layer
+	   (a parent of TRWTracks container). Let's find the TRW
+	   layer. */
+	TreeItem * grandparent = parent->parent_tree_item();
+	if (nullptr == grandparent) {
+		qDebug() << SG_PREFIX_E << "grandparent is NULL";
+		return sg_ret::err;
+	}
+	this->m_owner_tree_item = grandparent;
+
+	return sg_ret::ok;
 }
 
 
@@ -3199,7 +3224,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 	const SpeedType::Unit speed_unit = Preferences::get_unit_speed();
 
 
-	LayerTRW * trw = this->get_parent_layer_trw();
+	LayerTRW * trw = this->owner_trw_layer();
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool a_visible = trw->is_visible() && this->is_visible();
@@ -3522,7 +3547,7 @@ void Track::delete_all_selected_tp_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer = this->get_parent_layer_trw();
+	LayerTRW * parent_layer = this->owner_trw_layer();
 
 	this->delete_all_selected_tp();
 	parent_layer->deselect_current_trackpoint(this);
@@ -3540,7 +3565,7 @@ void Track::delete_points_same_position_cb(void)
 {
 	const unsigned long n_removed = this->remove_dup_points();
 
-	LayerTRW * parent_layer = this->get_parent_layer_trw();
+	LayerTRW * parent_layer = this->owner_trw_layer();
 
 	parent_layer->deselect_current_trackpoint(this);
 
@@ -3561,7 +3586,7 @@ void Track::delete_points_same_time_cb(void)
 {
 	const unsigned long n_removed = this->remove_same_time_points();
 
-	LayerTRW * parent_layer = this->get_parent_layer_trw();
+	LayerTRW * parent_layer = this->owner_trw_layer();
 
 	parent_layer->deselect_current_trackpoint(this);
 
@@ -3578,7 +3603,7 @@ void Track::delete_points_same_time_cb(void)
 void Track::extend_track_end_cb(void)
 {
 	Window * window = ThisApp::main_window();
-	LayerTRW * parent_layer = this->get_parent_layer_trw();
+	LayerTRW * parent_layer = this->owner_trw_layer();
 
 	window->activate_tool_by_id(this->is_route() ? LayerToolTRWNewRoute::tool_id() : LayerToolTRWNewTrack::tool_id());
 
@@ -3596,7 +3621,7 @@ void Track::extend_track_end_cb(void)
 void Track::extend_track_end_route_finder_cb(void)
 {
 	Window * window = ThisApp::main_window();
-	LayerTRW * parent_layer = this->get_parent_layer_trw();
+	LayerTRW * parent_layer = this->owner_trw_layer();
 
 	window->activate_tool_by_id(LayerToolTRWExtendedRouteFinder::tool_id());
 
@@ -3680,7 +3705,7 @@ void Track::selected_tp_set(const TrackpointReference & tp_ref)
 	}
 	this->selected_children.references.front() = tp_ref;
 
-	LayerTRW * trw = this->get_parent_layer_trw();
+	LayerTRW * trw = this->owner_trw_layer();
 	this->tp_properties_dialog_set();
 
 	trw->set_statusbar_msg_info_tp(this->selected_children.references.front(), this);
@@ -3708,7 +3733,7 @@ bool Track::selected_tp_reset(void)
 
 bool Track::is_selected(void) const
 {
-	LayerTRW * trw = this->get_parent_layer_trw();
+	LayerTRW * trw = this->owner_trw_layer();
 	return trw->selected_track_get() == this;
 }
 
@@ -3722,7 +3747,7 @@ void Track::list_dialog(QString const & title, Layer * parent_layer, const std::
 {
 	assert (parent_layer->m_kind == LayerKind::Aggregate || parent_layer->m_kind == LayerKind::TRW);
 
-	TreeItemListDialogWrapper<Track> list_dialog(parent_layer);
+	TreeItemListDialogWrapper<Track> list_dialog(parent_layer, parent_layer->m_kind == LayerKind::Aggregate);
 	if (!list_dialog.find_tree_items(wanted_types)) {
 		Dialog::info(QObject::tr("No Tracks found"), parent_layer->get_window());
 		return;
@@ -3781,7 +3806,7 @@ sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate
 
 
 	if (do_recalculate_bbox) {
-		LayerTRW * trw = this->get_parent_layer_trw();
+		LayerTRW * trw = this->owner_trw_layer();
 		if (this->is_route()) {
 			trw->routes.recalculate_bbox();
 		} else {

@@ -823,9 +823,9 @@ void LayerTRWTracks::sublayer_menu_sort(QMenu & menu)
 sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
-		this->sublayer_menu_tracks_misc((LayerTRW *) this->owning_layer, menu);
+		this->sublayer_menu_tracks_misc(this->owner_trw_layer(), menu);
 	} else if (this->get_type_id() == LayerTRWRoutes::type_id()) {
-		this->sublayer_menu_routes_misc((LayerTRW *) this->owning_layer, menu);
+		this->sublayer_menu_routes_misc(this->owner_trw_layer(), menu);
 	}
 
 
@@ -833,7 +833,7 @@ sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, __attribu
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(this->owner_trw_layer(), external_submenu);
 
 
 	return sg_ret::ok;
@@ -901,14 +901,14 @@ void LayerTRWTracks::track_or_route_list_dialog_cb(void) /* Slot. */
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 		/* Show each track in this tracks container. */
 		wanted_types.push_back(Track::type_id());
-		title = tr("%1: Tracks List").arg(this->owning_layer->get_name());
+		title = tr("%1: Tracks List").arg(this->owner_trw_layer()->get_name());
 	} else {
 		 /* Show each route in this routes container. */
 		wanted_types.push_back(Route::type_id());
-		title = tr("%1: Routes List").arg(this->owning_layer->get_name());
+		title = tr("%1: Routes List").arg(this->owner_trw_layer()->get_name());
 	}
 
-	Track::list_dialog(title, this->owning_layer, wanted_types);
+	Track::list_dialog(title, this->owner_trw_layer(), wanted_types);
 }
 
 
@@ -916,10 +916,10 @@ void LayerTRWTracks::track_or_route_list_dialog_cb(void) /* Slot. */
 
 bool LayerTRWTracks::handle_selection_in_tree(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
-	//parent_layer->set_statusbar_msg_info_trk(this);
-	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
+	//parent_trw->set_statusbar_msg_info_trk(this);
+	parent_trw->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -996,7 +996,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 
 void LayerTRWTracks::sort_order_z2a_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::AlphabeticalDescending;
+	this->owner_trw_layer()->track_sort_order = TreeViewSortOrder::AlphabeticalDescending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalDescending);
 }
 
@@ -1005,7 +1005,7 @@ void LayerTRWTracks::sort_order_z2a_cb(void)
 
 void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateAscending;
+	this->owner_trw_layer()->track_sort_order = TreeViewSortOrder::DateAscending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
 }
 
@@ -1014,7 +1014,7 @@ void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 
 void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateDescending;
+	this->owner_trw_layer()->track_sort_order = TreeViewSortOrder::DateDescending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
 }
 
@@ -1064,7 +1064,10 @@ bool LayerTRWTracks::empty(void) const
 
 sg_ret LayerTRWTracks::attach_to_container(Track * trk)
 {
-	trk->set_owning_layer(this->get_owning_layer());
+	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to set parent of track";
+		return sg_ret::err;
+	}
 	this->children_map.insert({{ trk->get_uid(), trk }});
 	this->children_list.push_back(trk);
 
@@ -1081,27 +1084,27 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 		return sg_ret::err;
 	}
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	if (trk->get_name().isEmpty()) {
 		qDebug() << SG_PREFIX_W << "Track with empty name, deleting anyway";
 	}
 
 	if (trk->is_selected()) {
-		parent_layer->selected_track_reset();
-		parent_layer->moving_tp = false;
-		parent_layer->route_finder_started = false;
+		parent_trw->selected_track_reset();
+		parent_trw->moving_tp = false;
+		parent_trw->route_finder_started = false;
 	}
 
 	if (NULL != was_visible) {
 		*was_visible = trk->is_visible();
 	}
 
-	if (trk == parent_layer->route_finder_added_track) {
-		parent_layer->route_finder_added_track = NULL;
+	if (trk == parent_trw->route_finder_added_track) {
+		parent_trw->route_finder_added_track = NULL;
 	}
 
-	parent_layer->deselect_current_trackpoint(trk);
+	parent_trw->deselect_current_trackpoint(trk);
 
 	this->children_map.erase(trk->get_uid()); /* Erase by key. */
 
@@ -1133,12 +1136,12 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, __attribute__((un
 {
 	/* Handle item in old location. */
 	{
-		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
-		trw->detach_from_container((Track *) tree_item);
+		LayerTRW * parent_trw = (LayerTRW *) tree_item->parent_layer();
+		parent_trw->detach_from_container((Track *) tree_item);
 		/* Detaching of tree item from tree view will be handled by QT. */
 
 		/* Update our own tooltip in tree view. */
-		trw->update_tree_item_tooltip();
+		parent_trw->update_tree_item_tooltip();
 	}
 
 	/* Handle item in new location. */
@@ -1186,8 +1189,7 @@ bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 
    @reviewed-on 2020-01-20
 */
-LayerTRW * LayerTRWTracks::get_parent_layer_trw(void) const
+LayerTRW * LayerTRWTracks::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owning_layer;
-
+	return (LayerTRW *) this->owner_tree_item();
 }

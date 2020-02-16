@@ -194,11 +194,11 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 							       gisview,
 							       this);
 
-
+#if K_TODO
 	Layer * parent = nullptr;
 	Layer * existing_layer = ThisApp::layers_panel()->selected_layer();
 	if (existing_layer) {
-		parent = existing_layer->get_owning_layer(); /* Maybe Aggregate layer, or maybe GPS layer. */
+		parent = existing_layer->get_parent_layer(); /* Maybe Aggregate layer, or maybe GPS layer. */
 	} else {
 		parent = ThisApp::layers_panel()->top_layer();
 	}
@@ -215,4 +215,5 @@ void OnlineService_query::run_at_current_position(GisViewport * gisview)
 		   non-TRW layers. */
 		break;
 	}
+#endif
 }

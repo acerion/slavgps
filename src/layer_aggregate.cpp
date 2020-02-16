@@ -136,8 +136,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		attach_mode = TreeViewAttachMode::After;
 	}
 
-
-	layer->set_owning_layer(this);
+	layer->set_parent_and_owner_tree_item(this);
 
 	if (sibling_layer->index.isValid()) {
 
@@ -193,7 +192,7 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 		return sg_ret::err;
 	}
 
-	Layer * layer = item->get_immediate_layer();
+	Layer * layer = item->immediate_layer();
 
 	/* By default layers go to the top. */
 	bool put_above = true;
@@ -202,8 +201,7 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 		put_above = false;
 	}
 
-	layer->set_owning_layer(this);
-
+	layer->set_parent_and_owner_tree_item(this);
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
@@ -237,9 +235,11 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 
 sg_ret LayerAggregate::attach_to_container(Layer * layer)
 {
-	layer->set_owning_layer(this);
+	if (sg_ret::ok != layer->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to attach layer to list of children";
+		return sg_ret::err;
+	}
 	this->children->push_back(layer);
-
 	return sg_ret::ok;
 }
 
@@ -292,7 +292,7 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 		return false;
 	}
 
-	Layer * layer = child_tree_item.get_immediate_layer();
+	Layer * layer = child_tree_item.immediate_layer();
 
 	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(*this->children, layer, up);
@@ -668,7 +668,7 @@ void LayerAggregate::clear()
 sg_ret LayerAggregate::detach_from_container(Layer * layer, bool * was_visible)
 {
 	assert (layer->is_in_tree());
-	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer));
+	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->immediate_layer(), layer));
 
 	if (NULL != was_visible) {
 		*was_visible = layer->is_visible();
@@ -713,9 +713,9 @@ sg_ret LayerAggregate::delete_child_item(TreeItem * item, __attribute__((unused)
 		return sg_ret::err;
 	}
 
-	Layer * layer = item->get_immediate_layer();
+	Layer * layer = item->immediate_layer();
 
-	if (!TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->get_immediate_layer(), layer)) {
+	if (!TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->immediate_layer(), layer)) {
 		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not in tree";
 		return sg_ret::err;
 	}
@@ -1002,15 +1002,11 @@ int LayerAggregate::get_child_layers_count(void) const
 
 sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
+#if K_TODO_LATER
 	/* Handle item in old location. */
 	{
-		Layer * layer = tree_item->get_owning_layer();
-		if (layer->m_kind != LayerKind::Aggregate) {
-			qDebug() << SG_PREFIX_E << "Moving item from layer owned by layer kind" << layer->m_kind;
-			/* TODO_LATER: what about drag and drop of TRW layers from GPS layer? */
-			return sg_ret::err;
-		}
-
+		/* TODO_LATER: implement detaching from parent tree
+		   item's container where tree item is of any kind. */
 		((LayerAggregate *) layer)->detach_from_container((LayerAggregate *) tree_item, NULL);
 		/* Detaching of tree item from tree view will be handled by QT. */
 	}
@@ -1020,7 +1016,7 @@ sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, __attribute__((un
 		this->attach_to_container((Layer *) tree_item);
 		this->attach_to_tree((Layer *) tree_item);
 	}
-
+#endif
 	return sg_ret::ok;
 }
 

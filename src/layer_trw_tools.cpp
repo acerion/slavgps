@@ -436,8 +436,8 @@ bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_searc
 	tool->selected_tree_item_type_id = wp_search.closest_wp->m_type_id;
 
 
-	LayerTRW * trw = (LayerTRW *) wp_search.closest_wp->get_owning_layer();
-	trw->selected_wp_set(wp_search.closest_wp);
+	LayerTRW * parent_trw = wp_search.closest_wp->owner_trw_layer();
+	parent_trw->selected_wp_set(wp_search.closest_wp);
 	wp_search.closest_wp->click_in_tree("Waypoint has been selected with 'select tool' click");
 
 	return true;
@@ -476,8 +476,8 @@ bool LayerTRW::try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_s
 	tool->selected_tree_item_type_id = tp_search.closest_track->m_type_id;
 
 
-	LayerTRW * trw = (LayerTRW *) tp_search.closest_track->get_owning_layer();
-	trw->selected_track_set(tp_search.closest_track, TrackpointReference(tp_search.closest_tp_iter, true));
+	LayerTRW * parent_trw = tp_search.closest_track->owner_trw_layer();
+	parent_trw->selected_track_set(tp_search.closest_track, TrackpointReference(tp_search.closest_tp_iter, true));
 	tp_search.closest_track->click_in_tree("Track has been selected with 'select tool' click");
 
 	return true;

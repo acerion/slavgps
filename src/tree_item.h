@@ -261,6 +261,30 @@ namespace SlavGPS {
 		*/
 		virtual bool is_layer(void) const;
 
+
+
+
+		/* Top-level functions for cut/copy/paste/delete operations. */
+		/**
+		   @brief "paste" operation
+
+		   @param allow_reordering: should be set to true for GUI
+		   interactions, whereas loading from a file needs strict ordering and
+		   so should be false.
+		*/
+		virtual sg_ret add_child_item(TreeItem * item, bool allow_reordering);
+		virtual sg_ret cut_child_item(TreeItem * item);
+		virtual sg_ret copy_child_item(TreeItem * item);
+		/**
+		   @brief Delete a child item specified by @param item
+
+		   This method also calls destructor of @param item.
+		*/
+		virtual sg_ret delete_child_item(TreeItem * item, bool confirm_deleting);
+
+
+
+
 		/**
 		   @brief Get layer associated with this tree item
 
@@ -268,15 +292,31 @@ namespace SlavGPS {
 		   sublayer has its parent/owning layer.  Return one
 		   of these.
 		*/
-		virtual Layer * get_immediate_layer(void);
+		virtual Layer * immediate_layer(void);
 
-		Layer * get_owning_layer(void) const;
-		void set_owning_layer(Layer * layer);
+		/**
+		   Get direct parent tree item. Direct parent tree
+		   item and owning tree item may be two different tree
+		   items.
+		*/
+		TreeItem * parent_tree_item(void) const;
 
-		/* Get direct parent tree item. Direct parent tree
-		   item and owning layer may be two different tree
-		   items. */
-		TreeItem * get_direct_parent_tree_item(void) const;
+		/**
+		   Get tree item that is the owner of this tree
+		   item. Direct parent tree item and owning tree item
+		   may be two different tree items.
+		*/
+		TreeItem * owner_tree_item(void) const;
+
+		Layer * parent_layer(void) const;
+
+		/**
+		   Set two fields of this tree item using specified
+		   direct @param parent tree item: parent tree item
+		   and owner tree item
+		*/
+		virtual sg_ret set_parent_and_owner_tree_item(TreeItem * parent);
+
 
 		/* Get tree items (direct and indirect children of the
 		   layer) of types given by @param wanted_types. */
@@ -331,8 +371,6 @@ namespace SlavGPS {
 	protected:
 		QString m_name;
 
-		Layer * owning_layer = nullptr; /* Reference. */
-
 		sg_uid_t uid = SG_UID_INITIAL;
 
 		/* Menu items (actions) to be created and put into a
@@ -346,8 +384,12 @@ namespace SlavGPS {
 		   items. */
 		bool visible = true;
 
-	private:
-		TreeItem * m_direct_parent_tree_item = nullptr; /* Direct parent, may be different than owning layer. */
+		/* Direct parent, may be different than owning layer. */
+		TreeItem * m_parent_tree_item = nullptr;
+
+		/* Some tree items may belong to a grandparent rather
+		   than parent item. */
+		TreeItem * m_owner_tree_item = nullptr;
 
 	signals:
 		void tree_item_changed(const QString & tree_item_name);

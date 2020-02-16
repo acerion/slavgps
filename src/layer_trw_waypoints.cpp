@@ -627,22 +627,23 @@ void LayerTRWWaypoints::sublayer_menu_sort(QMenu & menu)
 sg_ret LayerTRWWaypoints::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 
 	if (ThisApp::layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
-		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
+		connect(qa, SIGNAL (triggered(bool)), parent_trw, SLOT (new_waypoint_cb()));
 	}
 
 
-	this->sublayer_menu_waypoints_misc((LayerTRW *) this->owning_layer, menu);
+	this->sublayer_menu_waypoints_misc(parent_trw, menu);
 
 
 	this->sublayer_menu_sort(menu);
 
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	layer_trw_sublayer_menu_all_add_external_tools((LayerTRW *) this->owning_layer, external_submenu);
+	layer_trw_sublayer_menu_all_add_external_tools(parent_trw, external_submenu);
 
 
 	QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QObject::tr("&Transform"));
@@ -753,8 +754,7 @@ void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 		changed_ = changed_ + (int) (*iter)->apply_dem_data(skip_existing_elevations);
 	}
 
-	LayerTRW * trw = (LayerTRW *) this->owning_layer;
-	trw->wp_changed_message(changed_);
+	this->owner_trw_layer()->wp_changed_message(changed_);
 }
 
 
@@ -762,10 +762,10 @@ void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 
 bool LayerTRWWaypoints::handle_selection_in_tree(void)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
-	//parent_layer->set_statusbar_msg_info_trk(this);
-	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
+	//parent_trw->set_statusbar_msg_info_trk(this);
+	parent_trw->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->get_name() << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -826,7 +826,7 @@ sg_ret LayerTRWWaypoints::paste_child_tree_item_cb(void)
 
 void LayerTRWWaypoints::sort_order_a2z_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::AlphabeticalAscending;
+	this->owner_trw_layer()->wp_sort_order = TreeViewSortOrder::AlphabeticalAscending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalAscending);
 }
 
@@ -835,7 +835,7 @@ void LayerTRWWaypoints::sort_order_a2z_cb(void)
 
 void LayerTRWWaypoints::sort_order_z2a_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::AlphabeticalDescending;
+	this->owner_trw_layer()->wp_sort_order = TreeViewSortOrder::AlphabeticalDescending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalDescending);
 }
 
@@ -844,7 +844,7 @@ void LayerTRWWaypoints::sort_order_z2a_cb(void)
 
 void LayerTRWWaypoints::sort_order_timestamp_ascend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::DateAscending;
+	this->owner_trw_layer()->wp_sort_order = TreeViewSortOrder::DateAscending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
 }
 
@@ -853,7 +853,7 @@ void LayerTRWWaypoints::sort_order_timestamp_ascend_cb(void)
 
 void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::DateDescending;
+	this->owner_trw_layer()->wp_sort_order = TreeViewSortOrder::DateDescending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
 }
 
@@ -891,7 +891,11 @@ bool LayerTRWWaypoints::empty(void) const
 
 sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
 {
-	wp->set_owning_layer(this->get_owning_layer());
+	if (sg_ret::ok != wp->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to set parent of waypoint";
+		return sg_ret::err;
+	}
+
 	this->children_map.insert({{ wp->get_uid(), wp }});
 	this->children.push_back(wp);
 
@@ -912,15 +916,15 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 		return sg_ret::err;
 	}
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	if (wp->get_name().isEmpty()) {
 		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
 	}
 
-	if (wp == parent_layer->selected_wp_get()) {
-		parent_layer->selected_wp_reset();
-		parent_layer->moving_wp = false;
+	if (wp == parent_trw->selected_wp_get()) {
+		parent_trw->selected_wp_reset();
+		parent_trw->moving_wp = false;
 	}
 
 	if (NULL != was_visible) {
@@ -1043,12 +1047,12 @@ sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, __attribute__(
 {
 	/* Handle item in old location. */
 	{
-		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
-		trw->detach_from_container((Waypoint *) tree_item);
+		LayerTRW * parent_trw = (LayerTRW *) tree_item->parent_layer();
+		parent_trw->detach_from_container((Waypoint *) tree_item);
 		/* Detaching of tree item from tree view will be handled by QT. */
 
 		/* Update our own tooltip in tree view. */
-		trw->update_tree_item_tooltip();
+		parent_trw->update_tree_item_tooltip();
 	}
 
 	/* Handle item in new location. */
@@ -1113,7 +1117,7 @@ sg_ret LayerTRWWaypoints::move_selection_to_next_child(void)
 			Waypoint * cur_wp = *std::next(iter);
 
 			g_selected.add_to_set(cur_wp);
-			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
+			this->owner_trw_layer()->selected_wp_set(cur_wp);
 			this->tree_view->select_and_expose_tree_item(cur_wp);
 
 			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
@@ -1153,7 +1157,7 @@ sg_ret LayerTRWWaypoints::move_selection_to_previous_child(void)
 			Waypoint * cur_wp = *std::prev(iter);
 
 			g_selected.add_to_set(cur_wp);
-			this->get_parent_layer_trw()->selected_wp_set(cur_wp);
+			this->owner_trw_layer()->selected_wp_set(cur_wp);
 			this->tree_view->select_and_expose_tree_item(cur_wp);
 
 			LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::main_window()->toolbox()->get_tool(LayerToolTRWEditWaypoint::tool_id());
@@ -1175,8 +1179,8 @@ sg_ret LayerTRWWaypoints::move_selection_to_previous_child(void)
 
    @reviewed-on 2020-01-20
 */
-LayerTRW * LayerTRWWaypoints::get_parent_layer_trw(void) const
+LayerTRW * LayerTRWWaypoints::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owning_layer;
+	return (LayerTRW *) this->owner_tree_item();
 
 }

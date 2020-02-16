@@ -218,7 +218,7 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 
 
 	{
-		LayerTRW * trw = wp->get_parent_layer_trw();
+		LayerTRW * trw = wp->owner_trw_layer();
 
 		bool is_first = false;
 		bool is_last = false;
@@ -533,8 +533,8 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		qDebug() << SG_PREFIX_N << "Not handling action, no current wp";
 		return;
 	}
-	LayerTRW * trw = (LayerTRW *) wp->get_owning_layer();
-	if (!trw) {
+	LayerTRW * parent_trw = wp->owner_trw_layer();
+	if (!parent_trw) {
 		qDebug() << SG_PREFIX_N << "Not handling action, no current trw layer";
 		return;
 	}
@@ -542,22 +542,22 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	switch ((WpPropertiesDialog::Action) action) {
 	case WpPropertiesDialog::Action::DeleteSelectedPoint:
-		trw->delete_child_item(wp, false);
-		trw->emit_tree_item_changed("Indicating deletion of waypoint");
+		parent_trw->delete_child_item(wp, false);
+		parent_trw->emit_tree_item_changed("Indicating deletion of waypoint");
 		break;
 
 	case WpPropertiesDialog::Action::NextPoint:
-		if (sg_ret::ok != trw->get_waypoints_node().move_selection_to_next_child()) {
+		if (sg_ret::ok != parent_trw->get_waypoints_node().move_selection_to_next_child()) {
 			break;
 		}
-		trw->emit_tree_item_changed("Indicating selecting next trackpoint in track");
+		parent_trw->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
 	case WpPropertiesDialog::Action::PreviousPoint:
-		if (sg_ret::ok != trw->get_waypoints_node().move_selection_to_previous_child()) {
+		if (sg_ret::ok != parent_trw->get_waypoints_node().move_selection_to_previous_child()) {
 			break;
 		}
-		trw->emit_tree_item_changed("Indicating selecting previous waypoint in layer");
+		parent_trw->emit_tree_item_changed("Indicating selecting previous waypoint in layer");
 		break;
 
 	default:

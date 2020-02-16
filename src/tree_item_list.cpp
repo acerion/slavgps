@@ -147,7 +147,7 @@ TreeItemListDialog::TreeItemListDialog(QString const & title, QWidget * parent_w
 	this->setWindowTitle(title);
 
 	this->button_box = new QDialogButtonBox();
-	this->parent = parent_widget;
+	this->m_parent_widget = parent_widget;
 	this->button_box->addButton("&Close", QDialogButtonBox::AcceptRole);
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &TreeItemListDialog::accept_cb);
 	this->vbox = new QVBoxLayout;
@@ -328,19 +328,19 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 		}
 
 
-		LayerTRW * parent_layer = (LayerTRW *) trk->get_owning_layer();
-		parent_layer->lock_remove();
+		LayerTRW * parent_trw = trk->owner_trw_layer();
+		parent_trw->lock_remove();
 
 
 		/* Make sure that the track really is in parent layer. */
 		bool has_child = false;
-		if (sg_ret::ok != parent_layer->has_child(trk, &has_child)) {
-			parent_layer->unlock_remove();
+		if (sg_ret::ok != parent_trw->has_child(trk, &has_child)) {
+			parent_trw->unlock_remove();
 			return;
 		}
 		if (!has_child) {
 			qDebug() << SG_PREFIX_W << "Can't find edited Track in TRW layer";
-			parent_layer->unlock_remove();
+			parent_trw->unlock_remove();
 			return;
 		}
 
@@ -356,7 +356,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 		}
 
 
-		parent_layer->unlock_remove();
+		parent_trw->unlock_remove();
 	}
 
 #if TODO_ALTER

@@ -79,17 +79,18 @@ extern bool have_geojson_export;
 sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((unused)) bool in_tree_view)
 {
 	QAction * qa = NULL;
+	Window * main_window = this->get_window();
 
 	{
-		Layer * parent_layer = this->get_owning_layer();
+		Layer * parent_layer = this->parent_layer();
 
 		delete this->layer_trw_importer;
-		this->layer_trw_importer = new LayerTRWImporter(this->get_window(),
+		this->layer_trw_importer = new LayerTRWImporter(main_window,
 								ThisApp::main_gisview(),
 								parent_layer,  /* Aggregate layer or GPS layer. */
 								this);         /* Target TRW layer, to which import will occur. */
 
-		this->layer_trw_filter->set_main_fields(parent_layer->get_window(),
+		this->layer_trw_filter->set_main_fields(main_window,
 							ThisApp::main_gisview(),
 							parent_layer);
 		this->layer_trw_filter->set_trw_field(this);
@@ -248,7 +249,7 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 	qa->setEnabled((bool) (this->waypoints.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
-	ExternalTools::add_menu_items(external_submenu, this->get_window()->main_gisview(), NULL);
+	ExternalTools::add_menu_items(external_submenu, main_window->main_gisview(), NULL);
 
 	return sg_ret::ok;
 }

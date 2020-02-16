@@ -72,10 +72,8 @@ using namespace SlavGPS;
 
 
 
-DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * gisview)
+DataSourceOSMMyTraces::DataSourceOSMMyTraces()
 {
-	this->m_gisview = gisview;
-
 	this->m_window_title = QObject::tr("OSM My Traces");
 	this->m_layer_title = QObject::tr("OSM My Traces");
 	this->m_layer_mode = TargetLayerMode::ManualLayerManagement; /* We'll do this ourselves. */
@@ -560,10 +558,8 @@ DataSourceOSMMyTracesConfigDialog::DataSourceOSMMyTracesConfigDialog(const QStri
 /**
    For each track - mark whether the start is in within the viewport.
 */
-void DataSourceOSMMyTraces::update_tracks_metadata_property(std::list<GPXMetaData *> & tracks_metadata)
+void DataSourceOSMMyTraces::update_tracks_metadata_property(const LatLonBBox & viewport_bbox, std::list<GPXMetaData *> & tracks_metadata)
 {
-	const LatLonBBox viewport_bbox = this->m_gisview->get_bbox();
-
 	for (auto iter = tracks_metadata.begin(); iter != tracks_metadata.end(); iter++) {
 		GPXMetaData * metadata = *iter;
 		metadata->in_current_view = viewport_bbox.contains_point(metadata->lat_lon);
@@ -619,7 +615,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
-	this->update_tracks_metadata_property(xd->list_of_gpx_meta_data);
+	this->update_tracks_metadata_property(acquire_context.get_gisview()->get_bbox(), xd->list_of_gpx_meta_data);
 
 
 	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.get_window(), xd->list_of_gpx_meta_data, QObject::tr("Select GPS Traces"), QObject::tr("Select the GPS traces you want to add."));

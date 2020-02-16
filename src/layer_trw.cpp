@@ -2227,7 +2227,7 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
-	LayerTRW * source_trw = (LayerTRW *) tree_item->get_owning_layer();
+	LayerTRW * source_trw = (LayerTRW *) tree_item->parent_layer();
 	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
 
 	/* Handle item in old location. */
@@ -3445,12 +3445,12 @@ SaveStatus LayerTRW::write_layer_data(FILE * file) const
 LayerTRW::LayerTRW() : Layer()
 {
 	this->m_kind = LayerKind::TRW;
-	strcpy(this->debug_string, "TRW");
+	strcpy(this->debug_string, "LayerKind::TRW");
 	this->interface = &vik_trw_layer_interface;
 
-	this->tracks.owning_layer = this;
-	this->routes.owning_layer = this;
-	this->waypoints.owning_layer = this;
+	this->tracks.set_parent_and_owner_tree_item(this);
+	this->routes.set_parent_and_owner_tree_item(this);
+	this->waypoints.set_parent_and_owner_tree_item(this);
 
 	this->painter = new LayerTRWPainter(this);
 	this->layer_trw_filter = new LayerTRWBabelFilter();

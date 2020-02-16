@@ -279,7 +279,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	/* If selected item is layer, then the layer itself is
 	   returned here. Otherwise, parent/owning layer of selected
 	   sublayer is returned. */
-	Layer * selected_layer = selected_item->get_immediate_layer();
+	Layer * selected_layer = selected_item->immediate_layer();
 	assert (selected_layer->tree_view);
 	assert (selected_layer->index.isValid());
 	TreeIndex selected_layer_index = selected_layer->index;
@@ -350,11 +350,11 @@ void LayersPanel::move_item(bool up)
 
 	this->m_tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
-	if (selected_item->get_direct_parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
+	if (selected_item->parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
 		this->m_tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
 
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_direct_parent_tree_item()->get_name();
-		this->emit_items_tree_updated_cb(selected_item->get_direct_parent_tree_item()->get_name());
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->parent_tree_item()->get_name();
+		this->emit_items_tree_updated_cb(selected_item->parent_tree_item()->get_name());
 	}
 }
 
@@ -395,7 +395,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 	/* Special case for top-level Aggregate layer. */
 	if (selected_item->is_layer()) {
-		Layer * layer = selected_item->get_immediate_layer();
+		Layer * layer = selected_item->immediate_layer();
 		if (layer->m_kind == LayerKind::Aggregate) {
 			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
 				Dialog::info(tr("You cannot cut the Top Layer."), this->m_window);
@@ -403,9 +403,10 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 			}
 		}
 	}
-
-	Layer * owning_layer = selected_item->get_owning_layer();
-	owning_layer->cut_child_item(selected_item);
+#ifdef K_TODO_LATER
+	TreeItem * parent = selected_item->parent_tree_item();
+	parent->cut_child_item(selected_item);
+#endif
 
 	return;
 }
@@ -468,7 +469,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 	/* Special case for top-level Aggregate layer. */
 	if (selected_item->is_layer()) {
-		Layer * layer = selected_item->get_immediate_layer();
+		Layer * layer = selected_item->immediate_layer();
 		if (layer->m_kind == LayerKind::Aggregate) {
 			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
 				Dialog::info(tr("You cannot delete the Top Layer."), this->m_window);
@@ -477,9 +478,11 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	}
 
-	Layer * owning_layer = selected_item->get_owning_layer();
+#ifdef K_TODO_LATER
+	TreeItem * parent = selected_item->parent_tree_item();
 	/* true: confirm delete request. */
-	owning_layer->delete_child_item(selected_item, true);
+	parent->delete_child_item(selected_item, true);
+#endif
 
 	// TODO_LATER? this->activate_buttons_cb();
 }
@@ -512,7 +515,7 @@ Layer * LayersPanel::selected_layer(void) const
 
 	/* If a layer is selected, return the layer itself.
 	   If a sublayer is selected, return its parent/owning layer. */
-	return selected_item->get_immediate_layer();
+	return selected_item->immediate_layer();
 }
 
 

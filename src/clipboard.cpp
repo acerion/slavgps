@@ -479,7 +479,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 			len = ilen;
 		} else {
 			type = ClipboardDataType::Sublayer;
-			selected->copy_child_item(item, &data, &len);
+			selected->copy_child_item2(item, &data, &len);
 		}
 #endif
 	}

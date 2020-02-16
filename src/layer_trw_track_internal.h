@@ -318,14 +318,14 @@ namespace SlavGPS {
 		   @brief Common method for showing a list of tracks with extended information
 
 		   @title: the title for the dialog
-		   @layer: The layer, from which a list of tracks/routes should be extracted (may be Aggregate layer)
+		   @parent_layer: The layer, from which a list of tracks/routes should be extracted (may be Aggregate layer)
 		   @wanted_types: type IDs of items to be shown in list (tracks and/or routes)
 
 		   @param layer can be also Aggregate layer - the
 		   function then goes through all child layers of the
 		   Aggregate layer in search of @param wanted_types
 		*/
-		static void list_dialog(QString const & title, Layer * layer, const std::list<SGObjectTypeID> & wanted_types);
+		static void list_dialog(QString const & title, Layer * parent_layer, const std::list<SGObjectTypeID> & wanted_types);
 
 		QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format) override;
 
@@ -450,7 +450,9 @@ namespace SlavGPS {
 		/**
 		   @brief Simple accessor
 		*/
-		LayerTRW * get_parent_layer_trw(void) const;
+		LayerTRW * owner_trw_layer(void) const;
+
+		sg_ret set_parent_and_owner_tree_item(TreeItem * parent) override;
 
 		static TreeItemViewFormat get_view_format_header(bool include_parent_layer);
 

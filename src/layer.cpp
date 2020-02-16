@@ -681,7 +681,7 @@ void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coo
 /**
    @reviewed-on 2019-12-29
 */
-Layer * Layer::get_immediate_layer(void)
+Layer * Layer::immediate_layer(void)
 {
 	/* We are already a layer, no need to go up in hierarchy of
 	   tree items to find our immediate layer. */
@@ -697,53 +697,4 @@ Layer * Layer::get_immediate_layer(void)
 bool Layer::is_layer(void) const
 {
 	return true;
-}
-
-
-
-
-/**
-   @reviewed-on 2019-12-31
-*/
-sg_ret Layer::add_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool allow_reordering)
-{
-	qDebug() << SG_PREFIX_E << "Called the method for base class";
-	return sg_ret::err;
-
-}
-
-
-
-
-/**
-   @reviewed-on 2019-12-30
-*/
-sg_ret Layer::cut_child_item(__attribute__((unused)) TreeItem * item)
-{
-	qDebug() << SG_PREFIX_E << "Called the method for base class";
-	return sg_ret::err;
-}
-
-
-
-
-/**
-   @reviewed-on 2019-12-30
-*/
-sg_ret Layer::copy_child_item(__attribute__((unused)) TreeItem * item)
-{
-	qDebug() << SG_PREFIX_E << "Called the method for base class";
-	return sg_ret::err;
-}
-
-
-
-
-/**
-   @reviewed-on 2019-12-30
-*/
-sg_ret Layer::delete_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool confirm_deleting)
-{
-	qDebug() << SG_PREFIX_E << "Called the method for base class";
-	return sg_ret::err;
 }

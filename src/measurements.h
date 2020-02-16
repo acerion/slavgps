@@ -727,9 +727,9 @@ namespace SlavGPS {
 		}
 
 	protected:
-		typename T::LL m_ll_value;
-		typename T::Unit m_unit;
-		bool m_valid;
+		typename T::LL m_ll_value = 0;
+		typename T::Unit m_unit = T::Unit::internal_unit();
+		bool m_valid = false;
 	};
 	template<typename T>
 	QDebug operator<<(QDebug debug, const typename T::Unit & unit);

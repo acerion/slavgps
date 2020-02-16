@@ -810,7 +810,7 @@ TrackProfileDialog::TrackProfileDialog(Track * new_trk, GisViewport * new_main_g
 {
 	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->get_name()));
 
-	this->trw = (LayerTRW *) new_trk->get_owning_layer();
+	this->trw = new_trk->owner_trw_layer();
 	this->trk = new_trk;
 	this->main_gisview = new_main_gisview;
 

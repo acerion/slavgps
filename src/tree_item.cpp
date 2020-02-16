@@ -171,36 +171,55 @@ void TreeItem::set_name(const QString & name)
 /**
    @reviewed-on 2019-12-29
 */
-Layer * TreeItem::get_immediate_layer(void)
+Layer * TreeItem::immediate_layer(void)
 {
 	/* Default behaviour for Waypoints, Tracks, Routes, their
 	   containers and other non-Layer items. This behaviour will
 	   be overriden for Layer class and its derived classes. */
-	return this->owning_layer;
+	return (Layer *) this->owner_tree_item();
 }
 
 
 
 
-Layer * TreeItem::get_owning_layer(void) const
+Layer * TreeItem::parent_layer(void) const
 {
-	return this->owning_layer;
+	return (Layer *) this->owner_tree_item();
 }
 
 
 
 
-void TreeItem::set_owning_layer(Layer * layer)
+sg_ret TreeItem::set_parent_and_owner_tree_item(TreeItem * parent)
 {
-	this->owning_layer = layer;
+	/*
+	  For most of tree items this is quite simple: most of layers
+	  have simple structure without any sub-children.
+
+	  However TRW layer and GPS layer have more complicated
+	  internal structure, and their children will have to
+	  re-implement this method.
+	*/
+	this->m_parent_tree_item = parent;
+	this->m_owner_tree_item = parent;
+
+	return sg_ret::ok;
 }
 
 
 
 
-TreeItem * TreeItem::get_direct_parent_tree_item(void) const
+TreeItem * TreeItem::parent_tree_item(void) const
 {
-	return this->m_direct_parent_tree_item;
+	return this->m_parent_tree_item;
+}
+
+
+
+
+TreeItem * TreeItem::owner_tree_item(void) const
+{
+	return this->m_owner_tree_item;
 }
 
 
@@ -528,13 +547,15 @@ sg_ret TreeItem::attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMo
 	}
 
 	/* Attach yourself to tree first. */
-	if (sg_ret::ok != parent->tree_view->attach_to_tree(parent, this, attach_mode, sibling)) {
-		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
-		return sg_ret::err;
-	}
-	if (!this->is_in_tree()) { /* After calling tree_view->attach_to_tree(), this condition should be true. */
-		qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
-		return sg_ret::err;
+	if (!this->is_in_tree()) {
+		if (sg_ret::ok != parent->tree_view->attach_to_tree(parent, this, attach_mode, sibling)) {
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+			return sg_ret::err;
+		}
+		if (!this->is_in_tree()) { /* After calling tree_view->attach_to_tree(), this condition should be true. */
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+			return sg_ret::err;
+		}
 	}
 
 	/* Attach child items. */
@@ -623,6 +644,55 @@ sg_ret TreeItem::delete_tree_item_cb(void)
    @reviewed-on 2019-12-30
 */
 sg_ret TreeItem::paste_child_tree_item_cb(void)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-31
+*/
+sg_ret TreeItem::add_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool allow_reordering)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::cut_child_item(__attribute__((unused)) TreeItem * item)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::copy_child_item(__attribute__((unused)) TreeItem * item)
+{
+	qDebug() << SG_PREFIX_E << "Called the method for base class";
+	return sg_ret::err;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-12-30
+*/
+sg_ret TreeItem::delete_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool confirm_deleting)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;

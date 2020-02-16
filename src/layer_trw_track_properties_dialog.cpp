@@ -314,8 +314,8 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		const LatLon center = this->trk->bbox.get_center_lat_lon();
-		LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
-		const Coord coord(center, parent_layer->get_coord_mode());
+		LayerTRW * parent_trw = this->trk->owner_trw_layer();
+		const Coord coord(center, parent_trw->get_coord_mode());
 		this->tz = TZLookup::get_tz_at_location(coord);
 
 
@@ -365,18 +365,18 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
-	parent_layer->lock_remove();
+	LayerTRW * parent_trw = this->trk->owner_trw_layer();
+	parent_trw->lock_remove();
 
 
 	bool has_child = false;
-	if (sg_ret::ok != parent_layer->has_child(this->trk, &has_child)) {
-		parent_layer->unlock_remove();
+	if (sg_ret::ok != parent_trw->has_child(this->trk, &has_child)) {
+		parent_trw->unlock_remove();
 		return;
 	}
 	if (!has_child) {
 		qDebug() << SG_PREFIX_W << "Can't find edited Track in TRW layer";
-		parent_layer->unlock_remove();
+		parent_trw->unlock_remove();
 		return;
 	}
 
@@ -414,11 +414,11 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	if (changed) {
 		trk->update_tree_item_properties();
-		parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track");
+		parent_trw->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track");
 	}
 
 
-	parent_layer->unlock_remove();
+	parent_trw->unlock_remove();
 
 
 	this->accept();

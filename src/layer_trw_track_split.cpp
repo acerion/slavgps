@@ -86,7 +86,7 @@ sg_ret Track::split_at_trackpoint(const TrackpointReference & tp_ref)
 	}
 
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 
 	/* Configuration dialog. */
@@ -121,7 +121,7 @@ sg_ret Track::split_at_trackpoint(const TrackpointReference & tp_ref)
 
 
 	/* Creation of new tracks. */
-	return this->split_at_iterators(split_iters, parent_layer);
+	return this->split_at_iterators(split_iters, parent_trw);
 }
 
 
@@ -197,7 +197,7 @@ void Track::split_by_timestamp_cb(void)
 
 	Duration threshold(60, DurationType::Unit::E::Seconds);
 	QWidget * dialog_parent = ThisApp::main_window();
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 
 	/* Configuration dialog. */
@@ -235,7 +235,7 @@ void Track::split_by_timestamp_cb(void)
 
 			if (timestamp_delta.is_negative()) {
 				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(this_timestamp.strftime_local("%c"))), dialog_parent) {
-					parent_layer->request_new_viewport_center(ThisApp::main_gisview(), (*iter)->coord);
+					parent_trw->request_new_viewport_center(ThisApp::main_gisview(), (*iter)->coord);
 				}
 				return;
 			}
@@ -257,7 +257,7 @@ void Track::split_by_timestamp_cb(void)
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(split_iters, parent_layer);
+	this->split_at_iterators(split_iters, parent_trw);
 
 
 	return;
@@ -278,7 +278,7 @@ void Track::split_by_n_points_cb(void)
 
 
 	int n_points = 0;
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 	QWidget * dialog_parent = ThisApp::main_window();
 
 
@@ -331,7 +331,7 @@ void Track::split_by_n_points_cb(void)
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(split_iters, parent_layer);
+	this->split_at_iterators(split_iters, parent_trw);
 
 
 	return;
@@ -353,7 +353,7 @@ void Track::split_by_segments_cb(void)
 
 
 	QWidget * dialog_parent = ThisApp::main_window();
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	const unsigned int segs = this->get_segment_count();
 	if (segs < 2) {
@@ -415,7 +415,7 @@ void Track::split_by_segments_cb(void)
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(split_iters, parent_layer);
+	this->split_at_iterators(split_iters, parent_trw);
 
 
 	return;

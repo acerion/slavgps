@@ -276,7 +276,7 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
 	tree_item->tree_view = nullptr;
-	tree_item->m_direct_parent_tree_item = nullptr;
+	tree_item->m_parent_tree_item = nullptr;
 }
 
 
@@ -665,7 +665,7 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 
 	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->tree_view = this;
-	tree_item->m_direct_parent_tree_item = new_parent_tree_item;
+	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
 
 	/* Some tree items may have been created in other thread
 	   (e.g. during acquire process). Signal connections for such

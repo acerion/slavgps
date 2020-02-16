@@ -55,7 +55,7 @@ namespace SlavGPS {
 
 	class DataSourceOSMMyTraces : public DataSource {
 	public:
-		DataSourceOSMMyTraces(GisViewport * gisview);
+		DataSourceOSMMyTraces();
 		~DataSourceOSMMyTraces() {};
 
 		LoadStatus acquire_into_layer(AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) override;
@@ -66,9 +66,7 @@ namespace SlavGPS {
 		static SGObjectTypeID source_id(void);
 
 	private:
-		void update_tracks_metadata_property(std::list<GPXMetaData *> & tracks_metadata);
-
-		GisViewport * m_gisview = nullptr;
+		void update_tracks_metadata_property(const LatLonBBox & viewport_bbox, std::list<GPXMetaData *> & tracks_metadata);
 	};
 
 
