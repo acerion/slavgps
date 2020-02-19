@@ -75,7 +75,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
-		sg_ret attach_children_to_tree(void) override;
+		sg_ret post_read_2(void) override;
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
@@ -94,12 +94,6 @@ namespace SlavGPS {
 
 
 
-		sg_ret attach_to_container(Layer * layer);
-		sg_ret attach_to_tree(Layer * layer);
-
-		sg_ret detach_from_container(Layer * layer, bool * was_visible);
-		sg_ret detach_from_tree(Layer * layer);
-
 		sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const override;
 
 		Layer * get_top_visible_layer_of_type(LayerKind layer_kind);
@@ -112,7 +106,8 @@ namespace SlavGPS {
 		int get_child_layers_count(void) const;
 		std::list<Layer const *> get_child_layers(void) const;
 
-		std::list<Layer *> * children = NULL;
+		/* Child items that have been read from some source, but aren't attached to tree yet. */
+		std::list<Layer *> non_attached_children;
 
 	private:
 		void children_visibility_set(bool visible);

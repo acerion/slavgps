@@ -131,13 +131,13 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 
 void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 {
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index().parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */
-		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
+		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index().row() << tree_item->index().column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::Timestamp));
+	QStandardItem * ch = parent_item->child(tree_item->index().row(), this->property_id_to_column_idx(TreeItemPropertyID::Timestamp));
 
 	qDebug() << SG_PREFIX_I;
 
@@ -153,10 +153,10 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 void TreeView::update_tree_item_tooltip(const TreeItem & tree_item)
 {
 	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item.get_name();
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item.index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item.index().parent());
 	if (!parent_item) {
 		/* "tree_item.index" points at the top tree item. */
-		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item.index.row() << tree_item.index.column();
+		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item.index().row() << tree_item.index().column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 
@@ -164,7 +164,7 @@ void TreeView::update_tree_item_tooltip(const TreeItem & tree_item)
 
 	   Perhaps in future other columns will get their own
 	   dedicated tooltips, but not now. */
-	QStandardItem * ch = parent_item->child(tree_item.index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+	QStandardItem * ch = parent_item->child(tree_item.index().row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	const QString tooltip = tree_item.get_tooltip();
 	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item.get_name();
 	ch->setToolTip(tooltip);
@@ -211,7 +211,7 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 		return false;
 	}
 
-	QModelIndex parent_index = tree_item->index.parent();
+	QModelIndex parent_index = tree_item->index().parent();
 	if (!parent_index.isValid()) {
 		qDebug() << SG_PREFIX_W << "Parent index is invalid. Function called for top level item?";
 		return false;
@@ -222,7 +222,7 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 
 	const int n_rows = source_parent_item->rowCount();
 
-	const int source_row = tree_item->index.row();
+	const int source_row = tree_item->index().row();
 	const int target_row = up ? source_row - 1 : source_row + 1;
 
 	if (target_row < 0 || target_row > n_rows - 1) {
@@ -236,7 +236,8 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 	target_parent_item->insertRow(target_row, items);
 
 
-	tree_item->index = QPersistentModelIndex(items.at(0)->index());
+	TreeIndex index = QPersistentModelIndex(items.at(0)->index());
+	tree_item->set_index(index);
 
 	return true;
 }
@@ -246,7 +247,7 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 
 void TreeView::select_and_expose_tree_item(const TreeItem * tree_item)
 {
-	this->setCurrentIndex(tree_item->index);
+	this->setCurrentIndex(tree_item->index());
 }
 
 
@@ -274,7 +275,7 @@ TreeItem * TreeView::get_selected_tree_item(void) const
 
 void TreeView::detach_tree_item(TreeItem * tree_item)
 {
-	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
+	this->tree_model->removeRow(tree_item->index().row(), tree_item->index().parent());
 	tree_item->tree_view = nullptr;
 	tree_item->m_parent_tree_item = nullptr;
 }
@@ -284,7 +285,7 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 
 void TreeView::detach_children(TreeItem * parent_tree_item)
 {
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent_tree_item->index);
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent_tree_item->index());
 	parent_item->removeRows(0, parent_item->rowCount());
 }
 
@@ -296,21 +297,21 @@ void TreeView::detach_children(TreeItem * parent_tree_item)
 */
 void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 {
-	if (!tree_item->index.isValid()) {
+	if (!tree_item->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid item index";
 		return;
 	}
 	qDebug() << SG_PREFIX_I << "Setting icon for tree item" << tree_item->get_name();
 
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index().parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top-level item. */
-		qDebug() << SG_PREFIX_I << "Querying Top Level Item for item" << tree_item->index.row() << tree_item->index.column();
+		qDebug() << SG_PREFIX_I << "Querying Top Level Item for item" << tree_item->index().row() << tree_item->index().column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 
 	/* Icon is a property of TreeItemPropertyID::TheItem column. */
-	QStandardItem * child_item = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+	QStandardItem * child_item = parent_item->child(tree_item->index().row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	/* Sometimes the icon may be null (QIcon::isNull()) - this can
 	   happen e.g. when user selects "none" icon for waypoint. */
 	child_item->setIcon(tree_item->icon);
@@ -321,11 +322,11 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 
 void TreeView::apply_tree_item_name(const TreeItem * tree_item)
 {
-	if (!tree_item->index.isValid()) {
+	if (!tree_item->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid item index";
 		return;
 	}
-	this->tree_model->itemFromIndex(tree_item->index)->setText(tree_item->get_name());
+	this->tree_model->itemFromIndex(tree_item->index())->setText(tree_item->get_name());
 }
 
 
@@ -333,7 +334,7 @@ void TreeView::apply_tree_item_name(const TreeItem * tree_item)
 
 bool TreeView::get_tree_item_visibility(const TreeItem * tree_item)
 {
-	const TreeIndex & index = tree_item->index;
+	const TreeIndex & index = tree_item->index();
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(index.parent());
 	if (!parent_item) {
@@ -362,7 +363,7 @@ bool TreeView::get_tree_item_visibility_with_parents(const TreeItem * tree_item)
 {
 	__attribute__((unused)) int loop_depth = 1;
 
-	TreeIndex this_item_index = tree_item->index;
+	TreeIndex this_item_index = tree_item->index();
 	const TreeItem * this_tree_item = tree_item;
 
 	do {
@@ -376,7 +377,7 @@ bool TreeView::get_tree_item_visibility_with_parents(const TreeItem * tree_item)
 		}
 		/* This item is visible. What about its parent? */
 
-		TreeIndex parent_item_index = this_tree_item->index.parent();
+		TreeIndex parent_item_index = this_tree_item->index().parent();
 		if (!parent_item_index.isValid()) {
 			/* This item doesn't have valid parent, so it
 			   must be a top-level item. The top-level item
@@ -398,12 +399,12 @@ bool TreeView::get_tree_item_visibility_with_parents(const TreeItem * tree_item)
 
 bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 {
-	if (!tree_item || !tree_item->index.isValid()) {
+	if (!tree_item || !tree_item->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid tree item" << (tree_item ? "bad index" : "NULL pointer");
 		return false;
 	}
 
-	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::Visibility));
+	QModelIndex visible_index = tree_item->index().sibling(tree_item->index().row(), this->property_id_to_column_idx(TreeItemPropertyID::Visibility));
 	this->tree_model->itemFromIndex(visible_index)->setCheckState(tree_item->is_visible() ? Qt::Checked : Qt::Unchecked);
 
 	return true;
@@ -414,7 +415,7 @@ bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 
 void TreeView::expand_tree_item(const TreeItem * tree_item)
 {
-	TreeIndex const & index = tree_item->index;
+	TreeIndex const & index = tree_item->index();
 
 	if (!index.isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index";
@@ -430,7 +431,7 @@ void TreeView::expand_tree_item(const TreeItem * tree_item)
 
 void TreeView::select_tree_item(const TreeItem * tree_item)
 {
-	TreeIndex const & index = tree_item->index;
+	TreeIndex const & index = tree_item->index();
 
 	if (!index.isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index";
@@ -445,7 +446,7 @@ void TreeView::select_tree_item(const TreeItem * tree_item)
 
 void TreeView::deselect_tree_item(const TreeItem * tree_item)
 {
-	this->selectionModel()->select(tree_item->index, QItemSelectionModel::Deselect);
+	this->selectionModel()->select(tree_item->index(), QItemSelectionModel::Deselect);
 }
 
 
@@ -462,7 +463,7 @@ void TreeView::deselect_tree_item(const TreeItem * tree_item)
 */
 sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeViewAttachMode attach_mode, const TreeItem * sibling_tree_item)
 {
-	if (!parent_tree_item->index.isValid()) {
+	if (!parent_tree_item->index().isValid()) {
 		/* Parent index must always be valid. The only
 		   possibility would be when we would push top level
 		   layer, but this has been already done in tree
@@ -483,7 +484,7 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 		break;
 
 	case TreeViewAttachMode::Back:
-		row = this->tree_model->itemFromIndex(parent_tree_item->index)->rowCount();
+		row = this->tree_model->itemFromIndex(parent_tree_item->index())->rowCount();
 		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
@@ -497,13 +498,13 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 			break;
 		}
 
-		if (!sibling_tree_item->index.isValid()) {
+		if (!sibling_tree_item->index().isValid()) {
 			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: invalid sibling";
 			result = sg_ret::err;
 			break;
 		}
 
-		row = sibling_tree_item->index.row() + (attach_mode == TreeViewAttachMode::Before ? 0 : 1);
+		row = sibling_tree_item->index().row() + (attach_mode == TreeViewAttachMode::Before ? 0 : 1);
 		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->get_name() << "next to sibling named" << sibling_tree_item->get_name() << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 		qDebug() << SG_PREFIX_I;
@@ -595,7 +596,7 @@ static int sort_tuple_compare(__attribute__((unused)) const void * a, __attribut
  */
 void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order)
 {
-	__attribute__((unused)) TreeIndex const & parent_index = parent_tree_item->index;
+	__attribute__((unused)) TreeIndex const & parent_index = parent_tree_item->index();
 
 	if (sort_order == TreeViewSortOrder::None) {
 		/* Nothing to do. */
@@ -656,14 +657,15 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 
 	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
 
-	if (new_parent_tree_item && new_parent_tree_item->index.isValid()) {
-		this->tree_model->itemFromIndex(new_parent_tree_item->index)->insertRow(row, items);
+	if (new_parent_tree_item && new_parent_tree_item->index().isValid()) {
+		this->tree_model->itemFromIndex(new_parent_tree_item->index())->insertRow(row, items);
 	} else {
 		/* Adding tree item just right under top-level item. */
 		this->tree_model->invisibleRootItem()->insertRow(row, items);
 	}
 
-	tree_item->index = QPersistentModelIndex(items.at(0)->index());
+	TreeIndex index = QPersistentModelIndex(items.at(0)->index());
+	tree_item->set_index(index);
 	tree_item->tree_view = this;
 	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
 
@@ -836,7 +838,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, __attribute__((unus
 
 sg_ret TreeView::get_item_position(const TreeItem & item, bool & is_first, bool & is_last)
 {
-	QModelIndex parent_index = item.index.parent();
+	QModelIndex parent_index = item.index().parent();
 	if (!parent_index.isValid()) {
 		qDebug() << SG_PREFIX_W << "Parent index is invalid. Function called for top level item?";
 		return sg_ret::err;
@@ -845,7 +847,7 @@ sg_ret TreeView::get_item_position(const TreeItem & item, bool & is_first, bool 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent_index);
 
 	const int n_rows = parent_item->rowCount();
-	const int row = item.index.row();
+	const int row = item.index().row();
 
 
 	is_first = false;
@@ -1283,4 +1285,76 @@ void SelectedTreeItems::print_draw_mode(const TreeItem & tree_item, bool parent_
 			qDebug() << SG_PREFIX_I << "Drawing tree item" << tree_item.get_name() << "as non-selected";
 		}
 	}
+}
+
+
+
+
+void TreeView::debug_print_tree(void) const
+{
+	QStandardItem * root = this->tree_model->invisibleRootItem();
+	int rows = root->rowCount();
+
+	fprintf(stderr, "============== tree view dump begin ==============\n");
+	fprintf(stderr, "root, %d children (rows)\n", rows);
+	int padding = 0;
+	this->debug_print_item_rec(root, 0, padding);
+	fprintf(stderr, "============== tree view dump end ==============\n");
+}
+
+
+
+
+void TreeView::debug_print_item_rec(const QStandardItem * item, int item_row_in_parents_frame, int padding) const
+{
+	int rows = item->rowCount();
+	for (int row = 0; row < rows; row++) {
+		QStandardItem * child_item = item->child(row, this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+		int child_item_rows = child_item->rowCount();
+		QVariant variant = child_item->data(RoleLayerData);
+		TreeItem * child_tree_item = variant.value<TreeItem *>();
+
+		fprintf(stderr, "%*s row %02d, name = '%s', %d children (rows)\n", padding, "", row, child_tree_item->get_name().toUtf8().constData(), child_item_rows);
+		this->debug_print_item_rec(child_item, row, padding + 4);
+	}
+}
+
+
+
+
+sg_ret TreeView::get_child_rows_count(const TreeIndex & parent, int & rows)
+{
+	if (parent.row() == -1 || parent.column() == -1) {
+		qDebug() << SG_PREFIX_W << "Querying for item with -1 row or column";
+		return sg_ret::err;
+	}
+
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent);
+	rows = parent_item->rowCount();
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TreeView::get_child_from_row(const TreeIndex & parent, int row, TreeItem ** child_tree_item)
+{
+	if (parent.row() == -1 || parent.column() == -1) {
+		qDebug() << SG_PREFIX_W << "Querying for item with -1 row or column";
+		return sg_ret::err;
+	}
+
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent);
+	const int rows = parent_item->rowCount();
+	if (row >= rows) {
+		qDebug() << SG_PREFIX_E << "Row" << row << "larger than rows count" << rows;
+		return sg_ret::err;
+	}
+
+
+	QStandardItem * child_item = parent_item->child(row, this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+	QVariant variant = child_item->data(RoleLayerData);
+	*child_tree_item = variant.value<TreeItem *>();
+
+	return sg_ret::ok;
 }

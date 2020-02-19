@@ -173,7 +173,7 @@ void AcquireWorker::finalize_after_success(void)
 		/* Target layer is already attached to tree, but its
 		   children (at least those freshly acquired) are not.
 		   This function will attach the new children to tree. */
-		target_trw->attach_children_to_tree();
+		target_trw->post_read_2();
 	}
 
 	target_trw->post_read(this->m_acquire_context.get_gisview(), true);

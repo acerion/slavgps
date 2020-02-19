@@ -99,6 +99,9 @@ namespace SlavGPS {
 		void select_and_expose_tree_item(const TreeItem * tree_item);
 		void deselect_tree_item(const TreeItem * tree_item);
 
+		sg_ret get_child_rows_count(const TreeIndex & parent, int & rows);
+		sg_ret get_child_from_row(const TreeIndex & parent, int row, TreeItem ** child_tree_item);
+
 		void expand_tree_item(const TreeItem * tree_item);
 
 		/* Move tree item up or down in list of its siblings. */
@@ -115,6 +118,9 @@ namespace SlavGPS {
 		sg_ret get_item_position(const TreeItem & item, bool & is_first, bool & is_last);
 
 		TreeModel * get_tree_model(void) const { return this->tree_model; }
+
+		void debug_print_tree(void) const;
+		void debug_print_item_rec(const QStandardItem * item, int item_row_in_parents_frame, int padding) const;
 
 	private slots:
 		void tree_item_selected_cb(void);

@@ -95,6 +95,7 @@ LayerTRWWaypoints::LayerTRWWaypoints(TreeView * ref_tree_view) : LayerTRWWaypoin
 
 LayerTRWWaypoints::~LayerTRWWaypoints()
 {
+	qDebug() << SG_PREFIX_I << "Destructor of" << this->get_name() << "called";
 	this->clear();
 }
 
@@ -543,7 +544,7 @@ Time LayerTRWWaypoints::get_earliest_timestamp(void) const
 
 
 
-sg_ret LayerTRWWaypoints::attach_children_to_tree(void)
+sg_ret LayerTRWWaypoints::post_read_2(void)
 {
 	for (auto iter = this->children.begin(); iter != this->children.end(); iter++) {
 		Waypoint * wp = *iter;

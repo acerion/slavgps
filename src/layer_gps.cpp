@@ -304,7 +304,7 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* No need to attach signal update handler
 			   here as this will always be performed later
-			   on in LayerGPS::attach_children_to_tree(). */
+			   on in LayerGPS::post_read_2(). */
 		}
 	}
 
@@ -572,7 +572,7 @@ LayerGPS::~LayerGPS()
 
 
 
-sg_ret LayerGPS::attach_children_to_tree(void)
+sg_ret LayerGPS::post_read_2(void)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "GPS Layer" << this->get_name() << "is not connected to tree";

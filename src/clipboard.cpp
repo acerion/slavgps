@@ -454,7 +454,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	unsigned char * data = NULL;
 	unsigned int len = 0;
 
-	if (!selected || !selected->index.isValid()) {
+	if (!selected || !selected->index().isValid()) {
 		return;
 	}
 

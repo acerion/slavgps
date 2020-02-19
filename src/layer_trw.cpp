@@ -1270,7 +1270,7 @@ void LayerTRW::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 
 
 
-sg_ret LayerTRW::attach_children_to_tree(void)
+sg_ret LayerTRW::post_read_2(void)
 {
 	qDebug() << SG_PREFIX_D;
 
@@ -3491,6 +3491,7 @@ LayerTRW::LayerTRW() : Layer()
 
 LayerTRW::~LayerTRW()
 {
+	qDebug() << SG_PREFIX_I << "Destructor of" << this->get_name() << "called";
 	delete this->painter;
 	delete this->layer_trw_importer;
 	delete this->layer_trw_filter;

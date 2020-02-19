@@ -973,7 +973,7 @@ void Waypoint::display_debug_info(const QString & reference) const
 	//qDebug() << SG_PREFIX_D << "      Parent layer UID =" << (parent_trw ? parent_trw->uid : "<no parent layer>");
 
 	qDebug() << SG_PREFIX_D << "            Is in tree =" << this->is_in_tree();
-	qDebug() << SG_PREFIX_D << "      Tree index valid =" << this->index.isValid();
+	qDebug() << SG_PREFIX_D << "      Tree index valid =" << this->index().isValid();
 	qDebug() << SG_PREFIX_D << "          Debug string =" << this->debug_string;
 
 	return;
@@ -987,7 +987,7 @@ void Waypoint::display_debug_info(const QString & reference) const
 */
 sg_ret Waypoint::update_tree_item_properties(void)
 {
-	if (!this->index.isValid()) {
+	if (!this->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index of tree item";
 		return sg_ret::err;
 	}
@@ -1018,7 +1018,7 @@ void Waypoint::self_assign_icon(void)
 sg_ret Waypoint::set_new_waypoint_icon(void)
 {
 	/* Update the tree view. */
-	if (!this->index.isValid()) {
+	if (!this->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
 		return sg_ret::err;
 	}
@@ -1038,7 +1038,7 @@ sg_ret Waypoint::set_new_waypoint_icon(void)
 sg_ret Waypoint::propagate_new_waypoint_name(void)
 {
 	/* Update the tree view. */
-	if (!this->index.isValid()) {
+	if (!this->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
 		return sg_ret::err;
 	}

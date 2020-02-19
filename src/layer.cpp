@@ -342,6 +342,7 @@ void Layer::unmarshall_params(Pickle & pickle)
 
 Layer::~Layer()
 {
+	qDebug() << SG_PREFIX_I << "Destructor of" << this->get_name() << "called";
 	delete right_click_menu;
 }
 

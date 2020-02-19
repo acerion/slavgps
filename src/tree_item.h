@@ -164,8 +164,8 @@ namespace SlavGPS {
 		~TreeItem();
 
 
-		TreeIndex const & get_index(void);
-		void set_index(TreeIndex & i);
+		TreeIndex const & index(void) const;
+		void set_index(TreeIndex & index);
 
 		sg_uid_t get_uid(void) const;
 
@@ -195,7 +195,7 @@ namespace SlavGPS {
 
 		   TODO_LATER: this should be a protected method.
 		*/
-		virtual sg_ret attach_children_to_tree(void);
+		virtual sg_ret post_read_2(void);
 
 
 		virtual sg_ret menu_add_standard_operations(QMenu & menu, const StandardMenuOperations & ops, bool in_tree_view);
@@ -351,7 +351,7 @@ namespace SlavGPS {
 
 
 	//protected:
-		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */
+
 		TreeView * tree_view = nullptr; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
 
 		bool editable = true; /* Is this item is editable? TODO_LATER: be more specific: is the data editable, or is the reference visible in the tree editable? */
@@ -369,6 +369,7 @@ namespace SlavGPS {
 		char debug_string[100] = { 0 };
 
 	protected:
+		TreeIndex m_index; /* Set in TreeView::attach_to_tree(). */
 		QString m_name;
 
 		sg_uid_t uid = SG_UID_INITIAL;

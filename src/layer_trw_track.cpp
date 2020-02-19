@@ -3375,7 +3375,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 */
 sg_ret Track::update_tree_item_properties(void)
 {
-	if (!this->index.isValid()) {
+	if (!this->index().isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid index of tree item";
 		return sg_ret::err;
 	}

@@ -281,8 +281,8 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	   sublayer is returned. */
 	Layer * selected_layer = selected_item->immediate_layer();
 	assert (selected_layer->tree_view);
-	assert (selected_layer->index.isValid());
-	TreeIndex selected_layer_index = selected_layer->index;
+	assert (selected_layer->index().isValid());
+	TreeIndex selected_layer_index = selected_layer->index();
 	qDebug() << SG_PREFIX_I << "Selected layer is named" << selected_layer->get_name();
 
 
@@ -478,11 +478,9 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	}
 
-#ifdef K_TODO_LATER
-	TreeItem * parent = selected_item->parent_tree_item();
+	TreeItem * parent_of_selected = selected_item->parent_tree_item();
 	/* true: confirm delete request. */
-	parent->delete_child_item(selected_item, true);
-#endif
+	parent_of_selected->delete_child_item(selected_item, true);
 
 	// TODO_LATER? this->activate_buttons_cb();
 }
@@ -678,7 +676,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 */
 Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerKind expected_layer_kind)
 {
-	TreeIndex const & item_index = tree_item->index;
+	TreeIndex const & item_index = tree_item->index();
         TreeIndex this_index = item_index;
 	TreeIndex parent_index;
 

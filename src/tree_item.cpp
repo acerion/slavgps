@@ -75,23 +75,24 @@ TreeItem::TreeItem()
 
 TreeItem::~TreeItem()
 {
+	qDebug() << SG_PREFIX_I << "Destructor of" << this->get_name() << "called";
 	g_selected.remove_from_set(this);
 }
 
 
 
 
-TreeIndex const & TreeItem::get_index(void)
+TreeIndex const & TreeItem::index(void) const
 {
-	return this->index;
+	return this->m_index;
 }
 
 
 
 
-void TreeItem::set_index(TreeIndex & i)
+void TreeItem::set_index(TreeIndex & index)
 {
-	this->index = i;
+	this->m_index = index;
 }
 
 
@@ -243,7 +244,7 @@ bool TreeItem::is_in_tree(void) const
 		return false;
 	}
 
-	if (!this->index.isValid()) {
+	if (!this->index().isValid()) {
 		return false;
 	}
 
@@ -508,7 +509,7 @@ void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 
 sg_ret TreeItem::click_in_tree(__attribute__((unused)) const QString & debug)
 {
-	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index);
+	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index());
 	if (NULL == item) {
 		qDebug() << SG_PREFIX_E << "Failed to get qstandarditem for" << this->m_name;
 		return sg_ret::err;
@@ -559,13 +560,13 @@ sg_ret TreeItem::attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMo
 	}
 
 	/* Attach child items. */
-	return this->attach_children_to_tree();
+	return this->post_read_2();
 }
 
 
 
 
-sg_ret TreeItem::attach_children_to_tree(void)
+sg_ret TreeItem::post_read_2(void)
 {
 	return sg_ret::ok;
 }

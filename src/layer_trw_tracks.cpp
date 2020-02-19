@@ -115,6 +115,7 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes, TreeView * ref_tree_view) : Layer
 
 LayerTRWTracks::~LayerTRWTracks()
 {
+	qDebug() << SG_PREFIX_I << "Destructor of" << this->get_name() << "called";
 	this->clear();
 }
 
@@ -513,7 +514,7 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 		trk->set_name(uniq_name);
 
 		/* TODO_LATER: do we really need to do this? Isn't the name in tree view auto-updated? */
-		if (trk->index.isValid()) {
+		if (trk->index().isValid()) {
 			this->tree_view->apply_tree_item_name(trk);
 			this->tree_view->sort_children(this, sort_order);
 		}
@@ -669,7 +670,7 @@ Time LayerTRWTracks::get_earliest_timestamp(void) const
 
 
 
-sg_ret LayerTRWTracks::attach_children_to_tree(void)
+sg_ret LayerTRWTracks::post_read_2(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
@@ -985,7 +986,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 
 	this->tree_view->detach_children(this);
 	this->children_list.sort(TreeItem::compare_name_ascending);
-	this->attach_children_to_tree();
+	this->post_read_2();
 
 	this->blockSignals(false);
 	this->tree_view->blockSignals(false);
