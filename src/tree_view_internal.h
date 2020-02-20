@@ -110,7 +110,7 @@ namespace SlavGPS {
 		void detach_tree_item(TreeItem * tree_item);
 		void detach_children(TreeItem * parent_tree_item);
 
-		void sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order);
+		sg_ret sort_children(TreeItem * parent_tree_item, TreeViewSortOrder sort_order);
 
 		bool is_editing_in_progress(void) const;
 
@@ -133,6 +133,8 @@ namespace SlavGPS {
 
 	private:
 		sg_ret insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row);
+
+		int column_id_to_column_idx(TreeItemPropertyID column_id);
 
 		bool editing = false;
 

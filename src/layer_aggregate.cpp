@@ -435,19 +435,7 @@ void LayerAggregate::children_visibility_off_cb(void) /* Slot. */
 
 void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 {
-	this->blockSignals(true);
-	this->tree_view->blockSignals(true);
-
-#ifdef K_TODO_LATER
-	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		this->tree_view->detach_tree_item(*iter);
-	}
-	this->children->sort(TreeItem::compare_name_ascending);
-#endif
-	this->post_read_2();
-
-	this->blockSignals(false);
-	this->tree_view->blockSignals(false);
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalAscending);
 }
 
 
@@ -455,19 +443,7 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 
 void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 {
-	this->blockSignals(true);
-	this->tree_view->blockSignals(true);
-
-#ifdef K_TODO_LATER
-	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		this->tree_view->detach_tree_item(*iter);
-	}
-	this->children->sort(TreeItem::compare_name_descending);
-#endif
-	this->post_read_2();
-
-	this->blockSignals(false);
-	this->tree_view->blockSignals(false);
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalDescending);
 }
 
 
@@ -476,9 +452,6 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 {
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
-#ifdef K_TODO_LATER
-	this->children->sort(Layer::compare_timestamp_ascending);
-#endif
 }
 
 
@@ -487,9 +460,6 @@ void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 {
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
-#ifdef K_TODO_LATER
-	this->children->sort(Layer::compare_timestamp_descending);
-#endif
 }
 
 
@@ -678,30 +648,22 @@ LayerAggregate::~LayerAggregate()
 
 void LayerAggregate::clear()
 {
-	TreeView * tree = this->tree_view;
-
-
 	int rows = 0;
 	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
+		qDebug() << SG_PREFIX_E << "Can't get count of children of Aggregate layer" << this->get_name() << this->index().row() << this->index().column();
 		return;
 	}
-	while (rows > 0) {
-		int row = rows - 1;
+
+	for (int row = rows - 1; row >= 0; row--) {
 		TreeItem * child = nullptr;
 		if (sg_ret::ok == this->tree_view->get_child_from_row(this->index(), row, &child)) {
 			Layer * layer = (Layer *) child;
 			if (layer->is_in_tree()) {
-				tree->detach_tree_item(layer);
+				this->tree_view->detach_tree_item(layer);
 			}
 			delete layer;
 		} else {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
-		}
-
-		if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-			qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-			return;
 		}
 	}
 

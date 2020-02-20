@@ -341,6 +341,11 @@ sg_ret TreeItem::show_context_menu(const QPoint & position, bool in_tree_view, Q
 
 
 
+/* FIXME: make this function as simple as possible, only returning a
+   vector of QStandardItem values.  Query for as few properties of the
+   item as possible: the item may not be attached to tree view, so
+   getting some of its properties may be invalid, time consuming, and
+   trigger error logs. */
 QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewFormat & view_format)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html

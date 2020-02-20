@@ -1012,6 +1012,20 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 		this->draw_tree_items(this->m_main_gisview);
 		this->set_dirty_flag(true);
 	}
+
+#if 0
+	/* Test code that creates lots of new layers and adds them to
+	   top level layer. Random names allow testing of sorting by
+	   name. */
+	for (int i = 0; i < 20000; i++) {
+		Layer * test_layer = new LayerAggregate();
+		test_layer->set_name(QString("%1").arg(rand()));
+		if (test_layer) {
+			this->m_layers_panel->tree_view()->attach_to_tree(this->m_layers_panel->top_layer(), test_layer);
+		}
+	}
+#endif
+
 }
 
 

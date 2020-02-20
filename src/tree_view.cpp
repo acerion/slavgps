@@ -526,6 +526,7 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 	this->apply_tree_item_timestamp(tree_item);
 	qDebug() << SG_PREFIX_I;
 	this->apply_tree_item_icon(tree_item);
+	qDebug() << SG_PREFIX_D << "New item" << tree_item->get_name() << "has index:" << tree_item->index().row() << tree_item->index().column();
 
 	qDebug() << SG_PREFIX_I;
 
@@ -594,54 +595,47 @@ static int sort_tuple_compare(__attribute__((unused)) const void * a, __attribut
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order)
+sg_ret TreeView::sort_children(TreeItem * item, TreeViewSortOrder sort_order)
 {
-	__attribute__((unused)) TreeIndex const & parent_index = parent_tree_item->index();
+	Qt::SortOrder qt_sort_order;
+	int column = 0;
 
-	if (sort_order == TreeViewSortOrder::None) {
-		/* Nothing to do. */
-		return;
+	switch (sort_order) {
+	case TreeViewSortOrder::AlphabeticalAscending:
+		qt_sort_order = Qt::AscendingOrder;
+		column = this->column_id_to_column_idx(TreeItemPropertyID::TheItem);
+		break;
+	case TreeViewSortOrder::AlphabeticalDescending:
+		qt_sort_order = Qt::DescendingOrder;
+		column = this->column_id_to_column_idx(TreeItemPropertyID::TheItem);
+		break;
+	case TreeViewSortOrder::DateAscending:
+		qt_sort_order = Qt::AscendingOrder;
+		column = this->column_id_to_column_idx(TreeItemPropertyID::Timestamp);
+		break;
+	case TreeViewSortOrder::DateDescending:
+		qt_sort_order = Qt::DescendingOrder;
+		column = this->column_id_to_column_idx(TreeItemPropertyID::Timestamp);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled sort order" << (int) sort_order;
+		return sg_ret::err;
+	}
+	if (column < 0) {
+		qDebug() << SG_PREFIX_E << "Failed to look up column";
+		return sg_ret::err;
 	}
 
-#ifdef K_FIXME_RESTORE
-	GtkTreeIter child;
-	if (!gtk_tree_model_iter_children(this->tree_model, &child, parent_index)) {
-		return;
+	const TreeIndex item_index = item->index();
+	if (item_index.row() == -1 || item_index.column() == -1) {
+		qDebug() << SG_PREFIX_W << "Querying for item with -1 row or column";
+		return sg_ret::err;
 	}
 
-	unsigned int length = gtk_tree_model_iter_n_children(this->tree_model, parent_index);
+	QStandardItem * standard_item = this->tree_model->itemFromIndex(item_index);
+	standard_item->sortChildren(column, qt_sort_order);
 
-	/* Create an array to store the position offsets. */
-	SortTuple *sort_array;
-	sort_array = (SortTuple *) malloc(length * sizeof (SortTuple));
-
-	unsigned int ii = 0;
-	do {
-		sort_array[ii].offset = ii;
-		gtk_tree_model_get(this->tree_model, &child, COLUMN_NAME, &(sort_array[ii].name), -1);
-		gtk_tree_model_get(this->tree_model, &child, COLUMN_TIMESTAMP, &(sort_array[ii].timestamp), -1);
-		ii++;
-	} while (gtk_tree_model_iter_next(this->tree_model, &child));
-
-	/* Sort list... */
-	g_qsort_with_data(sort_array,
-			  length,
-			  sizeof (SortTuple),
-			  sort_tuple_compare,
-			  sort_order);
-
-	/* As the sorted list contains the reordered position offsets, extract this and then apply to the tree view. */
-	int * positions = (int *) malloc(sizeof(int) * length);
-	for (ii = 0; ii < length; ii++) {
-		positions[ii] = sort_array[ii].offset;
-		free(sort_array[ii].name);
-	}
-	free(sort_array);
-
-	/* This is extremely fast compared to the old alphabetical insertion. */
-	gtk_tree_store_reorder(GTK_TREE_STORE(this->tree_model), parent_index, positions);
-	free(positions);
-#endif
+	return sg_ret::ok;
 }
 
 
@@ -649,11 +643,22 @@ void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrde
 
 sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeItem * tree_item, int row)
 {
+	qDebug() << SG_PREFIX_I << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv";
 	if (new_parent_tree_item) {
 		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->get_name() << "under parent tree item" << new_parent_tree_item->get_name();
 	} else {
 		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->get_name() << "on top of tree";
 	}
+
+	/* Some tree items may have been created in other thread
+	   (e.g. during acquire process). Signal connections for such
+	   objects will not work. Fix this by moving the object to
+	   main thread.
+	   http://doc.qt.io/archives/qt-4.8/threads-qobject.html */
+	tree_item->moveToThread(QApplication::instance()->thread());
+
+	qDebug() << SG_PREFIX_I;
+
 
 	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
 
@@ -669,16 +674,10 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 	tree_item->tree_view = this;
 	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
 
-	/* Some tree items may have been created in other thread
-	   (e.g. during acquire process). Signal connections for such
-	   objects will not work. Fix this by moving the object to
-	   main thread.
-	   http://doc.qt.io/archives/qt-4.8/threads-qobject.html */
-	tree_item->moveToThread(QApplication::instance()->thread());
 
 	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
 
-	qDebug() << SG_PREFIX_I;
+	qDebug() << SG_PREFIX_I << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^";
 
 	return sg_ret::ok;
 }
@@ -1325,7 +1324,7 @@ void TreeView::debug_print_item_rec(const QStandardItem * item, int item_row_in_
 sg_ret TreeView::get_child_rows_count(const TreeIndex & parent, int & rows)
 {
 	if (parent.row() == -1 || parent.column() == -1) {
-		qDebug() << SG_PREFIX_W << "Querying for item with -1 row or column";
+		qDebug() << SG_PREFIX_W << "Querying for item with -1 row:" << parent.row() << "or -1 column:" << parent.column();
 		return sg_ret::err;
 	}
 
@@ -1357,4 +1356,17 @@ sg_ret TreeView::get_child_from_row(const TreeIndex & parent, int row, TreeItem 
 	*child_tree_item = variant.value<TreeItem *>();
 
 	return sg_ret::ok;
+}
+
+
+
+
+int TreeView::column_id_to_column_idx(TreeItemPropertyID column_id)
+{
+	for (unsigned int i = 0; i < this->view_format.columns.size(); i++) {
+		if (this->view_format.columns[i].id == column_id) {
+			return (int) i;
+		}
+	}
+	return -1;
 }
