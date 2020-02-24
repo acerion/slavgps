@@ -99,7 +99,7 @@ namespace SlavGPS {
 		void select_and_expose_tree_item(const TreeItem * tree_item);
 		void deselect_tree_item(const TreeItem * tree_item);
 
-		sg_ret get_child_rows_count(const TreeIndex & parent, int & rows);
+		sg_ret get_child_rows_count(const TreeIndex & parent, int & rows) const;
 		sg_ret get_child_from_row(const TreeIndex & parent, int row, TreeItem ** child_tree_item);
 
 		void expand_tree_item(const TreeItem * tree_item);

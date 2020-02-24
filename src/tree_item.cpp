@@ -703,3 +703,29 @@ sg_ret TreeItem::delete_child_item(__attribute__((unused)) TreeItem * item, __at
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
 }
+
+
+
+
+int TreeItem::child_rows_count(void) const
+{
+	if (!this->is_in_tree()) {
+		/* Not necessarily an error. */
+		return -1;
+	}
+
+	int rows = 0;
+	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
+		return -1;
+	}
+
+	return rows;
+}
+
+
+
+
+sg_ret TreeItem::child_from_row(int row, TreeItem ** child_tree_item) const
+{
+	return this->tree_view->get_child_from_row(this->index(), row, child_tree_item);
+}

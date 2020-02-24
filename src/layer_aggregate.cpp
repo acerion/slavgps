@@ -83,15 +83,10 @@ void LayerAggregate::marshall(Pickle & pickle)
 {
 	this->marshall_params(pickle);
 
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return ;
-	}
-
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -289,15 +284,10 @@ void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_select
 {
 	__attribute__((unused)) Layer * trigger = gisview->get_trigger();
 
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return;
-	}
-
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			return;
 		}
@@ -331,15 +321,10 @@ void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_select
 
 void LayerAggregate::change_coord_mode(CoordMode mode)
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return;
-	}
-
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -353,20 +338,13 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return;
-	}
-	if (0 == rows) {
-		return;
-	}
-
+	unsigned int changed = 0;
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -375,10 +353,13 @@ void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 		layer->toggle_visible();
 		/* Also set checkbox on/off in tree view. */
 		this->tree_view->apply_tree_item_visibility(layer);
+		changed++;
 	}
 
-	/* Redraw as view may have changed. */
-	this->emit_tree_item_changed("Aggregate - child visible toggle");
+	if (changed) {
+		/* Redraw as view may have changed. */
+		this->emit_tree_item_changed("Aggregate - child visible toggle");
+	}
 }
 
 
@@ -386,20 +367,14 @@ void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 
 void LayerAggregate::children_visibility_set(bool on_off)
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return;
-	}
-	if (0 == rows) {
-		return;
-	}
+	unsigned int changed = 0;
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -408,10 +383,13 @@ void LayerAggregate::children_visibility_set(bool on_off)
 		layer->set_visible(on_off);
 		/* Also set checkbox on_off in tree view. */
 		this->tree_view->apply_tree_item_visibility(layer);
+		changed++;
 	}
 
-	/* Redraw as view may have changed. */
-	this->emit_tree_item_changed("Aggregate - child visible set");
+	if (changed) {
+		/* Redraw as view may have changed. */
+		this->emit_tree_item_changed("Aggregate - child visible set");
+	}
 }
 
 
@@ -532,17 +510,12 @@ sg_ret LayerAggregate::get_tree_items(std::list<TreeItem *> & list, const std::l
 {
 	sg_ret result = sg_ret::ok;
 
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return sg_ret::err;
-	}
-
 	/* For each layer keep adding the specified tree items
 	   to build a list of all of them. */
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -648,28 +621,28 @@ LayerAggregate::~LayerAggregate()
 
 void LayerAggregate::clear()
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't get count of children of Aggregate layer" << this->get_name() << this->index().row() << this->index().column();
-		return;
-	}
+	unsigned int deleted = 0;
 
+	const int rows = this->child_rows_count();
 	for (int row = rows - 1; row >= 0; row--) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok == this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok == this->child_from_row(row, &child)) {
 			Layer * layer = (Layer *) child;
 			if (layer->is_in_tree()) {
 				this->tree_view->detach_tree_item(layer);
 			}
 			delete layer;
+			deleted++;
 		} else {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 		}
 	}
 
 
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
+	if (deleted) {
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
+	}
 }
 
 
@@ -753,18 +726,14 @@ unsigned int LayerAggregate::layer_tool(LayerKind layer_kind, VikToolInterfaceFu
 
 Layer * LayerAggregate::get_top_visible_layer_of_type(LayerKind layer_kind)
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return nullptr;
-	}
-	if (0 == rows) {
+	const int rows = this->child_rows_count();
+	if (rows <= 0) {
 		return nullptr;
 	}
 
 	for (int row = rows - 1; row >= 0; row--) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -788,16 +757,11 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerKind layer_kind)
 
 void LayerAggregate::get_all_layers_of_kind(std::list<Layer const *> & layers, LayerKind expected_layer_kind, bool include_invisible) const
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return;
-	}
-
 	/* Where appropriate *don't* include non-visible layers. */
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -841,12 +805,6 @@ void LayerAggregate::get_all_layers_of_kind(std::list<Layer const *> & layers, L
 
 bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return false;
-	}
-
 	if (!this->is_visible()) {
 		/* In practice this condition will be checked for
 		   top-level aggregate layer only. For child aggregate
@@ -858,13 +816,12 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, GisViewport *
 
 	bool has_been_handled = false;
 
-
-
 	/* For each layer keep adding the specified tree items
 	   to build a list of all of them. */
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
@@ -967,22 +924,16 @@ sg_ret LayerAggregate::post_read_2(void)
 std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 {
 	std::list<Layer const *> result;
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
-		return result;
-	}
 
-
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->tree_view->get_child_from_row(this->index(), row, &child)) {
+		if (sg_ret::ok != this->child_from_row(row, &child)) {
 			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
 			continue;
 		}
 		result.push_back((Layer *) child);
 	}
-
 
 	qDebug() << SG_PREFIX_I << "Returning" << result.size() << "children";
 	return result;
@@ -993,13 +944,12 @@ std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 
 int LayerAggregate::get_child_layers_count(void) const
 {
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
+	const int rows = this->child_rows_count();
+	if (rows <= 0) {
 		return 0;
+	} else {
+		return rows;
 	}
-
-	return rows;
 }
 
 
@@ -1086,9 +1036,10 @@ QString LayerAggregate::get_tooltip(void) const
 	/* We could have a more complicated tooltip that numbers each
 	   type of layers, but for now a simple overall count should be enough. */
 
-	int rows = 0;
-	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		qDebug() << SG_PREFIX_E << "Can't draw children of Aggregate layer" << this->get_name();
+	int rows = this->child_rows_count();
+	if (rows < 0) {
+		qDebug() << SG_PREFIX_E << "Can't get count of children of Aggregate layer" << this->get_name();
+		rows = 0;
 	}
 
 	return tr("%n immediate child layer(s)", "", rows);

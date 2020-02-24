@@ -283,6 +283,29 @@ namespace SlavGPS {
 		virtual sg_ret delete_child_item(TreeItem * item, bool confirm_deleting);
 
 
+		/**
+		   @brief Get count of child items in underlying Qt Model, to which this tree item is attached
+
+		   I'm using "rows" in function's name to stress that
+		   this is about number of rows in the Model, not
+		   about e.g. number of Trackpoints (which aren't tree
+		   items) in TRW Track.
+
+		   Derived classes may choose to override the
+		   implementation if they are sure that they don't
+		   have any child rows. One tree item that may do this
+		   is Coordinates Layer.
+
+		   @return -1 on errors (e.g. tree item not attached to the model),
+		   @return 0 if no children items are present,
+		   @return positive number - number of child items
+		*/
+		virtual int child_rows_count(void) const;
+
+		/**
+		   @brief Get item's child from given row
+		*/
+		sg_ret child_from_row(int row, TreeItem ** child_tree_item) const;
 
 
 		/**

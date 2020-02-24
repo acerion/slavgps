@@ -1321,7 +1321,7 @@ void TreeView::debug_print_item_rec(const QStandardItem * item, int item_row_in_
 
 
 
-sg_ret TreeView::get_child_rows_count(const TreeIndex & parent, int & rows)
+sg_ret TreeView::get_child_rows_count(const TreeIndex & parent, int & rows) const
 {
 	if (parent.row() == -1 || parent.column() == -1) {
 		qDebug() << SG_PREFIX_W << "Querying for item with -1 row:" << parent.row() << "or -1 column:" << parent.column();
