@@ -1112,7 +1112,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	Pickle helper_pickle;
-
+#ifdef K_TODO_LATER
 	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
@@ -1138,6 +1138,7 @@ void LayerTRW::marshall(Pickle & pickle)
 		}
 		helper_pickle.clear();
 	}
+#endif
 }
 
 
@@ -2139,6 +2140,7 @@ void LayerTRW::deselect_current_trackpoint(Track * trk)
  */
 void LayerTRW::reset_waypoints()
 {
+#ifdef K_TODO_LATER
 	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		Waypoint * wp = *iter;
 		if (wp->symbol_name.isEmpty()) {
@@ -2151,6 +2153,7 @@ void LayerTRW::reset_waypoints()
 		const QString tmp_symbol_name = wp->symbol_name;
 		wp->set_symbol_name(tmp_symbol_name);
 	}
+#endif
 }
 
 
@@ -2438,9 +2441,11 @@ void LayerTRW::delete_all_waypoints()
 
 	this->waypoints.name_generator.reset();
 
+#ifdef K_TODO_LATER
 	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
 		this->tree_view->detach_tree_item(*iter);
 	}
+#endif
 	this->tree_view->detach_tree_item(&this->waypoints);
 	this->waypoints.set_visible(false); /* There is no such item in tree anymore. */
 
@@ -2633,7 +2638,7 @@ void LayerTRW::append_track_cb(void)
 
 	/* Get list of tracks for usage with list selection dialog function.
 	   The dialog function will present tracks in a manner allowing differentiating between tracks with the same name. */
-	const std::list<Track *> source_tracks = source_sublayer.get_sorted_by_name(track);
+	const std::list<Track *> source_tracks = source_sublayer.children_sorted_by_name(track);
 
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
@@ -2693,7 +2698,7 @@ void LayerTRW::append_other_cb(void)
 
 	/* Get list of names for usage with list selection dialog function.
 	   The dialog function will present tracks in a manner allowing differentiating between tracks with the same name. */
-	const std::list<Track *> source_tracks = source_sublayer.get_sorted_by_name(track);
+	const std::list<Track *> source_tracks = source_sublayer.children_sorted_by_name(track);
 
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
@@ -2867,7 +2872,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
-	const std::list<Track *> all_tracks = this->tracks.get_sorted_by_name();
+	const std::list<Track *> all_tracks = this->tracks.children_sorted_by_name();
 
 	if (all_tracks.empty()) {
 		Dialog::error(tr("No tracks found"), this->get_window());
@@ -2908,7 +2913,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
-	const std::list<Track *> all_routes = this->routes.get_sorted_by_name();
+	const std::list<Track *> all_routes = this->routes.children_sorted_by_name();
 
 	if (all_routes.empty()) {
 		Dialog::error(tr("No routes found"), this->get_window());
@@ -2946,7 +2951,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   uniquely identify and distinguish each item. */
 
 	/* Sort list alphabetically for better presentation. */
-	std::list<Waypoint *> all_waypoints = this->waypoints.get_sorted_by_name();
+	std::list<Waypoint *> all_waypoints = this->waypoints.children_sorted_by_name();
 	if (all_waypoints.empty()) {
 		Dialog::error(tr("No waypoints found"), this->get_window());
 		return;
@@ -3796,14 +3801,14 @@ sg_ret LayerTRW::has_child(const Track * trk, bool * result) const
 	}
 
 
-	Track * found = NULL;
+	TreeItem * found = nullptr;
 	if (trk->is_track()) {
 		found = this->tracks.find_child_by_uid(trk->get_uid());
 	} else {
 		found = this->routes.find_child_by_uid(trk->get_uid());
 	}
 
-	*result = (NULL != found);
+	*result = (nullptr != found);
 
 	return sg_ret::ok;
 }
@@ -3823,9 +3828,9 @@ sg_ret LayerTRW::has_child(const Waypoint * wp, bool * result) const
 	}
 
 
-	Waypoint * found = this->waypoints.find_child_by_uid(wp->get_uid());
+	TreeItem * found = this->waypoints.find_child_by_uid(wp->get_uid());
 
-	*result = NULL != found;
+	*result = nullptr != found;
 
 	return sg_ret::ok;
 }

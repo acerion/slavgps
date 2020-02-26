@@ -729,3 +729,50 @@ sg_ret TreeItem::child_from_row(int row, TreeItem ** child_tree_item) const
 {
 	return this->tree_view->get_child_from_row(this->index(), row, child_tree_item);
 }
+
+
+
+
+TreeItem * TreeItem::find_child_by_uid(sg_uid_t child_uid) const
+{
+	int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
+			continue;
+		}
+
+		if (child_uid == tree_item->get_uid()) {
+			return tree_item;
+		}
+	}
+
+	return nullptr;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-02-25
+*/
+TreeItem * TreeItem::find_child_by_name(const QString & name) const
+{
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
+			continue;
+		}
+		if (tree_item->get_name().isEmpty()) {
+			continue;
+		}
+		if (tree_item->get_name() == name) {
+			return tree_item;
+		}
+	}
+	return nullptr;
+
+}

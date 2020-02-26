@@ -156,9 +156,9 @@ namespace SlavGPS {
 		sg_ret add_route(Track * trk);
 		sg_ret add_waypoint(Waypoint * wp);
 
-		const std::list<Track *> & get_tracks(void) const { return this->tracks.children_list; };
-		const std::list<Track *> & get_routes(void) const { return this->routes.children_list; };
-		const std::list<Waypoint *> & get_waypoints(void) const { return this->waypoints.children; };
+		const std::list<Track *> & get_tracks_(void) const; //  { return this->tracks.children_list; };
+		const std::list<Track *> & get_routes_(void) const; // { return this->routes.children_list; };
+		const std::list<Waypoint *> & get_waypoints_(void) const; // { return this->waypoints.children; };
 
 		LayerTRWTracks & get_tracks_node(void) { return this->tracks; };
 		LayerTRWTracks & get_routes_node(void) { return this->routes; };

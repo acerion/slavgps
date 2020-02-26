@@ -197,40 +197,6 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(const QDate & search_da
 
 
 
-/*
- * ATM use a case sensitive find.
- * Finds the first one.
- */
-Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
-{
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Track * trk = *iter;
-		if (trk && !trk->get_name().isEmpty()) {
-			if (trk->get_name() == trk_name) {
-				return trk;
-			}
-		}
-	}
-	return NULL;
-}
-
-
-
-
-Track * LayerTRWTracks::find_child_by_uid(sg_uid_t child_uid) const
-{
-	auto iter = this->children_map.find(child_uid);
-	if (iter == this->children_map.end()) {
-		qDebug() << SG_PREFIX_W << "Can't find track with specified UID" << child_uid;
-		return NULL;
-	} else {
-		return iter->second;
-	}
-}
-
-
-
-
 void LayerTRWTracks::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
@@ -351,7 +317,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 
 
 
-std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) const
+std::list<Track *> LayerTRWTracks::children_sorted_by_name(const Track * exclude) const
 {
 	std::list<Track *> result;
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
@@ -384,7 +350,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 		return NULL;
 	}
 
-	const std::list<Track *> tracks = this->get_sorted_by_name();
+	const std::list<Track *> tracks = this->children_sorted_by_name();
 
 	for (auto iter = std::next(tracks.begin()); iter != tracks.end(); iter++) {
 		const QString this_one = (*iter)->get_name();
@@ -535,15 +501,15 @@ QString LayerTRWTracks::new_unique_element_name(const QString & existing_name)
 	int i = 2;
 	QString new_name = existing_name;
 
-	Track * existing_trk = NULL;
+	TreeItem * existing_trk = nullptr;
 	do {
-		existing_trk = this->find_track_by_name(new_name);
+		existing_trk = this->find_child_by_name(new_name);
 		/* If found a name already in use try adding 1 to it and we try again. */
 		if (existing_trk) {
 			new_name = QString("%1#%2").arg(existing_name).arg(i);
 			i++;
 		}
-	} while (existing_trk != NULL);
+	} while (existing_trk != nullptr);
 
 	return new_name;
 }

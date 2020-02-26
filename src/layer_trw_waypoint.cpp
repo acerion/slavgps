@@ -696,7 +696,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 		}
 	}
 
-	if (parent_trw->waypoints.find_waypoint_by_name(new_name)) {
+	if (parent_trw->waypoints.find_child_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
 		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::main_window())) {
 			return empty_string;

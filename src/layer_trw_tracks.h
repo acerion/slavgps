@@ -126,11 +126,7 @@ namespace SlavGPS {
 
 		sg_ret post_read_2(void) override;
 
-		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
-		Track * find_track_by_name(const QString & trk_name);
 		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
-
-		Track * find_child_by_uid(sg_uid_t uid) const;
 
 		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & existing_name);
@@ -153,7 +149,7 @@ namespace SlavGPS {
 		/* Get list of pointers to tracks, sorted by name.  If
 		   @param exclude is not NULL, track specified by
 		   @exclude won't be included in returned list. */
-		std::list<Track *> get_sorted_by_name(const Track * exclude = NULL) const;
+		std::list<Track *> children_sorted_by_name(const Track * exclude = NULL) const;
 
 		Track * find_track_with_duplicate_name(void) const;
 

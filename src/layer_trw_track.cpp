@@ -2684,7 +2684,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 		message = tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	}
 
-	if (tracks->find_track_by_name(new_name)) {
+	if (tracks->find_child_by_name(new_name)) {
 		/* An existing track/route has been found with the requested name. */
 		if (!Dialog::yes_or_no(message, ThisApp::main_window())) {
 			return empty_string;

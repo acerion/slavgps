@@ -152,7 +152,6 @@ namespace SlavGPS {
 		/* Uses a case sensitive find. Finds the first waypoint matching given name. */
 		Waypoint * find_waypoint_by_name(const QString & wp_name);
 
-		Waypoint * find_child_by_uid(sg_uid_t uid) const;
 
 		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
 
@@ -166,7 +165,7 @@ namespace SlavGPS {
 
 
 		void list_wp_uids(std::list<sg_uid_t> & list);
-		std::list<Waypoint *> get_sorted_by_name(void) const;
+		std::list<Waypoint *> children_sorted_by_name(void) const;
 		Waypoint * find_waypoint_with_duplicate_name(void) const;
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
@@ -260,8 +259,8 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
-		std::list<Waypoint *> children;
-		std::unordered_map<sg_uid_t, Waypoint *> children_map;
+		//std::list<Waypoint *> children;
+		//std::unordered_map<sg_uid_t, Waypoint *> children_map;
 	};
 
 

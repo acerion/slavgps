@@ -1355,6 +1355,10 @@ sg_ret TreeView::get_child_from_row(const TreeIndex & parent, int row, TreeItem 
 	QVariant variant = child_item->data(RoleLayerData);
 	*child_tree_item = variant.value<TreeItem *>();
 
+	if (nullptr == *child_tree_item) {
+		return sg_ret::err;
+	}
+
 	return sg_ret::ok;
 }
 

@@ -307,6 +307,19 @@ namespace SlavGPS {
 		*/
 		sg_ret child_from_row(int row, TreeItem ** child_tree_item) const;
 
+		/**
+		   @brief Find child tree item by its uid
+		*/
+		TreeItem * find_child_by_uid(sg_uid_t child_uid) const;
+
+		/**
+		   @brief Find first child tree item with given @param name
+
+		   Uses a case sensitive find. If there are more than
+		   one child with given @param name, the function
+		   ignores it.
+		*/
+		TreeItem * find_child_by_name(const QString & name) const;
 
 		/**
 		   @brief Get layer associated with this tree item
