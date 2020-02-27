@@ -100,16 +100,16 @@ void TreeItem::set_index(TreeIndex & index)
 
 bool TreeItem::toggle_visible(void)
 {
-	this->visible = !this->visible;
-	return this->visible;
+	this->m_visible = !this->m_visible;
+	return this->m_visible;
 }
 
 
 
 
-void TreeItem::set_visible(bool new_state)
+void TreeItem::set_visible(bool visible)
 {
-	this->visible = new_state;
+	this->m_visible = visible;
 }
 
 
@@ -125,7 +125,7 @@ bool TreeItem::is_visible_with_parents(void) const
 
 bool TreeItem::is_visible(void) const
 {
-	return this->visible;
+	return this->m_visible;
 }
 
 
@@ -486,7 +486,7 @@ bool TreeItem::move_child(__attribute__((unused)) TreeItem & child_tree_item, __
 */
 void TreeItem::emit_tree_item_changed(const QString & where)
 {
-	if (this->visible && this->tree_view) {
+	if (this->m_visible && this->tree_view) {
 		ThisApp::main_window()->set_redraw_trigger(this);
 		qDebug() << SG_PREFIX_SIGNAL << "Tree item" << this->m_name << "emits 'layer changed' signal @" << where;
 		emit this->tree_item_changed(this->m_name);
@@ -775,4 +775,51 @@ TreeItem * TreeItem::find_child_by_name(const QString & name) const
 	}
 	return nullptr;
 
+}
+
+
+
+
+int TreeItem::set_direct_children_only_visibility_flag(bool visible)
+{
+	int changed = 0;
+
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+
+		tree_item->set_visible(visible);
+		this->tree_view->apply_tree_item_visibility(tree_item);
+		changed++;
+	}
+
+	return changed;
+}
+
+
+
+
+int TreeItem::toggle_direct_children_only_visibility_flag(void)
+{
+	int changed = 0;
+
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+
+		tree_item->toggle_visible();
+		/* Also set checkbox on/off in tree view. */
+		this->tree_view->apply_tree_item_visibility(tree_item);
+		changed++;
+	}
+
+	return changed;
 }

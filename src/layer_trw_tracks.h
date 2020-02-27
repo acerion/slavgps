@@ -126,7 +126,7 @@ namespace SlavGPS {
 
 		sg_ret post_read_2(void) override;
 
-		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
+		std::list<TreeItem *> find_children_by_date(const QDate & search_date) const;
 
 		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & existing_name);
@@ -135,6 +135,16 @@ namespace SlavGPS {
 
 
 		Time get_earliest_timestamp(void) const;
+
+		/**
+		   @brief Get total duration of all tracks or routes
+		*/
+		Distance total_distance(void) const;
+
+		/**
+		   @brief Get total duration and earliest and latest time stamp from all tracks
+		*/
+		void total_time_information(Duration & duration, Time & start_time, Time & end_time) const;
 
 
 		SGObjectTypeID get_type_id(void) const override;
@@ -153,9 +163,6 @@ namespace SlavGPS {
 
 		Track * find_track_with_duplicate_name(void) const;
 
-
-		void set_items_visibility(bool on_off);
-		void toggle_items_visibility();
 
 		/* Get tree items from this object. For this object
 		   this would be Track or Route tree items. */
@@ -187,7 +194,7 @@ namespace SlavGPS {
 		void clear(void);
 
 		/* Similar to C++ container's ::size() method. */
-		size_t size(void) const;
+		int size(void) const;
 
 		/* Similar to C++ container's ::empty() method. */
 		bool empty(void) const;
@@ -209,9 +216,9 @@ namespace SlavGPS {
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);
-		void items_visibility_on_cb(void);
-		void items_visibility_off_cb(void);
-		void items_visibility_toggle_cb(void);
+		void children_visibility_on_cb(void);
+		void children_visibility_off_cb(void);
+		void children_visibility_toggle_cb(void);
 
 		/**
 		   @brief Display list of Track or Route objects,
@@ -229,9 +236,6 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
-
-		std::list<Track *> children_list;
-		TracksMap children_map;
 
 		void init_item(void);
 	};

@@ -547,14 +547,14 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		break;
 
 	case WpPropertiesDialog::Action::NextPoint:
-		if (sg_ret::ok != parent_trw->get_waypoints_node().move_selection_to_next_child()) {
+		if (sg_ret::ok != parent_trw->waypoints_node().move_selection_to_next_child()) {
 			break;
 		}
 		parent_trw->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
 	case WpPropertiesDialog::Action::PreviousPoint:
-		if (sg_ret::ok != parent_trw->get_waypoints_node().move_selection_to_previous_child()) {
+		if (sg_ret::ok != parent_trw->waypoints_node().move_selection_to_previous_child()) {
 			break;
 		}
 		parent_trw->emit_tree_item_changed("Indicating selecting previous waypoint in layer");

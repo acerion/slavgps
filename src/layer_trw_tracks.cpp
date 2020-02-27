@@ -154,12 +154,17 @@ QString LayerTRWTracks::get_tooltip(void) const
 {
 	QString tooltip;
 
+	int rows = this->child_rows_count();
+	if (rows < 0) {
+		rows = 0;
+	}
+
 	if (this->get_type_id() == LayerTRWRoutes::type_id()) {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Routes: %1").arg(this->children_list.size());
+		tooltip = tr("Routes: %1").arg(rows);
 	} else {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Tracks: %1").arg(this->children_list.size());
+		tooltip = tr("Tracks: %1").arg(rows);
 	}
 
 	return tooltip;
@@ -168,15 +173,21 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 
 
-std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(const QDate & search_date) const
+std::list<TreeItem *> LayerTRWTracks::find_children_by_date(const QDate & search_date) const
 {
 	const QString search_date_string = search_date.toString("yyyy-MM-dd");
 	qDebug() << SG_PREFIX_I << "Search date =" << search_date << search_date_string;
 
 	std::list<TreeItem *> result;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Track * trk = *iter;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
 
 		if (trk->empty()) {
 			continue;
@@ -201,9 +212,17 @@ void LayerTRWTracks::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->recalculate_bbox();
-		const LatLonBBox trk_bbox = (*iter)->get_bbox();
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
+
+		trk->recalculate_bbox();
+		const LatLonBBox trk_bbox = trk->get_bbox();
 		this->bbox.expand_with_bbox(trk_bbox);
 	}
 
@@ -215,8 +234,14 @@ void LayerTRWTracks::recalculate_bbox(void)
 
 void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		list.push_back((*iter)->get_uid());
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		list.push_back(tree_item->get_uid());
 	}
 }
 
@@ -227,8 +252,14 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 {
 	std::list<Track *> result;
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Track * trk = *iter;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
 
 		if (trk == exclude) {
 			continue;
@@ -280,8 +311,14 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 	}
 
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Track * trk = *iter;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
 
 		/* Skip self. */
 		if (TreeItem::the_same_object(trk, main_trk)) {
@@ -308,7 +345,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 			continue;
 		}
 
-		result.push_front(*iter);
+		result.push_front(trk);
 	}
 
 	return result; /* I hope that Return Value Optimization works. */
@@ -320,12 +357,20 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 std::list<Track *> LayerTRWTracks::children_sorted_by_name(const Track * exclude) const
 {
 	std::list<Track *> result;
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		/* Skip given track. */
-		if (exclude && *iter == exclude) {
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
 			continue;
 		}
-		result.push_back(*iter);
+		Track * trk = (Track *) tree_item;
+
+		/* Skip given track. */
+		if (nullptr != exclude && TreeItem::the_same_object(trk, exclude)) {
+			continue;
+		}
+		result.push_back(trk);
 	}
 
 	/* Sort list of names alphabetically. */
@@ -346,8 +391,9 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->children_list.size() <= 1) {
-		return NULL;
+	const int rows = this->child_rows_count();
+	if (rows <= 1) {
+		return nullptr;
 	}
 
 	const std::list<Track *> tracks = this->children_sorted_by_name();
@@ -367,32 +413,17 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 
 
-void LayerTRWTracks::set_items_visibility(bool on_off)
-{
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->set_visible(on_off);
-		this->tree_view->apply_tree_item_visibility(*iter);
-	}
-}
-
-
-
-
-void LayerTRWTracks::toggle_items_visibility(void)
-{
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->toggle_visible();
-		this->tree_view->apply_tree_item_visibility(*iter);
-	}
-}
-
-
-
-
 sg_ret LayerTRWTracks::get_tree_items(std::list<TreeItem *> & list) const
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		list.push_back(*iter);
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+
+		list.push_back(tree_item);
 	}
 
 	return sg_ret::ok;
@@ -403,9 +434,14 @@ sg_ret LayerTRWTracks::get_tree_items(std::list<TreeItem *> & list) const
 
 void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 {
-	for (auto track_iter = this->children_list.begin(); track_iter != this->children_list.end(); track_iter++) {
-
-		Track * trk = *track_iter;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
 
 		if (!trk->is_visible()) {
 			continue;
@@ -433,7 +469,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 				/* Was the old trackpoint we already found closer than this one? */
 				|| dist_x + dist_y < std::fabs(tp_pos.x() - search.closest_pos.x()) + std::fabs(tp_pos.y() - search.closest_pos.y()))) {
 
-				search.closest_track = *track_iter;
+				search.closest_track = trk;
 				search.closest_tp = *iter;
 				search.closest_tp_iter = iter;
 				search.closest_pos = tp_pos;
@@ -447,8 +483,16 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->change_coord_mode(dest_mode);
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
+
+		trk->change_coord_mode(dest_mode);
 	}
 }
 
@@ -460,7 +504,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 */
 void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->children_list.empty()) {
+	if (this->empty()) {
 		qDebug() << SG_PREFIX_E << "Called for empty tracks/routes set";
 		return;
 	}
@@ -543,9 +587,14 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	if (this->get_type_id() == LayerTRWTracks::type_id()) {
 
 		int color_i = 0;
-		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-
-			Track * trk = *iter;
+		const int rows = this->child_rows_count();
+		for (int row = 0; row < rows; row++) {
+			TreeItem * tree_item = nullptr;
+			if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+				qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+				continue;
+			}
+			Track * trk = (Track *) tree_item;
 
 			/* Tracks get a random spread of colors if not already assigned. */
 			if (!trk->has_color) {
@@ -568,9 +617,15 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	} else { /* Routes. */
 
 		bool use_dark = false;
-		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		const int rows = this->child_rows_count();
+		for (int row = 0; row < rows; row++) {
 
-			Track * route = *iter;
+			TreeItem * tree_item = nullptr;
+			if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+				qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+				continue;
+			}
+			Track * route = (Track *) tree_item;
 
 			/* Routes get an intermix of reds. */
 			if (!route->has_color) {
@@ -638,8 +693,15 @@ Time LayerTRWTracks::get_earliest_timestamp(void) const
 
 sg_ret LayerTRWTracks::post_read_2(void)
 {
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Track * trk = *iter;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
 
 		if (trk->is_in_tree()) {
 			continue;
@@ -691,13 +753,13 @@ void LayerTRWTracks::sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu &
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), tr("&Hide All Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(tr("&Toggle Visibility of All Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_toggle_cb()));
 	}
 
 	qa = menu.addAction(tr("&Tracks List..."));
@@ -745,13 +807,13 @@ void LayerTRWTracks::sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu &
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Routes"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-delete"), tr("&Hide All Routes"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), tr("&Toggle Visibility of All Routes"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_toggle_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Routes List..."));
@@ -815,10 +877,9 @@ sg_ret LayerTRWTracks::menu_add_type_specific_operations(QMenu & menu, __attribu
 */
 void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	const unsigned int n_items = this->children_list.size();
 	this->recalculate_bbox();
 
-	if (n_items > 0) {
+	if (!this->empty()) {
 		ThisApp::main_gisview()->set_bbox(this->get_bbox());
 		ThisApp::main_gisview()->request_redraw("Re-align viewport to show all tracks or routes");
 	}
@@ -827,31 +888,37 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 
 
 
-void LayerTRWTracks::items_visibility_on_cb(void) /* Slot. */
+void LayerTRWTracks::children_visibility_on_cb(void) /* Slot. */
 {
-	this->set_items_visibility(true);
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Tracks - items visibility on");
+	const int changed = this->set_direct_children_only_visibility_flag(true);
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW tracks after visibility was turned on");
+	}
 }
 
 
 
 
-void LayerTRWTracks::items_visibility_off_cb(void) /* Slot. */
+void LayerTRWTracks::children_visibility_off_cb(void) /* Slot. */
 {
-	this->set_items_visibility(false);
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Tracks - items visibility off");
+	const int changed = this->set_direct_children_only_visibility_flag(false);
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW tracks after visibility was turned off");
+	}
 }
 
 
 
 
-void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
+void LayerTRWTracks::children_visibility_toggle_cb(void) /* Slot. */
 {
-	this->toggle_items_visibility();
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Tracks - items visibility toggle");
+	const int changed = this->toggle_direct_children_only_visibility_flag();
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW tracks after visibility was toggled");
+	}
 }
 
 
@@ -913,7 +980,7 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 		return;
 	}
 
-	if (this->children_list.empty()) {
+	if (this->empty()) {
 		return;
 	}
 
@@ -924,8 +991,15 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 #ifdef TODO_MAYBE
 	if (this->bbox.intersects_with(viewport->get_bbox())) {
 #endif
-		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
+		const int rows = this->child_rows_count();
+		for (int row = 0; row < rows; row++) {
+			TreeItem * tree_item = nullptr;
+			if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+				qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+				continue;
+			}
+
+			tree_item->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
 #ifdef TODO_MAYBE
 	}
@@ -947,15 +1021,8 @@ sg_ret LayerTRWTracks::paste_child_tree_item_cb(void)
 
 void LayerTRWTracks::sort_order_a2z_cb(void)
 {
-	this->blockSignals(true);
-	this->tree_view->blockSignals(true);
-
-	this->tree_view->detach_children(this);
-	this->children_list.sort(TreeItem::compare_name_ascending);
-	this->post_read_2();
-
-	this->blockSignals(false);
-	this->tree_view->blockSignals(false);
+	this->owner_trw_layer()->track_sort_order = TreeViewSortOrder::AlphabeticalDescending;
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalAscending);
 }
 
 
@@ -1001,21 +1068,33 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, GisViewport * new_gisview
 
 void LayerTRWTracks::clear(void)
 {
-	this->children_map.clear();
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
 
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		delete *iter;
+		this->tree_view->detach_tree_item(tree_item);
+		delete tree_item;
 	}
-
+#ifdef K_TODO_LATER
 	this->children_list.clear();
+#endif
 }
 
 
 
 
-size_t LayerTRWTracks::size(void) const
+int LayerTRWTracks::size(void) const
 {
-	return this->children_list.size();
+	int rows = this->child_rows_count();
+	if (rows < 0) {
+		rows = 0;
+	}
+
+	return rows;
 }
 
 
@@ -1023,7 +1102,12 @@ size_t LayerTRWTracks::size(void) const
 
 bool LayerTRWTracks::empty(void) const
 {
-	return this->children_list.empty();
+	const int rows = this->child_rows_count();
+	if (rows <= 0) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 
@@ -1035,8 +1119,9 @@ sg_ret LayerTRWTracks::attach_to_container(Track * trk)
 		qDebug() << SG_PREFIX_E << "Failed to set parent of track";
 		return sg_ret::err;
 	}
-	this->children_map.insert({{ trk->get_uid(), trk }});
+#ifdef K_TODO_LATER
 	this->children_list.push_back(trk);
+#endif
 
 	return sg_ret::ok;
 }
@@ -1073,18 +1158,25 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 
 	parent_trw->deselect_current_trackpoint(trk);
 
-	this->children_map.erase(trk->get_uid()); /* Erase by key. */
-
-
+#ifdef K_TODO_LATER
 	TreeItemIdentityPredicate pred(trk);
 	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
 	if (iter != this->children_list.end()) {
 		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
 		this->children_list.erase(iter);
 	}
+#endif
 
 #if 0   /* Old code. */
-	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		Track * trk = (Track *) tree_item;
+
 		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->get_name() << "and" << trk->get_name();
 		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);
@@ -1137,9 +1229,12 @@ bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 
 	Track * trk = (Track *) &child_tree_item;
 
+	bool result = false;
+#ifdef K_TODO_LATER
 	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
 	const bool result = move_tree_item_child_algo(this->children_list, trk, up);
 	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
+#endif
 
 	/* In this function we only move children in container of tree items.
 	   Movement in tree widget is handled elsewhere. */
@@ -1159,4 +1254,64 @@ bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
 LayerTRW * LayerTRWTracks::owner_trw_layer(void) const
 {
 	return (LayerTRW *) this->owner_tree_item();
+}
+
+
+
+
+Distance LayerTRWTracks::total_distance(void) const
+{
+	Distance result;
+
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		const Track * trk = (const Track *) tree_item;
+
+		result += trk->get_length();
+	}
+
+	return result;
+}
+
+
+
+
+void LayerTRWTracks::total_time_information(Duration & duration, Time & start_time, Time & end_time) const
+{
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		const Track * trk = (const Track *) tree_item;
+
+		Time ts_first;
+		Time ts_last;
+		if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
+
+			/* Update the earliest / the latest timestamps
+			   (initialize if necessary). */
+			if ((!start_time.is_valid()) || ts_first < start_time) {
+				start_time = ts_first;
+			}
+
+			if ((!end_time.is_valid()) || ts_last > end_time) {
+				end_time = ts_last;
+			}
+
+			/* Keep track of total time.
+			   There maybe gaps within a track (eg segments)
+			   but this should be generally good enough for a simple indicator. */
+			duration += Duration::get_abs_duration(ts_last, ts_first);
+		}
+	}
+
+	return;
 }

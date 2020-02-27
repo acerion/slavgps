@@ -109,9 +109,6 @@ namespace SlavGPS {
 		/* Child items that have been read from some source, but aren't attached to tree yet. */
 		std::list<Layer *> non_attached_children;
 
-	private:
-		void children_visibility_set(bool visible);
-
 	public slots:
 		/* Aggregate Layer can contain other layers and should be notified about changes in them. */
 		void child_tree_item_changed_cb(const QString & child_tree_item_name);

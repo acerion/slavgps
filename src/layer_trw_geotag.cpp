@@ -477,7 +477,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 			bool updated_existing_waypoint = false;
 
 			if (this->values.overwrite_waypoints) {
-				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(new_wp_name);
+				Waypoint * current_wp = this->trw->waypoints_node().find_waypoint_by_name(new_wp_name);
 				if (current_wp) {
 					/* Existing wp found, so set new position, comment and image. */
 
@@ -545,7 +545,7 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 				/* Update existing WP. */
 				/* Find a WP with current name. */
 				QString wp_name = file_base_name(file_full_path);
-				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(wp_name);
+				Waypoint * wp2 = this->trw->waypoints_node().find_waypoint_by_name(wp_name);
 				if (wp2) {
 					/* Found, so set new position, image and (below) a comment. */
 
@@ -635,7 +635,7 @@ void GeotagJob::run(void)
 
 	if (this->redraw) {
 		if (this->trw) {
-			this->trw->get_waypoints_node().recalculate_bbox();
+			this->trw->waypoints_node().recalculate_bbox();
 			/* Ensure any new images get show. */
 			this->trw->generate_missing_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */

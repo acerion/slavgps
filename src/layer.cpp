@@ -309,7 +309,7 @@ Layer * Layer::unmarshall(Pickle & pickle, GisViewport * gisview)
 void Layer::marshall_params(Pickle & pickle)
 {
 	/* Store the internal properties first. TODO_LATER: why we put these members here, in "marshall params"? */
-	pickle.put_raw_object((char *) &this->visible, sizeof (this->visible));
+	pickle.put_raw_object((char *) &this->m_visible, sizeof (this->m_visible));
 	pickle.put_string(this->get_name());
 
 	/* Now the actual parameters. */
@@ -327,7 +327,7 @@ void Layer::unmarshall_params(Pickle & pickle)
 {
 	__attribute__((unused)) const pickle_size_t params_size = pickle.take_size();
 
-	pickle.take_object(&this->visible);
+	pickle.take_object(&this->m_visible);
 	this->set_name(pickle.take_string());
 
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {

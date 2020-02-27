@@ -586,32 +586,10 @@ std::list<TreeItem *> LayerTRW::get_items_by_date(const QDate & search_date) con
 
 	/* Routes don't have date, so we don't search for routes by date. */
 
-	result.splice(result.end(), this->get_tracks_by_date(search_date)); /* Move items from one list to another. */
-	result.splice(result.end(), this->get_waypoints_by_date(search_date)); /* Move items from one list to another. */
+	result.splice(result.end(), this->tracks_node().find_children_by_date(search_date)); /* Move items from one list to another. */
+	result.splice(result.end(), this->waypoints_node().find_children_by_date(search_date)); /* Move items from one list to another. */
 
 	return result;
-}
-
-
-
-
-/**
-   Return list of tracks meeting date criterion
-*/
-std::list<TreeItem *> LayerTRW::get_tracks_by_date(const QDate & search_date) const
-{
-	return this->tracks.get_tracks_by_date(search_date);
-}
-
-
-
-
-/**
-   Return list of waypoints meeting date criterion
-*/
-std::list<TreeItem *> LayerTRW::get_waypoints_by_date(const QDate & search_date) const
-{
-	return this->waypoints.get_waypoints_by_date(search_date);
 }
 
 
@@ -1200,7 +1178,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, original_data_size);
 
 	// Not stored anywhere else so need to regenerate
-	trw->get_waypoints_node().recalculate_bbox();
+	trw->waypoints_node().recalculate_bbox();
 
 	return trw;
 }
@@ -1321,12 +1299,7 @@ int LayerTRW::get_track_thickness()
 */
 Distance LayerTRW::get_routes_tooltip_data(void) const
 {
-	Distance result;
-	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		result += (*iter)->get_length();
-	}
-
-	return result;
+	return this->routes_node().total_distance();
 }
 
 
@@ -1339,32 +1312,8 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 {
 	TracksTooltipData result;
 
-	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
-
-		Track * trk = *iter;
-
-		result.length += trk->get_length();
-
-		Time ts_first;
-		Time ts_last;
-		if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
-
-			/* Update the earliest / the latest timestamps
-			   (initialize if necessary). */
-			if ((!result.start_time.is_valid()) || ts_first < result.start_time) {
-				result.start_time = ts_first;
-			}
-
-			if ((!result.end_time.is_valid()) || ts_last > result.end_time) {
-				result.end_time = ts_last;
-			}
-
-			/* Keep track of total time.
-			   There maybe gaps within a track (eg segments)
-			   but this should be generally good enough for a simple indicator. */
-			result.duration += Duration::get_abs_duration(ts_last, ts_first);
-		}
-	}
+	this->tracks_node().total_time_information(result.duration, result.start_time, result.end_time);
+	result.length = this->tracks_node().total_distance();
 
 	return result;
 }
@@ -2385,9 +2334,7 @@ void LayerTRW::delete_all_routes()
 		this->selected_track_reset();
 	}
 
-	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		this->tree_view->detach_tree_item(*iter);
-	}
+	this->routes.clear();
 	this->tree_view->detach_tree_item(&this->routes);
 	this->routes.set_visible(false); /* There is no such item in tree anymore. */
 
@@ -2396,8 +2343,6 @@ void LayerTRW::delete_all_routes()
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
 	g_selected.clear();
-
-	this->routes.clear();
 
 	this->emit_tree_item_changed("TRW - delete all tracks");
 }
@@ -2414,9 +2359,7 @@ void LayerTRW::delete_all_tracks()
 		this->selected_track_reset();
 	}
 
-	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
-		this->tree_view->detach_tree_item(*iter);
-	}
+	this->tracks.clear();
 	this->tree_view->detach_tree_item(&this->tracks);
 	this->tracks.set_visible(false); /* There is no such item in tree anymore. */
 
@@ -2425,8 +2368,6 @@ void LayerTRW::delete_all_tracks()
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
 	g_selected.clear();
-
-	this->tracks.clear();
 
 	this->emit_tree_item_changed("TRW - delete all routes");
 }
@@ -2441,11 +2382,7 @@ void LayerTRW::delete_all_waypoints()
 
 	this->waypoints.name_generator.reset();
 
-#ifdef K_TODO_LATER
-	for (auto iter = this->waypoints.children.begin(); iter != this->waypoints.children.end(); iter++) {
-		this->tree_view->detach_tree_item(*iter);
-	}
-#endif
+	this->waypoints.clear();
 	this->tree_view->detach_tree_item(&this->waypoints);
 	this->waypoints.set_visible(false); /* There is no such item in tree anymore. */
 
@@ -2454,8 +2391,6 @@ void LayerTRW::delete_all_waypoints()
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
 	g_selected.clear();
-
-	this->waypoints.clear();
 
 	this->emit_tree_item_changed("TRW - delete all waypoints");
 }

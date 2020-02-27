@@ -129,13 +129,13 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 SaveStatus LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_full_path)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
-	if (this->get_tracks_node().size()) {
+	if (!this->tracks_node().empty()) {
 		mode.tracks_write = 1;
 	}
-	if (this->get_routes_node().size()) {
+	if (!this->routes_node().empty()) {
 		mode.routes_write = 1;
 	}
-	if (this->get_waypoints_node().size()) {
+	if (!this->waypoints_node().empty()) {
 		mode.waypoints_write = 1;
 	}
 

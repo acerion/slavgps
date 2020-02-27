@@ -160,9 +160,12 @@ namespace SlavGPS {
 		const std::list<Track *> & get_routes_(void) const; // { return this->routes.children_list; };
 		const std::list<Waypoint *> & get_waypoints_(void) const; // { return this->waypoints.children; };
 
-		LayerTRWTracks & get_tracks_node(void) { return this->tracks; };
-		LayerTRWTracks & get_routes_node(void) { return this->routes; };
-		LayerTRWWaypoints & get_waypoints_node(void) { return this->waypoints; };
+		const LayerTRWTracks & tracks_node(void) const { return this->tracks; };
+		const LayerTRWTracks & routes_node(void) const { return this->routes; };
+		const LayerTRWWaypoints & waypoints_node(void) const { return this->waypoints; };
+		LayerTRWTracks & tracks_node(void) { return this->tracks; };
+		LayerTRWTracks & routes_node(void) { return this->routes; };
+		LayerTRWWaypoints & waypoints_node(void) { return this->waypoints; };
 
 		LayerTRWTracks tracks{false}; /* Sub-node, under which all layer's tracks are shown. */
 		LayerTRWTracks routes{true};  /* Sub-node, under which all layer's routes are shown. */
@@ -176,8 +179,6 @@ namespace SlavGPS {
 		bool is_empty(void) const;
 
 
-		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
-		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
 		std::list<TreeItem *> get_items_by_date(const QDate & search_date) const;
 
 		sg_ret has_child(const Track * trk, bool * result) const;

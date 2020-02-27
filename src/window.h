@@ -39,10 +39,8 @@
 
 
 #include "file.h"
+#include "tree_item.h"
 #include "layer_trw_import.h"
-#include "layer_trw_track.h"
-//#include "layer_trw_waypoints.h"
-#include "layer_trw_tracks.h"
 #include "measurements.h"
 #include "viewport.h"
 

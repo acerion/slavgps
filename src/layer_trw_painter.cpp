@@ -1112,7 +1112,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, GisViewport * a_gisview, bool
 		return;
 	}
 
-	if (this->trw->get_waypoints_node().get_bbox().intersects_with(a_gisview->get_bbox())) {
+	if (this->trw->waypoints_node().get_bbox().intersects_with(a_gisview->get_bbox())) {
 		this->draw_waypoint_sub(wp, do_highlight);
 	}
 }

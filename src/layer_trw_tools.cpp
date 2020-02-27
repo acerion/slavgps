@@ -325,12 +325,12 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const LatLonBBox & viewport_bbox, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* First try for tracks. */
-	const bool tracks_visible = this->get_tracks_node().is_visible();
+	const bool tracks_visible = this->tracks_node().is_visible();
 	const bool tracks_inside = this->tracks.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
 	if (tracks_visible && tracks_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_tracks_node(), select_tool)) {
+		if (true == this->try_clicking_trackpoint(ev, tp_search, this->tracks_node(), select_tool)) {
 			this->emit_tree_item_changed("TRW layer changed after selecting tp in track with 'click'");
 			return true;
 		}
@@ -343,7 +343,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
 	if (routes_visible && routes_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_routes_node(), select_tool)) {
+		if (true == this->try_clicking_trackpoint(ev, tp_search, this->routes_node(), select_tool)) {
 			this->emit_tree_item_changed("TRW layer changed after selecting tp in route with 'click'");
 			return true;
 		}
@@ -1330,7 +1330,7 @@ LayerTool::Status LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMo
 	const Coord coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	qDebug() << SG_PREFIX_I << "Will create new waypoint with coordinates" << coord;
 	if (trw->new_waypoint(coord, visible_with_parents, trw->get_window())) {
-		trw->get_waypoints_node().recalculate_bbox();
+		trw->waypoints_node().recalculate_bbox();
 		if (visible_with_parents) {
 			qDebug() << SG_PREFIX_I << "Created new waypoint, will emit update";
 			trw->emit_tree_item_changed("New waypoint created with 'new waypoint' tool");
@@ -1703,7 +1703,7 @@ LayerTool::Status LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMo
 	}
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->gisview);
+	QString found_image = trw->waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->gisview);
 	if (!found_image.isEmpty()) {
 		trw->show_wp_picture_cb();
 		return LayerTool::Status::Handled; /* Found a match. */

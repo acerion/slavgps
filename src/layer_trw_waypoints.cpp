@@ -141,7 +141,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 
 
 
-std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & search_date) const
+std::list<TreeItem *> LayerTRWWaypoints::find_children_by_date(const QDate & search_date) const
 {
 	const QString search_date_str = search_date.toString("yyyy-MM-dd");
 	qDebug() << SG_PREFIX_I << "Search date =" << search_date << search_date_str;
@@ -234,42 +234,6 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 	}
 
 	return NULL;
-}
-
-
-
-
-void LayerTRWWaypoints::set_items_visibility(bool on_off)
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
-			continue;
-		}
-
-		tree_item->set_visible(on_off);
-		this->tree_view->apply_tree_item_visibility(tree_item);
-	}
-}
-
-
-
-
-void LayerTRWWaypoints::toggle_items_visibility(void)
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
-			continue;
-		}
-
-		tree_item->toggle_visible();
-		this->tree_view->apply_tree_item_visibility(tree_item);
-	}
 }
 
 
@@ -661,13 +625,13 @@ void LayerTRWWaypoints::sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, Q
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), tr("&Show All Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), tr("&Hide All Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(tr("&Toggle Visibility of All Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (items_visibility_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_toggle_cb()));
 	}
 
 	qa = menu.addAction(tr("&Waypoints List..."));
@@ -777,31 +741,37 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 
 
 
-void LayerTRWWaypoints::items_visibility_on_cb(void) /* Slot. */
+void LayerTRWWaypoints::children_visibility_on_cb(void) /* Slot. */
 {
-	this->set_items_visibility(true);
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Waypoints - Visibility On");
+	const int changed = this->set_direct_children_only_visibility_flag(true);
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW waypoints after visibility was turned on");
+	}
 }
 
 
 
 
-void LayerTRWWaypoints::items_visibility_off_cb(void) /* Slot. */
+void LayerTRWWaypoints::children_visibility_off_cb(void) /* Slot. */
 {
-	this->set_items_visibility(false);
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Waypoints - Visibility Off");
+	const int changed = this->set_direct_children_only_visibility_flag(false);
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW waypoints after visibility was turned off");
+	}
 }
 
 
 
 
-void LayerTRWWaypoints::items_visibility_toggle_cb(void) /* Slot. */
+void LayerTRWWaypoints::children_visibility_toggle_cb(void) /* Slot. */
 {
-	this->toggle_items_visibility();
-	/* Redraw. */
-	this->emit_tree_item_changed("TRW - Waypoints - Visibility Toggle");
+	const int changed = this->toggle_direct_children_only_visibility_flag();
+	if (changed) {
+		/* Redraw. */
+		this->emit_tree_item_changed("Requesting redrawing of TRW waypoints after visibility was toggled");
+	}
 }
 
 

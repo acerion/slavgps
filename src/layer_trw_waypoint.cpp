@@ -96,7 +96,7 @@ Waypoint::Waypoint()
 Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 {
 	this->m_coord = wp.m_coord;
-	this->visible = wp.visible;
+	this->m_visible = wp.m_visible;
 	this->set_timestamp(wp.timestamp);
 	this->altitude = wp.altitude;
 
@@ -867,7 +867,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 
 	LayerTRW * trw = this->owner_trw_layer();
 
-	bool a_visible = trw->is_visible() && this->visible;
+	bool a_visible = trw->is_visible() && this->m_visible;
 	a_visible = a_visible && trw->get_waypoints_visibility();
 
 	Qt::DateFormat date_time_format = Qt::ISODate;

@@ -338,57 +338,10 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 {
-	unsigned int changed = 0;
-	/* Loop around all (child) layers applying visibility setting.
-	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &child)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
-			continue;
-		}
-
-		Layer * layer = (Layer *) child;
-		layer->toggle_visible();
-		/* Also set checkbox on/off in tree view. */
-		this->tree_view->apply_tree_item_visibility(layer);
-		changed++;
-	}
-
+	const int changed = this->toggle_direct_children_only_visibility_flag();
 	if (changed) {
 		/* Redraw as view may have changed. */
-		this->emit_tree_item_changed("Aggregate - child visible toggle");
-	}
-}
-
-
-
-
-void LayerAggregate::children_visibility_set(bool on_off)
-{
-	unsigned int changed = 0;
-
-	/* Loop around all (child) layers applying visibility setting.
-	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * child = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &child)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
-			continue;
-		}
-
-		Layer * layer = (Layer *) child;
-		layer->set_visible(on_off);
-		/* Also set checkbox on_off in tree view. */
-		this->tree_view->apply_tree_item_visibility(layer);
-		changed++;
-	}
-
-	if (changed) {
-		/* Redraw as view may have changed. */
-		this->emit_tree_item_changed("Aggregate - child visible set");
+		this->emit_tree_item_changed("Requesting redrawing of children of Aggregate layer after visibility flag was toggled");
 	}
 }
 
@@ -397,7 +350,11 @@ void LayerAggregate::children_visibility_set(bool on_off)
 
 void LayerAggregate::children_visibility_on_cb(void) /* Slot. */
 {
-	this->children_visibility_set(true);
+	const int changed = this->set_direct_children_only_visibility_flag(true);
+	if (changed) {
+		/* Redraw as view may have changed. */
+		this->emit_tree_item_changed("Requesting redrawing of children of Aggregate layer after visibility flag was set to true");
+	}
 }
 
 
@@ -405,7 +362,11 @@ void LayerAggregate::children_visibility_on_cb(void) /* Slot. */
 
 void LayerAggregate::children_visibility_off_cb(void) /* Slot. */
 {
-	this->children_visibility_set(false);
+	const int changed = this->set_direct_children_only_visibility_flag(false);
+	if (changed) {
+		/* Redraw as view may have changed. */
+		this->emit_tree_item_changed("Requesting redrawing of children of Aggregate layer after visibility flag was set to false");
+	}
 }
 
 

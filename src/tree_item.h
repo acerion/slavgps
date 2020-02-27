@@ -304,6 +304,11 @@ namespace SlavGPS {
 
 		/**
 		   @brief Get item's child from given row
+
+		   If the row contains NULL pointer to the child, the
+		   function returns sg_ret::err - caller of the
+		   function doesn't have to do additional check of
+		   NULL-ness of returned pointer.
 		*/
 		sg_ret child_from_row(int row, TreeItem ** child_tree_item) const;
 
@@ -352,6 +357,34 @@ namespace SlavGPS {
 		   and owner tree item
 		*/
 		virtual sg_ret set_parent_and_owner_tree_item(TreeItem * parent);
+
+		/**
+		   @brief Set 'visibility' flag of only direct children to @param visible
+
+		   This only modifies the 'visibility' flag of child
+		   tree items. Actual redrawing of the child tree
+		   items must be triggered by caller separately,
+		   e.g. by calling TreeItem::emit_tree_item_changed()
+		   by tree item that toggled the 'visibility' flag of
+		   its direct children.
+
+		   @brief Return count of child items affected
+		*/
+		int set_direct_children_only_visibility_flag(bool visible);
+
+		/**
+		   @brief Toggle 'visibility' flag of only direct children
+
+		   This only modifies the 'visibility' flag of child
+		   tree items. Actual redrawing of the child tree
+		   items must be triggered by caller separately,
+		   e.g. by calling TreeItem::emit_tree_item_changed()
+		   by tree item that toggled the 'visibility' flag of
+		   its direct children.
+
+		   @brief Return count of child items affected
+		*/
+		int toggle_direct_children_only_visibility_flag(void);
 
 
 		/* Get tree items (direct and indirect children of the
@@ -419,7 +452,7 @@ namespace SlavGPS {
 		/* Is this item marked as visible in a tree of data
 		   items? This does not include visibility of parent
 		   items. */
-		bool visible = true;
+		bool m_visible = true;
 
 		/* Direct parent, may be different than owning layer. */
 		TreeItem * m_parent_tree_item = nullptr;

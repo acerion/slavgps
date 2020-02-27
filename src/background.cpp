@@ -43,6 +43,7 @@
 #include "ui_builder.h"
 #include "window.h"
 #include "statusbar.h"
+#include "tree_view.h"
 
 
 

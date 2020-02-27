@@ -339,7 +339,7 @@ SGObjectTypeID Route::type_id(void)
 
 void Track::copy_properties(const Track & from)
 {
-	this->visible = from.visible;
+	this->m_visible = from.m_visible;
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;
 
