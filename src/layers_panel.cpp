@@ -350,9 +350,8 @@ void LayersPanel::move_item(bool up)
 
 	this->m_tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
-	if (selected_item->parent_tree_item()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
-		this->m_tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
-
+	TreeItem * parent_tree_item = selected_item->parent_tree_item();
+	if (parent_tree_item->move_child(*selected_item, up)) {
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->parent_tree_item()->get_name();
 		this->emit_items_tree_updated_cb(selected_item->parent_tree_item()->get_name());
 	}

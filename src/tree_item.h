@@ -349,6 +349,21 @@ namespace SlavGPS {
 		*/
 		TreeItem * owner_tree_item(void) const;
 
+		/**
+		   @brief Get list of child item UIDs
+
+		   @return count of items on the list - may be zero
+		*/
+		int list_child_uids(std::list<sg_uid_t> & list) const;
+
+		/**
+		   @brief Get list of child items
+
+		   @return count of items on the list - may be zero
+		*/
+		int list_tree_items(std::list<TreeItem *> & list) const;
+
+
 		Layer * parent_layer(void) const;
 
 		/**
@@ -409,10 +424,17 @@ namespace SlavGPS {
 		virtual SGObjectTypeID get_type_id(void) const;
 
 		/**
-		   @brief Move child tree item up (closer to beginning of container) or down (closer to end of container)
+		   @brief Move child tree item up or down
+
+		   The function may return false when child item is
+		   already at the beginning or end of list of child
+		   items
+
+		   The function may return false when parent doesn't
+		   allow moving its child items up and down.
 
 		   @return true if move was successful
-		   @return false otherwise (e.g. because child item is already at the beginning or end of container
+		   @return false otherwise
 		*/
 		virtual bool move_child(TreeItem & child_tree_item, bool up);
 
@@ -487,41 +509,6 @@ namespace SlavGPS {
 	private:
 		const sg_uid_t uid_;
 	};
-
-
-
-
-	template <typename T>
-	bool move_tree_item_child_algo(std::list<T> & children, const T child_tree_item, bool up)
-	{
-		TreeItemIdentityPredicate pred(child_tree_item);
-		auto child_iter = std::find_if(children.begin(), children.end(), pred);
-		if (child_iter == children.end()) {
-			qDebug() << "EE   Move TreeItem Child algo: failed to find iterator of child item" << child_tree_item->get_name();
-			return false;
-		}
-
-		bool result = false;
-		if (up) {
-			if (child_iter == children.begin()) {
-				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->get_name() << "up, already at the beginning";
-			} else {
-				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->get_name() << "up in list of children";
-				std::swap(*child_iter, *std::prev(child_iter));
-				result = true;
-			}
-		} else {
-			if (std::next(child_iter) == children.end()) {
-				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->get_name() << "down, already at the end";
-			} else {
-				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->get_name() << "down in list of children";
-				std::swap(*child_iter, *std::next(child_iter));
-				result = true;
-			}
-		}
-
-		return result;
-	}
 
 
 

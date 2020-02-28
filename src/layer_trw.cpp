@@ -2927,13 +2927,13 @@ sg_ret LayerTRW::get_tree_items(std::list<TreeItem *> & list, const std::list<SG
 {
 	for (auto iter = wanted_types.begin(); iter != wanted_types.end(); ++iter) {
 		if (*iter ==  Track::type_id()) {
-			this->tracks.get_tree_items(list);
+			this->tracks.list_tree_items(list);
 
 		} else if (*iter == Route::type_id()) {
-			this->routes.get_tree_items(list);
+			this->routes.list_tree_items(list);
 
 		} else if (*iter == Waypoint::type_id()) {
-			this->waypoints.get_tree_items(list);
+			this->waypoints.list_tree_items(list);
 
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected type id" << *iter;
@@ -3795,7 +3795,7 @@ void LayerTRW::unlock_remove(void)
 
 bool LayerTRW::move_child(__attribute__((unused)) TreeItem & child_tree_item, __attribute__((unused)) bool up)
 {
-	/* Let's not allow moving Tracks/Routes/Waypoints nodes. */
+	/* Let's not allow moving of Tracks/Routes/Waypoints nodes. */
 	return false;
 }
 

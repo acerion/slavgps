@@ -156,15 +156,11 @@ namespace SlavGPS {
 		std::list<TreeItem *> find_children_by_date(const QDate & search_date) const;
 
 
-		bool move_child(TreeItem & child_tree_item, bool up) override;
-
-
 		Time get_earliest_timestamp(void) const;
 
 		void apply_dem_data_common(bool skip_existing_elevations);
 
 
-		void list_wp_uids(std::list<sg_uid_t> & list);
 		std::list<Waypoint *> children_sorted_by_name(void) const;
 		Waypoint * find_waypoint_with_duplicate_name(void) const;
 
@@ -172,11 +168,6 @@ namespace SlavGPS {
 		QString tool_show_picture_wp(int event_x, int event_y, GisViewport * gisview);
 		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);
-
-		/* Get tree items from this object. For this object
-		   this would be Waypoint tree items. */
-		sg_ret get_tree_items(std::list<TreeItem *> & list) const;
-
 
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		void sublayer_menu_waypoints_misc(LayerTRW * parent_layer_, QMenu & menu);
@@ -197,7 +188,7 @@ namespace SlavGPS {
 		void clear(void);
 
 		/* Similar to C++ container's ::size() method. */
-		size_t size(void) const;
+		int size(void) const;
 
 		/* Similar to C++ container's ::empty() method. */
 		bool empty(void) const;

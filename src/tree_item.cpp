@@ -473,9 +473,9 @@ void TreeItem::set_timestamp(time_t value)
 
 
 
-bool TreeItem::move_child(__attribute__((unused)) TreeItem & child_tree_item, __attribute__((unused)) bool up)
+bool TreeItem::move_child(TreeItem & child_tree_item, bool up)
 {
-	return false;
+	return this->tree_view->move_tree_item(child_tree_item, up);
 }
 
 
@@ -822,4 +822,45 @@ int TreeItem::toggle_direct_children_only_visibility_flag(void)
 	}
 
 	return changed;
+}
+
+
+
+
+int TreeItem::list_child_uids(std::list<sg_uid_t> & list) const
+{
+	int count = 0;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
+			continue;
+		}
+		list.push_back(tree_item->get_uid());
+		count++;
+	}
+
+	return count;
+}
+
+
+
+
+int TreeItem::list_tree_items(std::list<TreeItem *> & list) const
+{
+	int count = 0;
+
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
+			continue;
+		}
+
+		list.push_back(tree_item);
+		count++;
+	}
+	return count;
 }

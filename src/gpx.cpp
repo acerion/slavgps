@@ -1159,7 +1159,7 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 	if (trw->tracks.size() && (trw->get_tracks_visibility() || (options && options->hidden))) {
 
 		std::list<TreeItem *> tree_items;
-		trw->tracks.get_tree_items(tree_items);
+		trw->tracks.list_tree_items(tree_items);
 
 		if (tree_items.size()) {
 			switch (Preferences::get_gpx_export_trk_sort()) {
@@ -1186,7 +1186,7 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 	if (trw->routes.size() && (trw->get_routes_visibility() || (options && options->hidden))) {
 
 		std::list<TreeItem *> tree_items;
-		trw->routes.get_tree_items(tree_items);
+		trw->routes.list_tree_items(tree_items);
 
 		if (tree_items.size()) {
 			tree_items.sort(TreeItem::compare_name_ascending);

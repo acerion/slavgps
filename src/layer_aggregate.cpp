@@ -246,31 +246,6 @@ sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
 
 
 
-bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
-{
-	/* We are in aggregate layer, so the child must be a layer as well. */
-	if (!child_tree_item.is_layer()) {
-		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.get_name();
-		return false;
-	}
-
-	/* TODO_LATER: this should be entirely rewritten. */
-
-	Layer * layer = child_tree_item.immediate_layer();
-
-	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
-	const bool result = move_tree_item_child_algo(this->non_attached_children, layer, up);
-	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
-
-	/* In this function we only move children in container of tree items.
-	   Movement in tree widget is handled elsewhere. */
-
-	return result;
-}
-
-
-
-
 /* Draw the aggregate layer. If vik viewport is in half_drawn mode, this means we are only
  * to draw the layers above and including the trigger layer.
  * To do this we don't draw any layers if in half drawn mode, unless we find the

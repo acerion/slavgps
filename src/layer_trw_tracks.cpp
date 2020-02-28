@@ -232,22 +232,6 @@ void LayerTRWTracks::recalculate_bbox(void)
 
 
 
-void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list)
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
-			continue;
-		}
-		list.push_back(tree_item->get_uid());
-	}
-}
-
-
-
-
 std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude)
 {
 	std::list<Track *> result;
@@ -408,25 +392,6 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 	}
 
 	return NULL;
-}
-
-
-
-
-sg_ret LayerTRWTracks::get_tree_items(std::list<TreeItem *> & list) const
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
-			continue;
-		}
-
-		list.push_back(tree_item);
-	}
-
-	return sg_ret::ok;
 }
 
 
@@ -654,7 +619,7 @@ Time LayerTRWTracks::get_earliest_timestamp(void) const
 {
 	Time result;
 	std::list<TreeItem *> tree_items;
-	this->get_tree_items(tree_items);
+	this->list_tree_items(tree_items);
 	if (tree_items.empty()) {
 		return result;
 	}
@@ -1214,32 +1179,6 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, __attribute__((un
 	}
 
 	return sg_ret::ok;
-}
-
-
-
-
-bool LayerTRWTracks::move_child(TreeItem & child_tree_item, bool up)
-{
-	if (child_tree_item.get_type_id() != Track::type_id()
-	    && child_tree_item.get_type_id() != Route::type_id()) {
-		qDebug() << SG_PREFIX_E << "Attempting to move non-track/route child" << child_tree_item.m_type_id;
-		return false;
-	}
-
-	Track * trk = (Track *) &child_tree_item;
-
-	bool result = false;
-#ifdef K_TODO_LATER
-	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->get_name() << (up ? "up" : "down");
-	const bool result = move_tree_item_child_algo(this->children_list, trk, up);
-	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
-#endif
-
-	/* In this function we only move children in container of tree items.
-	   Movement in tree widget is handled elsewhere. */
-
-	return result;
 }
 
 

@@ -83,12 +83,6 @@ namespace SlavGPS {
 		sg_ret add_child_item(TreeItem * item, bool allow_reordering) override;
 		void insert_layer(Layer * layer, const Layer * sibling_layer);
 
-		/* Move child item (direct/immediate child of given
-		   aggregate layer) up or down in list of the child
-		   item's peers. This change is made only to aggregate
-		   layer's container of child items. */
-		bool move_child(TreeItem & child_tree_item, bool up) override;
-
 		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
 		void clear();
 

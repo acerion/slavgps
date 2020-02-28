@@ -204,14 +204,9 @@ void TreeView::tree_item_selected_cb(void) /* Slot. */
 
 
 
-bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
+bool TreeView::move_tree_item(TreeItem & tree_item, bool up)
 {
-	if (!tree_item) {
-		qDebug() << SG_PREFIX_E << "Trying to move NULL tree item";
-		return false;
-	}
-
-	QModelIndex parent_index = tree_item->index().parent();
+	QModelIndex parent_index = tree_item.index().parent();
 	if (!parent_index.isValid()) {
 		qDebug() << SG_PREFIX_W << "Parent index is invalid. Function called for top level item?";
 		return false;
@@ -222,7 +217,7 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 
 	const int n_rows = source_parent_item->rowCount();
 
-	const int source_row = tree_item->index().row();
+	const int source_row = tree_item.index().row();
 	const int target_row = up ? source_row - 1 : source_row + 1;
 
 	if (target_row < 0 || target_row > n_rows - 1) {
@@ -237,7 +232,7 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 
 
 	TreeIndex index = QPersistentModelIndex(items.at(0)->index());
-	tree_item->set_index(index);
+	tree_item.set_index(index);
 
 	return true;
 }

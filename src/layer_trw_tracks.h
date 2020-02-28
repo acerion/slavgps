@@ -151,8 +151,6 @@ namespace SlavGPS {
 		static SGObjectTypeID type_id(void);
 
 
-		void list_trk_uids(std::list<sg_uid_t> & list);
-
 		std::list<Track *> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
 		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, const Duration & threshold);
 
@@ -163,10 +161,6 @@ namespace SlavGPS {
 
 		Track * find_track_with_duplicate_name(void) const;
 
-
-		/* Get tree items from this object. For this object
-		   this would be Track or Route tree items. */
-		sg_ret get_tree_items(std::list<TreeItem *> & list) const;
 
 		void track_search_closest_tp(TrackpointSearch & search) const;
 
@@ -184,8 +178,6 @@ namespace SlavGPS {
 		bool handle_selection_in_tree(void);
 
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
-
-		bool move_child(TreeItem & child_tree_item, bool up) override;
 
 		/* Similar to C++ container's ::clear() method: call
 		   destructor for all elements of this container,

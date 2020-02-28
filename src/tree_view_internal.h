@@ -105,7 +105,7 @@ namespace SlavGPS {
 		void expand_tree_item(const TreeItem * tree_item);
 
 		/* Move tree item up or down in list of its siblings. */
-		bool change_tree_item_position(TreeItem * tree_item, bool up);
+		bool move_tree_item(TreeItem & tree_item, bool up);
 
 		void detach_tree_item(TreeItem * tree_item);
 		void detach_children(TreeItem * parent_tree_item);
