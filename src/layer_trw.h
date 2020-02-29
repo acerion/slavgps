@@ -140,7 +140,7 @@ namespace SlavGPS {
 
 		Time get_timestamp(void) const override;
 
-		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 
 		LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
 		SaveStatus write_layer_data(FILE * file) const;
@@ -243,14 +243,6 @@ namespace SlavGPS {
 		bool move_child(TreeItem & child_tree_item, bool up) override;
 
 
-
-		/* Add to layer's data structure. */
-		sg_ret attach_to_container(Track * trk);
-		sg_ret attach_to_container(Waypoint * wp);
-
-		/* Remove from layer's data structure. */
-		sg_ret detach_from_container(Track * trk, bool * was_visible = NULL);
-		sg_ret detach_from_container(Waypoint * wp, bool * was_visible = NULL);
 
 		sg_ret attach_to_tree(Track * trk);
 		sg_ret attach_to_tree(Waypoint * wp);

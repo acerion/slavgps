@@ -423,7 +423,7 @@ void TreeItem::display_debug_info(__attribute__((unused)) const QString & refere
 
 
 
-sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret TreeItem::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "here";
 	return sg_ret::err;

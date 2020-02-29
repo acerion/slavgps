@@ -77,7 +77,7 @@ namespace SlavGPS {
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		sg_ret post_read_2(void) override;
 
-		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
 
 		sg_ret add_child_item(TreeItem * item, bool allow_reordering) override;

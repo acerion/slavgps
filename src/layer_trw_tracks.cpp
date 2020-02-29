@@ -1044,9 +1044,6 @@ void LayerTRWTracks::clear(void)
 		this->tree_view->detach_tree_item(tree_item);
 		delete tree_item;
 	}
-#ifdef K_TODO_LATER
-	this->children_list.clear();
-#endif
 }
 
 
@@ -1078,105 +1075,49 @@ bool LayerTRWTracks::empty(void) const
 
 
 
-sg_ret LayerTRWTracks::attach_to_container(Track * trk)
-{
-	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
-		qDebug() << SG_PREFIX_E << "Failed to set parent of track";
-		return sg_ret::err;
-	}
-#ifdef K_TODO_LATER
-	this->children_list.push_back(trk);
-#endif
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
-{
-	if (!trk) {
-		qDebug() << SG_PREFIX_E << "NULL pointer to track";
-		return sg_ret::err;
-	}
-
-	LayerTRW * parent_trw = this->owner_trw_layer();
-
-	if (trk->get_name().isEmpty()) {
-		qDebug() << SG_PREFIX_W << "Track with empty name, deleting anyway";
-	}
-
-	if (trk->is_selected()) {
-		parent_trw->selected_track_reset();
-		parent_trw->moving_tp = false;
-		parent_trw->route_finder_started = false;
-	}
-
-	if (NULL != was_visible) {
-		*was_visible = trk->is_visible();
-	}
-
-	if (trk == parent_trw->route_finder_added_track) {
-		parent_trw->route_finder_added_track = NULL;
-	}
-
-	parent_trw->deselect_current_trackpoint(trk);
-
-#ifdef K_TODO_LATER
-	TreeItemIdentityPredicate pred(trk);
-	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
-	if (iter != this->children_list.end()) {
-		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
-		this->children_list.erase(iter);
-	}
-#endif
-
-#if 0   /* Old code. */
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
-			continue;
-		}
-		Track * trk = (Track *) tree_item;
-
-		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->get_name() << "and" << trk->get_name();
-		if (TreeItem::the_same_object(*iter, trk)) {
-			this->children_list.erase(iter);
-			break;
-		}
-	}
-#endif
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
 	/* Handle item in old location. */
 	{
-		LayerTRW * parent_trw = (LayerTRW *) tree_item->parent_layer();
-		parent_trw->detach_from_container((Track *) tree_item);
-		/* Detaching of tree item from tree view will be handled by QT. */
+		tree_item->disconnect(); /* Disconnect all old signals. */
 
-		/* Update our own tooltip in tree view. */
-		parent_trw->update_tree_item_tooltip();
+		Track * trk = (Track *) tree_item;
+		if (nullptr == trk) {
+			qDebug() << SG_PREFIX_E << "NULL pointer to track";
+			return sg_ret::err;
+		}
+		LayerTRW * owner_trw = trk->owner_trw_layer();
+		TreeItem * parent_tree_item = trk->parent_tree_item();
+
+		if (trk->is_selected()) {
+			owner_trw->selected_track_reset();
+			owner_trw->moving_tp = false;
+			owner_trw->route_finder_started = false;
+		}
+
+		if (trk == owner_trw->route_finder_added_track) {
+			owner_trw->route_finder_added_track = NULL;
+		}
+
+		owner_trw->deselect_current_trackpoint(trk);
+
+#ifdef K_TODO_LATER
+		this->name_generator.remove_name(trk->get_name());
+#endif
+		owner_trw->update_tree_item_tooltip();        /* Previous TRW Layer. */
+		parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
 	}
+
 
 	/* Handle item in new location. */
 	{
-		this->attach_to_container((Track *) tree_item);
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
-		tree_item->attach_to_tree_under_parent(this);
+		this->tree_view->attach_to_tree(this, tree_item, row);
 
 		/* Update our own tooltip in tree view. */
 		this->update_tree_item_tooltip();
 	}
+
 
 	return sg_ret::ok;
 }

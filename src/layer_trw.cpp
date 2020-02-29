@@ -1900,28 +1900,6 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::attach_to_container(Track * trk)
-{
-	if (trk->is_route()) {
-		this->routes.attach_to_container(trk);
-	} else {
-		this->tracks.attach_to_container(trk);
-	}
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::attach_to_container(Waypoint * wp)
-{
-	this->waypoints.attach_to_container(wp);
-	return sg_ret::ok;
-}
-
-
-
-
 sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
@@ -1954,7 +1932,11 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 
 sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 {
-	this->attach_to_container(wp);
+	if (sg_ret::ok != wp->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
+		return sg_ret::ok;
+	}
+
 	this->attach_to_tree(wp);
 
 	/* Update our own tooltip in tree view. */
@@ -2027,7 +2009,11 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 
 sg_ret LayerTRW::add_track(Track * trk)
 {
-	this->attach_to_container(trk);
+	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
+		return sg_ret::ok;
+	}
+
 	this->attach_to_tree(trk);
 
 	/* Update our own tooltip in tree view. */
@@ -2043,7 +2029,11 @@ sg_ret LayerTRW::add_track(Track * trk)
 
 sg_ret LayerTRW::add_route(Track * trk)
 {
-	this->attach_to_container(trk);
+	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
+		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
+		return sg_ret::ok;
+	}
+
 	this->attach_to_tree(trk);
 
 	/* Update our own tooltip in tree view. */
@@ -2161,9 +2151,9 @@ void LayerTRW::add_track_from_file(Track * trk)
 	} else {
 		/* No more uniqueness of name forced when loading from a file. */
 		if (trk->is_route()) {
-			this->routes.attach_to_container(trk);
+			this->add_route(trk);
 		} else {
-			this->tracks.attach_to_container(trk);
+			this->add_track(trk);
 		}
 		QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
@@ -2177,113 +2167,48 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 
 
-sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 {
+	if (tree_item->get_type_id() == Track::type_id()) {
+		this->tracks_node().accept_dropped_child(tree_item, row, col);
+
+	} else if (tree_item->get_type_id() == Route::type_id()) {
+		this->routes_node().accept_dropped_child(tree_item, row, col);
+
+	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
+		this->waypoints_node().accept_dropped_child(tree_item, row, col);
+
+	} else {
+		qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
+		return sg_ret::err;
+	}
+
+
 	LayerTRW * source_trw = (LayerTRW *) tree_item->parent_layer();
 	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
 
-	/* Handle item in old location. */
-	{
-		if (tree_item->get_type_id() == Track::type_id()) {
-			source_trw->detach_from_container((Track *) tree_item);
-
-		} else if (tree_item->get_type_id() == Route::type_id()) {
-			source_trw->detach_from_container((Track *) tree_item);
-
-		} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-			source_trw->detach_from_container((Waypoint *) tree_item);
-		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
-			return sg_ret::err;
+	/* TODO: recalculation of bboxes needs to be moved to tracks/routes/waypoints nodes. */
+	if (tree_item->get_type_id() == Track::type_id()) {
+		this->tracks.recalculate_bbox();
+		if (!the_same_parent) {
+			source_trw->tracks.recalculate_bbox();
 		}
 
-		tree_item->disconnect(); /* Disconnect everything connected to object's signals. */
-
-		/* Detaching of tree item from tree view will be handled by QT. */
-	}
-
-	/* Handle item in new location. */
-	{
-		/* We are using
-		   LayerTRW::add_waypoint()/add_track()/add_route()
-		   here so that the layer can create and attach
-		   Tracks/Routes/Waypoints nodes if necessary. */
-
-		if (tree_item->get_type_id() == Track::type_id()) {
-
-			this->add_track((Track *) tree_item);
-
-			this->tracks.recalculate_bbox();
-			if (!the_same_parent) {
-				source_trw->tracks.recalculate_bbox();
-			}
-
-		} else if (tree_item->get_type_id() == Route::type_id()) {
-			this->add_route((Track *) tree_item);
-
-			this->routes.recalculate_bbox();
-			if (!the_same_parent) {
-				source_trw->routes.recalculate_bbox();
-			}
-
-		} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-			this->add_waypoint((Waypoint *) tree_item);
-
-			this->waypoints.recalculate_bbox();
-			if (!the_same_parent) {
-				source_trw->waypoints.recalculate_bbox();
-			}
-		} else {
-			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
-			return sg_ret::err;
+	} else if (tree_item->get_type_id() == Route::type_id()) {
+		this->routes.recalculate_bbox();
+		if (!the_same_parent) {
+			source_trw->routes.recalculate_bbox();
 		}
-	}
 
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::detach_from_container(Track * trk, bool * was_visible)
-{
-	if (!trk) {
-		qDebug() << SG_PREFIX_E << "NULL pointer to track";
-		return sg_ret::err;
-	}
-
-	if (trk->is_route()) {
-		if (sg_ret::ok != this->routes.detach_from_container(trk, was_visible)) {
-			return sg_ret::err;
+	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
+		this->waypoints.recalculate_bbox();
+		if (!the_same_parent) {
+			source_trw->waypoints.recalculate_bbox();
 		}
 	} else {
-		if (sg_ret::ok != this->tracks.detach_from_container(trk, was_visible)) {
-			return sg_ret::err;
-		}
-	}
-
-	/* In case it was selected (no item delete signal ATM). */
-	this->get_window()->clear_highlight();
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::detach_from_container(Waypoint * wp, bool * was_visible)
-{
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
+		qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
 		return sg_ret::err;
 	}
-
-	if (sg_ret::ok != this->waypoints.detach_from_container(wp, was_visible)) {
-		return sg_ret::err;
-	}
-
-	/* In case it was selected (no item delete signal ATM). */
-	this->get_window()->clear_highlight();
 
 	return sg_ret::ok;
 }
@@ -2541,7 +2466,6 @@ void LayerTRW::merge_with_other_cb(void)
 			qDebug() << SG_PREFIX_I << "We have a merge track";
 			track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
-			this->detach_from_container(source_track);
 			this->detach_from_tree(source_track);
 			delete source_track;
 
@@ -2601,7 +2525,6 @@ void LayerTRW::append_track_cb(void)
 
 	/* All trackpoints have been moved from source_track to
 	   target_track. We don't need source_track anymore. */
-	this->detach_from_container(source_track);
 	this->detach_from_tree(source_track);
 	delete source_track;
 
@@ -2677,7 +2600,6 @@ void LayerTRW::append_other_cb(void)
 	/* All trackpoints have been moved from
 	   source_track to target_track. We don't need
 	   source_track anymore. */
-	this->detach_from_container(source_track);
 	this->detach_from_tree(source_track);
 	delete source_track;
 
@@ -2758,7 +2680,6 @@ void LayerTRW::merge_by_timestamp_cb(void)
 			/* Remove trackpoints from merged track, delete track. */
 			orig_track->move_trackpoints_from(**iter, (*iter)->begin(), (*iter)->end());
 
-			this->detach_from_container(*iter);
 			this->detach_from_tree(*iter);
 			delete *iter;
 
@@ -2826,7 +2747,6 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	   Since specificly requested, IMHO no need for extra confirmation. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_container(*iter);
 		this->detach_from_tree(*iter);
 		delete *iter;
 	}
@@ -2867,7 +2787,6 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_container(*iter);
 		this->detach_from_tree(*iter);
 		delete *iter;
 	}
@@ -2904,7 +2823,6 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
-		this->detach_from_container(*iter);
 		this->detach_from_tree(*iter);
 		delete *iter;
 	}
@@ -3673,7 +3591,6 @@ sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
 
 
 	bool was_visible = false;
-	this->detach_from_container(trk, &was_visible);
 	this->detach_from_tree(trk);
 	delete trk;
 
@@ -3704,7 +3621,6 @@ sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
 	}
 
 	bool was_visible;
-	this->detach_from_container(wp, &was_visible);
 	this->detach_from_tree(wp);
 	delete wp;
 

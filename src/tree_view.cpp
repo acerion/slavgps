@@ -531,6 +531,39 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 
 
 
+/**
+   \brief Add given @tree_item under given parent tree item
+
+   @param parent_tree_index - parent tree item under which to put new @tree_item
+   @param tree_item - tree_item to be added
+
+   @return sg_ret::ok on success
+   @return error value on failure
+*/
+sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, int row)
+{
+	if (!parent_tree_item->index().isValid()) {
+		/* Parent index must always be valid. The only
+		   possibility would be when we would push top level
+		   layer, but this has been already done in tree
+		   view's constructor. */
+		qDebug() << SG_PREFIX_E << "Trying to push tree item with invalid parent item";
+		return sg_ret::err;
+	}
+
+	if (row == -1) {
+		/* Probably item is being dropped on parent, so move
+		   the item to end of parent's children. */
+		row = this->tree_model->itemFromIndex(parent_tree_item->index())->rowCount();
+	}
+
+	qDebug() << SG_PREFIX_I << "Inserting tree item named" << tree_item->get_name() << "into row" << row;
+	return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
+}
+
+
+
+
 /* Inspired by the internals of GtkTreeView sorting itself. */
 typedef struct _SortTuple
 {
@@ -1024,10 +1057,8 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
 			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "at the end of parent item" << parent_item->get_name();
-			parent_item->drag_drop_request(tree_item, row, column);
+			parent_item->accept_dropped_child(tree_item, row, column);
 		}
-
-		return true;
 	} else {
 		/* Drop between some items: insert at position specified by row. */
 		qDebug() << SG_PREFIX_I << "Dropping items as siblings with parent item" << parent_item->get_name();
@@ -1035,10 +1066,13 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
 			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "as sibling with parent item" << parent_item->get_name();
-			parent_item->drag_drop_request(tree_item, row, column);
+			parent_item->accept_dropped_child(tree_item, row, column);
 		}
-		return true;
 	}
+
+	parent_item->tree_view->debug_print_tree();
+
+	return true; //QStandardItemModel::dropMimeData(mime_data, action, row, column, parent_index);
 
 #if 0
 	QModelIndex drop_target_index = parent_index.child(row, 0);

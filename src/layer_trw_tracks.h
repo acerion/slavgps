@@ -173,7 +173,7 @@ namespace SlavGPS {
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);
 
-		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 
 		bool handle_selection_in_tree(void);
 
@@ -191,12 +191,6 @@ namespace SlavGPS {
 		/* Similar to C++ container's ::empty() method. */
 		bool empty(void) const;
 
-
-		sg_ret attach_to_container(Track * trk);
-
-		/* Delete a single track from container (but not from main items tree).
-		   Return value of track's "visible" property before it was deleted. */
-		sg_ret detach_from_container(Track * trk, bool * was_visible);
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };

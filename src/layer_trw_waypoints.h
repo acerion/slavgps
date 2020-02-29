@@ -174,7 +174,7 @@ namespace SlavGPS {
 		void sublayer_menu_sort(QMenu & menu);
 
 
-		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 
 
 		bool handle_selection_in_tree(void);
@@ -193,12 +193,6 @@ namespace SlavGPS {
 		/* Similar to C++ container's ::empty() method. */
 		bool empty(void) const;
 
-
-		sg_ret attach_to_container(Waypoint * wp);
-
-		/*  Delete a single waypoint from container (but not from items tree)..
-		    Return value of waypoint's "visible" property before it was deleted. */
-		sg_ret detach_from_container(Waypoint * wp, bool * was_visible);
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };

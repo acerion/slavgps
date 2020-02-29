@@ -912,11 +912,9 @@ void LayerTRWWaypoints::clear(void)
 			continue;
 		}
 
+		this->tree_view->detach_tree_item(tree_item);
 		delete tree_item;
 	}
-#ifdef K_TODO_LATER
-	this->children.clear();
-#endif
 }
 
 
@@ -941,75 +939,6 @@ bool LayerTRWWaypoints::empty(void) const
 		qDebug() << SG_PREFIX_E << "Failed to find count of child items of" << this->get_name();
 	}
 	return rows <= 0;
-}
-
-
-
-
-sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
-{
-	if (sg_ret::ok != wp->set_parent_and_owner_tree_item(this)) {
-		qDebug() << SG_PREFIX_E << "Failed to set parent of waypoint";
-		return sg_ret::err;
-	}
-
-	//this->children.push_back(wp);
-
-	//wp->set_new_waypoint_icon();
-
-	this->name_generator.add_name(wp->get_name());
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visible)
-{
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
-		return sg_ret::err;
-	}
-
-	LayerTRW * parent_trw = this->owner_trw_layer();
-
-	if (wp->get_name().isEmpty()) {
-		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
-	}
-
-	if (wp == parent_trw->selected_wp_get()) {
-		parent_trw->selected_wp_reset();
-		parent_trw->moving_wp = false;
-	}
-
-	if (NULL != was_visible) {
-		*was_visible = wp->is_visible();
-	}
-
-	this->name_generator.remove_name(wp->get_name());
-
-
-#ifdef K_TODO_LATER
-	TreeItemIdentityPredicate pred(wp);
-	auto iter = std::find_if(this->children.begin(), this->children.end(), pred);
-	if (iter != this->children.end()) {
-		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->get_name() << "from list" << this->get_name();
-		this->children.erase(iter);
-	}
-#endif
-
-#if 0   /* Old code. */
-	for (int row = 0; row < rows; row++) {
-		qDebug() << SG_PREFIX_I << "Will compare waypoints" << (*iter)->get_name() << "and" << wp->get_name();
-		if (TreeItem::the_same_object(*iter, wp)) {
-			this->children.erase(iter);
-			break;
-		}
-	}
-#endif
-
-	return sg_ret::ok;
 }
 
 
@@ -1099,23 +1028,35 @@ QString DefaultNameGenerator::try_new_name(void) const
 
 
 
-sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __attribute__((unused)) int col)
 {
 	/* Handle item in old location. */
 	{
-		LayerTRW * parent_trw = (LayerTRW *) tree_item->parent_layer();
-		parent_trw->detach_from_container((Waypoint *) tree_item);
-		/* Detaching of tree item from tree view will be handled by QT. */
+		tree_item->disconnect(); /* Disconnect all old signals. */
 
-		/* Update our own tooltip in tree view. */
-		parent_trw->update_tree_item_tooltip();
+		Waypoint * wp = (Waypoint *) tree_item;
+		if (nullptr == wp) {
+			qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
+			return sg_ret::err;
+		}
+		LayerTRW * owner_trw = wp->owner_trw_layer();
+		TreeItem * parent_tree_item = wp->parent_tree_item();
+
+		if (wp == owner_trw->selected_wp_get()) {
+			owner_trw->selected_wp_reset();
+			owner_trw->moving_wp = false;
+		}
+#ifdef K_TODO_LATER
+		this->name_generator.remove_name(wp->get_name());
+#endif
+		owner_trw->update_tree_item_tooltip();        /* Previous TRW Layer. */
+		parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
 	}
 
 	/* Handle item in new location. */
 	{
-		this->attach_to_container((Waypoint *) tree_item);
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
-		tree_item->attach_to_tree_under_parent(this);
+		this->tree_view->attach_to_tree(this, tree_item, row);
 
 		/* Update our own tooltip in tree view. */
 		this->update_tree_item_tooltip();

@@ -891,60 +891,24 @@ int LayerAggregate::get_child_layers_count(void) const
 
 
 
-sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret LayerAggregate::accept_dropped_child(TreeItem * tree_item, int row, int col)
 {
-#if K_TODO_LATER
 	/* Handle item in old location. */
 	{
-		/* TODO_LATER: implement detaching from parent tree
-		   item's container where tree item is of any kind. */
-
-		assert (layer->is_in_tree());
-		assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->immediate_layer(), layer));
-
-		if (NULL != was_visible) {
-			*was_visible = layer->is_visible();
-		}
-
-		for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-			if (TreeItem::the_same_object(layer, *iter)) {
-				this->children->erase(iter);
-				break;
-			}
-		}
-
-		/* Detaching of tree item from tree view will be handled by QT. */
+		tree_item->disconnect(); /* Disconnect all old signals. */
 	}
 
 	/* Handle item in new location. */
 	{
-		if (!this->is_in_tree()) {
-			qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->get_name() << "is not connected to tree";
-			return sg_ret::err;
-		}
+		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
+		this->tree_view->attach_to_tree(this, tree_item, row);
 
-		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
-		layer->attach_to_tree_under_parent(this);
-
-
-		QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-
-
-		this->tree_view->apply_tree_item_timestamp(layer);
+		QObject::connect(tree_item, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 		/* Update our own tooltip in tree view. */
 		this->update_tree_item_tooltip();
-
-
-#if 0
-		if (!this->children->empty()) {
-			this->tree_view->expand(this->index);
-		}
-#endif
-
 	}
-#endif
+
 	return sg_ret::ok;
 }
 

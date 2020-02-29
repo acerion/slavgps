@@ -208,7 +208,7 @@ namespace SlavGPS {
 		*/
 		sg_ret show_context_menu(const QPoint & position, bool in_tree_view, QWidget * parent = nullptr);
 
-		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		virtual sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col);
 		virtual bool dropped_item_is_acceptable(const TreeItem & tree_item) const;
 
 

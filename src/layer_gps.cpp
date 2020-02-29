@@ -1730,7 +1730,6 @@ void LayerGPS::rt_cleanup_layer_children(void)
 	   "received" any trackpoints from gpsd (i.e. is empty). */
 	if (this->realtime_record && this->realtime_track) {
 		if (this->realtime_track->empty()) {
-			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_container(this->realtime_track);
 			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_tree(this->realtime_track);
 			delete this->realtime_track;
 		}

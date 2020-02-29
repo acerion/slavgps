@@ -146,11 +146,7 @@ namespace SlavGPS {
 
 		virtual Time get_timestamp(void) const override;
 
-		/* Treeview drag and drop method. called on the
-		   destination layer. it is given a source and
-		   destination layer, and the source and destination
-		   iters in the tree view. */
-		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 
 		/* Read layer-specific data from Vik file. */
 		virtual LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
