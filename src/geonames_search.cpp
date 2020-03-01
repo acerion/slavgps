@@ -445,7 +445,7 @@ void Geonames::create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbo
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 		const Geoname * geoname = *iter;
 		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
-		trw->add_waypoint_from_file(wp);
+		trw->add_waypoint(wp);
 	}
 
 	free_geoname_list(wiki_places);

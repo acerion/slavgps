@@ -152,10 +152,6 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
 
-		sg_ret add_track(Track * trk);
-		sg_ret add_route(Track * trk);
-		sg_ret add_waypoint(Waypoint * wp);
-
 		const std::list<Track *> & get_tracks_(void) const; //  { return this->tracks.children_list; };
 		const std::list<Track *> & get_routes_(void) const; // { return this->routes.children_list; };
 		const std::list<Waypoint *> & get_waypoints_(void) const; // { return this->waypoints.children; };
@@ -231,9 +227,18 @@ namespace SlavGPS {
 		QString new_unique_element_name(const SGObjectTypeID & type_id, const QString& old_name);
 
 
-		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
-		void add_waypoint_from_file(Waypoint * wp);
-		void add_track_from_file(Track * trk);
+		sg_ret add_track(Track * trk);
+		sg_ret add_route(Track * trk);
+		sg_ret add_waypoint(Waypoint * wp);
+
+		/**
+		   Detach tree item from Qt tree. Do TRW-specific
+		   actions after the item has been detached from the
+		   tree.
+
+		   The tree item is not deleted.
+		*/
+		sg_ret remove_child(TreeItem * tree_item);
 
 
 		void delete_all_routes();
@@ -241,17 +246,6 @@ namespace SlavGPS {
 		void delete_all_waypoints();
 
 		bool move_child(TreeItem & child_tree_item, bool up) override;
-
-
-
-		sg_ret attach_to_parent_tree_item(Track * trk, int row = -1);
-		sg_ret attach_to_parent_tree_item(Waypoint * wp, int row = -1);
-
-		/**
-		   Detach tree item from Qt tree. Do TRW-specific
-		   actions after the item has been detached from tree.
-		*/
-		sg_ret detach_from_parent_tree_item(TreeItem * tree_item);
 
 
 
@@ -471,8 +465,13 @@ namespace SlavGPS {
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
 
-		sg_ret delete_track(Track * trk, bool confirm);
-		sg_ret delete_waypoint(Waypoint * wp, bool confirm);
+		/**
+		   Attach tree item to Qt tree. Do TRW-specific
+		   actions after the item has been attached to the
+		   tree.
+		*/
+		sg_ret attach_to_parent_tree_item(Track * trk, int row = -1);
+		sg_ret attach_to_parent_tree_item(Waypoint * wp, int row = -1);
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */

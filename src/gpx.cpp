@@ -361,7 +361,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 			importer->wp_name = QString("VIKING_WP%1").arg(importer->unnamed_waypoints++, 4, 10, (QChar) '0');
 		}
 		importer->wp->set_name(importer->wp_name);
-		importer->trw->add_waypoint_from_file(importer->wp);
+		importer->trw->add_waypoint(importer->wp);
 		importer->wp = NULL;
 		break;
 
@@ -375,7 +375,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 			importer->trk_name = QString("VIKING_RT%1").arg(importer->unnamed_routes++, 3, 10, (QChar) '0');
 		}
 		importer->trk->set_name(importer->trk_name);
-		importer->trw->add_track_from_file(importer->trk);
+		importer->trw->add_track(importer->trk);
 		importer->trk = NULL;
 		break;
 

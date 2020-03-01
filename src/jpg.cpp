@@ -143,11 +143,11 @@ LoadStatus SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * g
 			/* GeotagExif method doesn't guarantee setting waypoints name. */
 			wp->set_name(FileUtils::get_base_name(file_full_path));
 		}
-		trw->add_waypoint_from_file(wp);
+		trw->add_waypoint(wp);
 	} else {
 		wp = new Waypoint(gisview->get_center_coord()); /* Simply set position to the current center. */
 		wp->set_name(file_base_name(file_full_path));
-		trw->add_waypoint_from_file(wp);
+		trw->add_waypoint(wp);
 		wp->set_image_full_path(file_full_path);
 		auto_zoom = false;
 	}

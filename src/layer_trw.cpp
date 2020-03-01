@@ -2009,6 +2009,40 @@ sg_ret LayerTRW::attach_to_parent_tree_item(Track * trk, int row)
 
 sg_ret LayerTRW::add_track(Track * trk)
 {
+	{
+		Track * curr_track = this->selected_track_get();
+
+		if (this->route_finder_append && curr_track) {
+			trk->remove_dup_points(); /* Make "double point" track work to undo. */
+
+			/* Enforce end of current track equal to start of tr. */
+			Trackpoint * cur_end = curr_track->get_tp_last();
+			Trackpoint * new_start = trk->get_tp_first();
+			if (cur_end && new_start) {
+				if (cur_end->coord != new_start->coord) {
+					curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
+				}
+			}
+
+			curr_track->move_trackpoints_from(*trk, trk->begin(), trk->end());
+			trk->free();
+			this->route_finder_append = false; /* This means we have added it. */
+		} else {
+			/* No more uniqueness of name forced when loading from a file. */
+			if (trk->is_route()) {
+				this->add_route(trk);
+			} else {
+				this->add_track(trk);
+			}
+			QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
+
+			if (this->route_finder_check_added_track) {
+				trk->remove_dup_points(); /* Make "double point" track work to undo. */
+				this->route_finder_added_track = trk;
+			}
+		}
+	}
+
 	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
 		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
 		return sg_ret::ok;
@@ -2116,57 +2150,6 @@ QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, c
 
 
 
-void LayerTRW::add_waypoint_from_file(Waypoint * wp)
-{
-	/* No more uniqueness of name forced when loading from a file.
-	   This now makes this function a little redunant as we just flow the parameters through. */
-
-	this->add_waypoint(wp);
-
-	QObject::connect(wp, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-}
-
-
-
-
-void LayerTRW::add_track_from_file(Track * trk)
-{
-	Track * curr_track = this->selected_track_get();
-
-	if (this->route_finder_append && curr_track) {
-		trk->remove_dup_points(); /* Make "double point" track work to undo. */
-
-		/* Enforce end of current track equal to start of tr. */
-		Trackpoint * cur_end = curr_track->get_tp_last();
-		Trackpoint * new_start = trk->get_tp_first();
-		if (cur_end && new_start) {
-			if (cur_end->coord != new_start->coord) {
-				curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
-			}
-		}
-
-		curr_track->move_trackpoints_from(*trk, trk->begin(), trk->end());
-		trk->free();
-		this->route_finder_append = false; /* This means we have added it. */
-	} else {
-		/* No more uniqueness of name forced when loading from a file. */
-		if (trk->is_route()) {
-			this->add_route(trk);
-		} else {
-			this->add_track(trk);
-		}
-		QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-
-		if (this->route_finder_check_added_track) {
-			trk->remove_dup_points(); /* Make "double point" track work to undo. */
-			this->route_finder_added_track = trk;
-		}
-	}
-}
-
-
-
-
 sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 {
 	/* Better to calculate 'previous_trw' at the beginning of the
@@ -2204,7 +2187,7 @@ sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret LayerTRW::detach_from_parent_tree_item(TreeItem * tree_item)
+sg_ret LayerTRW::remove_child(TreeItem * tree_item)
 {
 	if (!tree_item) {
 		qDebug() << SG_PREFIX_E << "NULL pointer to tree item";
@@ -2344,25 +2327,64 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::delete_child_item(TreeItem * item, bool confirm_deleting)
+sg_ret LayerTRW::delete_child_item(TreeItem * child_item, bool confirm_deleting)
 {
-	if (nullptr == item) {
+	if (nullptr == child_item) {
 		qDebug() << SG_PREFIX_E << "Argument is NULL";
 		return sg_ret::err;
 	}
 
-	if (item->get_type_id() == Waypoint::type_id()) {
-		Waypoint * wp = (Waypoint *) item;
-		return this->delete_waypoint(wp, confirm_deleting);
+	const SGObjectTypeID type_id = child_item->get_type_id();
+	if (confirm_deleting) {
+		/* Get confirmation from the user. */
+		QString format;
+		if (type_id == Track::type_id()) {
+			format = tr("Are you sure you want to delete the track \"%1\"?");
+		} else if (type_id == Route::type_id()) {
+			format = tr("Are you sure you want to delete the route \"%1\"?");
+		} else if (type_id == Waypoint::type_id()) {
+			format = tr("Are you sure you want to delete the waypoint \"%1\"?");
+		} else {
+			qDebug() << SG_PREFIX_E << "Unexpected child item type" << child_item->m_type_id;
+			return sg_ret::err;
+		}
 
-	} else if (item->get_type_id() == Track::type_id()
-		   || item->get_type_id() == Route::type_id()) {
-		Track * trk = (Track *) item;
-		return this->delete_track(trk, confirm_deleting);
+		if (!Dialog::yes_or_no(format.arg(child_item->get_name()), ThisApp::main_window())) {
+			return sg_ret::ok;
+		}
+	}
+
+	const bool had_valid_timestamp = child_item->get_timestamp().is_valid();
+	const bool was_visible = child_item->is_visible_with_parents();
+
+	this->remove_child(child_item);
+	delete child_item;
+
+	if (had_valid_timestamp) {
+		/* Reset layer timestamp in case it has now changed.
+
+		   TODO: double-check if this is the right function to
+		   call here. Maybe the function should be like
+		   "update_timestamp()". */
+		this->tree_view->apply_tree_item_timestamp(this);
+	}
+
+	if (was_visible) {
+		this->emit_tree_item_changed("Indicating change in Layer TRW after deleting Track or Route or Waypoint");
+	}
+
+	if (type_id == Track::type_id()) {
+		this->tracks.recalculate_bbox();
+	} else if (type_id == Route::type_id()) {
+		this->routes.recalculate_bbox();
+	} else if (type_id == Waypoint::type_id()) {
+		this->waypoints.recalculate_bbox();
 	} else {
-		qDebug() << SG_PREFIX_E << "Unexpected child item type" << item->m_type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected child item type" << child_item->m_type_id;
 		return sg_ret::err;
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -2454,7 +2476,7 @@ void LayerTRW::merge_with_other_cb(void)
 			qDebug() << SG_PREFIX_I << "We have a merge track";
 			track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
-			this->detach_from_parent_tree_item(source_track);
+			this->remove_child(source_track);
 			delete source_track;
 
 			track->sort(Trackpoint::compare_timestamps);
@@ -2513,7 +2535,7 @@ void LayerTRW::append_track_cb(void)
 
 	/* All trackpoints have been moved from source_track to
 	   target_track. We don't need source_track anymore. */
-	this->detach_from_parent_tree_item(source_track);
+	this->remove_child(source_track);
 	delete source_track;
 
 
@@ -2588,7 +2610,7 @@ void LayerTRW::append_other_cb(void)
 	/* All trackpoints have been moved from
 	   source_track to target_track. We don't need
 	   source_track anymore. */
-	this->detach_from_parent_tree_item(source_track);
+	this->remove_child(source_track);
 	delete source_track;
 
 
@@ -2668,7 +2690,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 			/* Remove trackpoints from merged track, delete track. */
 			orig_track->move_trackpoints_from(**iter, (*iter)->begin(), (*iter)->end());
 
-			this->detach_from_parent_tree_item(*iter);
+			this->remove_child(*iter);
 			delete *iter;
 
 			/* Tracks have changed, therefore retry again against all the remaining tracks. */
@@ -2735,7 +2757,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	   Since specificly requested, IMHO no need for extra confirmation. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_parent_tree_item(*iter);
+		this->remove_child(*iter);
 		delete *iter;
 	}
 
@@ -2775,7 +2797,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_parent_tree_item(*iter);
+		this->remove_child(*iter);
 		delete *iter;
 	}
 
@@ -2811,7 +2833,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
-		this->detach_from_parent_tree_item(*iter);
+		this->remove_child(*iter);
 		delete *iter;
 	}
 
@@ -3559,71 +3581,6 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 
 	/* TODO_LATER: add handling of errors from process. */
 }
-
-
-
-
-sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
-{
-	const bool is_track = trk->is_track();
-
-	if (confirm) {
-		/* Get confirmation from the user. */
-		if (!Dialog::yes_or_no(is_track
-				       ? tr("Are you sure you want to delete the track \"%1\"?")
-				       : tr("Are you sure you want to delete the route \"%1\"?")
-				       .arg(trk->get_name())), ThisApp::main_window()) {
-			return sg_ret::ok;
-		}
-	}
-
-
-	bool was_visible = false;
-	this->detach_from_parent_tree_item(trk);
-	delete trk;
-
-
-	if (is_track) {
-		/* Reset layer timestamp in case it has now changed. */
-		this->tree_view->apply_tree_item_timestamp(this);
-	}
-
-	if (was_visible) {
-		this->emit_tree_item_changed("Indicating change in Layer TRW after deleting Track or Route");
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
-{
-	if (confirm) {
-		/* Get confirmation from the user. */
-		/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->get_name())), ThisApp::main_window()) {
-			return sg_ret::ok;
-		}
-	}
-
-	bool was_visible;
-	this->detach_from_parent_tree_item(wp);
-	delete wp;
-
-	this->waypoints.recalculate_bbox();
-
-	/* Reset layer timestamp in case it has now changed. */
-	this->tree_view->apply_tree_item_timestamp(this);
-
-	if (was_visible) {
-		this->emit_tree_item_changed("Indicating change in Layer TRW after deleting Waypoint");
-	}
-
-	return sg_ret::ok;
-}
-
 
 
 
