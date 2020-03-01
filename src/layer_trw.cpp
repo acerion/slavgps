@@ -1258,19 +1258,19 @@ sg_ret LayerTRW::post_read_2(void)
 		return sg_ret::err;
 	}
 
-	if (this->tracks.size() > 0) {
+	if (this->tracks.size() > 0) { /* TODO: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
-		this->tracks.attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(&this->tracks);
 	}
 
-	if (this->routes.size() > 0) {
+	if (this->routes.size() > 0) { /* TODO: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
-		this->routes.attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(&this->routes);
 	}
 
-	if (this->waypoints.size() > 0) {
+	if (this->waypoints.size() > 0) { /* TODO: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
-		this->waypoints.attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(&this->waypoints);
 	}
 
 	this->generate_missing_thumbnails();
@@ -1900,7 +1900,7 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
+sg_ret LayerTRW::attach_to_parent_tree_item(Waypoint * wp, int row)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
@@ -1909,12 +1909,12 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 
 	if (!this->waypoints.is_in_tree()) {
 		qDebug() << SG_PREFIX_I << "Attaching item" << this->waypoints.get_name() << "to tree under" << this->get_name();
-		this->waypoints.attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(&this->waypoints);
 	}
 
 
 	qDebug() << SG_PREFIX_I << "Attaching item" << wp->get_name() << "to tree under" << this->waypoints.get_name();
-	wp->attach_to_tree_under_parent(&this->waypoints); /* push item to the end of parent node. */
+	this->waypoints.attach_child_to_tree(wp, row); /* push item to the end of parent node. */
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
 	/* TODO_LATER: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
@@ -1937,7 +1937,7 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 		return sg_ret::ok;
 	}
 
-	this->attach_to_tree(wp);
+	this->attach_to_parent_tree_item(wp);
 
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -1950,7 +1950,7 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 
 
 
-sg_ret LayerTRW::attach_to_tree(Track * trk)
+sg_ret LayerTRW::attach_to_parent_tree_item(Track * trk, int row)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
@@ -1960,13 +1960,13 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 	if (trk->is_route()) {
 		if (!this->routes.is_in_tree()) {
 			qDebug() << SG_PREFIX_I << "Attaching item" << this->routes.get_name() << "to tree under" << this->get_name();
-			this->routes.attach_to_tree_under_parent(this);
+			this->attach_child_to_tree(&this->routes);
 		}
 
 		/* Now we can proceed with adding a route to Routes node. */
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->routes.get_name();
-		trk->attach_to_tree_under_parent(&this->routes);
+		this->routes.attach_child_to_tree(trk, row);
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
 		trk->update_tree_item_properties();
@@ -1979,7 +1979,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 	} else {
 		if (!this->tracks.is_in_tree()) {
 			qDebug() << SG_PREFIX_I << "Attaching item" << this->tracks.get_name() << "to tree under" << this->get_name();
-			this->tracks.attach_to_tree_under_parent(this);
+			this->attach_child_to_tree(&this->tracks);
 		}
 
 
@@ -1989,7 +1989,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 		}
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->tracks.get_name();
-		trk->attach_to_tree_under_parent(&this->tracks); /* push item to the end of parent nodes. */
+		this->tracks.attach_child_to_tree(trk, row); /* push item to the end of parent nodes. */
 
 		/* Update tree item properties of this item before sorting of all sibling tree items. */
 		trk->update_tree_item_properties();
@@ -2014,7 +2014,7 @@ sg_ret LayerTRW::add_track(Track * trk)
 		return sg_ret::ok;
 	}
 
-	this->attach_to_tree(trk);
+	this->attach_to_parent_tree_item(trk);
 
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -2034,7 +2034,7 @@ sg_ret LayerTRW::add_route(Track * trk)
 		return sg_ret::ok;
 	}
 
-	this->attach_to_tree(trk);
+	this->attach_to_parent_tree_item(trk);
 
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -2169,6 +2169,12 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 {
+	/* Better to calculate 'previous_trw' at the beginning of the
+	   function, before the parent will be changed as a result of
+	   drop. */
+	LayerTRW * previous_trw = (LayerTRW *) tree_item->parent_layer();
+	const bool the_same_trw = TreeItem::the_same_object(this, previous_trw);
+
 	if (tree_item->get_type_id() == Track::type_id()) {
 		this->tracks_node().accept_dropped_child(tree_item, row, col);
 
@@ -2184,30 +2190,12 @@ sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 	}
 
 
-	LayerTRW * source_trw = (LayerTRW *) tree_item->parent_layer();
-	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
-
-	/* TODO: recalculation of bboxes needs to be moved to tracks/routes/waypoints nodes. */
-	if (tree_item->get_type_id() == Track::type_id()) {
-		this->tracks.recalculate_bbox();
-		if (!the_same_parent) {
-			source_trw->tracks.recalculate_bbox();
-		}
-
-	} else if (tree_item->get_type_id() == Route::type_id()) {
-		this->routes.recalculate_bbox();
-		if (!the_same_parent) {
-			source_trw->routes.recalculate_bbox();
-		}
-
-	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-		this->waypoints.recalculate_bbox();
-		if (!the_same_parent) {
-			source_trw->waypoints.recalculate_bbox();
-		}
-	} else {
-		qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
-		return sg_ret::err;
+	if (!the_same_trw) {
+		/* Count of items in both previous and current TRW
+		   layer has changed, so we need to reflect this in
+		   TRW Layers' tooltips. */
+		previous_trw->update_tree_item_tooltip();
+		this->update_tree_item_tooltip();
 	}
 
 	return sg_ret::ok;
@@ -2216,7 +2204,7 @@ sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 
 
 
-sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
+sg_ret LayerTRW::detach_from_parent_tree_item(TreeItem * tree_item)
 {
 	if (!tree_item) {
 		qDebug() << SG_PREFIX_E << "NULL pointer to tree item";
@@ -2466,7 +2454,7 @@ void LayerTRW::merge_with_other_cb(void)
 			qDebug() << SG_PREFIX_I << "We have a merge track";
 			track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
-			this->detach_from_tree(source_track);
+			this->detach_from_parent_tree_item(source_track);
 			delete source_track;
 
 			track->sort(Trackpoint::compare_timestamps);
@@ -2525,7 +2513,7 @@ void LayerTRW::append_track_cb(void)
 
 	/* All trackpoints have been moved from source_track to
 	   target_track. We don't need source_track anymore. */
-	this->detach_from_tree(source_track);
+	this->detach_from_parent_tree_item(source_track);
 	delete source_track;
 
 
@@ -2600,7 +2588,7 @@ void LayerTRW::append_other_cb(void)
 	/* All trackpoints have been moved from
 	   source_track to target_track. We don't need
 	   source_track anymore. */
-	this->detach_from_tree(source_track);
+	this->detach_from_parent_tree_item(source_track);
 	delete source_track;
 
 
@@ -2680,7 +2668,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 			/* Remove trackpoints from merged track, delete track. */
 			orig_track->move_trackpoints_from(**iter, (*iter)->begin(), (*iter)->end());
 
-			this->detach_from_tree(*iter);
+			this->detach_from_parent_tree_item(*iter);
 			delete *iter;
 
 			/* Tracks have changed, therefore retry again against all the remaining tracks. */
@@ -2747,7 +2735,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	   Since specificly requested, IMHO no need for extra confirmation. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_tree(*iter);
+		this->detach_from_parent_tree_item(*iter);
 		delete *iter;
 	}
 
@@ -2787,7 +2775,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->detach_from_tree(*iter);
+		this->detach_from_parent_tree_item(*iter);
 		delete *iter;
 	}
 
@@ -2823,7 +2811,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
-		this->detach_from_tree(*iter);
+		this->detach_from_parent_tree_item(*iter);
 		delete *iter;
 	}
 
@@ -3591,7 +3579,7 @@ sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
 
 
 	bool was_visible = false;
-	this->detach_from_tree(trk);
+	this->detach_from_parent_tree_item(trk);
 	delete trk;
 
 
@@ -3621,7 +3609,7 @@ sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
 	}
 
 	bool was_visible;
-	this->detach_from_tree(wp);
+	this->detach_from_parent_tree_item(wp);
 	delete wp;
 
 	this->waypoints.recalculate_bbox();

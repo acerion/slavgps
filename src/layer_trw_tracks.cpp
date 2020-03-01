@@ -676,7 +676,7 @@ sg_ret LayerTRWTracks::post_read_2(void)
 		trk->self_assign_timestamp();
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->get_name();
-		trk->attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(trk);
 	}
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -1077,35 +1077,51 @@ bool LayerTRWTracks::empty(void) const
 
 sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
 {
+	/* Better to calculate 'previous_trw' at the beginning of the
+	   function, before the parent will be changed as a result of
+	   drop. */
+	LayerTRW * previous_trw = ((Track *) tree_item)->owner_trw_layer();
+	LayerTRW * current_trw = this->owner_trw_layer();
+	const bool the_same_trw = TreeItem::the_same_object(previous_trw, current_trw);
+
 	/* Handle item in old location. */
 	{
 		tree_item->disconnect(); /* Disconnect all old signals. */
 
-		Track * trk = (Track *) tree_item;
-		if (nullptr == trk) {
-			qDebug() << SG_PREFIX_E << "NULL pointer to track";
-			return sg_ret::err;
-		}
-		LayerTRW * owner_trw = trk->owner_trw_layer();
-		TreeItem * parent_tree_item = trk->parent_tree_item();
+		/* Stuff specific to TRW Layer. */
+		{
+			Track * trk = (Track *) tree_item;
+			if (nullptr == trk) {
+				qDebug() << SG_PREFIX_E << "NULL pointer to track";
+				return sg_ret::err;
+			}
 
-		if (trk->is_selected()) {
-			owner_trw->selected_track_reset();
-			owner_trw->moving_tp = false;
-			owner_trw->route_finder_started = false;
-		}
+			TreeItem * parent_tree_item = trk->parent_tree_item();
 
-		if (trk == owner_trw->route_finder_added_track) {
-			owner_trw->route_finder_added_track = NULL;
-		}
+			if (trk->is_selected()) {
+				previous_trw->selected_track_reset();
+				previous_trw->moving_tp = false;
+				previous_trw->route_finder_started = false;
+			}
 
-		owner_trw->deselect_current_trackpoint(trk);
+			if (trk == previous_trw->route_finder_added_track) {
+				previous_trw->route_finder_added_track = NULL;
+			}
 
+			previous_trw->deselect_current_trackpoint(trk);
+
+			if (!the_same_trw) {
+				if (trk->is_route()) {
+					previous_trw->routes_node().recalculate_bbox();
+				} else {
+					previous_trw->tracks_node().recalculate_bbox();
+				}
 #ifdef K_TODO_LATER
-		this->name_generator.remove_name(trk->get_name());
+				this->name_generator.remove_name(trk->get_name());
 #endif
-		owner_trw->update_tree_item_tooltip();        /* Previous TRW Layer. */
-		parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
+				parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWTracks. */
+			}
+		}
 	}
 
 
@@ -1114,8 +1130,12 @@ sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__(
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
 		this->tree_view->attach_to_tree(this, tree_item, row);
 
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
+		if (!the_same_trw) {
+			this->recalculate_bbox();
+
+			/* Update our own tooltip in tree view. */
+			this->update_tree_item_tooltip();
+		}
 	}
 
 

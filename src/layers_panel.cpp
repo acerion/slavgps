@@ -315,7 +315,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		qDebug() << SG_PREFIX_I << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		aggregate->insert_layer(layer, selected_layer); /* Insert layer next to selected layer. */
+		aggregate->add_child_item(layer, true);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());

@@ -82,7 +82,6 @@ namespace SlavGPS {
 		~TreeView();
 
 
-		sg_ret attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeViewAttachMode attach_mode = TreeViewAttachMode::Back, const TreeItem * sibling = NULL);
 		sg_ret attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 
 		TreeItem * get_tree_item(TreeIndex const & item_index) const;

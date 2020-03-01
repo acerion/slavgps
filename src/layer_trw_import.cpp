@@ -167,8 +167,8 @@ void AcquireWorker::finalize_after_success(void)
 
 		/* Attach newly created TRW layer and its children to tree. */
 		Layer * parent = this->m_acquire_context.get_parent_layer();
-		parent->add_child_item(target_trw, true);
-		target_trw->attach_to_tree_under_parent(parent, TreeViewAttachMode::Back, nullptr);
+		parent->add_child_item(target_trw, true); /* TODO: doesn't this line duplicate the line below? */
+		parent->attach_child_to_tree(target_trw);
 	} else {
 		/* Target layer is already attached to tree, but its
 		   children (at least those freshly acquired) are not.

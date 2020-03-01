@@ -244,10 +244,14 @@ namespace SlavGPS {
 
 
 
-		sg_ret attach_to_tree(Track * trk);
-		sg_ret attach_to_tree(Waypoint * wp);
+		sg_ret attach_to_parent_tree_item(Track * trk, int row = -1);
+		sg_ret attach_to_parent_tree_item(Waypoint * wp, int row = -1);
 
-		sg_ret detach_from_tree(TreeItem * tree_item);
+		/**
+		   Detach tree item from Qt tree. Do TRW-specific
+		   actions after the item has been detached from tree.
+		*/
+		sg_ret detach_from_parent_tree_item(TreeItem * tree_item);
 
 
 

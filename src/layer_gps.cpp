@@ -582,7 +582,7 @@ sg_ret LayerGPS::post_read_2(void)
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
 		qDebug() << SG_PREFIX_I << "Attaching item" << trw->get_name() << "to tree under" << this->get_name();
-		trw->attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(trw);
 		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
 
@@ -1730,7 +1730,7 @@ void LayerGPS::rt_cleanup_layer_children(void)
 	   "received" any trackpoints from gpsd (i.e. is empty). */
 	if (this->realtime_record && this->realtime_track) {
 		if (this->realtime_track->empty()) {
-			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_tree(this->realtime_track);
+			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_parent_tree_item(this->realtime_track);
 			delete this->realtime_track;
 		}
 		this->realtime_track = NULL;

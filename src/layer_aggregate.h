@@ -81,7 +81,6 @@ namespace SlavGPS {
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
 
 		sg_ret add_child_item(TreeItem * item, bool allow_reordering) override;
-		void insert_layer(Layer * layer, const Layer * sibling_layer);
 
 		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
 		void clear();

@@ -561,7 +561,7 @@ sg_ret LayerTRWWaypoints::post_read_2(void)
 		}
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
-		tree_item->attach_to_tree_under_parent(this);
+		this->attach_child_to_tree(tree_item);
 	}
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
@@ -1030,37 +1030,53 @@ QString DefaultNameGenerator::try_new_name(void) const
 
 sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __attribute__((unused)) int col)
 {
+	/* Better to calculate 'previous_trw' at the beginning of the
+	   function, before the parent will be changed as a result of
+	   drop. */
+	LayerTRW * previous_trw = ((Waypoint *) tree_item)->owner_trw_layer();
+	LayerTRW * current_trw = this->owner_trw_layer();
+	const bool the_same_trw = TreeItem::the_same_object(previous_trw, current_trw);
+
 	/* Handle item in old location. */
 	{
 		tree_item->disconnect(); /* Disconnect all old signals. */
 
-		Waypoint * wp = (Waypoint *) tree_item;
-		if (nullptr == wp) {
-			qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
-			return sg_ret::err;
-		}
-		LayerTRW * owner_trw = wp->owner_trw_layer();
-		TreeItem * parent_tree_item = wp->parent_tree_item();
+		/* Stuff specific to TRW layer. */
+		{
+			Waypoint * wp = (Waypoint *) tree_item;
+			if (nullptr == wp) {
+				qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
+				return sg_ret::err;
+			}
+			TreeItem * parent_tree_item = wp->parent_tree_item();
 
-		if (wp == owner_trw->selected_wp_get()) {
-			owner_trw->selected_wp_reset();
-			owner_trw->moving_wp = false;
-		}
+			if (!the_same_trw) {
+				if (wp == previous_trw->selected_wp_get()) {
+					previous_trw->selected_wp_reset();
+					previous_trw->moving_wp = false;
+				}
 #ifdef K_TODO_LATER
-		this->name_generator.remove_name(wp->get_name());
+				this->name_generator.remove_name(wp->get_name());
 #endif
-		owner_trw->update_tree_item_tooltip();        /* Previous TRW Layer. */
-		parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
+				parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
+			}
+		}
 	}
+
 
 	/* Handle item in new location. */
 	{
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
 		this->tree_view->attach_to_tree(this, tree_item, row);
 
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
+		if (!the_same_trw) {
+			this->recalculate_bbox();
+
+			/* Update our own tooltip in tree view. */
+			this->update_tree_item_tooltip();
+		}
 	}
+
 
 	return sg_ret::ok;
 }

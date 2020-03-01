@@ -545,27 +545,27 @@ sg_ret TreeItem::get_tree_items(__attribute__((unused)) std::list<TreeItem *> & 
 
 
 
-sg_ret TreeItem::attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMode attach_mode, const TreeItem * sibling)
+sg_ret TreeItem::attach_child_to_tree(TreeItem * child, int row)
 {
-	if (!parent->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "Parent tree item" << parent->get_name() << "is not attached to tree";
+	if (!this->is_in_tree()) {
+		qDebug() << SG_PREFIX_E << "Parent tree item" << this->get_name() << "is not attached to tree";
 		return sg_ret::err;
 	}
 
 	/* Attach yourself to tree first. */
-	if (!this->is_in_tree()) {
-		if (sg_ret::ok != parent->tree_view->attach_to_tree(parent, this, attach_mode, sibling)) {
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+	if (!child->is_in_tree()) {
+		if (sg_ret::ok != this->tree_view->attach_to_tree(this, child, row)) {
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << child->get_name() << "to tree";
 			return sg_ret::err;
 		}
-		if (!this->is_in_tree()) { /* After calling tree_view->attach_to_tree(), this condition should be true. */
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << this->get_name() << "to tree";
+		if (!child->is_in_tree()) { /* After calling tree_view->attach_to_tree(), this condition should be true. */
+			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << child->get_name() << "to tree";
 			return sg_ret::err;
 		}
 	}
 
 	/* Attach child items. */
-	return this->post_read_2();
+	return child->post_read_2();
 }
 
 

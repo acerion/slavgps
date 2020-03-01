@@ -2790,7 +2790,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Detach from old location. */
-	parent_trw->detach_from_tree(this);
+	parent_trw->detach_from_parent_tree_item(this);
 
 
 	/* Convert and attach to new location. */

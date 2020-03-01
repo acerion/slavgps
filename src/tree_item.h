@@ -65,15 +65,6 @@ namespace SlavGPS {
 	class TreeItemIdentityPredicate;
 
 
-	enum class TreeViewAttachMode {
-		Front,
-		Back,
-		Before,
-		After
-	};
-
-
-
 
 	typedef uint32_t sg_uid_t;
 #define SG_UID_INITIAL  1
@@ -189,9 +180,8 @@ namespace SlavGPS {
 		   items/children that need to be added to
 		   application's tree of items.
 
-		   This method should call
-		   attach_to_tree_under_parent() on any such child
-		   that needs to be added to the tree.
+		   This method should call attach_child_to_tree() on
+		   any such child that needs to be added to the tree.
 
 		   TODO_LATER: this should be a protected method.
 		*/
@@ -406,7 +396,7 @@ namespace SlavGPS {
 		   layer) of types given by @param wanted_types. */
 		virtual sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const;
 
-		virtual sg_ret attach_to_tree_under_parent(TreeItem * parent, TreeViewAttachMode attach_mode = TreeViewAttachMode::Back, const TreeItem * sibling = nullptr);
+		virtual sg_ret attach_child_to_tree(TreeItem * child, int row = -1);
 
 
 		const StandardMenuOperations & get_menu_operation_ids(void) const;

@@ -576,7 +576,7 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 		this->param_specs_count = Layer::get_interface(current_layer_kind)->parameter_specifications.size();
 
 		qDebug() << SG_PREFIX_I << "Attaching item" << child->get_name() << "to tree under" << parent->get_name();
-		child->attach_to_tree_under_parent(parent);
+		parent->attach_child_to_tree(child);
 		return;
 	}
 	case LayerKind::Aggregate: {
@@ -597,7 +597,7 @@ void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
 		//qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << agg->get_name();
-		//layer->attach_to_tree_under_parent(agg);
+		//agg->attach_child_to_tree(layer);
 		return;
 	}
 	default:

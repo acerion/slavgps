@@ -454,91 +454,7 @@ void TreeView::deselect_tree_item(const TreeItem * tree_item)
    @param tree_item - tree_item to be added
 
    @return sg_ret::ok on success
-   @return error value on failure
-*/
-sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeViewAttachMode attach_mode, const TreeItem * sibling_tree_item)
-{
-	if (!parent_tree_item->index().isValid()) {
-		/* Parent index must always be valid. The only
-		   possibility would be when we would push top level
-		   layer, but this has been already done in tree
-		   view's constructor. */
-		qDebug() << SG_PREFIX_E << "Trying to push tree item with invalid parent item";
-		return sg_ret::err;
-	}
-
-	int row = -2;
-	sg_ret result = sg_ret::err;
-
-	switch (attach_mode) {
-	case TreeViewAttachMode::Front:
-		row = 0;
-		qDebug() << SG_PREFIX_I << "Pushing front tree item named" << tree_item->get_name() << "into row" << row;
-		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
-		qDebug() << SG_PREFIX_I;
-		break;
-
-	case TreeViewAttachMode::Back:
-		row = this->tree_model->itemFromIndex(parent_tree_item->index())->rowCount();
-		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->get_name() << "into row" << row;
-		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
-		qDebug() << SG_PREFIX_I;
-		break;
-
-	case TreeViewAttachMode::Before:
-	case TreeViewAttachMode::After:
-		if (NULL == sibling_tree_item) {
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: NULL sibling";
-			result = sg_ret::err;
-			break;
-		}
-
-		if (!sibling_tree_item->index().isValid()) {
-			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << tree_item->get_name() << "next to sibling: invalid sibling";
-			result = sg_ret::err;
-			break;
-		}
-
-		row = sibling_tree_item->index().row() + (attach_mode == TreeViewAttachMode::Before ? 0 : 1);
-		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->get_name() << "next to sibling named" << sibling_tree_item->get_name() << "into row" << row;
-		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
-		qDebug() << SG_PREFIX_I;
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected attach mode" << (int) attach_mode;
-		result = sg_ret::err;
-		break;
-	}
-
-
-	if (sg_ret::ok != result) {
-		qDebug() << SG_PREFIX_E << "Failed to attach child" << tree_item->get_name() << "under parent" << parent_tree_item->get_name() << "with mode" << (int) attach_mode << "into row" << row;
-		return sg_ret::err;
-	}
-
-
-	this->apply_tree_item_timestamp(tree_item);
-	qDebug() << SG_PREFIX_I;
-	this->apply_tree_item_icon(tree_item);
-	qDebug() << SG_PREFIX_D << "New item" << tree_item->get_name() << "has index:" << tree_item->index().row() << tree_item->index().column();
-
-	qDebug() << SG_PREFIX_I;
-
-	return sg_ret::ok;
-}
-
-
-
-
-/**
-   \brief Add given @tree_item under given parent tree item
-
-   @param parent_tree_index - parent tree item under which to put new @tree_item
-   @param tree_item - tree_item to be added
-
-   @return sg_ret::ok on success
-   @return error value on failure
+   @return sg_ret::err on failure
 */
 sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, int row)
 {
@@ -551,14 +467,25 @@ sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_ite
 		return sg_ret::err;
 	}
 
-	if (row == -1) {
-		/* Probably item is being dropped on parent, so move
-		   the item to end of parent's children. */
-		row = this->tree_model->itemFromIndex(parent_tree_item->index())->rowCount();
+	const int n_rows = this->tree_model->itemFromIndex(parent_tree_item->index())->rowCount();
+	if (row >= n_rows) {
+		qDebug() << SG_PREFIX_W << "Specified row" << row << "Larger than row count" << n_rows;
 	}
 
-	qDebug() << SG_PREFIX_I << "Inserting tree item named" << tree_item->get_name() << "into row" << row;
-	return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
+	if (-1 == row) {
+		row = n_rows;
+	}
+
+	qDebug() << SG_PREFIX_I << "Adding tree item" << tree_item->get_name() << "into row" << row;
+	if (sg_ret::ok != this->insert_tree_item_at_row(parent_tree_item, tree_item, row)) {
+		qDebug() << SG_PREFIX_E << "Failed to attach child" << tree_item->get_name() << "under parent" << parent_tree_item->get_name();
+		return sg_ret::err;
+	}
+
+	this->apply_tree_item_timestamp(tree_item);
+	this->apply_tree_item_icon(tree_item);
+
+	return sg_ret::ok;
 }
 
 
