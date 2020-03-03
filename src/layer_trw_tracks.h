@@ -26,6 +26,7 @@
 
 
 #include <unordered_map>
+#include <list>
 
 
 
@@ -167,6 +168,8 @@ namespace SlavGPS {
  		void change_coord_mode(CoordMode dest_mode);
 
 
+		sg_ret add_child(Track * trk);
+
 
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		void sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu);
@@ -222,6 +225,18 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
+
+		/**
+		   @Attach given @param child as child tree item in Qt Model
+
+		   The method can be called when a single @param child
+		   is added to already connected Tracks/Routes
+		   container, or when (in post_read()) all unattached
+		   children are connected to Qt Model.
+		*/
+		sg_ret attach_as_tree_item_child(TreeItem * child, int row);
+
+		std::list<Track *> unattached_children;
 
 		void init_item(void);
 	};

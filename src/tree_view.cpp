@@ -614,6 +614,8 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 
 	qDebug() << SG_PREFIX_I;
 
+	/* Owner will be needed in "get_list_representation()" called below. */
+	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
 
 	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
 
@@ -627,7 +629,7 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 	TreeIndex index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->set_index(index);
 	tree_item->tree_view = this;
-	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
+
 
 
 	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));

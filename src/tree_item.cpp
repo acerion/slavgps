@@ -552,7 +552,7 @@ sg_ret TreeItem::attach_child_to_tree(TreeItem * child, int row)
 		return sg_ret::err;
 	}
 
-	/* Attach yourself to tree first. */
+	/* Attach child to tree under yourself. */
 	if (!child->is_in_tree()) {
 		if (sg_ret::ok != this->tree_view->attach_to_tree(this, child, row)) {
 			qDebug() << SG_PREFIX_E << "Failed to attach tree item" << child->get_name() << "to tree";

@@ -465,14 +465,6 @@ namespace SlavGPS {
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
 
-		/**
-		   Attach tree item to Qt tree. Do TRW-specific
-		   actions after the item has been attached to the
-		   tree.
-		*/
-		sg_ret attach_to_parent_tree_item(Track * trk, int row = -1);
-		sg_ret attach_to_parent_tree_item(Waypoint * wp, int row = -1);
-
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */
 		Track * m_selected_track = NULL;

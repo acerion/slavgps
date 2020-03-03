@@ -1900,115 +1900,43 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 
 
-sg_ret LayerTRW::attach_to_parent_tree_item(Waypoint * wp, int row)
+sg_ret LayerTRW::add_track(Track * trk)
 {
-	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
-		ThisApp::layers_panel()->top_layer()->add_child_item(this, true);
-	}
-
-	if (!this->waypoints.is_in_tree()) {
-		qDebug() << SG_PREFIX_I << "Attaching item" << this->waypoints.get_name() << "to tree under" << this->get_name();
-		this->attach_child_to_tree(&this->waypoints);
-	}
-
-
-	qDebug() << SG_PREFIX_I << "Attaching item" << wp->get_name() << "to tree under" << this->waypoints.get_name();
-	this->waypoints.attach_child_to_tree(wp, row); /* push item to the end of parent node. */
-
-	/* Sort now as post_read is not called on a waypoint connected to tree. */
-	/* TODO_LATER: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
-	this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
-
-	/* Update our own tooltip in tree view. */
-	this->waypoints.update_tree_item_tooltip();
-
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::add_waypoint(Waypoint * wp)
-{
-	if (sg_ret::ok != wp->set_parent_and_owner_tree_item(this)) {
-		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
-		return sg_ret::ok;
-	}
-
-	this->attach_to_parent_tree_item(wp);
-
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
-
-	QObject::connect(wp, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::attach_to_parent_tree_item(Track * trk, int row)
-{
-	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_W << "This layer" << this->get_name() << "is not connected to tree, will now connect it";
-		ThisApp::layers_panel()->top_layer()->add_child_item(this, true);
-	}
-
-	if (trk->is_route()) {
-		if (!this->routes.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching item" << this->routes.get_name() << "to tree under" << this->get_name();
-			this->attach_child_to_tree(&this->routes);
-		}
-
-		/* Now we can proceed with adding a route to Routes node. */
-
-		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->routes.get_name();
-		this->routes.attach_child_to_tree(trk, row);
-
-		/* Update tree item properties of this item before sorting of all sibling tree items. */
-		trk->update_tree_item_properties();
-
-		/* Sort now as post_read is not called on a route connected to tree. */
-		this->tree_view->sort_children(&this->routes, this->track_sort_order);
-
-		/* Update our own tooltip in tree view. */
-		this->routes.update_tree_item_tooltip();
-	} else {
+	if (this->is_in_tree()) {
+		/* This TRW layer is already in Qt Model, so it can
+		  attach the child item as its Qt Model child node. */
 		if (!this->tracks.is_in_tree()) {
-			qDebug() << SG_PREFIX_I << "Attaching item" << this->tracks.get_name() << "to tree under" << this->get_name();
+			/* Tracks container is not attached to Model
+			   yet, probably because the container was
+			   empty until this point. Let's attach it
+			   first. */
 			this->attach_child_to_tree(&this->tracks);
 		}
 
-
-		Trackpoint * tp = trk->get_tp_first();
-		if (tp && tp->timestamp.is_valid()) {
-			trk->set_timestamp(tp->timestamp);
+		if (sg_ret::ok != this->tracks.add_child(trk)) {
+			qDebug() << SG_PREFIX_E << "Failed to add track to Tracks container attached to Model";
+			return sg_ret::err;
 		}
 
-		qDebug() << SG_PREFIX_I << "Attaching item" << trk->get_name() << "to tree under" << this->tracks.get_name();
-		this->tracks.attach_child_to_tree(trk, row); /* push item to the end of parent nodes. */
-
-		/* Update tree item properties of this item before sorting of all sibling tree items. */
-		trk->update_tree_item_properties();
-
-		/* Sort now as post_read is not called on a track connected to tree. */
-		this->tree_view->sort_children(&this->tracks, this->track_sort_order);
-
 		/* Update our own tooltip in tree view. */
-		this->tracks.update_tree_item_tooltip();
+		this->update_tree_item_tooltip();
+
+		return sg_ret::ok;
+	} else {
+		/* This TRW layer is not yet attached to Qt Model, so
+		   we have to put the child layer on temporary list of
+		   unattached children. this->tracks.add_child() will
+		   do this for us. */
+
+		if (sg_ret::ok != this->tracks.add_child(trk)) {
+			qDebug() << SG_PREFIX_E << "Failed to add track to Tracks container NOT attached to Model";
+			return sg_ret::err;
+		}
+
+		return sg_ret::ok;
 	}
 
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret LayerTRW::add_track(Track * trk)
-{
+#ifdef K_TODO_LATER /* What to do with this piece of code? */
 	{
 		Track * curr_track = this->selected_track_get();
 
@@ -2042,18 +1970,8 @@ sg_ret LayerTRW::add_track(Track * trk)
 			}
 		}
 	}
+#endif
 
-	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
-		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
-		return sg_ret::ok;
-	}
-
-	this->attach_to_parent_tree_item(trk);
-
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
-
-	QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 	return sg_ret::ok;
 }
@@ -2063,19 +1981,79 @@ sg_ret LayerTRW::add_track(Track * trk)
 
 sg_ret LayerTRW::add_route(Track * trk)
 {
-	if (sg_ret::ok != trk->set_parent_and_owner_tree_item(this)) {
-		qDebug() << SG_PREFIX_E << "Failed to sent parent and owner";
+	if (this->is_in_tree()) {
+		/* This TRW layer is already in Qt Model, so it can
+		  attach the child item as its Qt Model child node. */
+		if (!this->routes.is_in_tree()) {
+			/* Routes container is not attached to Model
+			   yet, probably because the container was
+			   empty until this point. Let's attach it
+			   first. */
+			this->attach_child_to_tree(&this->routes);
+		}
+
+		if (sg_ret::ok != this->routes.add_child(trk)) {
+			qDebug() << SG_PREFIX_E << "Failed to add route to Routes container attached to Model";
+			return sg_ret::err;
+		}
+
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
+
+		return sg_ret::ok;
+	} else {
+		/* This TRW layer is not yet attached to Qt Model, so
+		   we have to put the child layer on temporary list of
+		   unattached children. this->routes.add_child() will
+		   do this for us. */
+
+		if (sg_ret::ok != this->routes.add_child(trk)) {
+			qDebug() << SG_PREFIX_E << "Failed to add route to Routes container NOT attached to Model";
+			return sg_ret::err;
+		}
+
 		return sg_ret::ok;
 	}
+}
 
-	this->attach_to_parent_tree_item(trk);
 
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
 
-	QObject::connect(trk, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
-	return sg_ret::ok;
+sg_ret LayerTRW::add_waypoint(Waypoint * wp)
+{
+	if (this->is_in_tree()) {
+		/* This TRW layer is already in Qt Model, so it can
+		  attach the child item as its Qt Model child node. */
+		if (!this->waypoints.is_in_tree()) {
+			/* Waypoints container is not attached to Model
+			   yet, probably because the container was
+			   empty until this point. Let's attach it
+			   first. */
+			this->attach_child_to_tree(&this->waypoints);
+		}
+
+		if (sg_ret::ok != this->waypoints.add_child(wp)) {
+			qDebug() << SG_PREFIX_E << "Failed to add waypoint to Waypoints container attached to Model";
+			return sg_ret::err;
+		}
+
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
+
+		return sg_ret::ok;
+	} else {
+		/* This TRW layer is not yet attached to Qt Model, so
+		   we have to put the child layer on temporary list of
+		   unattached children. this->waypoints.add_child() will
+		   do this for us. */
+
+		if (sg_ret::ok != this->waypoints.add_child(wp)) {
+			qDebug() << SG_PREFIX_E << "Failed to add waypoint to Waypoints container NOT attached to Model";
+			return sg_ret::err;
+		}
+
+		return sg_ret::ok;
+	}
 }
 
 
