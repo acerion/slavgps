@@ -359,7 +359,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 		parent_trw->unlock_remove();
 	}
 
-#if TODO_ALTER
+#if TODO_LATER
 	/* The dialog may be invoked from LayerAggregate's context
 	   menu, which means that there may be multiple TRW layers.
 	   For each of them we need to call trw->udpate_tree_item(),

@@ -1137,14 +1137,12 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 	}
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
-#ifdef K_TODO_LATER
-		std::list<Waypoint *> waypoints = trw->get_waypoints_();
+		std::list<Waypoint *> waypoints = trw->waypoints_node().children_list();
 		waypoints.sort(gpx_waypoint_compare);
 
 		for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
 			gpx_write_waypoint(*iter, &context);
 		}
-#endif
 	}
 
 

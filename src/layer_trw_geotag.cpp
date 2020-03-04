@@ -525,13 +525,11 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 		/* Single specified track. */
 		this->geotag_image_from_track(this->trk);
 	} else {
-#ifdef K_TODO_LATER
 		/* Try all tracks. */
-		const std::list<Track *> tracks = this->trw->get_tracks_();
+		const std::list<Track *> tracks = this->trw->tracks_node().children_list();
 		for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
 			this->geotag_image_from_track(*iter);
 		}
-#endif
 	}
 
 	if (this->found_match) {

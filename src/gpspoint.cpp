@@ -951,10 +951,9 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 SaveStatus GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
 {
-#ifdef K_TODO_LATER
-	const std::list<Track *> tracks = trw->get_tracks_();
-	const std::list<Track *> routes = trw->get_routes_();
-	const std::list<Waypoint *> waypoints = trw->get_waypoints_();
+	const std::list<Track *> tracks = trw->tracks_node().children_list();
+	const std::list<Track *> routes = trw->routes_node().children_list();
+	const std::list<Waypoint *> waypoints = trw->waypoints_node().children_list();
 
 	fprintf(file, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(file, waypoints);
@@ -962,7 +961,6 @@ SaveStatus GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
 
 	a_gpspoint_write_tracks(file, tracks);
 	a_gpspoint_write_tracks(file, routes);
-#endif
 
 	return SaveStatus::Code::Success;
 }

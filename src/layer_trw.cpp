@@ -1258,17 +1258,17 @@ sg_ret LayerTRW::post_read_2(void)
 		return sg_ret::err;
 	}
 
-	if (this->m_tracks.size() > 0) { /* TODO: this should somehow check number of un-attached children */
+	if (this->m_tracks.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_tracks);
 	}
 
-	if (this->m_routes.size() > 0) { /* TODO: this should somehow check number of un-attached children */
+	if (this->m_routes.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_routes);
 	}
 
-	if (this->m_waypoints.size() > 0) { /* TODO: this should somehow check number of un-attached children */
+	if (this->m_waypoints.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
 		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_waypoints);
 	}
