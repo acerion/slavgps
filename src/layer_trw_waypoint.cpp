@@ -222,7 +222,7 @@ sg_ret Waypoint::set_coord(const Coord & new_coord, bool do_recalculate_bbox, bo
 	this->m_coord = new_coord;
 	if (do_recalculate_bbox) {
 		LayerTRW * trw = this->owner_trw_layer();
-		trw->waypoints.recalculate_bbox();
+		trw->waypoints_node().recalculate_bbox();
 	}
 
 	if (only_set_value) {
@@ -696,7 +696,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 		}
 	}
 
-	if (parent_trw->waypoints.find_child_by_name(new_name)) {
+	if (parent_trw->waypoints_node().find_child_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
 		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::main_window())) {
 			return empty_string;
@@ -707,7 +707,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	this->set_name(new_name);
 
 	parent_trw->tree_view->apply_tree_item_name(this);
-	parent_trw->tree_view->sort_children(&parent_trw->waypoints, parent_trw->wp_sort_order);
+	parent_trw->tree_view->sort_children(&parent_trw->waypoints_node(), parent_trw->wp_sort_order);
 
 	ThisApp::layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming waypoint");
 
@@ -1047,7 +1047,7 @@ sg_ret Waypoint::propagate_new_waypoint_name(void)
 	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	this->tree_view->apply_tree_item_name(this);
-	this->tree_view->sort_children(&parent_trw->waypoints, parent_trw->wp_sort_order);
+	this->tree_view->sort_children(&parent_trw->waypoints_node(), parent_trw->wp_sort_order);
 
 	return sg_ret::ok;
 }

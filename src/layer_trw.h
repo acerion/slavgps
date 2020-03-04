@@ -152,21 +152,12 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
 
-		const std::list<Track *> & get_tracks_(void) const; //  { return this->tracks.children_list; };
-		const std::list<Track *> & get_routes_(void) const; // { return this->routes.children_list; };
-		const std::list<Waypoint *> & get_waypoints_(void) const; // { return this->waypoints.children; };
-
-		const LayerTRWTracks & tracks_node(void) const { return this->tracks; };
-		const LayerTRWTracks & routes_node(void) const { return this->routes; };
-		const LayerTRWWaypoints & waypoints_node(void) const { return this->waypoints; };
-		LayerTRWTracks & tracks_node(void) { return this->tracks; };
-		LayerTRWTracks & routes_node(void) { return this->routes; };
-		LayerTRWWaypoints & waypoints_node(void) { return this->waypoints; };
-
-		LayerTRWTracks tracks{false}; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks routes{true};  /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints waypoints;  /* Sub-node, under which all layer's waypoints are shown. */
-
+		const LayerTRWTracks & tracks_node(void) const { return this->m_tracks; };
+		const LayerTRWTracks & routes_node(void) const { return this->m_routes; };
+		const LayerTRWWaypoints & waypoints_node(void) const { return this->m_waypoints; };
+		LayerTRWTracks & tracks_node(void) { return this->m_tracks; };
+		LayerTRWTracks & routes_node(void) { return this->m_routes; };
+		LayerTRWWaypoints & waypoints_node(void) { return this->m_waypoints; };
 
 		bool get_tracks_visibility(void) const;
 		bool get_routes_visibility(void) const;
@@ -450,6 +441,11 @@ namespace SlavGPS {
 
 	private:
 		void wp_image_cache_flush(void);
+
+		LayerTRWTracks m_tracks{false}; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks m_routes{true};  /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints m_waypoints;  /* Sub-node, under which all layer's waypoints are shown. */
+
 
 		/* Structure to hold multiple track information for a layer. */
 		class TracksTooltipData {

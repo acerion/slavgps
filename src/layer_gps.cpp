@@ -1618,7 +1618,7 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 	if (this->realtime_record) {
 		LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
 		this->realtime_track = new Track(false);
-		const QString track_name = trw->tracks.new_unique_element_name(QObject::tr("REALTIME"));
+		const QString track_name = trw->tracks_node().new_unique_element_name(QObject::tr("REALTIME"));
 		this->realtime_track->set_name(track_name);
 		trw->add_track(this->realtime_track);
 	}

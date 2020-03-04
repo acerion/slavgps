@@ -880,7 +880,7 @@ void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_viewp
 {
 	Geonames::create_wikipedia_waypoints(this->ctx.get_trw(), this->ctx.get_gisview()->get_bbox(), this->ctx.get_window());
 
-	this->ctx.get_trw()->waypoints.recalculate_bbox();
+	this->ctx.get_trw()->waypoints_node().recalculate_bbox();
 	this->ctx.get_trw()->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }
 
@@ -891,6 +891,6 @@ void LayerTRWImporter::import_into_existing_layer_from_wikipedia_waypoints_layer
 {
 	Geonames::create_wikipedia_waypoints(this->ctx.get_trw(), this->ctx.get_trw()->get_bbox(), this->ctx.get_window());
 
-	this->ctx.get_trw()->waypoints.recalculate_bbox();
+	this->ctx.get_trw()->waypoints_node().recalculate_bbox();
 	this->ctx.get_trw()->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
 }

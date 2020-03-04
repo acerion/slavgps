@@ -174,7 +174,7 @@ std::list<TreeItem *> LayerTRWWaypoints::find_children_by_date(const QDate & sea
 
 
 
-std::list<Waypoint *> LayerTRWWaypoints::children_sorted_by_name(void) const
+std::list<Waypoint *> LayerTRWWaypoints::children_list(const Waypoint * exclude) const
 {
 	std::list<Waypoint *> result;
 	const int rows = this->child_rows_count();
@@ -185,10 +185,25 @@ std::list<Waypoint *> LayerTRWWaypoints::children_sorted_by_name(void) const
 			continue;
 		}
 
+		/* Skip given waypoint. */
+		if (nullptr != exclude && TreeItem::the_same_object(tree_item, exclude)) {
+			continue;
+		}
+
 		result.push_back((Waypoint *) tree_item);
 	}
 	result.sort(TreeItem::compare_name_ascending);
 
+	return result;
+}
+
+
+
+
+std::list<Waypoint *> LayerTRWWaypoints::children_list_sorted_by_name(const Waypoint * exclude) const
+{
+	std::list<Waypoint *> result = this->children_list(exclude);
+	result.sort(TreeItem::compare_name_ascending);
 	return result;
 }
 
@@ -208,7 +223,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 		return nullptr;
 	}
 
-	std::list<Waypoint *> waypoints = this->children_sorted_by_name();
+	std::list<Waypoint *> waypoints = this->children_list_sorted_by_name();
 
 	for (auto iter = std::next(waypoints.begin()); iter != waypoints.end(); iter++) {
 		QString const this_one = (*iter)->get_name();

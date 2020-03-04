@@ -2673,14 +2673,14 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 
 	LayerTRW * parent_trw = this->owner_trw_layer();
-	LayerTRWTracks * tracks = NULL;
+	LayerTRWTracks * tracks = nullptr;
 	QString message;
 
 	if (this->is_track()) {
-		tracks = &parent_trw->tracks;
+		tracks = &parent_trw->tracks_node();
 		message = tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	} else {
-		tracks = &parent_trw->routes;
+		tracks = &parent_trw->routes_node();
 		message = tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	}
 
@@ -3807,9 +3807,9 @@ sg_ret Track::selected_tp_set_coord(const Coord & new_coord, bool do_recalculate
 	if (do_recalculate_bbox) {
 		LayerTRW * trw = this->owner_trw_layer();
 		if (this->is_route()) {
-			trw->routes.recalculate_bbox();
+			trw->routes_node().recalculate_bbox();
 		} else {
-			trw->tracks.recalculate_bbox();
+			trw->tracks_node().recalculate_bbox();
 		}
 	}
 

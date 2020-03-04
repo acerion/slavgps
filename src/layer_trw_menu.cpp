@@ -119,13 +119,13 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 		QMenu * view_submenu = menu.addMenu(QIcon::fromTheme("edit-find"), tr("V&iew"));
 
 		qa = view_submenu->addAction(tr("View All &Tracks"));
-		connect(qa, SIGNAL (triggered(bool)), &this->tracks, SLOT (move_viewport_to_show_all_cb()));
+		connect(qa, SIGNAL (triggered(bool)), &this->m_tracks, SLOT (move_viewport_to_show_all_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Routes"));
-		connect(qa, SIGNAL (triggered(bool)), &this->routes, SLOT (move_viewport_to_show_all_cb()));
+		connect(qa, SIGNAL (triggered(bool)), &this->m_routes, SLOT (move_viewport_to_show_all_cb()));
 
 		qa = view_submenu->addAction(tr("View All &Waypoints"));
-		connect(qa, SIGNAL (triggered(bool)), &this->waypoints, SLOT (move_viewport_to_show_all_cb()));
+		connect(qa, SIGNAL (triggered(bool)), &this->m_waypoints, SLOT (move_viewport_to_show_all_cb()));
 	}
 
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Goto Center of Layer"));
@@ -242,11 +242,11 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks and Routes List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_and_route_list_dialog_cb()));
-	qa->setEnabled((bool) (this->tracks.size() + this->routes.size()));
+	qa->setEnabled((bool) (this->m_tracks.size() + this->m_routes.size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
-	qa->setEnabled((bool) (this->waypoints.size()));
+	qa->setEnabled((bool) (this->m_waypoints.size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	ExternalTools::add_menu_items(external_submenu, main_window->main_gisview(), NULL);

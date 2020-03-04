@@ -160,8 +160,9 @@ namespace SlavGPS {
 
 		void apply_dem_data_common(bool skip_existing_elevations);
 
+		std::list<Waypoint *> children_list(const Waypoint * exclude = nullptr) const;
+		std::list<Waypoint *> children_list_sorted_by_name(const Waypoint * exclude = nullptr) const;
 
-		std::list<Waypoint *> children_sorted_by_name(void) const;
 		Waypoint * find_waypoint_with_duplicate_name(void) const;
 
 		void search_closest_wp(WaypointSearch & search);

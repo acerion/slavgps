@@ -338,7 +338,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 
 
 
-std::list<Track *> LayerTRWTracks::children_sorted_by_name(const Track * exclude) const
+std::list<Track *> LayerTRWTracks::children_list(const Track * exclude) const
 {
 	std::list<Track *> result;
 	const int rows = this->child_rows_count();
@@ -357,9 +357,16 @@ std::list<Track *> LayerTRWTracks::children_sorted_by_name(const Track * exclude
 		result.push_back(trk);
 	}
 
-	/* Sort list of names alphabetically. */
-	result.sort(TreeItem::compare_name_ascending);
+	return result;
+}
 
+
+
+
+std::list<Track *> LayerTRWTracks::children_list_sorted_by_name(const Track * exclude) const
+{
+	std::list<Track *> result = this->children_list(exclude);
+	result.sort(TreeItem::compare_name_ascending);
 	return result;
 }
 
@@ -380,7 +387,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 		return nullptr;
 	}
 
-	const std::list<Track *> tracks = this->children_sorted_by_name();
+	const std::list<Track *> tracks = this->children_list_sorted_by_name();
 
 	for (auto iter = std::next(tracks.begin()); iter != tracks.end(); iter++) {
 		const QString this_one = (*iter)->get_name();

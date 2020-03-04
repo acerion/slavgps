@@ -155,10 +155,12 @@ namespace SlavGPS {
 		std::list<Track *> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
 		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, const Duration & threshold);
 
+		std::list<Track *> children_list(const Track * exclude = nullptr) const;
+
 		/* Get list of pointers to tracks, sorted by name.  If
 		   @param exclude is not NULL, track specified by
 		   @exclude won't be included in returned list. */
-		std::list<Track *> children_sorted_by_name(const Track * exclude = NULL) const;
+		std::list<Track *> children_list_sorted_by_name(const Track * exclude = nullptr) const;
 
 		Track * find_track_with_duplicate_name(void) const;
 

@@ -179,21 +179,20 @@ SaveStatus GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
 	fprintf(file, "%s", line.toUtf8().constData());
 
 	SaveStatus save_status;
-#ifdef K_TODO_LATER
-	const auto waypoints = trw->get_waypoints_();
+
+	const std::list<Waypoint *> waypoints = trw->waypoints_node().children_list();
 	save_status = GPSMapper::write_waypoints_to_file(file, waypoints);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write waypoints" << save_status;
 		return save_status;
 	}
 
-	const auto tracks = trw->get_tracks_();
+	const std::list<Track *> tracks = trw->tracks_node().children_list();
 	save_status = GPSMapper::write_tracks_to_file(file, tracks);
 	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write tracks" << save_status;
 		return save_status;
 	}
-#endif
 
 	return SaveStatus::Code::Success;
 }

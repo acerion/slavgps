@@ -259,7 +259,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 		qDebug() << SG_PREFIX_E << "Skipping non-TRW layer";
 		return false;
 	}
-	if (!this->tracks.is_visible() && !this->waypoints.is_visible() && !this->routes.is_visible()) {
+	if (!this->m_tracks.is_visible() && !this->m_waypoints.is_visible() && !this->m_routes.is_visible()) {
 		qDebug() << SG_PREFIX_D << "Skipping - all sublayers are invisible";
 		return false;
 	}
@@ -268,8 +268,8 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	const bool waypoints_visible = this->waypoints.is_visible();
-	const bool waypoints_inside = this->waypoints.get_bbox().intersects_with(viewport_bbox);
+	const bool waypoints_visible = this->m_waypoints.is_visible();
+	const bool waypoints_inside = this->m_waypoints.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Waypoints are" << (waypoints_visible ? "visible" : "invisible") << "and" << (waypoints_inside ? "inside" : "outside") << "of viewport";
 	if (waypoints_visible && waypoints_inside) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
@@ -326,7 +326,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 {
 	/* First try for tracks. */
 	const bool tracks_visible = this->tracks_node().is_visible();
-	const bool tracks_inside = this->tracks.get_bbox().intersects_with(viewport_bbox);
+	const bool tracks_inside = this->tracks_node().get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
 	if (tracks_visible && tracks_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
@@ -338,8 +338,8 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 
 
 	/* Try again for routes. */
-	const bool routes_visible = this->routes.is_visible();
-	const bool routes_inside = this->routes.get_bbox().intersects_with(viewport_bbox);
+	const bool routes_visible = this->m_routes.is_visible();
+	const bool routes_inside = this->m_routes.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
 	if (routes_visible && routes_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
@@ -410,7 +410,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 bool LayerTRW::try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_search, LayerToolSelect * tool)
 {
-	this->waypoints.search_closest_wp(wp_search);
+	this->m_waypoints.search_closest_wp(wp_search);
 	if (NULL == wp_search.closest_wp) {
 		tool->edited_object_state = LayerToolSelect::ObjectState::NotSelected;
 		tool->selected_tree_item_type_id = SGObjectTypeID();
@@ -573,7 +573,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 		return false;
 	}
 
-	if (!this->tracks.is_visible() && !this->waypoints.is_visible() && !this->routes.is_visible()) {
+	if (!this->m_tracks.is_visible() && !this->m_waypoints.is_visible() && !this->m_routes.is_visible()) {
 		return false;
 	}
 
@@ -644,7 +644,7 @@ LayerTool::Status LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QM
 		qDebug() << SG_PREFIX_E << "Not TRW layer";
 		return LayerTool::Status::Error;
 	}
-	if (!trw->is_visible() || !trw->waypoints.is_visible()) {
+	if (!trw->is_visible() || !trw->waypoints_node().is_visible()) {
 		qDebug() << SG_PREFIX_N << "Waypoint is not visible";
 		return LayerTool::Status::Ignored;
 	}
@@ -798,12 +798,12 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 			}
 		}
 
-		this->tracks.track_search_closest_tp(tp_search);
+		this->m_tracks.track_search_closest_tp(tp_search);
 		if (NULL != tp_search.closest_tp) {
 			point_coord = tp_search.closest_tp->coord;
 			return true;
 		}
-		this->routes.track_search_closest_tp(tp_search);
+		this->m_routes.track_search_closest_tp(tp_search);
 		if (NULL != tp_search.closest_tp) {
 			point_coord = tp_search.closest_tp->coord;
 			return true;
@@ -829,7 +829,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 			/* NOTE: if there are more selected waypoints, this will get messier. */
 			wp_search.skip_wp = this->selected_wp_get(); /* May be NULL. */
 		}
-		this->waypoints.search_closest_wp(wp_search);
+		this->m_waypoints.search_closest_wp(wp_search);
 
 		if (NULL != wp_search.closest_wp) {
 			point_coord = wp_search.closest_wp->get_coord();
@@ -1403,7 +1403,7 @@ LayerTool::Status LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, 
 		return LayerTool::Status::Error;
 	}
 
-	if (!trw->is_visible() && !(trw->tracks.is_visible() && trw->routes.is_visible())) {
+	if (!trw->is_visible() && !(trw->tracks_node().is_visible() && trw->routes_node().is_visible())) {
 		return LayerTool::Status::Ignored;
 	}
 
