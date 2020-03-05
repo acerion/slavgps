@@ -152,12 +152,6 @@ void test_pickle(void)
 int main(int argc, char ** argv)
 {
 	srand(time(0));
-	//test_pickle();
-
-	Measurements::unit_tests();
-	Coords::unit_tests();
-	SGVariant::unit_tests();
-	TileZoomLevel::unit_tests();
 
 	MeasurementScale<Duration> aaa(1, 10, 5, 1, DurationType::Unit::E::Seconds, 0);
 
@@ -249,6 +243,24 @@ int main(int argc, char ** argv)
 
 	/* Ask for confirmation of default settings on first run. */
 	SGUtils::set_auto_features_on_first_run();
+
+
+	/* Read preferences file only after all modules have
+	   registered their preferences. Now the value of modules'
+	   preferences can be read from config file. */
+	Preferences::init();
+
+
+	{
+		/* Call the tests only after preferences have been
+		   read. Now we can get e.g. units of measurements for
+		   debug printing. */
+		Measurements::unit_tests();
+		Coords::unit_tests();
+		SGVariant::unit_tests();
+		TileZoomLevel::unit_tests();
+	}
+
 
 
 	/* Create the first window. */

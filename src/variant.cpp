@@ -383,9 +383,6 @@ SGVariant SlavGPS::sg_variant_false(void)
 
 QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 {
-	// TODO: remove the line below to be able to print the variant
-	return debug;
-
 	debug << value.type_id;
 
 	switch (value.type_id) {
@@ -422,7 +419,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		debug << value.get_duration();
 		break;
 	case SGVariantType::ImageAlphaType:
-		debug << value.alpha();
+		debug << value.alpha().value(); /* Notice: use alpha().value() to get decimal value. Using .alpha() alone will lead to infinite recursion. */
 		break;
 	case SGVariantType::Latitude:
 		/* This is for debug, so we don't apply any format specifiers. */

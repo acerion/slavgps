@@ -144,6 +144,7 @@ namespace SlavGPS {
 	class Preferences {
 	public:
 		Preferences() {};
+		static void init();
 		static void uninit();
 		static void register_default_values();
 

@@ -462,6 +462,15 @@ void SlavGPS::Preferences::register_parameter_instance(const ParameterSpecificat
 
 
 
+void Preferences::init(void)
+{
+	preferences_load_from_file();
+	preferences.loaded = true;
+}
+
+
+
+
 void Preferences::uninit()
 {
 	g_preferences_list.clear();
@@ -475,12 +484,13 @@ SGVariant Preferences::get_param_value(const QString & param_name)
 	SGVariant empty; /* Will have type id == Empty */
 
 	if (!preferences.loaded) {
-		qDebug() << SG_PREFIX_D << "The function has been called for the first time (param name is" << param_name << ")";
-
-		/* Since we can't load the file in Preferences::init() (no params registered yet),
-		   do it once before we get the first param name. */
-		preferences_load_from_file();
-		preferences.loaded = true;
+		qDebug() << SG_PREFIX_N << "Trying to get value of parameter" << param_name << "before the preferences have been loaded";
+		/* Debug printing some variant values may require
+		   reading of preferences (e.g. to see which format to
+		   use for debug printing of default coordinates read
+		   from .ini file). This module can't report back the
+		   value of a preference before it is registered. */
+		return empty;
 	}
 
 	auto pref = std::find_if(g_preferences_list.begin(), g_preferences_list.end(), PreferencesCompareByName(param_name));
