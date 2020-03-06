@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2010-2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -659,13 +660,40 @@ sg_ret TreeItem::paste_child_tree_item_cb(void)
 
 
 /**
-   @reviewed-on 2019-12-31
+   @reviewed-on 2020-03-05
 */
-sg_ret TreeItem::add_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool allow_reordering)
+sg_ret TreeItem::add_child_item(TreeItem * child_tree_item)
 {
-	qDebug() << SG_PREFIX_E << "Called the method for base class";
-	return sg_ret::err;
+	/* Classes derived from TreeItem should implement mechanisms
+	   deciding if a class can accept children and of which
+	   type. */
 
+	if (this->is_in_tree()) {
+		/* This container is attached to Qt Model, so it can
+		   attach the new child to the Model too, directly
+		   under itself. */
+		qDebug() << SG_PREFIX_I << "Attaching item" << child_tree_item->get_name() << "to tree under" << this->get_name();
+		if (sg_ret::ok != this->attach_as_tree_item_child(child_tree_item, -1)) {
+			qDebug() << SG_PREFIX_E << "Failed to attach" << child_tree_item->get_name() << "as tree item child of" << this->get_name();
+			return sg_ret::err;
+		}
+
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
+		return sg_ret::ok;
+	} else {
+		/* This container is not attached to Qt Model yet,
+		   most probably because it is being read
+		   from file and won't be attached to Qt Model until
+		   whole file is read.
+
+		   So the container has to put the child on list of
+		   un-attached items, to be attached later, in
+		   post_read() function. */
+		qDebug() << SG_PREFIX_I << this->get_name() << "container is not attached to Model yet, adding" << child_tree_item->get_name() << "to list of unattached children of" << this->get_name();
+		this->unattached_children.push_back(child_tree_item);
+		return sg_ret::ok;
+	}
 }
 
 
@@ -674,7 +702,7 @@ sg_ret TreeItem::add_child_item(__attribute__((unused)) TreeItem * item, __attri
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret TreeItem::cut_child_item(__attribute__((unused)) TreeItem * item)
+sg_ret TreeItem::cut_child_item(__attribute__((unused)) TreeItem * child_tree_item)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -686,7 +714,7 @@ sg_ret TreeItem::cut_child_item(__attribute__((unused)) TreeItem * item)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret TreeItem::copy_child_item(__attribute__((unused)) TreeItem * item)
+sg_ret TreeItem::copy_child_item(__attribute__((unused)) TreeItem * child_tree_item)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -698,7 +726,7 @@ sg_ret TreeItem::copy_child_item(__attribute__((unused)) TreeItem * item)
 /**
    @reviewed-on 2019-12-30
 */
-sg_ret TreeItem::delete_child_item(__attribute__((unused)) TreeItem * item, __attribute__((unused)) bool confirm_deleting)
+sg_ret TreeItem::delete_child_item(__attribute__((unused)) TreeItem * child_tree_item, __attribute__((unused)) bool confirm_deleting)
 {
 	qDebug() << SG_PREFIX_E << "Called the method for base class";
 	return sg_ret::err;
@@ -735,7 +763,7 @@ sg_ret TreeItem::child_from_row(int row, TreeItem ** child_tree_item) const
 
 TreeItem * TreeItem::find_child_by_uid(sg_uid_t child_uid) const
 {
-	int rows = this->child_rows_count();
+	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * tree_item = nullptr;
 		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
@@ -830,6 +858,7 @@ int TreeItem::toggle_direct_children_only_visibility_flag(void)
 int TreeItem::list_child_uids(std::list<sg_uid_t> & list) const
 {
 	int count = 0;
+
 	const int rows = this->child_rows_count();
 	for (int row = 0; row < rows; row++) {
 		TreeItem * tree_item = nullptr;
@@ -863,4 +892,41 @@ int TreeItem::list_tree_items(std::list<TreeItem *> & list) const
 		count++;
 	}
 	return count;
+}
+
+
+
+
+sg_ret TreeItem::attach_as_tree_item_child(TreeItem * child, int row)
+{
+	if (nullptr == this->tree_view) {
+		qDebug() << SG_PREFIX_E << "The method has been called for unattached parent" << this->get_name();
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->tree_view->attach_to_tree(this, child, row)) {
+		qDebug() << SG_PREFIX_E << "Failed to attach child item" << child->get_name() << "under" << this->get_name();
+		return sg_ret::err;
+	}
+
+	this->tree_view->expand(this->index());
+
+	QObject::connect(child, SIGNAL (tree_item_changed(const QString &)), this->m_parent_tree_item, SLOT (child_tree_item_changed_cb(const QString &)));
+	return sg_ret::ok;
+}
+
+
+
+
+/* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
+sg_ret TreeItem::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
+{
+	qDebug() << SG_PREFIX_SLOT << "Parent" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
+	if (this->is_visible()) {
+		/* TODO_LATER: this can used from the background - e.g. in acquire
+		   so will need to flow background update status through too. */
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
+		emit this->tree_item_changed(this->get_name());
+	}
+
+	return sg_ret::ok;
 }

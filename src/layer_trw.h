@@ -430,9 +430,6 @@ namespace SlavGPS {
 		void append_other_cb(void);
 		void routes_stats_cb();
 
-		/* TRW Layer can contain other layers and should be notified about changes in them. */
-		void child_tree_item_changed_cb(const QString & child_tree_item_name);
-
 		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
 
 		void on_tp_properties_dialog_tp_coordinates_changed_cb(void);

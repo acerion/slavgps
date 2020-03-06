@@ -609,7 +609,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_map_type_id(initial_type_id);
 			layer->set_name(Layer::get_translated_layer_kind_string(layer->m_kind));
 
-			ThisApp::layers_panel()->top_layer()->add_child_item(layer, true);
+			ThisApp::layers_panel()->top_layer()->add_child_item(layer);
 			layer->emit_tree_item_changed("Command Line Options - Apply");
 		}
 	}

@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,10 +81,12 @@ namespace SlavGPS {
 		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;
 
-		sg_ret add_child_item(TreeItem * item, bool allow_reordering) override;
 
-		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
-		void clear();
+		sg_ret add_child_item(TreeItem * child_tree_item) override;
+		sg_ret delete_child_item(TreeItem * child_tree_item, bool confirm_deleting) override;
+
+
+		void clear(void);
 
 
 
@@ -96,15 +99,8 @@ namespace SlavGPS {
 
 		bool is_top_level_layer(void) const;
 
-		int get_child_layers_count(void) const;
+		int child_rows_count(void) const override;
 		std::list<Layer const *> get_child_layers(void) const;
-
-		/* Child items that have been read from some source, but aren't attached to tree yet. */
-		std::list<Layer *> non_attached_children;
-
-	public slots:
-		/* Aggregate Layer can contain other layers and should be notified about changes in them. */
-		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 
 	private slots:
 		void children_visibility_on_cb(void);

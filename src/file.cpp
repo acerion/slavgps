@@ -772,7 +772,7 @@ void ReadParser::handle_layer_parameter(const char * line, size_t line_len)
 		   processing layer name, and not when opening tag for
 		   layer is discovered? */
 		qDebug() << SG_PREFIX_I << "Calling add_child_item(), parent layer =" << parent_layer->get_name() << ", child (this) layer = " << layer->get_name();
-		parent_layer->add_child_item(layer, false);
+		parent_layer->add_child_item(layer);
 
 	} else if (name_len == 7 && 0 == strncasecmp(line, "visible", name_len)) {
 		/* Generic parameter "visible" - every layer has it. */
@@ -934,7 +934,7 @@ LoadStatus VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QS
 			Layer * child = read_parser.layers_stack.first;
 
 			qDebug() << SG_PREFIX_D << "Will call parent Aggregate Layer's" << parent->name << "add_child_item(" << child->name << ")";
-			parent->add_child_item(child, false);
+			parent->add_child_item(child);
 
 			qDebug() << SG_PREFIX_D << "Will call child layer's" << child->name << "post_read()";
 			child->post_read(gisview, true);
@@ -1098,7 +1098,7 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, GisViewport * gisview, c
 		} else {
 			/* Complete the setup from the successful load. */
 			trw->post_read(gisview, true);
-			parent_layer->add_child_item(trw, false);
+			parent_layer->add_child_item(trw);
 			trw->move_viewport_to_show_all(gisview);
 		}
 	}

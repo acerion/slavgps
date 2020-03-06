@@ -477,7 +477,7 @@ KMZOpenResult SlavGPS::kmz_open_file(__attribute__((unused)) const QString & fil
 			Layer * grl = georef_layer_create(viewport, QString(name), pixmap, coord_tl, coord_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
-				top->add_child_item(grl, false);
+				top->add_child_item(grl);
 			}
 		}
 	}

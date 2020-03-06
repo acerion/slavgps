@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (c) 2011-2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,9 +171,6 @@ namespace SlavGPS {
  		void change_coord_mode(CoordMode dest_mode);
 
 
-		sg_ret add_child(Track * trk);
-
-
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
 		void sublayer_menu_tracks_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
@@ -227,20 +225,6 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
-
-		/**
-		   @Attach given @param child as child tree item in Qt Model
-
-		   The method can be called when a single @param child
-		   is added to already connected Tracks/Routes
-		   container, or when (in post_read()) all unattached
-		   children are connected to Qt Model.
-		*/
-		sg_ret attach_as_tree_item_child(TreeItem * child, int row);
-
-		std::list<Track *> unattached_children;
-
-		void init_item(void);
 	};
 
 

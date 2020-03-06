@@ -1474,18 +1474,15 @@ void Window::menu_edit_delete_cb(void)
 void Window::menu_edit_delete_all_cb(void)
 {
 	/* Do nothing if empty. */
-	if (0 == this->m_layers_panel->top_layer()->get_child_layers_count()) {
+	if (this->m_layers_panel->top_layer()->child_rows_count() <= 0) {
 		return;
 	}
 
 	if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
+		/* This will trigger 'items tree updated' signal that
+		   will redraw empty layers panel. */
 		this->m_layers_panel->clear();
 		this->set_current_document_full_path("");
-
-		/* TODO_LATER: verify if this call is needed, maybe removing
-		   all tree items has triggered re-painting of
-		   viewport? */
-		this->draw_tree_items(this->m_main_gisview);
 	}
 }
 
@@ -2434,7 +2431,7 @@ void Window::finish_new(void)
 		LayerMap * layer = new LayerMap();
 		layer->set_name(QObject::tr("Default Map"));
 
-		this->m_layers_panel->top_layer()->add_child_item(layer, true);
+		this->m_layers_panel->top_layer()->add_child_item(layer);
 
 		/* TODO_LATER: verify if this call is necessary. Maybe
 		   adding new layer has triggered re-painting

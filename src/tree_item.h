@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -257,20 +258,16 @@ namespace SlavGPS {
 		/* Top-level functions for cut/copy/paste/delete operations. */
 		/**
 		   @brief "paste" operation
-
-		   @param allow_reordering: should be set to true for GUI
-		   interactions, whereas loading from a file needs strict ordering and
-		   so should be false.
 		*/
-		virtual sg_ret add_child_item(TreeItem * item, bool allow_reordering);
-		virtual sg_ret cut_child_item(TreeItem * item);
-		virtual sg_ret copy_child_item(TreeItem * item);
+		virtual sg_ret add_child_item(TreeItem * child_tree_item);
+		virtual sg_ret cut_child_item(TreeItem * child_tree_item);
+		virtual sg_ret copy_child_item(TreeItem * child_tree_item);
 		/**
 		   @brief Delete a child item specified by @param item
 
 		   This method also calls destructor of @param item.
 		*/
-		virtual sg_ret delete_child_item(TreeItem * item, bool confirm_deleting);
+		virtual sg_ret delete_child_item(TreeItem * child_tree_item, bool confirm_deleting);
 
 
 		/**
@@ -450,8 +447,24 @@ namespace SlavGPS {
 		char debug_string[100] = { 0 };
 
 	protected:
+
+		/**
+		   @Attach given @param child as child tree item in Qt Model
+
+		   The method can be called when a single @param child
+		   is added being to already connected parent
+		   container, or when (in post_read()) all unattached
+		   children are connected to Qt Model.
+		*/
+		sg_ret attach_as_tree_item_child(TreeItem * child, int row);
+
+
 		TreeIndex m_index; /* Set in TreeView::attach_to_tree(). */
 		QString m_name;
+
+		/* Child items that have been read from some source,
+		   but aren't attached to Qt Model yet. */
+		std::list<TreeItem *> unattached_children;
 
 		sg_uid_t uid = SG_UID_INITIAL;
 
@@ -477,6 +490,10 @@ namespace SlavGPS {
 		void tree_item_changed(const QString & tree_item_name);
 
 	public slots:
+		/* Tree Item can contain other Tree Items and should
+		   be notified about changes in them. */
+		virtual sg_ret child_tree_item_changed_cb(const QString & child_tree_item_name);
+
 		virtual sg_ret cut_tree_item_cb(void);
 		virtual sg_ret copy_tree_item_cb(void);
 		virtual sg_ret delete_tree_item_cb(void);

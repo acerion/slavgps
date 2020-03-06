@@ -198,7 +198,7 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
 
-		int get_child_layers_count(void) const;
+		int child_rows_count(void) const override;
 		std::list<Layer const * > get_child_layers(void) const;
 		LayerTRW * get_a_child(void);
 
@@ -227,9 +227,6 @@ namespace SlavGPS {
 		void gps_empty_download_cb(void);
 		void gps_empty_all_cb(void);
 		void gps_empty_upload_cb(void);
-
-		/* GPS Layer can contain other layers and should be notified about changes in them. */
-		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 
 #if REALTIME_GPS_TRACKING_ENABLED
 		void rt_start_stop_tracking_cb(void);

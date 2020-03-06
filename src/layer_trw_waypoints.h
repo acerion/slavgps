@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (c) 2011-2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -177,9 +178,6 @@ namespace SlavGPS {
 
 		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 
-		sg_ret add_child(Waypoint * wp);
-
-
 		bool handle_selection_in_tree(void);
 
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
@@ -245,22 +243,7 @@ namespace SlavGPS {
 		void sort_order_timestamp_descend_cb(void);
 
 	private:
-
-		/**
-		   @Attach given @param child as child tree item in Qt Model
-
-		   The method can be called when a single @param child
-		   is added to already connected Waypoints container,
-		   or when (in post_read()) all unattached children
-		   are connected to Qt Model.
-		*/
-		sg_ret attach_as_tree_item_child(TreeItem * child, int row);
-
-		std::list<Waypoint *> unattached_children;
-
 		LatLonBBox bbox;
-		//std::list<Waypoint *> children;
-		//std::unordered_map<sg_uid_t, Waypoint *> children_map;
 	};
 
 

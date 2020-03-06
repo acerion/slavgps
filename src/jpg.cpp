@@ -155,7 +155,7 @@ LoadStatus SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * g
 	/* Complete the setup. */
 	trw->post_read(gisview, true);
 	if (create_layer) {
-		parent_layer->add_child_item(trw, false);
+		parent_layer->add_child_item(trw);
 	}
 
 	if (auto_zoom) {

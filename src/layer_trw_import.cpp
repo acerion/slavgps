@@ -167,7 +167,7 @@ void AcquireWorker::finalize_after_success(void)
 
 		/* Attach newly created TRW layer and its children to tree. */
 		Layer * parent = this->m_acquire_context.get_parent_layer();
-		parent->add_child_item(target_trw, true); /* TODO: doesn't this line duplicate the line below? */
+		parent->add_child_item(target_trw); /* TODO: doesn't this line duplicate the line below? */
 		parent->attach_child_to_tree(target_trw);
 	} else {
 		/* Target layer is already attached to tree, but its
@@ -525,7 +525,7 @@ LoadStatus AcquireOptions::universal_import_fn(AcquireContext & acquire_context,
 	if (this->babel_process) {
 
 		if (!acquire_context.get_trw()->is_in_tree()) {
-			acquire_context.get_parent_layer()->add_child_item(acquire_context.get_trw(), true);
+			acquire_context.get_parent_layer()->add_child_item(acquire_context.get_trw());
 		}
 
 

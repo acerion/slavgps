@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013-2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,14 +108,16 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, GisViewport * gisvi
 	LayerAggregate * aggregate = new LayerAggregate();
 
 	aggregate->unmarshall_params(pickle);
+#ifdef K_TODO_LATER
 
 	while (pickle.data_size() > 0) {
 		Layer * child_layer = Layer::unmarshall(pickle, gisview);
 		if (child_layer) {
-			aggregate->non_attached_children.push_front(child_layer);
+			aggregate->unattached_children.push_front(child_layer);
 			QObject::connect(child_layer, SIGNAL (tree_item_changed(const QString &)), aggregate, SLOT (child_tree_item_changed_cb(const QString &)));
 		}
 	}
+#endif
 	// qDebug() << SG_PREFIX_I << "unmarshall() ended with len =" << pickle.data_size;
 	return aggregate;
 }
@@ -133,44 +136,22 @@ bool is_base_type(LayerKind layer_kind)
 
 
 
-sg_ret LayerAggregate::add_child_item(TreeItem * item, bool allow_reordering)
+sg_ret LayerAggregate::add_child_item(TreeItem * child_tree_item)
 {
-	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->get_name() << "is not connected to tree";
-		return sg_ret::err;
-	}
-	if (!item->is_layer()) {
-		qDebug() << SG_PREFIX_E << "Tree item" << item->get_name() << "is not a layer";
+	if (!child_tree_item->is_layer()) {
+		/* Aggregate layer can contain only layers. */
+		qDebug() << SG_PREFIX_E << "Tree item" << child_tree_item->get_name() << "is not a layer";
 		return sg_ret::err;
 	}
 
-	Layer * layer = item->immediate_layer();
-
-	/* By default layers go to the top. */
-	int row = 0;
-	if (allow_reordering && is_base_type(layer->m_kind)) {
-	        row = -1;
+	if (sg_ret::ok != TreeItem::add_child_item(child_tree_item)) {
+		qDebug() << SG_PREFIX_E << "Failed to attach child tree item" << child_tree_item->get_name() << "under" << this->get_name();
+		return sg_ret::err;
 	}
 
-	layer->set_parent_and_owner_tree_item(this);
-
-	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
-	this->attach_child_to_tree(layer, row);
-
-	this->tree_view->apply_tree_item_timestamp(layer); /* TODO: verify if this method is not called twice when child is added to layer (i.e. if it is not called again elsewhere) */
+	child_tree_item->set_parent_and_owner_tree_item(this);
+	this->tree_view->apply_tree_item_timestamp(child_tree_item); /* TODO: verify if this method is not called twice when child is added to layer (i.e. if it is not called again elsewhere) */
 	this->tree_view->debug_print_tree();
-
-	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
-
-#if 0
-	if (!this->non_attached_children.empty()) {
-		this->tree_view->expand(this->index);
-	}
-#endif
 
 	return sg_ret::ok;
 }
@@ -655,7 +636,7 @@ void LayerAggregate::get_all_layers_of_kind(std::list<Layer const *> & layers, L
 				continue;
 			}
 
-			if (0 == layer->get_child_layers_count()) {
+			if (layer->child_rows_count() <= 0) {
 				continue;
 			}
 
@@ -738,7 +719,7 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, GisViewport *
 				continue;
 			}
 
-			if (0 == layer->get_child_layers_count()) {
+			if (layer->child_rows_count() <= 0) {
 				continue;
 			}
 
@@ -766,18 +747,15 @@ bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, GisVie
 
 sg_ret LayerAggregate::post_read_2(void)
 {
-	if (this->non_attached_children.empty()) {
+	if (this->unattached_children.empty()) {
 		return sg_ret::ok;
 	}
 
-	for (auto iter = this->non_attached_children.begin(); iter != this->non_attached_children.end(); iter++) {
-		Layer * layer = *iter;
-
-		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		qDebug() << SG_PREFIX_I << "Attaching item" << layer->get_name() << "to tree under" << this->get_name();
-		this->attach_child_to_tree(layer);
+	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
+		qDebug() << SG_PREFIX_I << "Attaching item" << (*iter)->get_name() << "to tree under" << this->get_name();
+		this->attach_child_to_tree(*iter);
 	}
-	this->non_attached_children.clear();
+	this->unattached_children.clear();
 
 
 	/* Update our own tooltip in tree view. */
@@ -810,10 +788,11 @@ std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 
 
 
-int LayerAggregate::get_child_layers_count(void) const
+int LayerAggregate::child_rows_count(void) const
 {
-	const int rows = this->child_rows_count();
-	if (rows <= 0) {
+	const int rows = TreeItem::child_rows_count();
+	if (rows < 0) {
+		qDebug() << SG_PREFIX_E << "Failed to get count of child layers in" << this->get_name();
 		return 0;
 	} else {
 		return rows;
@@ -889,20 +868,6 @@ LayerAggregate::LayerAggregate()
 
 	this->interface = &vik_aggregate_layer_interface;
 	this->set_name(Layer::get_translated_layer_kind_string(this->m_kind));
-}
-
-
-
-
-void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
-{
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->is_visible()) {
-		/* TODO_LATER: this can used from the background - e.g. in acquire
-		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
-		emit this->tree_item_changed(this->get_name());
-	}
 }
 
 

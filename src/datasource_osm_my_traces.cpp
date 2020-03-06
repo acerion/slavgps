@@ -676,7 +676,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(AcquireContext & acquire_co
 
 			if (LoadStatus::Code::Success == convert_result) {
 				/* Can use the layer. */
-				acquire_context.get_parent_layer()->add_child_item(target_layer, true);
+				acquire_context.get_parent_layer()->add_child_item(target_layer);
 				/* Move to area of the track. */
 				target_layer->post_read(acquire_context.get_gisview(), true);
 				target_layer->move_viewport_to_show_all(acquire_context.get_gisview());

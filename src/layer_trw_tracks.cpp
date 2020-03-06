@@ -9,7 +9,7 @@
  * Copyright (C) 2009, Hein Ragas <viking@ragas.nl>
  * Copyright (c) 2012-2015, Rob Norris <rw_norris@hotmail.com>
  * Copyright (c) 2012-2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- * Copyright (c) 2016 Kamil Ignacak <acerion@wp.pl>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,18 +78,10 @@ extern SelectedTreeItems g_selected;
 
 
 
-void LayerTRWTracks::init_item(void)
+LayerTRWTracks::LayerTRWTracks(bool is_routes)
 {
 	this->editable = false;
 	this->m_menu_operation_ids.push_back(StandardMenuOperation::Paste);
-}
-
-
-
-
-LayerTRWTracks::LayerTRWTracks(bool is_routes)
-{
-	this->init_item();
 
 	if (is_routes) {
 		this->m_type_id = LayerTRWRoutes::type_id();
@@ -1221,52 +1213,4 @@ void LayerTRWTracks::total_time_information(Duration & duration, Time & start_ti
 	}
 
 	return;
-}
-
-
-
-
-sg_ret LayerTRWTracks::add_child(Track * child)
-{
-	if (this->is_in_tree()) {
-		/* This container is attached to Qt Model, so it can
-		   attach the new child to the Model too, directly
-		   under itself. */
-		qDebug() << SG_PREFIX_I << "Attaching item" << child->get_name() << "to tree under" << this->get_name();
-		if (sg_ret::ok != this->attach_as_tree_item_child(child, -1)) {
-			qDebug() << SG_PREFIX_E << "Failed to attach" << child->get_name() << "as tree item child of" << this->get_name();
-			return sg_ret::err;
-		}
-
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
-		return sg_ret::ok;
-	} else {
-		/* This container is not attached to Qt Model yet,
-		   most probably because the TRW layer is being read
-		   from file and won't be attached to Qt Model until
-		   whole file is read.
-
-		   So the container has to put the child on list of
-		   un-attached items, to be attached later, in
-		   post_read() function. */
-		qDebug() << SG_PREFIX_I << this->get_name() << "container is not attached to Model yet, adding" << child->get_name() << "to list of unattached children of" << this->get_name();
-		this->unattached_children.push_back(child);
-		return sg_ret::ok;
-	}
-}
-
-
-
-
-sg_ret LayerTRWTracks::attach_as_tree_item_child(TreeItem * child, int row)
-{
-	if (sg_ret::ok != this->tree_view->attach_to_tree(this, child, row)) {
-		return sg_ret::err;
-	}
-
-	LayerTRW * trw = this->owner_trw_layer();
-
-	QObject::connect(child, SIGNAL (tree_item_changed(const QString &)), trw, SLOT (child_tree_item_changed_cb(const QString &)));
-	return sg_ret::ok;
 }

@@ -7,6 +7,7 @@
  * Copyright (C) 2009, Hein Ragas <viking@ragas.nl>
  * Copyright (c) 2012-2015, Rob Norris <rw_norris@hotmail.com>
  * Copyright (c) 2012-2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1913,7 +1914,7 @@ sg_ret LayerTRW::add_track(Track * trk)
 			this->attach_child_to_tree(&this->m_tracks);
 		}
 
-		if (sg_ret::ok != this->m_tracks.add_child(trk)) {
+		if (sg_ret::ok != this->m_tracks.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add track to Tracks container attached to Model";
 			return sg_ret::err;
 		}
@@ -1925,10 +1926,11 @@ sg_ret LayerTRW::add_track(Track * trk)
 	} else {
 		/* This TRW layer is not yet attached to Qt Model, so
 		   we have to put the child layer on temporary list of
-		   unattached children. this->m_tracks.add_child() will
-		   do this for us. */
+		   unattached
+		   children. this->m_tracks.add_child_item() will do
+		   this for us. */
 
-		if (sg_ret::ok != this->m_tracks.add_child(trk)) {
+		if (sg_ret::ok != this->m_tracks.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add track to Tracks container NOT attached to Model";
 			return sg_ret::err;
 		}
@@ -1992,7 +1994,7 @@ sg_ret LayerTRW::add_route(Track * trk)
 			this->attach_child_to_tree(&this->m_routes);
 		}
 
-		if (sg_ret::ok != this->m_routes.add_child(trk)) {
+		if (sg_ret::ok != this->m_routes.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add route to Routes container attached to Model";
 			return sg_ret::err;
 		}
@@ -2004,10 +2006,10 @@ sg_ret LayerTRW::add_route(Track * trk)
 	} else {
 		/* This TRW layer is not yet attached to Qt Model, so
 		   we have to put the child layer on temporary list of
-		   unattached children. this->m_routes.add_child() will
+		   unattached children. this->m_routes.add_child_item() will
 		   do this for us. */
 
-		if (sg_ret::ok != this->m_routes.add_child(trk)) {
+		if (sg_ret::ok != this->m_routes.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add route to Routes container NOT attached to Model";
 			return sg_ret::err;
 		}
@@ -2032,7 +2034,7 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 			this->attach_child_to_tree(&this->m_waypoints);
 		}
 
-		if (sg_ret::ok != this->m_waypoints.add_child(wp)) {
+		if (sg_ret::ok != this->m_waypoints.add_child_item(wp)) {
 			qDebug() << SG_PREFIX_E << "Failed to add waypoint to Waypoints container attached to Model";
 			return sg_ret::err;
 		}
@@ -2044,10 +2046,10 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 	} else {
 		/* This TRW layer is not yet attached to Qt Model, so
 		   we have to put the child layer on temporary list of
-		   unattached children. this->m_waypoints.add_child() will
+		   unattached children. this->m_waypoints.add_child_item() will
 		   do this for us. */
 
-		if (sg_ret::ok != this->m_waypoints.add_child(wp)) {
+		if (sg_ret::ok != this->m_waypoints.add_child_item(wp)) {
 			qDebug() << SG_PREFIX_E << "Failed to add waypoint to Waypoints container NOT attached to Model";
 			return sg_ret::err;
 		}
@@ -3636,21 +3638,6 @@ bool LayerTRW::move_child(__attribute__((unused)) TreeItem & child_tree_item, __
 {
 	/* Let's not allow moving of Tracks/Routes/Waypoints nodes. */
 	return false;
-}
-
-
-
-
-/* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
-void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
-{
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->is_visible()) {
-		/* TODO_LATER: this can used from the background - e.g. in acquire
-		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
-		emit this->tree_item_changed(this->get_name());
-	}
 }
 
 

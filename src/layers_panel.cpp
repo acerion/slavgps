@@ -267,7 +267,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 		   layer to be added goes directly under top level
 		   aggregate layer. */
 		qDebug() << SG_PREFIX_I << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
-		this->m_toplayer->add_child_item(layer, true);
+		this->m_toplayer->add_child_item(layer);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -295,7 +295,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		qDebug() << SG_PREFIX_I << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		selected_layer->add_child_item(layer, true);
+		selected_layer->add_child_item(layer);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -315,7 +315,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		qDebug() << SG_PREFIX_I << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		aggregate->add_child_item(layer, true);
+		aggregate->add_child_item(layer);
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -568,7 +568,7 @@ LayerAggregate * LayersPanel::top_layer(void) const
 
 void LayersPanel::clear(void)
 {
-	if (0 != this->m_toplayer->get_child_layers_count()) {
+	if (this->m_toplayer->child_rows_count() > 0) {
 		this->m_toplayer->clear(); /* Delete all layers. */
 		this->emit_items_tree_updated_cb("Delete all layers through layers panel");
 	}

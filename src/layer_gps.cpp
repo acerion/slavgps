@@ -623,11 +623,11 @@ LayerTRW * LayerGPS::get_a_child()
 
 
 /**
-   @reviewed-on: 2019-03-23
+   @reviewed-on: 2020-03-05
 */
-int LayerGPS::get_child_layers_count(void) const
+int LayerGPS::child_rows_count(void) const
 {
-	if (this->trw_children[0]) {
+	if (nullptr == this->trw_children[0]) {
 		/* First child layer not created, so the second/third is not created either. */
 		return 0;
 	} else {
@@ -1864,23 +1864,6 @@ void LayerGPS::set_coord_mode(CoordMode new_mode)
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->set_coord_mode(new_mode);
-	}
-}
-
-
-
-
-/* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
-void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
-{
-	qDebug() << SG_PREFIX_D << "-- realtime tracking";
-
-	qDebug() << SG_PREFIX_SLOT << "Layer" << this->get_name() << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->is_visible()) {
-		/* TODO_LATER: this can used from the background - e.g. in acquire
-		   so will need to flow background update status through too. */
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
-		emit this->tree_item_changed(this->get_name());
 	}
 }
 
