@@ -23,6 +23,7 @@
 
 
 
+#include <cassert>
 #include <mutex>
 
 
@@ -198,16 +199,28 @@ sg_ret TreeItem::set_parent_member(TreeItem * parent)
 
 
 /**
-   @reviewed-on 2020-03-06
+   @reviewed-on 2020-03-07
 */
 TreeItem * TreeItem::parent_member(void) const
 {
-#if K_TODO_LATER
-	/* Check that information stored in TreeItem::m_parent and in Qt Model/Tree is consistent. */
-	if (is in tree) {
-		assert (this->m_parent == this->tree_view->get_parent(this)->m_parent);
+	/* Check that information stored in TreeItem::m_parent and in
+	   Qt Model/Tree is consistent. */
+
+	if (this->is_in_tree()) {
+		TreeItem * parent_tree_item = nullptr;
+		if (sg_ret::ok != this->tree_view->parent_tree_item(*this, &parent_tree_item)) {
+			qDebug() << SG_PREFIX_E << "Can't get parent tree item of" << this->get_name();
+			return nullptr;
+		}
+		if (nullptr == parent_tree_item) {
+			/* This TreeItem is a top-level layer. Don't log error. */
+			return nullptr;
+		}
+		/* Non-top-level-layer that is attached to tree must
+		   have a valid parent. */
+		assert (this->m_parent == parent_tree_item);
 	}
-#endif
+
 	return this->m_parent;
 }
 

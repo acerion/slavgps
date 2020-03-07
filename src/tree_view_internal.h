@@ -103,6 +103,19 @@ namespace SlavGPS {
 		sg_ret get_child_rows_count(const TreeIndex & parent, int & rows) const;
 		sg_ret get_child_from_row(const TreeIndex & parent, int row, TreeItem ** child_tree_item);
 
+		/**
+		   @brief Get parent tree item of given @param tree_item
+
+		   If @param tree_item is top-level-layer, it has no
+		   parent. @param parent_tree_item is set to NULL and
+		   sg_ret::ok is returned.
+
+		   @return sg_ret::ok if the parent item has been found or if @param tree_item is a top-level layer
+		   @return sg_ret::err on argument errors
+		   @return sg_ret::err if parent of @param tree_item can't be found for any reason
+		*/
+		sg_ret parent_tree_item(const TreeItem & tree_item, TreeItem ** parent_tree_item);
+
 		void expand_tree_item(const TreeItem * tree_item);
 
 		/* Move tree item up or down in list of its siblings. */

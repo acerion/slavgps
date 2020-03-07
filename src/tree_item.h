@@ -501,11 +501,9 @@ namespace SlavGPS {
 		  (e.g. Waypoint) this is not a layer but some
 		  intermediate container.
 
-		  TODO_LATER: There is also a parent tree item stored
-		  in one of columns of Qt Model. Additionally (and
-		  ultimately) the parent item can be obtained from
-		  Tree (Model) relations between tree items, so extra
-		  care must be taken to ensure that these places have
+		  TODO: The parent item can also be obtained from Tree
+		  (Model) relations between tree items, so extra care
+		  must be taken to ensure that these places have
 		  consistent data.
 		*/
 		TreeItem * m_parent = nullptr;

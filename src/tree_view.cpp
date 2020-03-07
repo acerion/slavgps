@@ -1332,3 +1332,32 @@ int TreeView::column_id_to_column_idx(TreeItemPropertyID column_id)
 	}
 	return -1;
 }
+
+
+
+
+/**
+   @reviewed-on 2020-03-07
+*/
+sg_ret TreeView::parent_tree_item(const TreeItem & tree_item, TreeItem ** parent_tree_item)
+{
+	if (nullptr == parent_tree_item) {
+		qDebug() << SG_PREFIX_E << "Invalid argument";
+		return sg_ret::err;
+	}
+
+	if (this->tree_model->invisibleRootItem()->index() == tree_item.index()) {
+		/* We are asking for parent of top-level layer. There is no such thing. Handle it gracefully. */
+		*parent_tree_item = nullptr;
+		return sg_ret::ok;
+	}
+
+	TreeIndex parent_item_index = tree_item.index().parent();
+	if (!parent_item_index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Can't get valid parent";
+		return sg_ret::err;
+	}
+	*parent_tree_item = this->get_tree_item(parent_item_index);
+
+	return sg_ret::ok;
+}
