@@ -448,11 +448,10 @@ namespace SlavGPS {
 		sg_ret selected_tp_set_coord(const Coord & new_coord, bool do_recalculate_bbox);
 
 		/**
-		   @brief Simple accessor
+		   @brief Simple accessors
 		*/
 		LayerTRW * owner_trw_layer(void) const;
-
-		sg_ret set_parent_and_owner_tree_item(TreeItem * parent) override;
+		Layer * parent_layer(void) const override;
 
 		static TreeItemViewFormat get_view_format_header(bool include_parent_layer);
 

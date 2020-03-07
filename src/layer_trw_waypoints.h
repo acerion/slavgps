@@ -221,9 +221,10 @@ namespace SlavGPS {
 		sg_ret move_selection_to_previous_child(void);
 
 		/**
-		   @brief Simple accessor
+		   @brief Simple accessors
 		*/
 		LayerTRW * owner_trw_layer(void) const;
+		Layer * parent_layer(void) const override;
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);

@@ -350,10 +350,10 @@ void LayersPanel::move_item(bool up)
 
 	this->m_tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
-	TreeItem * parent_tree_item = selected_item->parent_tree_item();
+	TreeItem * parent_tree_item = selected_item->parent_member();
 	if (parent_tree_item->move_child(*selected_item, up)) {
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->parent_tree_item()->get_name();
-		this->emit_items_tree_updated_cb(selected_item->parent_tree_item()->get_name());
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->parent_member()->get_name();
+		this->emit_items_tree_updated_cb(selected_item->parent_member()->get_name());
 	}
 }
 
@@ -393,17 +393,13 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 
 	/* Special case for top-level Aggregate layer. */
-	if (selected_item->is_layer()) {
-		Layer * layer = selected_item->immediate_layer();
-		if (layer->m_kind == LayerKind::Aggregate) {
-			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
-				Dialog::info(tr("You cannot cut the Top Layer."), this->m_window);
-				return;
-			}
-		}
+	if (TreeItem::the_same_object(selected_item, this->m_toplayer)) {
+		Dialog::info(tr("You cannot cut the Top Layer."), this->m_window);
+		return;
 	}
+
 #ifdef K_TODO_LATER
-	TreeItem * parent = selected_item->parent_tree_item();
+	TreeItem * parent = selected_item->parent_member();
 	parent->cut_child_item(selected_item);
 #endif
 
@@ -467,17 +463,12 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 	}
 
 	/* Special case for top-level Aggregate layer. */
-	if (selected_item->is_layer()) {
-		Layer * layer = selected_item->immediate_layer();
-		if (layer->m_kind == LayerKind::Aggregate) {
-			if (((LayerAggregate *) selected_item)->is_top_level_layer()) {
-				Dialog::info(tr("You cannot delete the Top Layer."), this->m_window);
-				return;
-			}
-		}
+	if (TreeItem::the_same_object(selected_item, this->m_toplayer)) {
+		Dialog::info(tr("You cannot delete the Top Layer."), this->m_window);
+		return;
 	}
 
-	TreeItem * parent_of_selected = selected_item->parent_tree_item();
+	TreeItem * parent_of_selected = selected_item->parent_member();
 	/* true: confirm delete request. */
 	parent_of_selected->delete_child_item(selected_item, true);
 

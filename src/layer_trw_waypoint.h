@@ -126,11 +126,10 @@ namespace SlavGPS {
 		bool show_properties_dialog(void);
 
 		/**
-		   @brief Simple accessor
+		   @brief Simple accessors
 		*/
 		LayerTRW * owner_trw_layer(void) const;
-
-		sg_ret set_parent_and_owner_tree_item(TreeItem * parent) override;
+		Layer * parent_layer(void) const override;
 
 		void display_debug_info(const QString & reference) const;
 

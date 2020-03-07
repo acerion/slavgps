@@ -2300,7 +2300,8 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_first()->coord);
+		ThisApp::main_gisview()->set_center_coord(this->get_tp_first()->coord);
+		ThisApp::main_gisview()->request_redraw("Track's 'goto startpoint' callback");
 	}
 }
 
@@ -2316,7 +2317,8 @@ void Track::goto_center_cb(void)
 	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_trw->coord_mode);
-	parent_trw->request_new_viewport_center(ThisApp::main_gisview(), coord);
+	ThisApp::main_gisview()->set_center_coord(coord);
+	ThisApp::main_gisview()->request_redraw("Track's 'goto center' callback");
 }
 
 
@@ -2328,7 +2330,8 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
+	ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+	ThisApp::main_gisview()->request_redraw("Track's 'goto endpoint' callback");
 }
 
 
@@ -2341,7 +2344,8 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	ThisApp::main_gisview()->request_redraw("Track's 'goto max speed' callback");
 }
 
 
@@ -2354,7 +2358,8 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	ThisApp::main_gisview()->request_redraw("Track's 'goto max alt' callback");
 }
 
 
@@ -2367,7 +2372,8 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	this->parent_layer()->request_new_viewport_center(ThisApp::main_gisview(), tp->coord);
+	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	ThisApp::main_gisview()->request_redraw("Track's 'goto min alt' callback");
 }
 
 
@@ -3174,39 +3180,36 @@ void Track::remove_last_trackpoint(void)
 
 
 /**
-   Method created to avoid constant casting of Track::owning_layer to
-   LayerTRW* type.
+   @reviewed-on 2020-03-06
 */
 LayerTRW * Track::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owner_tree_item();
+	return (LayerTRW *) this->parent_layer();
 }
 
 
 
 
-sg_ret Track::set_parent_and_owner_tree_item(TreeItem * parent)
+/**
+   @reviewed-on 2020-03-06
+*/
+Layer * Track::parent_layer(void) const
 {
+	/* Track's immediate parent is LayerTRWTracks. Above the
+	   Tracks container is a parent layer. */
+
+	const TreeItem * parent = this->parent_member();
 	if (nullptr == parent) {
-		qDebug() << SG_PREFIX_E << "parent is NULL";
-		return sg_ret::err;
+		return nullptr;
 	}
-
-	/* A parent is always a parent. */
-	this->m_parent_tree_item = parent;
-
-	/* @param parent in case of Track is TRWTracks
-	   container. However the real owner of a track is a TRW layer
-	   (a parent of TRWTracks container). Let's find the TRW
-	   layer. */
-	TreeItem * grandparent = parent->parent_tree_item();
+	const TreeItem * grandparent = parent->parent_member();
 	if (nullptr == grandparent) {
-		qDebug() << SG_PREFIX_E << "grandparent is NULL";
-		return sg_ret::err;
+		return nullptr;
 	}
-	this->m_owner_tree_item = grandparent;
 
-	return sg_ret::ok;
+	Layer * layer = (Layer *) grandparent;
+	assert (layer->m_kind == LayerKind::TRW);;
+	return layer;
 }
 
 
@@ -3602,12 +3605,11 @@ void Track::delete_points_same_time_cb(void)
 void Track::extend_track_end_cb(void)
 {
 	Window * window = ThisApp::main_window();
-	LayerTRW * parent_layer = this->owner_trw_layer();
-
 	window->activate_tool_by_id(this->is_route() ? LayerToolTRWNewRoute::tool_id() : LayerToolTRWNewTrack::tool_id());
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
+		ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+		ThisApp::main_gisview()->request_redraw("Track's 'extender track end' callback");
 	}
 }
 
@@ -3627,7 +3629,8 @@ void Track::extend_track_end_route_finder_cb(void)
 	parent_layer->route_finder_started = true;
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(ThisApp::main_gisview(), this->get_tp_last()->coord);
+		ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+		ThisApp::main_gisview()->request_redraw("Track's 'extend track end route finder' callback");
 	}
 }
 

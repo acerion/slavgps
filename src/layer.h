@@ -142,8 +142,6 @@ namespace SlavGPS {
 
 		virtual void change_coord_mode(__attribute__((unused)) CoordMode dest_mode) { return; };
 
-		void request_new_viewport_center(GisViewport * gisview, const Coord & coord);
-
 		virtual Time get_timestamp(void) const override;
 
 		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
@@ -200,7 +198,7 @@ namespace SlavGPS {
 		void ref_layer(void);
 		void unref_layer(void);
 
-		Layer * immediate_layer(void) override;
+		Layer * parent_layer(void) const override;
 
 		bool is_layer(void) const override;
 

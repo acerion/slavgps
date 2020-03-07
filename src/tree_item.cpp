@@ -171,57 +171,44 @@ void TreeItem::set_name(const QString & name)
 
 
 /**
-   @reviewed-on 2019-12-29
+   @reviewed-on 2020-03-06
 */
 Layer * TreeItem::immediate_layer(void)
 {
-	/* Default behaviour for Waypoints, Tracks, Routes, their
-	   containers and other non-Layer items. This behaviour will
-	   be overriden for Layer class and its derived classes. */
-	return (Layer *) this->owner_tree_item();
+	if (this->is_layer()) {
+		return (Layer *) this;
+	} else {
+		return this->parent_layer();
+	}
 }
 
 
 
 
-Layer * TreeItem::parent_layer(void) const
+/**
+   @reviewed-on 2020-03-06
+*/
+sg_ret TreeItem::set_parent_member(TreeItem * parent)
 {
-	return (Layer *) this->owner_tree_item();
-}
-
-
-
-
-sg_ret TreeItem::set_parent_and_owner_tree_item(TreeItem * parent)
-{
-	/*
-	  For most of tree items this is quite simple: most of layers
-	  have simple structure without any sub-children.
-
-	  However TRW layer and GPS layer have more complicated
-	  internal structure, and their children will have to
-	  re-implement this method.
-	*/
-	this->m_parent_tree_item = parent;
-	this->m_owner_tree_item = parent;
-
+	this->m_parent = parent;
 	return sg_ret::ok;
 }
 
 
 
 
-TreeItem * TreeItem::parent_tree_item(void) const
+/**
+   @reviewed-on 2020-03-06
+*/
+TreeItem * TreeItem::parent_member(void) const
 {
-	return this->m_parent_tree_item;
-}
-
-
-
-
-TreeItem * TreeItem::owner_tree_item(void) const
-{
-	return this->m_owner_tree_item;
+#if K_TODO_LATER
+	/* Check that information stored in TreeItem::m_parent and in Qt Model/Tree is consistent. */
+	if (is in tree) {
+		assert (this->m_parent == this->tree_view->get_parent(this)->m_parent);
+	}
+#endif
+	return this->m_parent;
 }
 
 
@@ -910,7 +897,7 @@ sg_ret TreeItem::attach_as_tree_item_child(TreeItem * child, int row)
 
 	this->tree_view->expand(this->index());
 
-	QObject::connect(child, SIGNAL (tree_item_changed(const QString &)), this->m_parent_tree_item, SLOT (child_tree_item_changed_cb(const QString &)));
+	QObject::connect(child, SIGNAL (tree_item_changed(const QString &)), this->m_parent, SLOT (child_tree_item_changed_cb(const QString &)));
 	return sg_ret::ok;
 }
 

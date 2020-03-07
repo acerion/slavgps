@@ -1064,7 +1064,7 @@ sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __
 				qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
 				return sg_ret::err;
 			}
-			TreeItem * parent_tree_item = wp->parent_tree_item();
+			TreeItem * parent_tree_item = wp->parent_member();
 
 			if (!the_same_trw) {
 				if (wp == previous_trw->selected_wp_get()) {
@@ -1209,13 +1209,27 @@ sg_ret LayerTRWWaypoints::move_selection_to_previous_child(void)
 
 
 /**
-   Method created to avoid constant casting of LayerTRWWaypoints::owning_layer
-   to LayerTRW* type.
-
-   @reviewed-on 2020-01-20
+   @reviewed-on 2020-03-06
 */
 LayerTRW * LayerTRWWaypoints::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owner_tree_item();
+	return (LayerTRW *) this->parent_layer();
+}
 
+
+
+
+/**
+   @reviewed-on 2020-03-06
+*/
+Layer * LayerTRWWaypoints::parent_layer(void) const
+{
+	const TreeItem * parent = this->parent_member();
+	if (nullptr == parent) {
+		return nullptr;
+	}
+
+	Layer * layer = (Layer *) parent;
+	assert (layer->m_kind == LayerKind::TRW);
+	return layer;
 }

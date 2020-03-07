@@ -149,7 +149,7 @@ sg_ret LayerAggregate::add_child_item(TreeItem * child_tree_item)
 		return sg_ret::err;
 	}
 
-	child_tree_item->set_parent_and_owner_tree_item(this);
+	child_tree_item->set_parent_member(this);
 	this->tree_view->apply_tree_item_timestamp(child_tree_item); /* TODO: verify if this method is not called twice when child is added to layer (i.e. if it is not called again elsewhere) */
 	this->tree_view->debug_print_tree();
 

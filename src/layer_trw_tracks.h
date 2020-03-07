@@ -199,9 +199,10 @@ namespace SlavGPS {
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
 		/**
-		   @brief Simple accessor
+		   @brief Simple accessors
 		*/
 		LayerTRW * owner_trw_layer(void) const;
+		Layer * parent_layer(void) const override;
 
 	public slots:
 		void move_viewport_to_show_all_cb(void);

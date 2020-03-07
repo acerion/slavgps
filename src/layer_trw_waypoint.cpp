@@ -656,7 +656,8 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	this->owner_trw_layer()->request_new_viewport_center(ThisApp::main_gisview(), this->m_coord);
+	ThisApp::main_gisview()->set_center_coord(this->m_coord);
+	ThisApp::main_gisview()->request_redraw("Waypoint's 'show in viewport' callback");
 }
 
 
@@ -818,40 +819,36 @@ sg_ret Waypoint::delete_tree_item_cb(void)
 
 
 /**
-   Method created to avoid constant casting of Waypoint::owning_layer
-   to LayerTRW* type.
+   @reviewed-on 2020-03-06
 */
 LayerTRW * Waypoint::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owner_tree_item();
-
+	return (LayerTRW *) this->parent_layer();
 }
 
 
 
 
-sg_ret Waypoint::set_parent_and_owner_tree_item(TreeItem * parent)
+/**
+   @reviewed-on 2020-03-06
+*/
+Layer * Waypoint::parent_layer(void) const
 {
+	/* Waypoint's immediate parent is LayerTRWWaypoints. Above the
+	   Waypoints container is a parent layer. */
+
+	const TreeItem * parent = this->parent_member();
 	if (nullptr == parent) {
-		qDebug() << SG_PREFIX_E << "parent is NULL";
-		return sg_ret::err;
+		return nullptr;
 	}
-
-	/* A parent is always a parent. */
-	this->m_parent_tree_item = parent;
-
-	/* @param parent in case of Waypoint is TRWWaypoints
-	   container. However the real owner of a waypoint is a TRW
-	   layer (a parent of TRWWaypoints container). Let's find the
-	   TRW layer. */
-	TreeItem * grandparent = parent->parent_tree_item();
+	const TreeItem * grandparent = parent->parent_member();
 	if (nullptr == grandparent) {
-		qDebug() << SG_PREFIX_E << "grandparent is NULL";
-		return sg_ret::err;
+		return nullptr;
 	}
-	this->m_owner_tree_item = grandparent;
 
-	return sg_ret::ok;
+	Layer * layer = (Layer *) grandparent;
+	assert (layer->m_kind == LayerKind::TRW);
+	return layer;
 }
 
 

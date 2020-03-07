@@ -272,7 +272,7 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index().row(), tree_item->index().parent());
 	tree_item->tree_view = nullptr;
-	tree_item->m_parent_tree_item = nullptr;
+	tree_item->set_parent_member(nullptr);
 }
 
 
@@ -614,8 +614,8 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 
 	qDebug() << SG_PREFIX_I;
 
-	/* Owner will be needed in "get_list_representation()" called below. */
-	tree_item->set_parent_and_owner_tree_item(new_parent_tree_item);
+	/* Parent will be needed in "get_list_representation()" called below. */
+	tree_item->set_parent_member(new_parent_tree_item);
 
 	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
 

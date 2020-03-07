@@ -668,25 +668,14 @@ Time Layer::get_timestamp(void) const
 
 
 
-void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coord)
-{
-	if (gisview) {
-		gisview->set_center_coord(coord);
-		this->emit_tree_item_changed("Requesting change of center coordinate of viewport");
-	}
-}
-
-
-
-
 /**
-   @reviewed-on 2019-12-29
+   @reviewed-on 2020-03-06
 */
-Layer * Layer::immediate_layer(void)
+Layer * Layer::parent_layer(void) const
 {
-	/* We are already a layer, no need to go up in hierarchy of
-	   tree items to find our immediate layer. */
-	return this;
+	/* Layer's parent can be only another layer, so we simply cast
+	   to Layer* - for all layer kinds. */
+	return (Layer *) this->parent_member();
 }
 
 

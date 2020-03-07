@@ -1095,7 +1095,7 @@ sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__(
 				return sg_ret::err;
 			}
 
-			TreeItem * parent_tree_item = trk->parent_tree_item();
+			TreeItem * parent_tree_item = trk->parent_member();
 
 			if (trk->is_selected()) {
 				previous_trw->selected_track_reset();
@@ -1145,14 +1145,29 @@ sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__(
 
 
 /**
-   Method created to avoid constant casting of LayerTRWTracks::owning_layer
-   to LayerTRW* type.
-
-   @reviewed-on 2020-01-20
+   @reviewed-on 2020-03-06
 */
 LayerTRW * LayerTRWTracks::owner_trw_layer(void) const
 {
-	return (LayerTRW *) this->owner_tree_item();
+	return (LayerTRW *) this->parent_layer();
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-06
+*/
+Layer * LayerTRWTracks::parent_layer(void) const
+{
+	const TreeItem * parent = this->parent_member();
+	if (nullptr == parent) {
+		return nullptr;
+	}
+
+	Layer * layer = (Layer *) parent;
+	assert (layer->m_kind == LayerKind::TRW);
+	return layer;
 }
 
 

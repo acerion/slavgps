@@ -320,21 +320,7 @@ namespace SlavGPS {
 		   sublayer has its parent/owning layer.  Return one
 		   of these.
 		*/
-		virtual Layer * immediate_layer(void);
-
-		/**
-		   Get direct parent tree item. Direct parent tree
-		   item and owning tree item may be two different tree
-		   items.
-		*/
-		TreeItem * parent_tree_item(void) const;
-
-		/**
-		   Get tree item that is the owner of this tree
-		   item. Direct parent tree item and owning tree item
-		   may be two different tree items.
-		*/
-		TreeItem * owner_tree_item(void) const;
+		Layer * immediate_layer(void);
 
 		/**
 		   @brief Get list of child item UIDs
@@ -351,14 +337,31 @@ namespace SlavGPS {
 		int list_tree_items(std::list<TreeItem *> & list) const;
 
 
-		Layer * parent_layer(void) const;
+		/**
+		   @brief Get a parent of this TreeItem - a parent that is a layer
+
+		   For most of TreeItem types the parent tree item
+		   already is a layer. But for some TreeItem types
+		   (e.g. Waypoint or Track) we have to go up one more
+		   step (to grand-parent) to find the layer that
+		   contains/owns/manages the tree item.
+		*/
+		virtual Layer * parent_layer(void) const = 0;
+
 
 		/**
-		   Set two fields of this tree item using specified
-		   direct @param parent tree item: parent tree item
-		   and owner tree item
+		   @brief Set TreeItem::m_parent member
+
+		   The member should be always valid, even for
+		   TreeItems that aren't attached to Qt Model.
 		*/
-		virtual sg_ret set_parent_and_owner_tree_item(TreeItem * parent);
+		sg_ret set_parent_member(TreeItem * parent);
+
+		/**
+		   @brief Get direct parent tree item - get it from
+		   TreeItem::m_parent
+		*/
+		TreeItem * parent_member(void) const;
 
 		/**
 		   @brief Set 'visibility' flag of only direct children to @param visible
@@ -479,13 +482,6 @@ namespace SlavGPS {
 		   items. */
 		bool m_visible = true;
 
-		/* Direct parent, may be different than owning layer. */
-		TreeItem * m_parent_tree_item = nullptr;
-
-		/* Some tree items may belong to a grandparent rather
-		   than parent item. */
-		TreeItem * m_owner_tree_item = nullptr;
-
 	signals:
 		void tree_item_changed(const QString & tree_item_name);
 
@@ -498,6 +494,21 @@ namespace SlavGPS {
 		virtual sg_ret copy_tree_item_cb(void);
 		virtual sg_ret delete_tree_item_cb(void);
 		virtual sg_ret paste_child_tree_item_cb(void);
+
+	private:
+		/*
+		  Direct parent. For some TreeItem types
+		  (e.g. Waypoint) this is not a layer but some
+		  intermediate container.
+
+		  TODO_LATER: There is also a parent tree item stored
+		  in one of columns of Qt Model. Additionally (and
+		  ultimately) the parent item can be obtained from
+		  Tree (Model) relations between tree items, so extra
+		  care must be taken to ensure that these places have
+		  consistent data.
+		*/
+		TreeItem * m_parent = nullptr;
 	};
 
 

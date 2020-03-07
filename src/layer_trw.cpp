@@ -1535,7 +1535,8 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		this->request_new_viewport_center(ThisApp::main_gisview(), coord);
+		ThisApp::main_gisview()->set_center_coord(coord);
+		ThisApp::main_gisview()->request_redraw("TRW layer's 'centerize' callback");
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -3296,9 +3297,9 @@ LayerTRW::LayerTRW() : Layer()
 	strcpy(this->debug_string, "LayerKind::TRW");
 	this->interface = &vik_trw_layer_interface;
 
-	this->m_tracks.set_parent_and_owner_tree_item(this);
-	this->m_routes.set_parent_and_owner_tree_item(this);
-	this->m_waypoints.set_parent_and_owner_tree_item(this);
+	this->m_tracks.set_parent_member(this);
+	this->m_routes.set_parent_member(this);
+	this->m_waypoints.set_parent_member(this);
 
 	this->painter = new LayerTRWPainter(this);
 	this->layer_trw_filter = new LayerTRWBabelFilter();
