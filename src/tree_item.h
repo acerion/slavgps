@@ -184,7 +184,9 @@ namespace SlavGPS {
 		   This method should call attach_child_to_tree() on
 		   any such child that needs to be added to the tree.
 
-		   TODO_LATER: this should be a protected method.
+		   This method is not protected because it needs to be
+		   available to some 'importer' class that is not a
+		   friend of TreeItem class.
 		*/
 		virtual sg_ret post_read_2(void);
 

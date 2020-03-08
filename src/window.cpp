@@ -489,7 +489,7 @@ void Window::create_actions(void)
 		this->layer_trw_importer->add_import_into_new_layer_submenu(*this->submenu_file_acquire);
 
 
-#ifdef HAVE_ZIP_H /* TODO_LATER: does this belong to Window or to TRWLayerImporter? */
+#ifdef HAVE_ZIP_H /* TODO_LATER: does this belong to Window or should it be moved to this->layer_trw_importer->add_import_into_new_layer_submenu()? */
 		qa = this->submenu_file_acquire->addAction(QObject::tr("Import KMZ &Map File..."));
 		qa->setToolTip(QObject::tr("Import a KMZ file"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
@@ -2888,9 +2888,8 @@ static bool window_pan_timeout(__attribute__((unused)) Window * window)
 	window->single_click_pending = false;
 	window->viewport->set_center_coord(window->delayed_pan_pos);
 
-	/* TODO_LATER: verify if this call is necessary. Maybe call to
-	   set_center_coord() has emitted a signal that triggered
-	   re-painting already? */
+	/* set_center_coord() itself does not lead to redrawing of
+	   viewport, we have to trigger the redrawing. */
 	window->draw_tree_items(this->m_main_gisview);
 
 	/* Really turn off the pan moving!! */
