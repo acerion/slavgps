@@ -561,24 +561,20 @@ Time LayerTRWWaypoints::get_earliest_timestamp(void) const
 
 
 
-sg_ret LayerTRWWaypoints::post_read_2(void)
+sg_ret LayerTRWWaypoints::attach_unattached_children(void)
 {
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
+	if (this->unattached_children.empty()) {
+		return sg_ret::ok;
+	}
 
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
-			continue;
-		}
-
-		if (tree_item->is_in_tree()) {
-			continue;
-		}
-
+	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
+		TreeItem * tree_item = *iter;
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
 		this->attach_child_to_tree(tree_item);
 	}
+
+	this->unattached_children.clear();
+
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();
 
@@ -931,6 +927,11 @@ void LayerTRWWaypoints::clear(void)
 		this->tree_view->detach_tree_item(tree_item);
 		delete tree_item;
 	}
+
+	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
+		delete *iter;
+	}
+	this->unattached_children.clear();
 }
 
 
@@ -942,7 +943,9 @@ int LayerTRWWaypoints::size(void) const
 	if (rows < 0) {
 		rows = 0;
 	}
-	return 0;
+	/* TODO_LATER: what about items from ::unattached_children? */
+
+	return rows;
 }
 
 
@@ -955,6 +958,7 @@ bool LayerTRWWaypoints::empty(void) const
 		qDebug() << SG_PREFIX_E << "Failed to find count of child items of" << this->get_name();
 	}
 	return rows <= 0;
+	/* TODO_LATER: what about items from ::unattached_children? */
 }
 
 

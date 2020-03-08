@@ -745,7 +745,7 @@ bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, GisVie
 
 
 
-sg_ret LayerAggregate::post_read_2(void)
+sg_ret LayerAggregate::attach_unattached_children(void)
 {
 	if (this->unattached_children.empty()) {
 		return sg_ret::ok;
@@ -756,7 +756,6 @@ sg_ret LayerAggregate::post_read_2(void)
 		this->attach_child_to_tree(*iter);
 	}
 	this->unattached_children.clear();
-
 
 	/* Update our own tooltip in tree view. */
 	this->update_tree_item_tooltip();

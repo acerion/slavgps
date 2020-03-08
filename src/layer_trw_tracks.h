@@ -126,7 +126,7 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
-		sg_ret post_read_2(void) override;
+		sg_ret attach_unattached_children(void) override;
 
 		std::list<TreeItem *> find_children_by_date(const QDate & search_date) const;
 
@@ -188,7 +188,11 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
-		/* Similar to C++ container's ::size() method. */
+		/*
+		  Similar to C++ container's ::size() method.  Returns
+		  count of children attached to Tree. Does not include
+		  size of ::unattached_children.
+		*/
 		int size(void) const;
 
 		/* Similar to C++ container's ::empty() method. */

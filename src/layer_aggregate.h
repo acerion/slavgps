@@ -76,7 +76,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		sg_ret menu_add_type_specific_operations(QMenu & menu, bool in_tree_view) override;
-		sg_ret post_read_2(void) override;
+		sg_ret attach_unattached_children(void) override;
 
 		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
 		bool dropped_item_is_acceptable(const TreeItem & tree_item) const override;

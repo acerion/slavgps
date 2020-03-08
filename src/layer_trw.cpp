@@ -1250,7 +1250,7 @@ void LayerTRW::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 
 
 
-sg_ret LayerTRW::post_read_2(void)
+sg_ret LayerTRW::attach_unattached_children(void)
 {
 	qDebug() << SG_PREFIX_D;
 
@@ -1259,24 +1259,35 @@ sg_ret LayerTRW::post_read_2(void)
 		return sg_ret::err;
 	}
 
-	if (this->m_tracks.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
+	/*
+	  We check for m_tracks.size() because... TODO_LATER: why
+	  exactly? There should be a good reason, but I can't quite
+	  understand it now. Maybe m_tracks.size() should return size
+	  of both attached and non-attached items?
+
+	  We also check for m_tracks.unattached_children.size()
+	  because m_tracks.size() alone reports count of already
+	  attached children, but doesn't return count of unattached
+	  children. And we are very interested in count of the
+	  latter.
+	*/
+
+	if (this->m_tracks.size() > 0 || this->m_tracks.unattached_children.size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_tracks);
 	}
 
-	if (this->m_routes.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
+	if (this->m_routes.size() > 0 || this->m_routes.unattached_children.size() > 0 ) {
 		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_routes);
 	}
 
-	if (this->m_waypoints.size() > 0) { /* TODO_LATER: this should somehow check number of un-attached children */
+	if (this->m_waypoints.size() > 0 || this->m_waypoints.unattached_children.size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_waypoints);
 	}
 
 	this->generate_missing_thumbnails();
-
-	this->sort_all();
 
 	return sg_ret::ok;
 }

@@ -304,7 +304,7 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* No need to attach signal update handler
 			   here as this will always be performed later
-			   on in LayerGPS::post_read_2(). */
+			   on in LayerGPS::attach_unattached_children(). */
 		}
 	}
 
@@ -572,7 +572,7 @@ LayerGPS::~LayerGPS()
 
 
 
-sg_ret LayerGPS::post_read_2(void)
+sg_ret LayerGPS::attach_unattached_children(void)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "GPS Layer" << this->get_name() << "is not connected to tree";
@@ -581,8 +581,12 @@ sg_ret LayerGPS::post_read_2(void)
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
+		if (trw->is_in_tree()) {
+			qDebug() << SG_PREFIX_E << "TRW layer no." << i << "is already attached to tree";
+			continue;
+		}
 		qDebug() << SG_PREFIX_I << "Attaching item" << trw->get_name() << "to tree under" << this->get_name();
-		this->attach_child_to_tree(trw);
+		this->attach_child_to_tree(trw); /* Will call attach_unattached_children() for TRW's child items. */
 		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
 

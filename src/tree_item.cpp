@@ -565,14 +565,14 @@ sg_ret TreeItem::attach_child_to_tree(TreeItem * child, int row)
 		}
 	}
 
-	/* Attach child items. */
-	return child->post_read_2();
+	/* Attach child item's unattached children (may call ::attach_child_to_tree() by itself). */
+	return child->attach_unattached_children();
 }
 
 
 
 
-sg_ret TreeItem::post_read_2(void)
+sg_ret TreeItem::attach_unattached_children(void)
 {
 	return sg_ret::ok;
 }
