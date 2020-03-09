@@ -35,7 +35,6 @@
 
 
 #include "layer.h"
-#include "layer_aggregate.h"
 #include "window.h"
 #include "layers_panel.h"
 #include "datasource.h"

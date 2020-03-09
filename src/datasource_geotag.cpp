@@ -33,7 +33,6 @@
 #include "util.h"
 #include "vikutils.h"
 #include "layer_trw.h"
-#include "layer_aggregate.h"
 #include "window.h"
 #include "statusbar.h"
 #include "viewport_internal.h"

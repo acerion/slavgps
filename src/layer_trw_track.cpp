@@ -45,7 +45,6 @@
 #include "application_state.h"
 #include "util.h"
 #include "osm_traces.h"
-#include "layer_aggregate.h"
 
 #include "layer_trw.h"
 #include "layer_trw_babel_filter.h"

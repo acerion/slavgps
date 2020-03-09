@@ -738,13 +738,14 @@ sg_ret TreeItem::delete_child_item(__attribute__((unused)) TreeItem * child_tree
 int TreeItem::child_rows_count(void) const
 {
 	if (!this->is_in_tree()) {
-		/* Not necessarily an error. */
-		return -1;
+		/* Not necessarily an error. Non-attached item has zero child rows. */
+		return 0;
 	}
 
 	int rows = 0;
 	if (sg_ret::ok != this->tree_view->get_child_rows_count(this->index(), rows)) {
-		return -1;
+		qDebug() << SG_PREFIX_E << "Failed to get count of child rows in" << this->get_name();
+		return 0;
 	}
 
 	return rows;
@@ -929,4 +930,86 @@ sg_ret TreeItem::child_tree_item_changed_cb(const QString & child_tree_item_name
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+void TreeItem::clear(void)
+{
+	unsigned int detached = 0;
+
+	const int rows = this->child_rows_count();
+	for (int row = rows - 1; row >= 0; row--) {
+		TreeItem * child = nullptr;
+		if (sg_ret::ok == this->child_from_row(row, &child)) {
+			if (child->is_in_tree()) {
+				this->tree_view->detach_tree_item(child);
+			}
+			delete child;
+			detached++;
+		} else {
+			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
+		}
+	}
+
+
+	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
+		delete *iter;
+	}
+	this->unattached_children.clear();
+
+
+	if (detached) {
+		/* Update our own tooltip in tree view. */
+		this->update_tree_item_tooltip();
+	}
+}
+
+
+
+
+int TreeItem::attached_size(void) const
+{
+	if (!this->is_in_tree()) {
+		return 0;
+	}
+
+	int rows = this->child_rows_count();
+	if (rows < 0) {
+		rows = 0;
+	}
+	return rows;
+}
+
+
+
+
+bool TreeItem::attached_empty(void) const
+{
+	if (!this->is_in_tree()) {
+		return true;
+	}
+
+	const int rows = this->child_rows_count();
+	if (rows < 0) {
+		qDebug() << SG_PREFIX_E << "Failed to find count of child items of" << this->get_name();
+	}
+	return rows <= 0;
+}
+
+
+
+
+int TreeItem::unattached_size(void) const
+{
+	return this->unattached_children.size();
+}
+
+
+
+
+bool TreeItem::unattached_empty(void) const
+{
+	return this->unattached_children.empty();
 }

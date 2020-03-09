@@ -35,7 +35,6 @@
 
 
 #include "window.h"
-#include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_stats.h"
 #include "layer_trw_track_internal.h"

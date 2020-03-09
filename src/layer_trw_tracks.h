@@ -182,23 +182,6 @@ namespace SlavGPS {
 
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
-		/* Similar to C++ container's ::clear() method: call
-		   destructor for all elements of this container,
-		   remove the elements, leaving zero elements in the
-		   container. */
-		void clear(void);
-
-		/*
-		  Similar to C++ container's ::size() method.  Returns
-		  count of children attached to Tree. Does not include
-		  size of ::unattached_children.
-		*/
-		int size(void) const;
-
-		/* Similar to C++ container's ::empty() method. */
-		bool empty(void) const;
-
-
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 

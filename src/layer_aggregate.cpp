@@ -468,35 +468,6 @@ LayerAggregate::~LayerAggregate()
 
 
 
-void LayerAggregate::clear()
-{
-	unsigned int deleted = 0;
-
-	const int rows = this->child_rows_count();
-	for (int row = rows - 1; row >= 0; row--) {
-		TreeItem * child = nullptr;
-		if (sg_ret::ok == this->child_from_row(row, &child)) {
-			Layer * layer = (Layer *) child;
-			if (layer->is_in_tree()) {
-				this->tree_view->detach_tree_item(layer);
-			}
-			delete layer;
-			deleted++;
-		} else {
-			qDebug() << SG_PREFIX_E << "Failed to get child item in row" << row << "/" << rows;
-		}
-	}
-
-
-	if (deleted) {
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
-	}
-}
-
-
-
-
 sg_ret LayerAggregate::delete_child_item(TreeItem * item, __attribute__((unused)) bool confirm_deleting)
 {
 	const bool was_visible = item->is_visible();
@@ -782,20 +753,6 @@ std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 
 	qDebug() << SG_PREFIX_I << "Returning" << result.size() << "children";
 	return result;
-}
-
-
-
-
-int LayerAggregate::child_rows_count(void) const
-{
-	const int rows = TreeItem::child_rows_count();
-	if (rows < 0) {
-		qDebug() << SG_PREFIX_E << "Failed to get count of child layers in" << this->get_name();
-		return 0;
-	} else {
-		return rows;
-	}
 }
 
 

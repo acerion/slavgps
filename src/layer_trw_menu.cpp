@@ -242,11 +242,11 @@ sg_ret LayerTRW::menu_add_type_specific_operations(QMenu & menu, __attribute__((
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks and Routes List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_and_route_list_dialog_cb()));
-	qa->setEnabled((bool) (this->m_tracks.size() + this->m_routes.size()));
+	qa->setEnabled((bool) (this->m_tracks.attached_size() + this->m_routes.attached_size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
-	qa->setEnabled((bool) (this->m_waypoints.size()));
+	qa->setEnabled((bool) (this->m_waypoints.attached_size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	ExternalTools::add_menu_items(external_submenu, main_window->main_gisview(), NULL);

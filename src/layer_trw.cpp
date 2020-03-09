@@ -1260,29 +1260,28 @@ sg_ret LayerTRW::attach_unattached_children(void)
 	}
 
 	/*
-	  We check for m_tracks.size() because... TODO_LATER: why
-	  exactly? There should be a good reason, but I can't quite
-	  understand it now. Maybe m_tracks.size() should return size
-	  of both attached and non-attached items?
+	  We check for m_tracks.attached_size() because... TODO_LATER:
+	  why exactly? There should be a good reason, but I can't
+	  quite understand it now. Maybe m_tracks.size() should return
+	  size of both attached and non-attached items?
 
-	  We also check for m_tracks.unattached_children.size()
-	  because m_tracks.size() alone reports count of already
-	  attached children, but doesn't return count of unattached
-	  children. And we are very interested in count of the
-	  latter.
+	  We also check for m_tracks.unattached_size() because
+	  m_tracks.size() alone reports count of already attached
+	  children, but doesn't return count of unattached
+	  children. And we are very interested in count of the latter.
 	*/
 
-	if (this->m_tracks.size() > 0 || this->m_tracks.unattached_children.size() > 0) {
+	if (this->m_tracks.attached_size() > 0 || this->m_tracks.unattached_size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_tracks);
 	}
 
-	if (this->m_routes.size() > 0 || this->m_routes.unattached_children.size() > 0 ) {
+	if (this->m_routes.attached_size() > 0 || this->m_routes.unattached_size() > 0 ) {
 		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_routes);
 	}
 
-	if (this->m_waypoints.size() > 0 || this->m_waypoints.unattached_children.size() > 0) {
+	if (this->m_waypoints.attached_size() > 0 || this->m_waypoints.unattached_size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
 		this->attach_child_to_tree(&this->m_waypoints);
 	}
@@ -1341,12 +1340,12 @@ QString LayerTRW::get_tooltip(void) const
 	QString result = QObject::tr("Number of tracks: %1\n"
 				     "Number of waypoints: %2\n"
 				     "Number of routes: %3")
-		.arg(this->m_tracks.size())
-		.arg(this->m_waypoints.size())
-		.arg(this->m_routes.size());
+		.arg(this->m_tracks.attached_size())
+		.arg(this->m_waypoints.attached_size())
+		.arg(this->m_routes.attached_size());
 
 	QString tracks_info;
-	if (!this->m_tracks.empty()) {
+	if (!this->m_tracks.attached_empty()) {
 		TracksTooltipData ttd = this->get_tracks_tooltip_data();
 
 		QDateTime date_start;
@@ -1370,7 +1369,7 @@ QString LayerTRW::get_tooltip(void) const
 
 
 	QString routes_info;
-	if (!this->m_routes.empty()) {
+	if (!this->m_routes.attached_empty()) {
 		const Distance rlength = this->get_routes_tooltip_data(); /* [meters] */
 		if (rlength.is_valid()) {
 			/* Prepare track info dependent on distance units. */
@@ -1466,7 +1465,7 @@ void LayerTRW::reset_internal_selections(void)
 
 bool LayerTRW::is_empty(void) const
 {
-	return this->m_tracks.empty() && this->m_routes.empty() && this->m_waypoints.empty();
+	return this->m_tracks.attached_empty() && this->m_routes.attached_empty() && this->m_waypoints.attached_empty();
 }
 
 
@@ -2191,15 +2190,15 @@ sg_ret LayerTRW::remove_child(TreeItem * tree_item)
 	/* If last sublayer of given type, then remove sublayer container.
 	   TODO_LATER: this sometimes doesn't work. */
 	if (tree_item->get_type_id() == Track::type_id()) {
-		if (this->m_tracks.size() == 0) {
+		if (this->m_tracks.attached_size() == 0) {
 			this->tree_view->detach_tree_item(&this->m_tracks);
 		}
 	} else if (tree_item->get_type_id() == Route::type_id()) {
-		if (this->m_routes.size() == 0) {
+		if (this->m_routes.attached_size() == 0) {
 			this->tree_view->detach_tree_item(&this->m_routes);
 		}
 	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-		if (this->m_waypoints.size() == 0) {
+		if (this->m_waypoints.attached_size() == 0) {
 			this->tree_view->detach_tree_item(&this->m_waypoints);
 		}
 	} else {
@@ -3037,15 +3036,15 @@ void LayerTRW::sort_all()
 	}
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
-	if (this->m_tracks.size() > 1) {
+	if (this->m_tracks.attached_size() > 1) {
 		this->tree_view->sort_children(&this->m_tracks, this->track_sort_order);
 	}
 
-	if (this->m_routes.size() > 1) {
+	if (this->m_routes.attached_size() > 1) {
 		this->tree_view->sort_children(&this->m_routes, this->track_sort_order);
 	}
 
-	if (this->m_waypoints.size() > 1) {
+	if (this->m_waypoints.attached_size() > 1) {
 		this->tree_view->sort_children(&this->m_waypoints, this->wp_sort_order);
 	}
 }

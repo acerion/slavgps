@@ -434,6 +434,58 @@ namespace SlavGPS {
 		void update_tree_item_tooltip(void);
 
 
+		/**
+		   Similar to C++ container's ::clear() method: call
+		   destructor for all elements of this container,
+		   remove the elements, leaving zero elements in the
+		   container.
+
+		   Removes both attached and unattached immediate
+		   children. May recursively call ::clear() on child
+		   items.
+		*/
+		void clear(void);
+
+		/**
+		   Similar to C++ container's ::size() method.  Returns
+		   count of immediate children that are attached to Tree.
+
+		   Derived classes may want to re-implement this
+		   method to always return zero.
+		*/
+		virtual int attached_size(void) const;
+
+		/**
+		   Similar to C++ container's ::size() method.
+		   Returns count of immediate children that are NOT
+		   attached to Tree.
+
+		   Derived classes may want to re-implement this
+		   method to always return zero.
+		*/
+		virtual int unattached_size(void) const;
+
+		/**
+		   Similar to C++ container's ::empty()
+		   method. Returns information whether there are zero
+		   immediate children attached to Tree.
+
+		   Derived classes may want to re-implement this
+		   method to always return true.
+		*/
+		virtual bool attached_empty(void) const;
+
+		/**
+		   Similar to C++ container's ::empty()
+		   method. Returns information whether there are zero
+		   immediate children NOT attached to Tree.
+		*/
+		virtual bool unattached_empty(void) const;
+
+
+
+
+
 	//protected:
 
 		TreeView * tree_view = nullptr; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */

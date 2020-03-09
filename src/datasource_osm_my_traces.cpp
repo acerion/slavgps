@@ -42,7 +42,6 @@
 #include "window.h"
 #include "datasource_osm_my_traces.h"
 #include "layer_trw.h"
-#include "layer_aggregate.h"
 #include "layers_panel.h"
 #include "viewport_internal.h"
 #include "gpx.h"

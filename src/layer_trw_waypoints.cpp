@@ -392,7 +392,7 @@ void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 */
 void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->empty()) {
+	if (this->attached_empty()) {
 		qDebug() << SG_PREFIX_E << "Called for empty waypoints set";
 		return;
 	}
@@ -822,7 +822,7 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
  */
 void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	if (this->empty()) {
+	if (this->attached_empty()) {
 		qDebug() << SG_PREFIX_I << "Not drawing Waypoints - no waypoints";
 		return;
 	}
@@ -908,57 +908,6 @@ void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 {
 	this->owner_trw_layer()->wp_sort_order = TreeViewSortOrder::DateDescending;
 	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
-}
-
-
-
-
-void LayerTRWWaypoints::clear(void)
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
-			continue;
-		}
-
-		this->tree_view->detach_tree_item(tree_item);
-		delete tree_item;
-	}
-
-	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
-		delete *iter;
-	}
-	this->unattached_children.clear();
-}
-
-
-
-
-int LayerTRWWaypoints::size(void) const
-{
-	int rows = this->child_rows_count();
-	if (rows < 0) {
-		rows = 0;
-	}
-	/* TODO_LATER: what about items from ::unattached_children? */
-
-	return rows;
-}
-
-
-
-
-bool LayerTRWWaypoints::empty(void) const
-{
-	const int rows = this->child_rows_count();
-	if (rows < 0) {
-		qDebug() << SG_PREFIX_E << "Failed to find count of child items of" << this->get_name();
-	}
-	return rows <= 0;
-	/* TODO_LATER: what about items from ::unattached_children? */
 }
 
 

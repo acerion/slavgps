@@ -86,10 +86,6 @@ namespace SlavGPS {
 		sg_ret delete_child_item(TreeItem * child_tree_item, bool confirm_deleting) override;
 
 
-		void clear(void);
-
-
-
 		sg_ret get_tree_items(std::list<TreeItem *> & list, const std::list<SGObjectTypeID> & wanted_types) const override;
 
 		Layer * get_top_visible_layer_of_type(LayerKind layer_kind);
@@ -99,7 +95,6 @@ namespace SlavGPS {
 
 		bool is_top_level_layer(void) const;
 
-		int child_rows_count(void) const override;
 		std::list<Layer const *> get_child_layers(void) const;
 
 	private slots:

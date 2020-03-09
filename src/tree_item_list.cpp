@@ -38,7 +38,6 @@
 
 #include "layer.h"
 #include "tree_item_list.h"
-#include "layer_aggregate.h"
 #include "window.h"
 #include "viewport_internal.h"
 #include "util.h"

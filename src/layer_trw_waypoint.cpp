@@ -31,7 +31,6 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_painter.h"

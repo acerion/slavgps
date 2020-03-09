@@ -468,7 +468,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 */
 void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->empty()) {
+	if (this->attached_empty()) {
 		qDebug() << SG_PREFIX_E << "Called for empty tracks/routes set";
 		return;
 	}
@@ -838,7 +838,7 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	this->recalculate_bbox();
 
-	if (!this->empty()) {
+	if (!this->attached_empty()) {
 		ThisApp::main_gisview()->set_bbox(this->get_bbox());
 		ThisApp::main_gisview()->request_redraw("Re-align viewport to show all tracks or routes");
 	}
@@ -939,7 +939,7 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 		return;
 	}
 
-	if (this->empty()) {
+	if (this->attached_empty()) {
 		return;
 	}
 
@@ -1020,56 +1020,6 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, GisViewport * new_gisview
 	this->y = ev_y;
 	this->gisview = new_gisview;
 	this->bbox = this->gisview->get_bbox();
-}
-
-
-
-
-void LayerTRWTracks::clear(void)
-{
-	const int rows = this->child_rows_count();
-	for (int row = 0; row < rows; row++) {
-		TreeItem * tree_item = nullptr;
-		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
-			qDebug() << SG_PREFIX_E << "Failed to get child from row" << row << "/" << rows;
-			continue;
-		}
-
-		this->tree_view->detach_tree_item(tree_item);
-		delete tree_item;
-	}
-
-	for (auto iter = this->unattached_children.begin(); iter != this->unattached_children.end(); iter++) {
-		delete *iter;
-	}
-	this->unattached_children.clear();
-}
-
-
-
-
-int LayerTRWTracks::size(void) const
-{
-	int rows = this->child_rows_count();
-	if (rows < 0) {
-		rows = 0;
-	}
-	/* TODO_LATER: what about items from ::unattached_children? */
-
-	return rows;
-}
-
-
-
-
-bool LayerTRWTracks::empty(void) const
-{
-	const int rows = this->child_rows_count();
-	if (rows < 0) {
-		qDebug() << SG_PREFIX_E << "Failed to find count of child items of" << this->get_name();
-	}
-	return rows <= 0;
-	/* TODO_LATER: what about items from ::unattached_children? */
 }
 
 
