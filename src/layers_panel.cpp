@@ -371,7 +371,13 @@ void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected
 	   have to call ::get_highlight_usage() themselves. */
 	highlight_selected = highlight_selected && gisview->get_highlight_usage();
 	qDebug() << SG_PREFIX_I << "Calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
+	this->m_tree_view->debug_print_tree();
+
+	qDebug() << "";
+	qDebug() << SG_PREFIX_I << "vvvvvvvvvvvvv drawing tree - start vvvvvvvvvvvvv";
 	this->m_toplayer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
+	qDebug() << SG_PREFIX_I << "^^^^^^^^^^^^^ drawing tree - end   ^^^^^^^^^^^^^";
+	qDebug() << "";
 
 	/* TODO_LATER: layers panel or tree view or aggregate layer should
 	   recognize which layer lays under non-transparent layers,

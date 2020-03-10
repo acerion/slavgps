@@ -165,9 +165,6 @@ namespace SlavGPS {
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 
-		/* Most of layer kinds aren't able to store child items. */
-		int child_rows_count(void) const override { return 0; };
-
 		/* Return list of children layers. Most of layer kinds won't have child layers. */
 		virtual std::list<Layer const *> get_child_layers(void) const { std::list<Layer const *> a_list; return a_list; };
 
