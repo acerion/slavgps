@@ -182,6 +182,8 @@ namespace SlavGPS {
 
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
+		sg_ret update_properties(void) override;
+
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 

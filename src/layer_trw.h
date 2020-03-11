@@ -308,6 +308,8 @@ namespace SlavGPS {
 		sg_ret copy_child_item(TreeItem * item) override;
 		sg_ret delete_child_item(TreeItem * item, bool confirm_deleting) override;
 
+		sg_ret update_properties(void) override;
+
 
 		bool handle_selection_in_tree();
 

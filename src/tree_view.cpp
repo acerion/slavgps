@@ -683,6 +683,14 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	connect(this->tree_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
 
 
+	connect(this->tree_model, SIGNAL(rowsInserted(const QModelIndex&, int, int)),
+		this,             SLOT(rows_inserted_cb(const QModelIndex&, int, int)));
+	connect(this->tree_model, SIGNAL(rowsMoved(const QModelIndex&, int, int, const QModelIndex&, int)),
+		this,             SLOT(rows_moved_cb(const QModelIndex&, int, int, const QModelIndex&, int)));
+	connect(this->tree_model, SIGNAL(rowsRemoved(const QModelIndex&, int, int)),
+		this,             SLOT(rows_removed_cb(const QModelIndex&, int, int)));
+
+
 
 	/* Drag & Drop. */
 	this->setDragEnabled(true);
@@ -1360,4 +1368,87 @@ sg_ret TreeView::parent_tree_item(const TreeItem & tree_item, TreeItem ** parent
 	*parent_tree_item = this->get_tree_item(parent_item_index);
 
 	return sg_ret::ok;
+}
+
+
+
+
+TreeItem * TreeView::tree_item(const QModelIndex & model_index) const
+{
+	TreeIndex * index = new QPersistentModelIndex(model_index);
+	if (!index) {
+		qDebug() << SG_PREFIX_E << "Invalid TreeIndex from valid model index" << model_index;
+		return nullptr;
+	}
+
+	TreeItem * tree_item = this->get_tree_item(*index);
+	if (!tree_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get tree item from valid index";
+		return nullptr;
+	}
+
+	return tree_item;
+}
+
+
+
+
+/**
+   This will be connected to signal emitted by Qt when rows are added
+   by our API to given @param parent or when rows are
+   dragged-and-dropped into given @param parent. The part where items
+   are removed during DnD from original parent will be handled by
+   ::rows_removed_cb().
+*/
+void TreeView::rows_inserted_cb(const QModelIndex & parent, int first, int last)
+{
+	TreeItem * parent_tree_item = this->tree_item(parent);
+	if (nullptr == parent_tree_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get tree item for modified model index";
+		return;
+	}
+
+	qDebug() << SG_PREFIX_SLOT << (last - first + 1) << "rows inserted into" << parent_tree_item->get_name();
+	parent_tree_item->update_properties(); /* Update tooltip and other properties (e.g. bbox). */
+	return;
+}
+
+
+
+
+void TreeView::rows_moved_cb(const QModelIndex & parent, int start, int end, const QModelIndex & destination, int row)
+{
+	TreeItem * source = this->tree_item(parent);
+	TreeItem * dest = this->tree_item(destination);
+	if (nullptr == source || nullptr == dest) {
+		qDebug() << SG_PREFIX_E << "Failed to get tree item for modified model index" << source << dest;
+		return;
+	}
+
+	qDebug() << SG_PREFIX_SLOT << (end - start + 1) << "rows moved from" << source->get_name() << "to" << dest->get_name();
+
+	return;
+}
+
+
+
+
+/**
+   This will be connected to signal emitted by Qt when rows are
+   removed by our API from given @param parent or when rows are
+   dragged (DragAndDrop) from given @parent and dropped elsewhere. The
+   'dropped elsewhere' part of DnD will be handled in new place by
+   ::rows_inserted_cb().
+*/
+void TreeView::rows_removed_cb(const QModelIndex & parent, int first, int last)
+{
+	TreeItem * parent_tree_item = this->tree_item(parent);
+	if (nullptr == parent_tree_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get tree item for modified model index";
+		return;
+	}
+
+	qDebug() << SG_PREFIX_SLOT << (last - first + 1) << "rows removed from" << parent_tree_item->get_name();
+	parent_tree_item->update_properties(); /* Update tooltip and other properties (e.g. bbox). */
+	return;
 }

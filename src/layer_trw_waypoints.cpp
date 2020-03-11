@@ -575,9 +575,6 @@ sg_ret LayerTRWWaypoints::attach_unattached_children(void)
 
 	this->unattached_children.clear();
 
-	/* Update our own tooltip in tree view. */
-	this->update_tree_item_tooltip();
-
 	return sg_ret::ok;
 }
 
@@ -1027,7 +1024,7 @@ sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __
 #ifdef K_TODO_LATER
 				this->name_generator.remove_name(wp->get_name());
 #endif
-				parent_tree_item->update_tree_item_tooltip(); /* Previous LayerTRWWaypoints. */
+
 			}
 		}
 	}
@@ -1037,15 +1034,7 @@ sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __
 	{
 		qDebug() << SG_PREFIX_I << "Attaching item" << tree_item->get_name() << "to tree under" << this->get_name();
 		this->tree_view->attach_to_tree(this, tree_item, row);
-
-		if (!the_same_trw) {
-			this->recalculate_bbox();
-
-			/* Update our own tooltip in tree view. */
-			this->update_tree_item_tooltip();
-		}
 	}
-
 
 	return sg_ret::ok;
 }
@@ -1185,4 +1174,18 @@ Layer * LayerTRWWaypoints::parent_layer(void) const
 	Layer * layer = (Layer *) parent;
 	assert (layer->m_kind == LayerKind::TRW);
 	return layer;
+}
+
+
+
+
+sg_ret LayerTRWWaypoints::update_properties(void)
+{
+	this->recalculate_bbox();
+	TreeItem::update_properties();
+
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting signal 'properties changed'";
+	emit this->properties_changed(this->get_name() + " container"); /* Tell parent TRW layer that count of waypoints in the layer may have changed. */
+
+	return sg_ret::ok;
 }

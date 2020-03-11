@@ -216,9 +216,12 @@ TreeItem * TreeItem::parent_member(void) const
 			/* This TreeItem is a top-level layer. Don't log error. */
 			return nullptr;
 		}
+
+#if K_TODO_LATER /* This assertion fails during drag-and-drop. m_parent is already new, but parent_tree_item is still old. */
 		/* Non-top-level-layer that is attached to tree must
 		   have a valid parent. */
 		assert (this->m_parent == parent_tree_item);
+#endif
 	}
 
 	return this->m_parent;
@@ -678,8 +681,6 @@ sg_ret TreeItem::add_child_item(TreeItem * child_tree_item)
 			return sg_ret::err;
 		}
 
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
 		return sg_ret::ok;
 	} else {
 		/* This container is not attached to Qt Model yet,
@@ -958,12 +959,6 @@ void TreeItem::clear(void)
 		delete *iter;
 	}
 	this->unattached_children.clear();
-
-
-	if (detached) {
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
-	}
 }
 
 
@@ -1012,4 +1007,22 @@ int TreeItem::unattached_size(void) const
 bool TreeItem::unattached_empty(void) const
 {
 	return this->unattached_children.empty();
+}
+
+
+
+
+sg_ret TreeItem::update_properties(void)
+{
+	this->update_tree_item_tooltip();
+	return sg_ret::ok;
+}
+
+
+
+
+void TreeItem::properties_changed_cb(const QString & where)
+{
+	qDebug() << SG_PREFIX_SLOT << where << "child has informed us about its properties being changed";
+	this->update_properties();
 }

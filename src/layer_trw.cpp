@@ -1273,17 +1273,23 @@ sg_ret LayerTRW::attach_unattached_children(void)
 
 	if (this->m_tracks.attached_size() > 0 || this->m_tracks.unattached_size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Tracks node under" << this->get_name();
+		this->m_tracks.disconnect();
 		this->attach_child_to_tree(&this->m_tracks);
+		QObject::connect(&this->m_tracks, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 	}
 
 	if (this->m_routes.attached_size() > 0 || this->m_routes.unattached_size() > 0 ) {
 		qDebug() << SG_PREFIX_D << "Attaching Routes node under" << this->get_name();
+		this->m_routes.disconnect();
 		this->attach_child_to_tree(&this->m_routes);
+		QObject::connect(&this->m_routes, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 	}
 
 	if (this->m_waypoints.attached_size() > 0 || this->m_waypoints.unattached_size() > 0) {
 		qDebug() << SG_PREFIX_D << "Attaching Waypoints node under" << this->get_name();
+		this->m_waypoints.disconnect();
 		this->attach_child_to_tree(&this->m_waypoints);
+		QObject::connect(&this->m_waypoints, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 	}
 
 	this->generate_missing_thumbnails();
@@ -1922,16 +1928,15 @@ sg_ret LayerTRW::add_track(Track * trk)
 			   yet, probably because the container was
 			   empty until this point. Let's attach it
 			   first. */
+			this->m_tracks.disconnect();
 			this->attach_child_to_tree(&this->m_tracks);
+			QObject::connect(&this->m_tracks, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 		}
 
 		if (sg_ret::ok != this->m_tracks.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add track to Tracks container attached to Model";
 			return sg_ret::err;
 		}
-
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
 
 		return sg_ret::ok;
 	} else {
@@ -2002,16 +2007,15 @@ sg_ret LayerTRW::add_route(Track * trk)
 			   yet, probably because the container was
 			   empty until this point. Let's attach it
 			   first. */
+			this->m_routes.disconnect();
 			this->attach_child_to_tree(&this->m_routes);
+			QObject::connect(&this->m_routes, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 		}
 
 		if (sg_ret::ok != this->m_routes.add_child_item(trk)) {
 			qDebug() << SG_PREFIX_E << "Failed to add route to Routes container attached to Model";
 			return sg_ret::err;
 		}
-
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
 
 		return sg_ret::ok;
 	} else {
@@ -2042,16 +2046,15 @@ sg_ret LayerTRW::add_waypoint(Waypoint * wp)
 			   yet, probably because the container was
 			   empty until this point. Let's attach it
 			   first. */
+			this->m_waypoints.disconnect();
 			this->attach_child_to_tree(&this->m_waypoints);
+			QObject::connect(&this->m_waypoints, SIGNAL (properties_changed(const QString &)), this, SLOT (properties_changed_cb(const QString &)));
 		}
 
 		if (sg_ret::ok != this->m_waypoints.add_child_item(wp)) {
 			qDebug() << SG_PREFIX_E << "Failed to add waypoint to Waypoints container attached to Model";
 			return sg_ret::err;
 		}
-
-		/* Update our own tooltip in tree view. */
-		this->update_tree_item_tooltip();
 
 		return sg_ret::ok;
 	} else {
@@ -2143,36 +2146,19 @@ QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, c
 
 sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
 {
-	/* Better to calculate 'previous_trw' at the beginning of the
-	   function, before the parent will be changed as a result of
-	   drop. */
-	LayerTRW * previous_trw = (LayerTRW *) tree_item->parent_layer();
-	const bool the_same_trw = TreeItem::the_same_object(this, previous_trw);
-
 	if (tree_item->get_type_id() == Track::type_id()) {
-		this->tracks_node().accept_dropped_child(tree_item, row, col);
+		return this->tracks_node().accept_dropped_child(tree_item, row, col);
 
 	} else if (tree_item->get_type_id() == Route::type_id()) {
-		this->routes_node().accept_dropped_child(tree_item, row, col);
+		return this->routes_node().accept_dropped_child(tree_item, row, col);
 
 	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-		this->waypoints_node().accept_dropped_child(tree_item, row, col);
+		return this->waypoints_node().accept_dropped_child(tree_item, row, col);
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();
 		return sg_ret::err;
 	}
-
-
-	if (!the_same_trw) {
-		/* Count of items in both previous and current TRW
-		   layer has changed, so we need to reflect this in
-		   TRW Layers' tooltips. */
-		previous_trw->update_tree_item_tooltip();
-		this->update_tree_item_tooltip();
-	}
-
-	return sg_ret::ok;
 }
 
 
@@ -3660,4 +3646,14 @@ LayerTRW::TracksTooltipData::TracksTooltipData()
 	this->length = Distance(0, DistanceType::Unit::internal_unit());
 	this->duration = Duration(0, DurationType::Unit::internal_unit());
 
+}
+
+
+
+
+sg_ret LayerTRW::update_properties(void)
+{
+	this->recalculate_bbox();
+	TreeItem::update_properties();
+	return sg_ret::ok;
 }

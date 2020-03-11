@@ -482,7 +482,16 @@ namespace SlavGPS {
 		*/
 		virtual bool unattached_empty(void) const;
 
+		/**
+		   Update properties of given tree item that may have
+		   changed after e.g. a new child item has been added
+		   or removed, or when something else has been changed
+		   about the tree item.
 
+		   The updated properties may be a tooltip, an icon or
+		   a coordinates bounding box.
+		*/
+		virtual sg_ret update_properties(void);
 
 
 
@@ -540,6 +549,17 @@ namespace SlavGPS {
 	signals:
 		void tree_item_changed(const QString & tree_item_name);
 
+		/**
+		   E.g. count of child items has changed or bbox has
+		   changed. Used to notify of such changes in child
+		   tree item to parent tree item.
+
+		   To be connected to
+		   TreeItem::properties_changed_cb(). To be used
+		   instead of direct method call to avoid loops.
+		*/
+		void properties_changed(const QString & where);
+
 	public slots:
 		/* Tree Item can contain other Tree Items and should
 		   be notified about changes in them. */
@@ -549,6 +569,8 @@ namespace SlavGPS {
 		virtual sg_ret copy_tree_item_cb(void);
 		virtual sg_ret delete_tree_item_cb(void);
 		virtual sg_ret paste_child_tree_item_cb(void);
+
+		void properties_changed_cb(const QString & where);
 
 	private:
 		/*

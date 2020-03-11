@@ -136,16 +136,25 @@ namespace SlavGPS {
 		void debug_print_tree(void) const;
 		void debug_print_item_rec(const QStandardItem * item, int item_row_in_parents_frame, int padding) const;
 
+	public slots:
+		void rows_inserted_cb(const QModelIndex & parent, int first, int last);
+		void rows_moved_cb(const QModelIndex & parent, int start, int end, const QModelIndex & destination, int row);
+		void rows_removed_cb(const QModelIndex & parent, int first, int last);
+
+
 	private slots:
 		void tree_item_selected_cb(void);
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
 		bool tree_item_properties_cb(void);
+
 
 	signals:
 		void tree_item_needs_redraw(sg_uid_t uid);
 		void tree_item_selected(void);
 
 	private:
+		TreeItem * tree_item(const QModelIndex & model_index) const;
+
 		sg_ret insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 
 		int column_id_to_column_idx(TreeItemPropertyID column_id);
