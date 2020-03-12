@@ -994,7 +994,7 @@ QString DefaultNameGenerator::try_new_name(void) const
 
 
 
-sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row, __attribute__((unused)) int col)
+sg_ret LayerTRWWaypoints::accept_dropped_child(TreeItem * tree_item, int row)
 {
 	/* Better to calculate 'previous_trw' at the beginning of the
 	   function, before the parent will be changed as a result of

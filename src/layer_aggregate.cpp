@@ -482,8 +482,6 @@ sg_ret LayerAggregate::delete_child_item(TreeItem * item, __attribute__((unused)
 	delete item;
 	qDebug() << SG_PREFIX_I << "Calling destructor for removed item - end   =================";
 
-	this->update_properties(); /* Update our tooltip. */
-
 	if (was_visible) {
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->get_name() << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
@@ -727,8 +725,6 @@ sg_ret LayerAggregate::attach_unattached_children(void)
 	}
 	this->unattached_children.clear();
 
-	this->update_properties(); /* Update our tooltip. */
-
 	return sg_ret::ok;
 }
 
@@ -756,7 +752,7 @@ std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 
 
 
-sg_ret LayerAggregate::accept_dropped_child(TreeItem * tree_item, int row, int col)
+sg_ret LayerAggregate::accept_dropped_child(TreeItem * tree_item, int row)
 {
 	/* Handle item in old location. */
 	{
@@ -769,8 +765,6 @@ sg_ret LayerAggregate::accept_dropped_child(TreeItem * tree_item, int row, int c
 		this->tree_view->attach_to_tree(this, tree_item, row);
 
 		QObject::connect(tree_item, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
-
-		this->update_properties(); /* Update our tooltip. */
 	}
 
 	return sg_ret::ok;

@@ -1022,7 +1022,7 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, GisViewport * new_gisview
 
 
 
-sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret LayerTRWTracks::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row)
 {
 	/* Better to calculate 'previous_trw' at the beginning of the
 	   function, before the parent will be changed as a result of

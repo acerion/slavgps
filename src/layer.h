@@ -144,7 +144,7 @@ namespace SlavGPS {
 
 		virtual Time get_timestamp(void) const override;
 
-		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row) override;
 
 		/* Read layer-specific data from Vik file. */
 		virtual LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);

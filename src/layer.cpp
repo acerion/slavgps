@@ -494,7 +494,7 @@ QString Layer::get_tooltip(void) const
 
 
 
-sg_ret Layer::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row, __attribute__((unused)) int col)
+sg_ret Layer::accept_dropped_child(TreeItem * tree_item, __attribute__((unused)) int row)
 {
 	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->get_name() << "into this Layer";
 	return sg_ret::err;

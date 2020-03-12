@@ -2144,16 +2144,16 @@ QString LayerTRW::new_unique_element_name(const SGObjectTypeID & item_type_id, c
 
 
 
-sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row, int col)
+sg_ret LayerTRW::accept_dropped_child(TreeItem * tree_item, int row)
 {
 	if (tree_item->get_type_id() == Track::type_id()) {
-		return this->tracks_node().accept_dropped_child(tree_item, row, col);
+		return this->tracks_node().accept_dropped_child(tree_item, row);
 
 	} else if (tree_item->get_type_id() == Route::type_id()) {
-		return this->routes_node().accept_dropped_child(tree_item, row, col);
+		return this->routes_node().accept_dropped_child(tree_item, row);
 
 	} else if (tree_item->get_type_id() == Waypoint::type_id()) {
-		return this->waypoints_node().accept_dropped_child(tree_item, row, col);
+		return this->waypoints_node().accept_dropped_child(tree_item, row);
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->m_type_id << "of item" << tree_item->get_name();

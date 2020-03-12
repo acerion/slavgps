@@ -177,7 +177,7 @@ namespace SlavGPS {
 
 		sg_ret update_properties(void) override;
 
-		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row) override;
 
 		bool handle_selection_in_tree(void);
 

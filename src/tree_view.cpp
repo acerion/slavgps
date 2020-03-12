@@ -994,7 +994,7 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
 			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "at the end of parent item" << parent_item->get_name();
-			parent_item->accept_dropped_child(tree_item, row, column);
+			parent_item->accept_dropped_child(tree_item, row);
 		}
 	} else {
 		/* Drop between some items: insert at position specified by row. */
@@ -1003,7 +1003,7 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
 			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->get_name() << "as sibling with parent item" << parent_item->get_name();
-			parent_item->accept_dropped_child(tree_item, row, column);
+			parent_item->accept_dropped_child(tree_item, row);
 		}
 	}
 
@@ -1439,6 +1439,16 @@ void TreeView::rows_moved_cb(const QModelIndex & parent, int start, int end, con
    dragged (DragAndDrop) from given @parent and dropped elsewhere. The
    'dropped elsewhere' part of DnD will be handled in new place by
    ::rows_inserted_cb().
+
+   Notice that we can't call ::update_properties() in
+   ::dropMimeData(), especially not in a tree item from which the
+   items have been dragged. This is because until dropMimeData() is
+   completed (until it returns true) the number of child items in the
+   "source" tree item is still the same as before beginning of DnD
+   operation. Only after dropMimeData() returns, the new correct
+   number of items is available. Therefore we call update_properties()
+   in this slot, connected to signal emitted when count of items in
+   "source" after DnD operation is settled.
 */
 void TreeView::rows_removed_cb(const QModelIndex & parent, int first, int last)
 {

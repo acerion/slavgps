@@ -176,7 +176,7 @@ namespace SlavGPS {
 		void sublayer_menu_routes_misc(LayerTRW * parent_layer_, QMenu & menu);
 		void sublayer_menu_sort(QMenu & menu);
 
-		sg_ret accept_dropped_child(TreeItem * tree_item, int row, int col) override;
+		sg_ret accept_dropped_child(TreeItem * tree_item, int row) override;
 
 		bool handle_selection_in_tree(void);
 
