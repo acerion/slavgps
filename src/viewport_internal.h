@@ -170,12 +170,15 @@ namespace SlavGPS {
 		void set_draw_mode(GisViewportDrawMode drawmode);
 		GisViewportDrawMode get_draw_mode(void) const;
 
-		sg_ret utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone);
-		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
+		sg_ret utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, const UTMZone & zone);
+		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, const UTMZone & zone);
 
-		int get_leftmost_zone(void) const;
-		int get_rightmost_zone(void) const;
-		bool get_is_one_utm_zone(void) const;
+		/**
+		   @brief Get range (span) of UTM zones visible in viewport
+		*/
+		sg_ret utm_zones_range(UTMZone & leftmost_zone, UTMZone & rightmost_zone) const;
+
+		bool is_one_utm_zone(void) const;
 
 
 
@@ -275,8 +278,8 @@ namespace SlavGPS {
 		GisViewportDrawMode draw_mode = GisViewportDrawMode::Mercator;
 
 
-		double utm_zone_width = 0.0;
-		bool is_one_utm_zone;
+		double m_utm_zone_width = 0.0;
+		bool m_is_one_utm_zone;
 
 
 		/* ******** Other class variables. ******** */
@@ -300,7 +303,14 @@ namespace SlavGPS {
 
 
 		double calculate_utm_zone_width(void) const;
-		void utm_zone_check(void);
+
+		/**
+		   @brief Recalculate some often used parameters
+		   related to UTM coordinates system.
+
+		   To be called every time we update coordinates/zoom.
+		*/
+		void recalculate_utm(void);
 
 		/**
 		   @brief Debug function: draw text with viewport's GIS metadata

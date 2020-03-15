@@ -113,7 +113,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 		LatLon lat_lon = UTM::to_lat_lon(utm);
 
 		/* Boundary. */
-		lat_lon.lon = (utm.get_zone() - 1) * 6 - 180 ;
+		lat_lon.lon = (utm.zone().value() - 1) * 6 - 180 ;
 		utm = LatLon::to_utm(lat_lon);
 		return std::fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
 	}
@@ -532,7 +532,7 @@ sg_ret GisViewport::set_viking_scale(double new_value)
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 
 	return sg_ret::ok;
@@ -550,7 +550,7 @@ void GisViewport::zoom_in_on_center_pixel(void)
 		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 }
 
@@ -566,7 +566,7 @@ void GisViewport::zoom_out_on_center_pixel(void)
 		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 }
 
@@ -614,7 +614,7 @@ sg_ret GisViewport::set_viking_scale_x(double new_value)
 	this->viking_scale.x = new_value;
 	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 
 	return sg_ret::ok;
@@ -636,7 +636,7 @@ sg_ret GisViewport::set_viking_scale_y(double new_value)
 	this->viking_scale.y = new_value;
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 
 	return sg_ret::ok;
@@ -657,21 +657,26 @@ const Coord & GisViewport::get_center_coord(void) const
 
 
 /*
-  Called every time we update coordinates/zoom.
+
 
   @reviewed-on tbd
 */
-void GisViewport::utm_zone_check(void)
+void GisViewport::recalculate_utm(void)
 {
+	/* Calculate once, re-use many times. */
+
 	if (this->coord_mode == CoordMode::UTM) {
 		const UTM utm = LatLon::to_utm(UTM::to_lat_lon(this->center_coord.utm));
 		if (!UTM::is_the_same_zone(utm, this->center_coord.utm)) {
 			this->center_coord.utm = utm;
 		}
 
-		/* Misc. stuff so we don't have to check later. */
-		this->utm_zone_width = this->calculate_utm_zone_width();
-		this->is_one_utm_zone = (this->get_rightmost_zone() == this->get_leftmost_zone());
+		this->m_utm_zone_width = this->calculate_utm_zone_width();
+
+		UTMZone leftmost_zone;
+		UTMZone rightmost_zone;
+		this->utm_zones_range(leftmost_zone, rightmost_zone);
+		this->m_is_one_utm_zone = (rightmost_zone == leftmost_zone);
 	}
 }
 
@@ -969,7 +974,7 @@ sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 	}
 
 	if (this->coord_mode == CoordMode::UTM) {
-		this->utm_zone_check();
+		this->recalculate_utm();
 	}
 
 	return sg_ret::ok;
@@ -1004,7 +1009,7 @@ sg_ret GisViewport::set_center_coord(const ScreenPos & pos)
 /**
    @reviewed-on tbd
 */
-sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
+sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, const UTMZone & zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << this->coord_mode;
@@ -1013,7 +1018,7 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 
 	/* Get center, then just offset. */
 	if (sg_ret::ok != this->utm_recalculate_current_center_coord_for_other_zone(coord_ul.utm, zone)) {
-		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone;
+		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone.value();
 		return sg_ret::err;
 	}
 	coord_ul.set_coord_mode(CoordMode::UTM);
@@ -1044,18 +1049,19 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 /**
    @reviewed-on tbd
 */
-sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone)
+sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, const UTMZone & zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << this->coord_mode;
 		return sg_ret::err;
 	}
 
-	const int zone_diff = zone - this->center_coord.utm.get_zone();
+	/* TODO_LATER: this looks strange, it could be written better. */
+	const int zone_diff = (zone - this->center_coord.utm.zone()).value();
 
 	/* TODO_LATER: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
 	center_in_other_zone = this->center_coord.utm;
-	center_in_other_zone.shift_easting_by(-(zone_diff * this->utm_zone_width));
+	center_in_other_zone.shift_easting_by(-(zone_diff * this->m_utm_zone_width));
 	center_in_other_zone.set_zone(zone);
 
 	return sg_ret::ok;
@@ -1065,32 +1071,23 @@ sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & ce
 
 
 /**
-   @reviewed-on tbd
+   @reviewed-on 2020-03-14
 */
-int GisViewport::get_leftmost_zone(void) const
+sg_ret GisViewport::utm_zones_range(UTMZone & leftmost_zone, UTMZone & rightmost_zone) const
 {
 	if (coord_mode != CoordMode::UTM) {
-		return 0;
+		return sg_ret::err;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(ScreenPosition::UpperLeft); /* Upper/Lower argument shouldn't really matter, because we want to get "leftmost" zone. */
-	return coord.utm.get_zone();
-}
+	/* Upper/Lower argument shouldn't really matter, because we want to get "leftmost" zone. */
+	const Coord l_coord = this->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	leftmost_zone = l_coord.utm.zone();
 
+	/* Upper/Lower position shouldn't really matter, we just want to get "rightmost" zone. */
+	const Coord r_coord = this->screen_pos_to_coord(ScreenPosition::UpperRight);
+	rightmost_zone = r_coord.utm.zone();
 
-
-
-/**
-   @reviewed-on tbd
-*/
-int GisViewport::get_rightmost_zone(void) const
-{
-	if (coord_mode != CoordMode::UTM) {
-		return 0;
-	}
-
-	const Coord coord = this->screen_pos_to_coord(ScreenPosition::UpperRight); /* Upper/Lower position shouldn't really matter, we just want to get "rightmost" zone. */
-	return coord.utm.get_zone();
+	return sg_ret::ok;
 }
 
 
@@ -1164,11 +1161,11 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 		{
 			coord.utm.set_northing((delta_y_pixels * ympp) + this->center_coord.utm.get_northing());
 			coord.utm.set_easting((delta_x_pixels * xmpp) + this->center_coord.utm.get_easting());
-			coord.utm.set_zone(this->center_coord.utm.get_zone());
+			coord.utm.set_zone(this->center_coord.utm.zone());
 
-			const int zone_delta = floor((coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
+			const int zone_delta = floor((coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->m_utm_zone_width + 0.5);
 			coord.utm.shift_zone_by(zone_delta);
-			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
+			coord.utm.shift_easting_by(-(zone_delta * this->m_utm_zone_width));
 
 			/* Calculate correct band letter.  TODO_LATER: there
 			   has to be an easier way to do this. */
@@ -1176,8 +1173,8 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 				/* We only need this initial
 				   assignment to avoid assertion fail
 				   in ::to_lat_lon(). */
-				assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-				coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
+				assert (UTM::is_band_letter(this->center_coord.utm.band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+				coord.utm.set_band_letter(this->center_coord.utm.band_letter());
 
 				/* Calculated lat_lon will contain
 				   information about latitude, and
@@ -1185,7 +1182,7 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 				   is piece of cake. */
 				LatLon lat_lon = UTM::to_lat_lon(coord.utm);
 				UTM utm = LatLon::to_utm(lat_lon);
-				coord.utm.set_band_letter(utm.get_band_letter());
+				coord.utm.set_band_letter(utm.band_letter());
 			}
 		}
 
@@ -1197,20 +1194,20 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 			Coord test_coord;
 			test_coord.set_coord_mode(CoordMode::UTM);
 
-			test_coord.utm.set_zone(this->center_coord.utm.get_zone());
-			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-			test_coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
+			test_coord.utm.set_zone(this->center_coord.utm.zone());
+			assert (UTM::is_band_letter(this->center_coord.utm.band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			test_coord.utm.set_band_letter(this->center_coord.utm.band_letter());
 			test_coord.utm.m_easting = (delta_x_pixels * xmpp) + this->center_coord.utm.m_easting;
 
-			zone_delta = floor((test_coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
+			zone_delta = floor((test_coord.utm.m_easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->m_utm_zone_width + 0.5);
 
 			test_coord.utm.shift_zone_by(zone_delta);
-			test_coord.utm.m_easting -= zone_delta * this->utm_zone_width;
+			test_coord.utm.m_easting -= zone_delta * this->m_utm_zone_width;
 			test_coord.utm.m_northing = (delta_y_pixels * ympp) + this->center_coord.utm.m_northing;
 
 
 			if (!UTM::is_the_same_zone(coord.utm, test_coord.utm)) {
-				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.get_zone() << test_coord.utm.get_zone();
+				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.zone() << test_coord.utm.zone();
 			}
 			if (coord.utm.get_easting() != test_coord.utm.get_easting()) {
 				qDebug() << SG_PREFIX_E << "UTM: Easting calculation mismatch" << coord << test_coord << (coord.utm.get_easting() - test_coord.utm.get_easting());
@@ -1345,16 +1342,17 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
-			const int zone_diff = this->center_coord.utm.get_zone() - coord.utm.get_zone();
+			const int zone_diff = this->center_coord.utm.zone().value() - coord.utm.zone().value();
 
-			if (0 != zone_diff && this->is_one_utm_zone){
+			if (0 != zone_diff && this->m_is_one_utm_zone) {
+				qDebug() << SG_PREFIX_E << "Viewport is in 'one utm zone' mode, but given coord is outside of current utm zone";
 				return sg_ret::err;
 			}
 
 			const double horiz_distance_m = coord.utm.get_easting() - this->center_coord.utm.get_easting();
 			const double vert_distance_m = coord.utm.get_northing() - this->center_coord.utm.get_northing();
 
-			*pos_x = x_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
+			*pos_x = x_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->m_utm_zone_width) / xmpp;
 			*pos_y = y_center_pixel - (vert_distance_m / ympp); /* TODO_LATER: plus or minus? */
 		}
 		break;
@@ -1471,9 +1469,9 @@ void GisViewport::set_coord_mode(CoordMode new_mode)
 /**
    @reviewed-on tbd
 */
-bool GisViewport::get_is_one_utm_zone(void) const
+bool GisViewport::is_one_utm_zone(void) const
 {
-	return coord_mode == CoordMode::UTM && this->is_one_utm_zone;
+	return coord_mode == CoordMode::UTM && this->m_is_one_utm_zone;
 }
 
 

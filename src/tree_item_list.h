@@ -46,7 +46,6 @@
 
 #include "application_state.h"
 #include "measurements.h"
-//#include "tree_item.h"
 #include "layer.h"
 #include "window.h"
 

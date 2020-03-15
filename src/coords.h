@@ -59,7 +59,8 @@ namespace SlavGPS {
 
 
 
-#define UTM_ZONES_COUNT                        60 /* Number of UTM zones */
+#define UTM_ZONE_FIRST                          1
+#define UTM_ZONE_LAST                          60 /* Also total number of UTM zones */
 #define UTM_NORTHING_AT_EQUATOR        10000000.0 /* [m] */
 #define UTM_CENTRAL_MERIDIAN_EASTING     500000.0 /* [m] */
 
@@ -153,9 +154,53 @@ namespace SlavGPS {
 
 
 
+	class UTMZone {
+	public:
+		UTMZone() {};
+		UTMZone(int zone);
+		UTMZone shift_by(int shift);
+		int value(void) const { return this->m_value; }
+
+		bool is_valid(void) const;
+		static bool is_valid(int zone);
+
+		bool operator<(const UTMZone & rhs) const;
+		bool operator>(const UTMZone & rhs) const;
+		bool operator<=(const UTMZone & rhs) const;
+		bool operator>=(const UTMZone & rhs) const;
+
+		UTMZone & operator+=(const UTMZone & rhs);
+		UTMZone & operator-=(const UTMZone & rhs);
+
+		friend UTMZone operator+(UTMZone lhs, const UTMZone & rhs)
+		{
+			lhs += rhs;
+			return lhs;
+		}
+		friend UTMZone operator-(UTMZone lhs, const UTMZone & rhs)
+		{
+			lhs -= rhs;
+			return lhs;
+		}
+
+		UTMZone & operator++();
+		UTMZone & operator--();
+
+		static bool unit_tests(void);
+
+	private:
+		int m_value = UTM_ZONE_FIRST; /* There is no such thing as invalid UTM zone, so the default value must be from allowed range. */
+	};
+	QDebug operator<<(QDebug debug, const UTMZone & zone);
+	inline bool operator==(const UTMZone & lhs, const UTMZone & rhs) { return lhs.value() == rhs.value(); }
+	inline bool operator!=(const UTMZone & lhs, const UTMZone & rhs) { return !(lhs == rhs); }
+
+
+
+
 	class UTM {
 	public:
-		UTM(double northing = NAN, double easting = NAN, int zone = 0, UTMLetter band_letter = UTMLetter::None)
+		UTM(double northing = NAN, double easting = NAN, UTMZone zone = UTM_ZONE_FIRST, UTMLetter band_letter = UTMLetter::None)
 			: m_northing(northing), m_easting(easting), m_zone(zone), m_band_letter(band_letter) {};
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
@@ -163,7 +208,7 @@ namespace SlavGPS {
 
 		QString to_string(void) const;
 
-
+		bool is_valid(void) const;
 
 		bool has_band_letter(void) const;
 
@@ -178,8 +223,8 @@ namespace SlavGPS {
 
 		sg_ret set_northing(double value);
 		sg_ret set_easting(double value);
-		sg_ret set_zone(int value);
-		sg_ret set_band_letter(char character);
+		sg_ret set_zone(const UTMZone & zone);
+		sg_ret set_band_letter(char letter);
 		sg_ret set_band_letter(UTMLetter letter);
 
 		sg_ret shift_northing_by(double delta_meters);
@@ -189,9 +234,9 @@ namespace SlavGPS {
 
 		double get_northing(void) const { return this->m_northing; }
 		double get_easting(void) const { return this->m_easting; }
-		int get_zone(void) const { return this->m_zone; }
-		UTMLetter get_band_letter(void) const;
-		char get_band_as_letter(void) const;
+		UTMZone zone(void) const { return this->m_zone; }
+		UTMLetter band_letter(void) const;
+		char band_as_letter(void) const;
 
 		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
 		double m_northing = 0;
@@ -200,7 +245,7 @@ namespace SlavGPS {
 		static bool close_enough(const UTM & utm1, const UTM & utm2);
 
 	private:
-		int m_zone = 0;
+		UTMZone m_zone;
 		UTMLetter m_band_letter = UTMLetter::None;
 	};
 	QDebug operator<<(QDebug debug, const UTM & utm);

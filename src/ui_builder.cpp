@@ -22,7 +22,6 @@
 
 
 
-//#include <cstdlib>
 #include <cassert>
 
 
@@ -59,7 +58,6 @@
 #include "widget_duration.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
-//#include "goto.h"
 
 
 

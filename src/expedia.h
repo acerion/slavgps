@@ -40,6 +40,11 @@ namespace SlavGPS {
 
 
 
+	class LatLon;
+
+
+
+
 	class Expedia {
 	public:
 		static void init(void);

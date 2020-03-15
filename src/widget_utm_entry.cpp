@@ -109,7 +109,7 @@ UTMEntryWidget::UTMEntryWidget(__attribute__((unused)) QWidget * parent)
 
 sg_ret UTMEntryWidget::set_value(const UTM & utm, bool block_signal)
 {
-	assert (UTM::is_band_letter(utm.get_band_letter()));
+	assert (UTM::is_band_letter(utm.band_letter()));
 
 	if (block_signal) {
 		this->easting_spin->blockSignals(true);
@@ -120,8 +120,8 @@ sg_ret UTMEntryWidget::set_value(const UTM & utm, bool block_signal)
 
 	this->easting_spin->setValue(utm.get_easting());
 	this->northing_spin->setValue(utm.get_northing());
-	this->zone_spin->setValue(utm.get_zone());
-	this->band_letter_combo->setCurrentText(QString(utm.get_band_as_letter()));
+	this->zone_spin->setValue(utm.zone().value());
+	this->band_letter_combo->setCurrentText(QString(utm.band_as_letter()));
 
 	if (block_signal) {
 		this->easting_spin->blockSignals(false);
@@ -149,7 +149,7 @@ UTM UTMEntryWidget::get_value(void) const
 		qDebug() << SG_PREFIX_E << "Unexpectedly long text in combo:" << text;
 	} else {
 		utm.set_band_letter(text.at(0).toUpper().toLatin1());
-		qDebug() << SG_PREFIX_I << "UTM band letter conversion" << text << "->" << utm.get_band_as_letter();
+		qDebug() << SG_PREFIX_I << "UTM band letter conversion" << text << "->" << utm.band_as_letter();
 	}
 
 	return utm;

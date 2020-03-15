@@ -50,6 +50,11 @@ namespace SlavGPS {
 
 
 
+	class LatLon;
+
+
+
+
 	class LatLonBBoxStrings {
 	public:
 		QString north;

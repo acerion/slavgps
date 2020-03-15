@@ -967,7 +967,7 @@ public:
 		/* TODO_LATER: smarter handling of invalid band letter
 		   value. In theory the source object should be valid and for
 		   sure contain valid band letter. */
-		this->utm = UTM(NAN, NAN, dem.utm.get_zone(), dem.utm.get_band_letter());
+		this->utm = UTM(NAN, NAN, dem.utm.zone(), dem.utm.band_letter());
 	}
 
 	void begin_x(const UTMBounds & bounds)                  { this->col = bounds.start_col;                             this->utm.set_easting(bounds.start_eas); }

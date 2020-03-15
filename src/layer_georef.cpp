@@ -314,11 +314,11 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		rv = SGVariant((int32_t) this->utm_tl.get_zone(), SGVariantType::Int);
+		rv = SGVariant((int32_t) this->utm_tl.zone().value(), SGVariantType::Int);
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
-		rv = SGVariant((int32_t) this->utm_tl.get_band_as_letter(), SGVariantType::Int);
+		rv = SGVariant((int32_t) this->utm_tl.band_as_letter(), SGVariantType::Int);
 		break;
 	case PARAM_ALPHA:
 		rv = SGVariant(this->alpha, georef_layer_param_specs[PARAM_ALPHA].type_id);

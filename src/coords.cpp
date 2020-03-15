@@ -218,21 +218,21 @@ sg_ret UTM::set_easting(double value)
 
 
 
-sg_ret UTM::set_zone(int value)
+sg_ret UTM::set_zone(const UTMZone & zone)
 {
-	if (value <= 0 || value > UTM_ZONES_COUNT) {
-		qDebug() << SG_PREFIX_E << "Invalid UTM zone" << value;
+	if (!zone.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Invalid UTM zone" << zone;
 		return sg_ret::err;
 	}
 
-	this->m_zone = value;
+	this->m_zone = zone;
 	return sg_ret::ok;
 }
 
 
 
 
-UTMLetter UTM::get_band_letter(void) const
+UTMLetter UTM::band_letter(void) const
 {
 	return this->m_band_letter;
 }
@@ -240,7 +240,7 @@ UTMLetter UTM::get_band_letter(void) const
 
 
 
-char UTM::get_band_as_letter(void) const
+char UTM::band_as_letter(void) const
 {
 	return (char) this->m_band_letter;
 }
@@ -323,7 +323,7 @@ QString UTM::to_string(void) const
 	const QString result = QString("N = %1, E = %2, Zone = %3, Band Letter = %4")
 		.arg(this->m_northing, 0, 'f', 4)
 		.arg(this->m_easting, 0, 'f', 4)
-		.arg(this->m_zone)
+		.arg(this->m_zone.value())
 		.arg((char) this->m_band_letter);
 
 	return result;
@@ -479,7 +479,7 @@ LatLon UTM::to_lat_lon(const UTM & utm)
 		y -= UTM_NORTHING_AT_EQUATOR; /* Remove offset. */
 	}
 
-	const double long_origin = (utm.m_zone - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
+	const double long_origin = (utm.m_zone.value() - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
 	const double eccPrimeSquared = EccentricitySquared / (1.0 - EccentricitySquared);
 	const double e1 = (1.0 - sqrt(1.0 - EccentricitySquared)) / (1.0 + sqrt(1.0 - EccentricitySquared));
 	const double M = y / K0;
@@ -595,8 +595,8 @@ bool UTM::close_enough(const UTM & utm1, const UTM & utm2)
 		return false;
 	}
 
-	if (utm1.get_band_letter() != utm2.get_band_letter()) {
-		qDebug() << SG_PREFIX_E << "Band letter error:" << utm1.get_band_as_letter() << utm2.get_band_as_letter();
+	if (utm1.band_letter() != utm2.band_letter()) {
+		qDebug() << SG_PREFIX_E << "Band letter error:" << utm1.band_as_letter() << utm2.band_as_letter();
 		return false;
 	}
 
@@ -623,6 +623,194 @@ sg_ret UTM::shift_zone_by(int shift)
 
 
 
+bool UTM::is_valid(void) const
+{
+	if (UTM::is_band_letter(this->band_letter())) {
+		return false;
+	}
+
+	if (this->m_zone.is_valid()) {
+		return false;
+	}
+
+	return true;
+}
+
+
+
+UTMZone::UTMZone(int zone)
+{
+	if (!this->is_valid(zone)) {
+		qDebug() << SG_PREFIX_E << "Invalid value passed to constructor" << zone;
+		/* There is no such thing as invalid UTM zone, so the default value must be from allowed range.
+		   TODO_MAYBE: maybe we should throw an exception here? */
+		this->m_value = UTM_ZONE_FIRST;
+	} else {
+		this->m_value = zone;
+	}
+}
+
+
+
+
+bool UTMZone::operator<(const UTMZone & rhs) const { return this->m_value < rhs.m_value; }
+bool UTMZone::operator>(const UTMZone & rhs) const { return rhs < *this; }
+bool UTMZone::operator<=(const UTMZone & rhs) const { return !(*this > rhs); }
+bool UTMZone::operator>=(const UTMZone & rhs) const { return !(*this < rhs); }
+
+
+
+
+UTMZone & UTMZone::operator+=(const UTMZone & rhs)
+{
+	this->m_value += rhs.m_value;
+	this->m_value = (this->m_value % UTM_ZONE_LAST) + 1;
+	return *this;
+}
+
+
+
+
+UTMZone & UTMZone::operator-=(const UTMZone & rhs)
+{
+	this->m_value -= rhs.m_value;
+	while (this->m_value < UTM_ZONE_FIRST) {
+		this->m_value += UTM_ZONE_LAST;
+	}
+	return *this;
+}
+
+
+
+
+UTMZone & UTMZone::operator++()
+{
+	this->m_value++;
+	if (this->m_value > UTM_ZONE_LAST) {
+		this->m_value = UTM_ZONE_FIRST;
+	}
+	return *this;
+}
+
+
+
+
+UTMZone & UTMZone::operator--()
+{
+	this->m_value--;
+	if (this->m_value < UTM_ZONE_FIRST) {
+		this->m_value = UTM_ZONE_LAST;
+	}
+	return *this;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const UTMZone & zone)
+{
+	debug << "zone =" << zone.value();
+	return debug;
+}
+
+
+
+
+bool UTMZone::is_valid(void) const
+{
+	return UTMZone::is_valid(this->m_value);
+}
+
+
+
+
+bool UTMZone::is_valid(int zone)
+{
+	return zone >= UTM_ZONE_FIRST && zone <= UTM_ZONE_LAST;
+}
+
+
+
+
+bool UTMZone::unit_tests(void)
+{
+	/* Test 'is_valid(void)' method. */
+	{
+		UTMZone zone;
+
+		zone.m_value = 0; /* "Base" int value. */
+		if (zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+
+		zone.m_value = UTM_ZONE_FIRST - 1;
+		if (zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+
+		zone.m_value = UTM_ZONE_FIRST - 2;
+		if (zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+
+		zone.m_value = UTM_ZONE_LAST + 1;
+		if (zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+
+		zone.m_value = UTM_ZONE_LAST + 2;
+		if (zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+	}
+
+	/* Test that newly created UTMZone object is valid.
+	   There is no such thing as invalid UTM zone, so a new
+	   UTMZone object is always valid. */
+	{
+		UTMZone zone;
+		if (!zone.is_valid()) {
+			qDebug() << SG_PREFIX_E << zone;
+			return false;
+		}
+	}
+
+	/* Iterate forward. */
+	{
+		UTMZone zone;
+		for (int i = 0; i < 3 * UTM_ZONE_LAST; i++) {
+			++zone;
+			if (!zone.is_valid()) {
+				qDebug() << SG_PREFIX_E << i << zone;
+				return false;
+			}
+		}
+	}
+
+	/* Iterate backwards. */
+	{
+		UTMZone zone;
+		for (int i = 0; i < 3 * UTM_ZONE_LAST; i++) {
+			--zone;
+			if (!zone.is_valid()) {
+				qDebug() << SG_PREFIX_E << i << zone;
+				return false;
+			}
+		}
+	}
+
+	qDebug() << SG_PREFIX_I << "Success";
+	return true;
+}
+
+
+
+
 bool Coords::unit_tests(void)
 {
 	/* LatLon -> UTM -> LatLon */
@@ -634,7 +822,6 @@ bool Coords::unit_tests(void)
 		qDebug() << SG_PREFIX_D << lat_lon_in << "->" << utm << "->" << lat_lon_out << "->" << lat_lon_close_enough(lat_lon_in, lat_lon_out);
 		assert (lat_lon_close_enough(lat_lon_in, lat_lon_out));
 	}
-
 
 
 	/* UTM -> LatLon -> UTM */
@@ -653,6 +840,7 @@ bool Coords::unit_tests(void)
 		//N = , Z = 33, L = S"
 	}
 
+
 	/* Print some UTMLetters letters, just to verify that I know how to
 	   convert UTMLetter enum to string. */
 	{
@@ -663,6 +851,11 @@ bool Coords::unit_tests(void)
 	}
 
 
+	if (!UTMZone::unit_tests()) {
+		return false;
+	}
 
+
+	qDebug() << SG_PREFIX_I << "Success";
 	return true;
 }

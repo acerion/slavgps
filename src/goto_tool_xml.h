@@ -32,7 +32,6 @@
 
 
 #include "goto_tool.h"
-#include "coords.h"
 
 
 

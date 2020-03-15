@@ -37,7 +37,6 @@
 
 #include "globals.h"
 #include "measurements.h"
-//#include "lat_lon.h"
 #include "coords.h"
 #include "variant.h"
 #include "ui_builder.h"

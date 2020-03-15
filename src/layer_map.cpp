@@ -1331,13 +1331,14 @@ void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) boo
 	gisview->add_logo(this->m_map_source->get_logo());
 
 	/* Get corner coords. */
-	if (gisview->get_coord_mode() == CoordMode::UTM && ! gisview->get_is_one_utm_zone()) {
+	if (gisview->get_coord_mode() == CoordMode::UTM && ! gisview->is_one_utm_zone()) {
 		/* UTM multi-zone stuff by Kit Transue. */
-		const int leftmost_zone = gisview->get_leftmost_zone();
-		const int rightmost_zone = gisview->get_rightmost_zone();
-		Coord coord_ul;
-		Coord coord_br;
-		for (int zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
+		UTMZone leftmost_zone;
+		UTMZone rightmost_zone;
+		gisview->utm_zones_range(leftmost_zone, rightmost_zone);
+		for (UTMZone zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
+			Coord coord_ul;
+			Coord coord_br;
 			gisview->get_corners_for_zone(coord_ul, coord_br, zone);
 			this->draw_section(gisview, coord_ul, coord_br);
 		}

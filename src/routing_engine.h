@@ -34,7 +34,6 @@
 
 
 
-#include "coords.h"
 #include "download.h"
 
 
@@ -47,6 +46,7 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class Track;
+	class LatLon;
 
 
 

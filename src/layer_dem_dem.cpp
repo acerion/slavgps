@@ -309,8 +309,8 @@ bool DEM::intersect(const LatLonBBox & other_bbox) const
 		   band letter. In theory the source object should be
 		   valid and for sure contain valid band letter. */
 
-		const UTM dem_northeast_utm(this->max_north_seconds, this->max_east_seconds, this->utm.get_zone(), this->utm.get_band_letter());
-		const UTM dem_southwest_utm(this->min_north_seconds, this->min_east_seconds, this->utm.get_zone(), this->utm.get_band_letter());
+		const UTM dem_northeast_utm(this->max_north_seconds, this->max_east_seconds, this->utm.zone(), this->utm.band_letter());
+		const UTM dem_southwest_utm(this->min_north_seconds, this->min_east_seconds, this->utm.zone(), this->utm.band_letter());
 
 		dem_northeast = UTM::to_lat_lon(dem_northeast_utm);
 		dem_southwest = UTM::to_lat_lon(dem_southwest_utm);

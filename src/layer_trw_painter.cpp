@@ -118,7 +118,7 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 	this->vp_central_rect = this->gisview->central_get_rect();
 	this->vp_center_coord = this->gisview->get_center_coord();
 	this->vp_coord_mode = this->gisview->get_coord_mode();
-	this->vp_is_one_utm_zone = this->gisview->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
+	this->vp_is_one_utm_zone = this->gisview->is_one_utm_zone(); /* False if some other projection besides UTM. */
 
 	this->track_arrow = ArrowSymbol(45, this->draw_track_directions_size); /* Calculate once per trw update - even if not used. */
 
