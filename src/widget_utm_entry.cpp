@@ -82,10 +82,10 @@ UTMEntryWidget::UTMEntryWidget(__attribute__((unused)) QWidget * parent)
 
 
 	this->zone_spin = new QSpinBox();
-	this->zone_spin->setMinimum(1);
-	this->zone_spin->setMaximum(60);
+	this->zone_spin->setMinimum(UTM_ZONE_FIRST);
+	this->zone_spin->setMaximum(UTM_ZONE_LAST);
 	this->zone_spin->setSingleStep(1);
-	this->zone_spin->setValue(1);
+	this->zone_spin->setValue(UTM_ZONE_FIRST);
 	this->grid->addWidget(new QLabel(QObject::tr("Zone:")), row, 0);
 	this->grid->addWidget(this->zone_spin, row, 1);
 	row++;
@@ -120,7 +120,7 @@ sg_ret UTMEntryWidget::set_value(const UTM & utm, bool block_signal)
 
 	this->easting_spin->setValue(utm.get_easting());
 	this->northing_spin->setValue(utm.get_northing());
-	this->zone_spin->setValue(utm.zone().value());
+	this->zone_spin->setValue(utm.zone().bound_value());
 	this->band_letter_combo->setCurrentText(QString(utm.band_as_letter()));
 
 	if (block_signal) {

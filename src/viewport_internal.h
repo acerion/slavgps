@@ -170,7 +170,6 @@ namespace SlavGPS {
 		void set_draw_mode(GisViewportDrawMode drawmode);
 		GisViewportDrawMode get_draw_mode(void) const;
 
-		sg_ret utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, const UTMZone & zone);
 		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, const UTMZone & zone);
 
 		/**
@@ -311,6 +310,16 @@ namespace SlavGPS {
 		   To be called every time we update coordinates/zoom.
 		*/
 		void recalculate_utm(void);
+
+		/**
+		   @brief Recalculate an UTM coord in @param input_zone into corresponding UTM coord in @param output_zone
+
+		   @param input_utm contains valid
+		   northing/easting/band/zone. The function will
+		   produce @param output_utm that is "shifted" to
+		   other zone @param output_zone.
+		*/
+		sg_ret recalculate_input_utm_in_output_zone(const UTM & input_utm, UTM & output_utm, const UTMZone & output_zone);
 
 		/**
 		   @brief Debug function: draw text with viewport's GIS metadata

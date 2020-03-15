@@ -21,6 +21,11 @@
 
 
 
+#include <cassert>
+
+
+
+
 #include <QApplication>
 #include <QResource>
 #include <QTranslator>
@@ -255,10 +260,10 @@ int main(int argc, char ** argv)
 		/* Call the tests only after preferences have been
 		   read. Now we can get e.g. units of measurements for
 		   debug printing. */
-		Measurements::unit_tests();
-		Coords::unit_tests();
-		SGVariant::unit_tests();
-		TileZoomLevel::unit_tests();
+		assert(Measurements::unit_tests());
+		assert(Coords::unit_tests());
+		assert(SGVariant::unit_tests());
+		assert(TileZoomLevel::unit_tests());
 	}
 
 

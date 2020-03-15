@@ -113,7 +113,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 		LatLon lat_lon = UTM::to_lat_lon(utm);
 
 		/* Boundary. */
-		lat_lon.lon = (utm.zone().value() - 1) * 6 - 180 ;
+		lat_lon.lon = (utm.zone().bound_value() - 1) * 6 - 180 ;
 		utm = LatLon::to_utm(lat_lon);
 		return std::fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
 	}
@@ -1016,20 +1016,19 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, con
 		return sg_ret::err;
 	}
 
-	/* Get center, then just offset. */
-	if (sg_ret::ok != this->utm_recalculate_current_center_coord_for_other_zone(coord_ul.utm, zone)) {
-		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone.value();
+	/* 1. Calculate value of current center coord in given zone. */
+	if (sg_ret::ok != this->recalculate_input_utm_in_output_zone(this->center_coord.utm, coord_ul.utm, zone)) {
+		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone;
 		return sg_ret::err;
 	}
 	coord_ul.set_coord_mode(CoordMode::UTM);
 
 
-	/* Both coordinates will be now at center. */
+	/* 2. Move the second coordinate to the center too. */
 	coord_br = coord_ul;
 
 
-	/* And now we offset the two coordinates:
-	   we move the coordinates from center to one of the two corners. */
+	/* 3. Move (offset) both coordinates into ul and br corners. */
 	const double center_to_top_m = this->central_get_height_m() / 2;
 	const double center_to_left_m = this->central_get_width_m() / 2;
 	coord_ul.utm.shift_northing_by(center_to_top_m);
@@ -1049,20 +1048,19 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, con
 /**
    @reviewed-on tbd
 */
-sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, const UTMZone & zone)
+sg_ret GisViewport::recalculate_input_utm_in_output_zone(const UTM & input_utm, UTM & output_utm, const UTMZone & output_zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << this->coord_mode;
 		return sg_ret::err;
 	}
 
-	/* TODO_LATER: this looks strange, it could be written better. */
-	const int zone_diff = (zone - this->center_coord.utm.zone()).value();
+	const int zone_diff = UTMZone::bound_zone_diff(output_zone, input_utm.zone());
 
 	/* TODO_LATER: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
-	center_in_other_zone = this->center_coord.utm;
-	center_in_other_zone.shift_easting_by(-(zone_diff * this->m_utm_zone_width));
-	center_in_other_zone.set_zone(zone);
+	output_utm = input_utm; /* Northing and band will stay the same. We need to set initial value of easting - it will be shifted. */
+	output_utm.shift_easting_by(-(zone_diff * this->m_utm_zone_width));
+	output_utm.set_zone(input_utm.zone());
 
 	return sg_ret::ok;
 }
@@ -1342,7 +1340,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
-			const int zone_diff = this->center_coord.utm.zone().value() - coord.utm.zone().value();
+			const int zone_diff = UTMZone::bound_zone_diff(this->center_coord.utm.zone(), coord.utm.zone());
 
 			if (0 != zone_diff && this->m_is_one_utm_zone) {
 				qDebug() << SG_PREFIX_E << "Viewport is in 'one utm zone' mode, but given coord is outside of current utm zone";

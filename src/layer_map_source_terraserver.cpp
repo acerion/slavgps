@@ -108,7 +108,7 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 
 	tile_info.x = (int)(((int)(src_coord.utm.get_easting()))/(200 * xmpp));
 	tile_info.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * ympp));
-	tile_info.z = src_coord.utm.zone().value();
+	tile_info.z = src_coord.utm.zone().bound_value();
 	return true;
 }
 

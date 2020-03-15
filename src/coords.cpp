@@ -323,7 +323,7 @@ QString UTM::to_string(void) const
 	const QString result = QString("N = %1, E = %2, Zone = %3, Band Letter = %4")
 		.arg(this->m_northing, 0, 'f', 4)
 		.arg(this->m_easting, 0, 'f', 4)
-		.arg(this->m_zone.value())
+		.arg(this->m_zone.bound_value())
 		.arg((char) this->m_band_letter);
 
 	return result;
@@ -479,7 +479,7 @@ LatLon UTM::to_lat_lon(const UTM & utm)
 		y -= UTM_NORTHING_AT_EQUATOR; /* Remove offset. */
 	}
 
-	const double long_origin = (utm.m_zone.value() - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
+	const double long_origin = (utm.m_zone.bound_value() - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
 	const double eccPrimeSquared = EccentricitySquared / (1.0 - EccentricitySquared);
 	const double e1 = (1.0 - sqrt(1.0 - EccentricitySquared)) / (1.0 + sqrt(1.0 - EccentricitySquared));
 	const double M = y / K0;
@@ -616,7 +616,7 @@ bool UTM::is_the_same_zone(const UTM & utm1, const UTM & utm2)
 
 sg_ret UTM::shift_zone_by(int shift)
 {
-	this->m_zone += shift; /* TODO_LATER: wrap result to allowable range. */
+	this->m_zone.shift_by(shift);
 	return sg_ret::ok;
 }
 
@@ -638,22 +638,26 @@ bool UTM::is_valid(void) const
 
 
 
+
 UTMZone::UTMZone(int zone)
 {
-	if (!this->is_valid(zone)) {
+	if (zone <= 0) {
 		qDebug() << SG_PREFIX_E << "Invalid value passed to constructor" << zone;
 		/* There is no such thing as invalid UTM zone, so the default value must be from allowed range.
 		   TODO_MAYBE: maybe we should throw an exception here? */
-		this->m_value = UTM_ZONE_FIRST;
+		this->m_bound_value = UTM_ZONE_FIRST;
 	} else {
-		this->m_value = zone;
+		this->m_bound_value = zone;
+	}
+	while (this->m_bound_value > UTM_ZONE_LAST) {
+		this->m_bound_value -= UTM_ZONES_COUNT;
 	}
 }
 
 
 
 
-bool UTMZone::operator<(const UTMZone & rhs) const { return this->m_value < rhs.m_value; }
+bool UTMZone::operator<(const UTMZone & rhs) const { return this->m_bound_value < rhs.m_bound_value; }
 bool UTMZone::operator>(const UTMZone & rhs) const { return rhs < *this; }
 bool UTMZone::operator<=(const UTMZone & rhs) const { return !(*this > rhs); }
 bool UTMZone::operator>=(const UTMZone & rhs) const { return !(*this < rhs); }
@@ -661,33 +665,11 @@ bool UTMZone::operator>=(const UTMZone & rhs) const { return !(*this < rhs); }
 
 
 
-UTMZone & UTMZone::operator+=(const UTMZone & rhs)
-{
-	this->m_value += rhs.m_value;
-	this->m_value = (this->m_value % UTM_ZONE_LAST) + 1;
-	return *this;
-}
-
-
-
-
-UTMZone & UTMZone::operator-=(const UTMZone & rhs)
-{
-	this->m_value -= rhs.m_value;
-	while (this->m_value < UTM_ZONE_FIRST) {
-		this->m_value += UTM_ZONE_LAST;
-	}
-	return *this;
-}
-
-
-
-
 UTMZone & UTMZone::operator++()
 {
-	this->m_value++;
-	if (this->m_value > UTM_ZONE_LAST) {
-		this->m_value = UTM_ZONE_FIRST;
+	this->m_bound_value++;
+	if (this->m_bound_value > UTM_ZONE_LAST) {
+		this->m_bound_value = UTM_ZONE_FIRST;
 	}
 	return *this;
 }
@@ -697,9 +679,9 @@ UTMZone & UTMZone::operator++()
 
 UTMZone & UTMZone::operator--()
 {
-	this->m_value--;
-	if (this->m_value < UTM_ZONE_FIRST) {
-		this->m_value = UTM_ZONE_LAST;
+	this->m_bound_value--;
+	if (this->m_bound_value < UTM_ZONE_FIRST) {
+		this->m_bound_value = UTM_ZONE_LAST;
 	}
 	return *this;
 }
@@ -709,7 +691,7 @@ UTMZone & UTMZone::operator--()
 
 QDebug SlavGPS::operator<<(QDebug debug, const UTMZone & zone)
 {
-	debug << "zone =" << zone.value();
+	debug << "zone =" << zone.bound_value();
 	return debug;
 }
 
@@ -718,7 +700,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTMZone & zone)
 
 bool UTMZone::is_valid(void) const
 {
-	return UTMZone::is_valid(this->m_value);
+	return UTMZone::is_valid(this->m_bound_value);
 }
 
 
@@ -732,37 +714,72 @@ bool UTMZone::is_valid(int zone)
 
 
 
+int UTMZone::bound_zone_diff(const UTMZone & left_zone, const UTMZone & right_zone)
+{
+	/* TODO_HARD: how to handle two zones on two sides of
+	   date-change-line? */
+	return left_zone.bound_value() - right_zone.bound_value();
+}
+
+
+
+
+sg_ret UTMZone::shift_by(int shift)
+{
+	/* TODO_LATER: unit tests. */
+	if (0 == shift) {
+		return sg_ret::ok;
+
+	} else if (shift > 0) {
+		this->m_bound_value += shift;
+		while (this->m_bound_value > UTM_ZONE_LAST) {
+			this->m_bound_value -= UTM_ZONES_COUNT;
+		}
+
+		return sg_ret::ok;
+	} else {
+		this->m_bound_value += shift;
+		while (this->m_bound_value < UTM_ZONE_FIRST) {
+			this->m_bound_value += UTM_ZONES_COUNT;
+		}
+		return sg_ret::ok;
+	}
+}
+
+
+
+
 bool UTMZone::unit_tests(void)
 {
 	/* Test 'is_valid(void)' method. */
 	{
 		UTMZone zone;
 
-		zone.m_value = 0; /* "Base" int value. */
+		zone.m_bound_value = 0; /* "Base" int value. */
 		if (zone.is_valid()) {
 			qDebug() << SG_PREFIX_E << zone;
 			return false;
 		}
 
-		zone.m_value = UTM_ZONE_FIRST - 1;
+		zone.m_bound_value = UTM_ZONE_FIRST - 1;
 		if (zone.is_valid()) {
 			qDebug() << SG_PREFIX_E << zone;
 			return false;
 		}
 
-		zone.m_value = UTM_ZONE_FIRST - 2;
+		zone.m_bound_value = UTM_ZONE_FIRST - 2;
 		if (zone.is_valid()) {
 			qDebug() << SG_PREFIX_E << zone;
 			return false;
 		}
 
-		zone.m_value = UTM_ZONE_LAST + 1;
+		zone.m_bound_value = UTM_ZONE_LAST + 1;
 		if (zone.is_valid()) {
 			qDebug() << SG_PREFIX_E << zone;
 			return false;
 		}
 
-		zone.m_value = UTM_ZONE_LAST + 2;
+		zone.m_bound_value = UTM_ZONE_LAST + 2;
 		if (zone.is_valid()) {
 			qDebug() << SG_PREFIX_E << zone;
 			return false;
@@ -780,10 +797,46 @@ bool UTMZone::unit_tests(void)
 		}
 	}
 
+	/* Test constructor with various input values, also with
+	   values out of basic range. */
+	{
+		struct {
+			int valid_test; /* Guard. */
+			int input;
+			int expected_bound_value;
+		} test_data[] = {
+			{ 1,                       0, UTM_ZONE_FIRST }, /* Input is invalid, but constructor should handle this somehow. */
+			{ 1,                      -1, UTM_ZONE_FIRST }, /* Input is invalid, but constructor should handle this somehow. */
+			{ 1,                       1,              1 },
+			{ 1,          UTM_ZONE_FIRST, UTM_ZONE_FIRST },
+			{ 1,           UTM_ZONE_LAST,  UTM_ZONE_LAST },
+			{ 1,       UTM_ZONE_LAST + 1,              1 },
+			{ 1,       UTM_ZONE_LAST + 2,              2 },
+			{ 1,       2 * UTM_ZONE_LAST,  UTM_ZONE_LAST },
+			{ 1, (2 * UTM_ZONE_LAST) + 1,              1 },
+			{ 1, (2 * UTM_ZONE_LAST) + 2,              2 },
+
+			{ 0, 0, 0 }, /* Guard. */
+		};
+		int i = 0;
+		while (test_data[i].valid_test) {
+			UTMZone zone(test_data[i].input);
+			if (!zone.is_valid()) {
+				qDebug() << SG_PREFIX_E << i << zone;
+				return false;
+			}
+			if (zone.bound_value() != test_data[i].expected_bound_value) {
+				qDebug() << SG_PREFIX_E << i << zone;
+				return false;
+			}
+			i++;
+		}
+	}
+
 	/* Iterate forward. */
 	{
 		UTMZone zone;
-		for (int i = 0; i < 3 * UTM_ZONE_LAST; i++) {
+		for (int i = 0; i < 3 * UTM_ZONES_COUNT; i++) {
 			++zone;
 			if (!zone.is_valid()) {
 				qDebug() << SG_PREFIX_E << i << zone;
@@ -795,7 +848,7 @@ bool UTMZone::unit_tests(void)
 	/* Iterate backwards. */
 	{
 		UTMZone zone;
-		for (int i = 0; i < 3 * UTM_ZONE_LAST; i++) {
+		for (int i = 0; i < 3 * UTM_ZONES_COUNT; i++) {
 			--zone;
 			if (!zone.is_valid()) {
 				qDebug() << SG_PREFIX_E << i << zone;
@@ -803,6 +856,63 @@ bool UTMZone::unit_tests(void)
 			}
 		}
 	}
+
+	/* Test ::shift_by() method. */
+	{
+		struct {
+			int initial_bound_zone;
+			int shift;
+			int expected_bound_zone;
+		} test_data[] = {
+			{ UTM_ZONE_FIRST,                  0, UTM_ZONE_FIRST      },
+			{ UTM_ZONE_FIRST,                  1, UTM_ZONE_FIRST + 1  },
+			{ UTM_ZONE_FIRST,                 -1, UTM_ZONE_LAST       }, /* Wrap from first to last zone. Wrapping to zero would be an error. */
+			{ UTM_ZONE_FIRST,                 59, UTM_ZONE_LAST       },
+			{ UTM_ZONE_FIRST,                 60, UTM_ZONE_FIRST      }, /* Implicit shift by total count of zones, back to the same place. */
+			{ UTM_ZONE_FIRST,    UTM_ZONES_COUNT, UTM_ZONE_FIRST      }, /* Explicit shift by total count of zones, back to the same place. */
+			{ UTM_ZONE_FIRST,  UTM_ZONE_LAST + 1, UTM_ZONE_FIRST + 1  },
+			{ UTM_ZONE_FIRST, UTM_ZONE_LAST + 10, UTM_ZONE_FIRST + 10 },
+
+			{ UTM_ZONE_LAST,                     0, UTM_ZONE_LAST      },
+			{ UTM_ZONE_LAST,                     1, UTM_ZONE_FIRST     }, /* Wrap from last to first zone. Going beyond last zone or wrapping to zero would be an error. */
+			{ UTM_ZONE_LAST,                    -1, UTM_ZONE_LAST - 1  },
+			{ UTM_ZONE_LAST,                   -59, UTM_ZONE_FIRST     },
+			{ UTM_ZONE_LAST,                   -60, UTM_ZONE_LAST      }, /* Implicit shift by total count of zones, back to the same place. */
+			{ UTM_ZONE_LAST,      -UTM_ZONES_COUNT, UTM_ZONE_LAST      }, /* Explicit shift by total count of zones, back to the same place. */
+			{ UTM_ZONE_LAST,  -(UTM_ZONE_LAST + 1), UTM_ZONE_LAST - 1  },
+			{ UTM_ZONE_LAST, -(UTM_ZONE_LAST + 10), UTM_ZONE_LAST - 10 },
+
+			/* See if we can trick ::shift_by() to set zone to zero (i.e. to invalid value). */
+			{ 29,                               30, UTM_ZONE_LAST - 1  },
+			{ 29,                               31, UTM_ZONE_LAST      },
+			{ 29,                               32, UTM_ZONE_FIRST     },
+			{ 29,                               33, UTM_ZONE_FIRST + 1 },
+			{ 30,                               30, UTM_ZONE_LAST      },
+			{ 30,                               31, UTM_ZONE_FIRST     },
+			{ 31,                               30, UTM_ZONE_FIRST     },
+			{ UTM_ZONE_LAST + 29,               30, UTM_ZONE_LAST - 1  },
+			{ UTM_ZONE_LAST + 29,               31, UTM_ZONE_LAST      },
+			{ UTM_ZONE_LAST + 29,               32, UTM_ZONE_FIRST     },
+			{ UTM_ZONE_LAST + 29,               33, UTM_ZONE_FIRST + 1 },
+			{ UTM_ZONE_LAST + 30,               30, UTM_ZONE_LAST      },
+			{ UTM_ZONE_LAST + 30,               31, UTM_ZONE_FIRST     },
+			{ UTM_ZONE_LAST + 31,               30, UTM_ZONE_FIRST     },
+
+			{ 0, 0, 0 }, /* Guard. */
+		};
+
+		int i = 0;
+		while (test_data[i].initial_bound_zone != 0) {
+			UTMZone zone(test_data[i].initial_bound_zone);
+			zone.shift_by(test_data[i].shift);
+			if (zone.bound_value() != test_data[i].expected_bound_zone) {
+				qDebug() << SG_PREFIX_E << "Test" << i << ", expected" << test_data[i].expected_bound_zone << ", got" << zone.bound_value();
+				return false;
+			}
+			i++;
+		}
+	}
+
 
 	qDebug() << SG_PREFIX_I << "Success";
 	return true;
@@ -819,7 +929,10 @@ bool Coords::unit_tests(void)
 		const UTM utm = LatLon::to_utm(lat_lon_in);
 		const LatLon lat_lon_out = UTM::to_lat_lon(utm);
 
-		qDebug() << SG_PREFIX_D << lat_lon_in << "->" << utm << "->" << lat_lon_out << "->" << lat_lon_close_enough(lat_lon_in, lat_lon_out);
+		qDebug() << SG_PREFIX_D << "Input LatLon:      " << lat_lon_in;
+		qDebug() << SG_PREFIX_D << "Intermediate UTM:" << utm;
+		qDebug() << SG_PREFIX_D << "Re-converted LatLon:" << lat_lon_out;
+		qDebug() << SG_PREFIX_D << "Is close enough?" << lat_lon_close_enough(lat_lon_in, lat_lon_out);
 		assert (lat_lon_close_enough(lat_lon_in, lat_lon_out));
 	}
 

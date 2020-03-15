@@ -60,7 +60,8 @@ namespace SlavGPS {
 
 
 #define UTM_ZONE_FIRST                          1
-#define UTM_ZONE_LAST                          60 /* Also total number of UTM zones */
+#define UTM_ZONE_LAST                          60
+#define UTM_ZONES_COUNT                        60
 #define UTM_NORTHING_AT_EQUATOR        10000000.0 /* [m] */
 #define UTM_CENTRAL_MERIDIAN_EASTING     500000.0 /* [m] */
 
@@ -158,30 +159,29 @@ namespace SlavGPS {
 	public:
 		UTMZone() {};
 		UTMZone(int zone);
-		UTMZone shift_by(int shift);
-		int value(void) const { return this->m_value; }
+
+		/* Bound value is always in range UTM_ZONE_FIRST-UTM_ZONE_LAST. */
+		int bound_value(void) const { return this->m_bound_value; }
 
 		bool is_valid(void) const;
 		static bool is_valid(int zone);
+		sg_ret shift_by(int shift);
 
 		bool operator<(const UTMZone & rhs) const;
 		bool operator>(const UTMZone & rhs) const;
 		bool operator<=(const UTMZone & rhs) const;
 		bool operator>=(const UTMZone & rhs) const;
 
-		UTMZone & operator+=(const UTMZone & rhs);
-		UTMZone & operator-=(const UTMZone & rhs);
+		/**
+		   @brief Calculate difference between two UTM zones
 
-		friend UTMZone operator+(UTMZone lhs, const UTMZone & rhs)
-		{
-			lhs += rhs;
-			return lhs;
-		}
-		friend UTMZone operator-(UTMZone lhs, const UTMZone & rhs)
-		{
-			lhs -= rhs;
-			return lhs;
-		}
+		   The difference is calculated between one bound zone
+		   and another bound zones. TODO_HARD: should we
+		   introduce version for unbound zones?
+
+		   Result may be positive or negative, or zero.
+		*/
+		static int bound_zone_diff(const UTMZone & left_zone, const UTMZone & right_zone);
 
 		UTMZone & operator++();
 		UTMZone & operator--();
@@ -189,10 +189,10 @@ namespace SlavGPS {
 		static bool unit_tests(void);
 
 	private:
-		int m_value = UTM_ZONE_FIRST; /* There is no such thing as invalid UTM zone, so the default value must be from allowed range. */
+		int m_bound_value = UTM_ZONE_FIRST; /* There is no such thing as invalid UTM zone, so the default value must be from allowed range. */
 	};
 	QDebug operator<<(QDebug debug, const UTMZone & zone);
-	inline bool operator==(const UTMZone & lhs, const UTMZone & rhs) { return lhs.value() == rhs.value(); }
+	inline bool operator==(const UTMZone & lhs, const UTMZone & rhs) { return lhs.bound_value() == rhs.bound_value(); } /* TODO_HARD: how this will look like if we introduce unbound values (for multi-world view)? */
 	inline bool operator!=(const UTMZone & lhs, const UTMZone & rhs) { return !(lhs == rhs); }
 
 
