@@ -138,8 +138,11 @@ sg_ret TrackProfileDialog::set_center_at_selected_tp(const ProfileViewBase * vie
 		return sg_ret::err;
 	}
 
-	this->main_gisview->set_center_coord(tp_info.found_tp->coord);
-	this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+	if (sg_ret::ok != this->main_gisview->set_center_coord(tp_info.found_tp->coord)) {
+		/* Silently ignore. */
+	} else {
+		this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+	}
 
 	/* There is a selected trackpoint, on which we can split the track. */
 	this->button_split_at_marker->setEnabled(true);
@@ -293,8 +296,11 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		return;
 	}
 
-	this->main_gisview->set_center_coord(tp_info.found_tp->coord);
-	this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+	if (sg_ret::ok != this->main_gisview->set_center_coord(tp_info.found_tp->coord)) {
+		/* Silently ignore. */
+	} else {
+		this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+	}
 
 	/* There is a selected trackpoint, on which we can split the track. */
 	this->button_split_at_marker->setEnabled(true);

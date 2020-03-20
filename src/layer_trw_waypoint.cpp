@@ -655,7 +655,9 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	ThisApp::main_gisview()->set_center_coord(this->m_coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(this->m_coord)) {
+		return;
+	}
 	ThisApp::main_gisview()->request_redraw("Waypoint's 'show in viewport' callback");
 }
 

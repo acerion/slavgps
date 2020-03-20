@@ -1551,7 +1551,11 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		ThisApp::main_gisview()->set_center_coord(coord);
+		if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(coord)) {
+			qDebug() << SG_PREFIX_E << "Failed to centerize with coord" << coord;
+			return;
+		}
+
 		ThisApp::main_gisview()->request_redraw("TRW layer's 'centerize' callback");
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
@@ -1677,7 +1681,11 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::main_gisview()->set_center_coord(wp->get_coord());
+			if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(wp->get_coord())) {
+				qDebug() << SG_PREFIX_E << "Failed to center on waypoint's coord" << wp->get_coord();
+				return;
+			}
+
 			this->tree_view->select_and_expose_tree_item(wp);
 			ThisApp::main_gisview()->request_redraw("Redrawing items after setting new center in viewport");
 

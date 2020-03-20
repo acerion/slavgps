@@ -236,16 +236,28 @@ bool GisViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Gi
 {
 	bool redraw_viewport = false;
 
+	const Coord orig_coord = gisview->get_center_coord();
+
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		gisview->set_center_coord(event_pos);
-		gisview->zoom_in_on_center_pixel();
+		if (sg_ret::ok != gisview->set_center_coord(event_pos)) {
+			return false;
+		}
+		if (!gisview->zoom_in_on_center_pixel()) {
+			gisview->set_center_coord(orig_coord);
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		gisview->set_center_coord(event_pos);
-		gisview->zoom_out_on_center_pixel();
+		if (sg_ret::ok != gisview->set_center_coord(event_pos)) {
+			return false;
+		}
+		if (!gisview->zoom_out_on_center_pixel()) {
+			gisview->set_center_coord(orig_coord);
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -263,16 +275,28 @@ bool GisViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Gi
 {
 	bool redraw_viewport = false;
 
+	const Coord orig_coord = gisview->get_center_coord();
+
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		gisview->set_center_coord(center_pos);
-		gisview->zoom_in_on_center_pixel();
+		if (sg_ret::ok != gisview->set_center_coord(center_pos)) {
+			return false;
+		}
+		if (!gisview->zoom_in_on_center_pixel()) {
+			gisview->set_center_coord(orig_coord);
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		gisview->set_center_coord(center_pos);
-		gisview->zoom_out_on_center_pixel();
+		if (sg_ret::ok != gisview->set_center_coord(center_pos)) {
+			return false;
+		}
+		if (!gisview->zoom_out_on_center_pixel()) {
+			gisview->set_center_coord(orig_coord);
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -294,15 +318,20 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 	case ZoomOperation::In: {
 
 		/* Here we use event position before zooming in. */
-		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
+		const Coord coord_under_cursor = gisview->screen_pos_to_coord(event_pos);
 
-		gisview->zoom_in_on_center_pixel();
+		if (!gisview->zoom_in_on_center_pixel()) {
+			return false;
+		}
 
 		/* Position of event calculated in modified (zoomed in) viewport. */
 		ScreenPos orig_pos;
-		gisview->coord_to_screen_pos(cursor_coord, orig_pos);
+		gisview->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()));
+		if (sg_ret::ok != gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+			gisview->zoom_out_on_center_pixel();
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -310,15 +339,20 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 	case ZoomOperation::Out: {
 
 		/* Here we use event position before zooming out. */
-		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
+		const Coord coord_under_cursor = gisview->screen_pos_to_coord(event_pos);
 
-		gisview->zoom_out_on_center_pixel();
+		if (!gisview->zoom_out_on_center_pixel()) {
+			return false;
+		}
 
 		/* Position of event calculated in modified (zoomed out) viewport. */
 		ScreenPos orig_pos;
-		gisview->coord_to_screen_pos(cursor_coord, orig_pos);
+		gisview->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()));
+		if (sg_ret::ok != gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+			gisview->zoom_in_on_center_pixel();
+			return false;
+		}
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;

@@ -171,8 +171,6 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 	}
 
 	this->viking_scale.set(zoom_x, zoom_y);
-	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->center_coords.max_items)) {
@@ -183,7 +181,7 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 	}
 
 
-	this->set_center_coord(initial_lat_lon); /* The function will reject latlon if it's invalid. */
+	this->set_center_coord(Coord(initial_lat_lon, CoordMode::LatLon)); /* The function will reject latlon if it's invalid. */
 
 
 	this->setFocusPolicy(Qt::ClickFocus);
@@ -524,12 +522,18 @@ sg_ret GisViewport::set_viking_scale(double new_value)
 		return sg_ret::err;
 	}
 
+	const VikingScale prev_scale = this->viking_scale;
+
 	if (sg_ret::ok != this->viking_scale.set(new_value, new_value)) {
 		return sg_ret::err;
 	}
 
-	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
+	LatLonBBox bbox = this->get_bbox();
+	bbox.validate();
+	if (!bbox.is_valid()) {
+		this->viking_scale = prev_scale;
+		return sg_ret::err;
+	}
 
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->recalculate_utm();
@@ -544,14 +548,30 @@ sg_ret GisViewport::set_viking_scale(double new_value)
 /**
    @reviewed-on tbd
 */
-void GisViewport::zoom_in_on_center_pixel(void)
+bool GisViewport::zoom_in_on_center_pixel(int n_times)
 {
-	if (this->viking_scale.zoom_in(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
-
-		this->recalculate_utm();
+	if (!this->viking_scale.zoom_in(n_times * 2)) {
+		qDebug() << SG_PREFIX_N << "Not zooming in - can't zoom in on viking scale";
+		return false;
 	}
+
+#if 0
+	/*
+	  This check is not needed in "zoom in" operation. A bbox that
+	  was valid before the operation won't become invalid after
+	  zooming in - this is possible only when zooming out.
+	*/
+	LatLonBBox bbox = this->get_bbox();
+	bbox.validate();
+	if (!bbox.is_valid()) {
+		qDebug() << SG_PREFIX_N << "Not zooming in - new bbox would be invalid";
+		this->viking_scale.zoom_out(n_times * 2); /* Undo zoom-in. */
+		return false;
+	}
+#endif
+
+	this->recalculate_utm();
+	return true;
 }
 
 
@@ -560,14 +580,23 @@ void GisViewport::zoom_in_on_center_pixel(void)
 /**
    @reviewed-on tbd
 */
-void GisViewport::zoom_out_on_center_pixel(void)
+bool GisViewport::zoom_out_on_center_pixel(int n_times)
 {
-	if (this->viking_scale.zoom_out(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
-
-		this->recalculate_utm();
+	if (!this->viking_scale.zoom_out(n_times * 2)) {
+		qDebug() << SG_PREFIX_N << "Not zooming out - can't zoom out on viking scale";
+		return false;
 	}
+
+	LatLonBBox bbox = this->get_bbox();
+	bbox.validate();
+	if (!bbox.is_valid()) {
+		qDebug() << SG_PREFIX_N << "Not zooming out - new bbox would be invalid";
+		this->viking_scale.zoom_in(n_times * 2); /* Undo zoom-out. */
+		return false;
+	}
+
+	this->recalculate_utm();
+	return true;
 }
 
 
@@ -589,13 +618,22 @@ const VikingScale & GisViewport::get_viking_scale(void) const
 */
 sg_ret GisViewport::set_viking_scale(const VikingScale & new_value)
 {
-	if (new_value.is_valid()) {
-		this->viking_scale = new_value;
-		return sg_ret::ok;
-	} else {
+	if (!new_value.is_valid()) {
 		qDebug() << SG_PREFIX_E << "New value is invalid";
 		return sg_ret::err;
 	}
+
+	VikingScale old_value = this->viking_scale;
+	this->viking_scale = new_value;
+
+	LatLonBBox bbox = this->get_bbox();
+	bbox.validate();
+	if (!bbox.is_valid()) {
+		this->viking_scale = old_value;
+		return sg_ret::err;
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -612,7 +650,6 @@ sg_ret GisViewport::set_viking_scale_x(double new_value)
 	}
 
 	this->viking_scale.x = new_value;
-	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->recalculate_utm();
 	}
@@ -634,7 +671,6 @@ sg_ret GisViewport::set_viking_scale_y(double new_value)
 	}
 
 	this->viking_scale.y = new_value;
-	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->recalculate_utm();
 	}
@@ -968,7 +1004,21 @@ sg_ret GisViewport::set_center_coord(const UTM & utm, bool save_position)
 */
 sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 {
+	Coord orig_coord = this->center_coord;
 	this->center_coord = coord;
+
+	{
+		LatLonBBox bbox = this->get_bbox();
+		/* If we moved the view too far to north or south, we
+		   would get beyond a North Pole or South Pole, which
+		   would be undefined. */
+		bbox.validate();
+		if (!bbox.is_valid()) {
+			this->center_coord = orig_coord;
+			return sg_ret::err;
+		}
+	}
+
 	if (save_position) {
 		this->save_current_center_coord();
 	}
@@ -1695,6 +1745,7 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		 << "Wheel event" << (mouse_wheel_up ? "up" : "down")
 		 << ", buttons =" << (int) ev->buttons()
 		 << ", angle =" << angle.y();
+	bool op_success = false;
 
 	switch (modifiers) {
 	case Qt::ControlModifier: /* Pan up & down. */
@@ -1704,13 +1755,17 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		if (mouse_wheel_up) { /* Move viewport's content up. */
 			/* Get pixel that was above old center by
 			   delta_y, and move it to center. */
-			this->set_center_coord(this->central_get_x_center_pixel(),
-					       this->central_get_y_center_pixel() - delta_y);
+			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel(),
+								 this->central_get_y_center_pixel() - delta_y)) {
+				op_success = true;
+			}
 		} else { /* Move viewport's content down. */
 			/* Get pixel that was below old center by
 			   delta_y, and move it to center. */
-			this->set_center_coord(this->central_get_x_center_pixel(),
-					       this->central_get_y_center_pixel() + delta_y);
+			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel(),
+								 this->central_get_y_center_pixel() + delta_y)) {
+				op_success = true;
+			}
 		}
 		ev->accept();
 		break;
@@ -1723,14 +1778,18 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 			/* Get pixel that was to the left of old
 			   center by delta_x, and move it to
 			   center. */
-			this->set_center_coord(this->central_get_x_center_pixel() - delta_x,
-					       this->central_get_y_center_pixel());
+			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel() - delta_x,
+								 this->central_get_y_center_pixel())) {
+				op_success = true;
+			}
 		} else { /* Move viewport's content left. */
 			/* Get pixel that was to the right of old
 			   center by delta_x, and move it to
 			   center. */
-			this->set_center_coord(this->central_get_x_center_pixel() + delta_x,
-					       this->central_get_y_center_pixel());
+			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel() + delta_x,
+								 this->central_get_y_center_pixel())) {
+				op_success = true;
+			}
 		}
 		ev->accept();
 		break;
@@ -1740,9 +1799,9 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		   that is in the center position of center part of
 		   viewport. */
 		if (mouse_wheel_up) {
-			this->zoom_in_on_center_pixel();
+			op_success = this->zoom_in_on_center_pixel();
 		} else {
-			this->zoom_out_on_center_pixel();
+			op_success = this->zoom_out_on_center_pixel();
 		}
 		ev->accept();
 		break;
@@ -1758,6 +1817,7 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
 
 		GisViewportZoom::keep_coordinate_under_cursor(zoom_operation, this, this->window, event_pos, center_pos);
+		op_success = true;
 		}
 		ev->accept();
 		break;
@@ -1767,8 +1827,12 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		return;
 	};
 
-	qDebug() << SG_PREFIX_SIGNAL << "Will emit center_coord_or_zoom_changed()";
-	emit this->center_coord_or_zoom_changed(this);
+	if (op_success) {
+		qDebug() << SG_PREFIX_SIGNAL << "Will emit center_coord_or_zoom_changed()";
+		emit this->center_coord_or_zoom_changed(this);
+	} else {
+		qDebug() << SG_PREFIX_E << "Wheel event not handled properly";
+	}
 
 	return;
 }

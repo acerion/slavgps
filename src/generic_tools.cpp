@@ -486,18 +486,18 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 		if (modifiers == Qt::ShiftModifier) {
 			/* Zoom in/out by three if possible. */
 
+			bool zoomed = false;
 			if (event->button() == Qt::LeftButton) {
 				this->gisview->set_center_coord(event_pos);
-				this->gisview->zoom_in_on_center_pixel();
-				this->gisview->zoom_in_on_center_pixel();
-				this->gisview->zoom_in_on_center_pixel();
+				zoomed = this->gisview->zoom_in_on_center_pixel(3);
 			} else { /* Qt::RightButton */
 				this->gisview->set_center_coord(event_pos);
-				this->gisview->zoom_out_on_center_pixel();
-				this->gisview->zoom_out_on_center_pixel();
-				this->gisview->zoom_out_on_center_pixel();
+				zoomed = this->gisview->zoom_out_on_center_pixel(3);
 			}
-			redraw_viewport = true;
+			if (!zoomed) {
+				/* For some reason the zoom operation failed. */
+				redraw_viewport = true;
+			}
 		}
 	}
 
@@ -579,13 +579,18 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)
 	if (event->button() == Qt::LeftButton) {
 		this->window->set_dirty_flag(true);
 
+		bool zoomed = false;
 		if (event->modifiers() & Qt::ShiftModifier) {
-			this->window->main_gisview()->zoom_out_on_center_pixel();
+			zoomed = this->window->main_gisview()->zoom_out_on_center_pixel();
 		} else {
-			this->window->main_gisview()->zoom_in_on_center_pixel();
+			zoomed = this->window->main_gisview()->zoom_in_on_center_pixel();
 		}
 
-		this->window->draw_tree_items(this->gisview);
+		if (zoomed) {
+			this->window->draw_tree_items(this->gisview);
+		} else {
+			/* Zoom operation failed for some reason. */
+		}
 
 		return LayerTool::Status::Handled;
 

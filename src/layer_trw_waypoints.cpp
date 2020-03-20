@@ -696,7 +696,9 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
 		TreeItem * tree_item = nullptr;
 		if (sg_ret::ok == this->child_from_row(0, &tree_item)) {
-			gisview->set_center_coord(((Waypoint *) tree_item)->get_coord());
+			if (sg_ret::ok != gisview->set_center_coord(((Waypoint *) tree_item)->get_coord())) {
+				return;
+			}
 		} else {
 			qDebug() << SG_PREFIX_E << "Failed to find valid tree item";
 		}

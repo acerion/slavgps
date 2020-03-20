@@ -235,8 +235,11 @@ void Track::split_by_timestamp_cb(void)
 
 			if (timestamp_delta.is_negative()) {
 				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(this_timestamp.strftime_local("%c"))), dialog_parent) {
-					ThisApp::main_gisview()->set_center_coord((*iter)->coord);
-					ThisApp::main_gisview()->request_redraw("Track's 'unordered trackpoint'");
+					if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord((*iter)->coord)) {
+						;
+					} else {
+						ThisApp::main_gisview()->request_redraw("Track's 'unordered trackpoint'");
+					}
 				}
 				return;
 			}

@@ -8,6 +8,10 @@ RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc test_data
 SOURCES += main.cpp \
     globals.cpp \
     viewport_gis.cpp \
+    viewport_to_image.cpp \
+    viewport_decorations.cpp \
+    viewport_zoom.cpp \
+    viewport_pixmap.cpp \
     layer_trw_track_profile_dialog.cpp \
     babel.cpp \
     mem_cache.cpp \
@@ -93,10 +97,6 @@ SOURCES += main.cpp \
     geonames_search.cpp \
     babel_dialog.cpp \
     generic_tools.cpp \
-    viewport_to_image.cpp \
-    viewport_decorations.cpp \
-    viewport_zoom.cpp \
-    viewport_pixmap.cpp \
     coord.cpp \
     coords.cpp \
     lat_lon.cpp \

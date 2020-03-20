@@ -1334,7 +1334,10 @@ void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
 	if (this->pan_pos.x() != -1 && this->pan_pos.y() != -1) {
-		this->pan_move_update_viewport(ev);
+		if (sg_ret::ok != this->pan_move_update_viewport(ev)) {
+			this->pan_off();
+			return;
+		}
 
 		this->pan_move_in_progress = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
@@ -1391,10 +1394,14 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->m_main_gisview->set_center_coord(this->pan_pos);
+			if (sg_ret::ok != this->m_main_gisview->set_center_coord(this->pan_pos)) {
+				do_draw = false;
+			}
 		}
 	} else {
-		this->pan_move_update_viewport(ev);
+		if (sg_ret::ok != this->pan_move_update_viewport(ev)) {
+			do_draw = false;
+		}
 	}
 
 	this->pan_off();
@@ -1862,20 +1869,25 @@ void Window::zoom_cb(void)
 	QKeySequence seq = qa->shortcut();
 	QString debug_msg;
 
+	bool zoomed = false;
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
 		qDebug() << SG_PREFIX_D << "Zoom In";
 		debug_msg = "zoom in";
-		this->m_main_gisview->zoom_in_on_center_pixel();
+		zoomed = this->m_main_gisview->zoom_in_on_center_pixel();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
 		qDebug() << SG_PREFIX_D << "Zoom Out";
 		debug_msg = "zoom out";
-		this->m_main_gisview->zoom_out_on_center_pixel();
+		zoomed = this->m_main_gisview->zoom_out_on_center_pixel();
 	} else {
 		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
 		return;
 	}
 
-	this->m_main_gisview->request_redraw(debug_msg);
+	if (zoomed) {
+		this->m_main_gisview->request_redraw(debug_msg);
+	} else {
+		/* Zoom operation failed for some reason. */
+	}
 }
 
 
@@ -1886,8 +1898,11 @@ void Window::zoom_to_cb(void)
 	VikingScale viking_scale = this->m_main_gisview->get_viking_scale();
 
 	if (GisViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
-		this->m_main_gisview->set_viking_scale(viking_scale);
-		this->m_main_gisview->request_redraw("zoom to...");
+		if (sg_ret::ok == this->m_main_gisview->set_viking_scale(viking_scale)) {
+			this->m_main_gisview->request_redraw("zoom to...");
+		} else {
+			/* Failed to set specified scale value. */
+		}
 	}
 }
 
@@ -2602,16 +2617,22 @@ void Window::print_cb(void)
 /* Menu View -> Zoom -> Value. */
 void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 {
-	const double requested_scale = ZoomLevels::get_selected_scale(qa);
+	const double val = ZoomLevels::get_selected_scale(qa);
+	const VikingScale requested_scale(val, val);
 
 	/* But has it really changed? */
-	const double current_scale = this->m_main_gisview->get_viking_scale().get_x();
-	if (current_scale != 0.0 && requested_scale != current_scale) {
-		this->m_main_gisview->set_viking_scale(requested_scale);
-
-		/* Ask to draw updated viewport. */
-		this->m_main_gisview->request_redraw("zoom level selected");
+	const VikingScale current_scale = this->m_main_gisview->get_viking_scale();
+	if (requested_scale == current_scale) {
+		return;
 	}
+
+	if (sg_ret::ok != this->m_main_gisview->set_viking_scale(requested_scale)) {
+		/* Failed to set requested scale. */
+		return;
+	}
+
+	/* Ask to draw updated viewport. */
+	this->m_main_gisview->request_redraw("zoom level selected");
 }
 
 

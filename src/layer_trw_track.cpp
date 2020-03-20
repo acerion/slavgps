@@ -2299,7 +2299,9 @@ sg_ret Track::menu_add_type_specific_operations(QMenu & menu, bool in_tree_view)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		ThisApp::main_gisview()->set_center_coord(this->get_tp_first()->coord);
+		if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(this->get_tp_first()->coord)) {
+			return;
+		}
 		ThisApp::main_gisview()->request_redraw("Track's 'goto startpoint' callback");
 	}
 }
@@ -2316,7 +2318,9 @@ void Track::goto_center_cb(void)
 	LayerTRW * parent_trw = this->owner_trw_layer();
 
 	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_trw->coord_mode);
-	ThisApp::main_gisview()->set_center_coord(coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(coord)) {
+		return;
+	}
 	ThisApp::main_gisview()->request_redraw("Track's 'goto center' callback");
 }
 
@@ -2329,7 +2333,10 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord)) {
+		return;
+	}
+
 	ThisApp::main_gisview()->request_redraw("Track's 'goto endpoint' callback");
 }
 
@@ -2343,7 +2350,9 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(tp->coord)) {
+		return;
+	}
 	ThisApp::main_gisview()->request_redraw("Track's 'goto max speed' callback");
 }
 
@@ -2357,7 +2366,10 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(tp->coord)) {
+		return;
+	}
+
 	ThisApp::main_gisview()->request_redraw("Track's 'goto max alt' callback");
 }
 
@@ -2371,7 +2383,10 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	ThisApp::main_gisview()->set_center_coord(tp->coord);
+	if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(tp->coord)) {
+		return;
+	}
+
 	ThisApp::main_gisview()->request_redraw("Track's 'goto min alt' callback");
 }
 
@@ -3607,7 +3622,9 @@ void Track::extend_track_end_cb(void)
 	window->activate_tool_by_id(this->is_route() ? LayerToolTRWNewRoute::tool_id() : LayerToolTRWNewTrack::tool_id());
 
 	if (!this->empty()) {
-		ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+		if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord)) {
+			return;
+		}
 		ThisApp::main_gisview()->request_redraw("Track's 'extender track end' callback");
 	}
 }
@@ -3628,7 +3645,9 @@ void Track::extend_track_end_route_finder_cb(void)
 	parent_layer->route_finder_started = true;
 
 	if (!this->empty()) {
-		ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord);
+		if (sg_ret::ok != ThisApp::main_gisview()->set_center_coord(this->get_tp_last()->coord)) {
+			return;
+		}
 		ThisApp::main_gisview()->request_redraw("Track's 'extend track end route finder' callback");
 	}
 }

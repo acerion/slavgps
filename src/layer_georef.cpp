@@ -1165,7 +1165,10 @@ void LayerGeoref::goto_center_cb(void)
 	utm.m_easting = this->utm_tl.get_easting() + center_to_left_m;
 	utm.m_northing = this->utm_tl.get_northing() - center_to_bottom_m;
 
-	gisview->set_center_coord(utm);
+	if (sg_ret::ok != gisview->set_center_coord(utm)) {
+		qDebug() << SG_PREFIX_E << "Failed to set coordinate" << utm;
+		return;
+	}
 	gisview->request_redraw("Redrawing items after setting new center coord in viewport");
 }
 

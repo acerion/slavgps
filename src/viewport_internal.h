@@ -157,9 +157,13 @@ namespace SlavGPS {
 
 		   The geo point that was in a center of viewport will
 		   have the same screen position after zoom ended as
-		   it had before zoom started. */
-		void zoom_in_on_center_pixel(void);
-		void zoom_out_on_center_pixel(void);
+		   it had before zoom started.
+
+		   @return true if zoom operation succeeded
+		   @return false if zoom operation failed
+		*/
+		bool zoom_in_on_center_pixel(int n_times = 1);
+		bool zoom_out_on_center_pixel(int n_times = 1);
 
 		sg_ret set_viking_scale(double new_value);
 		sg_ret set_viking_scale_x(double new_value);
@@ -339,8 +343,6 @@ namespace SlavGPS {
 		/* ******** Class variables that definitely should be in this class. ******** */
 
 		VikingScale viking_scale;
-		double xmfactor = 0.0f;
-		double ymfactor = 0.0f;
 
 		GisViewportDecorations decorations;
 
