@@ -328,7 +328,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 
 	this->ztr_is_active = false;
 
-	const ZoomOperation zoom_operation = mouse_event_to_zoom_operation(event);
+	const ZoomDirection zoom_direction = mouse_event_to_zoom_direction(event);
 
 	switch (modifiers) {
 	case (Qt::ControlModifier | Qt::ShiftModifier):
@@ -336,7 +336,10 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
-		redraw_viewport = GisViewportZoom::keep_coordinate_in_center(zoom_operation, this->gisview, this->window, center_pos);
+		redraw_viewport = this->gisview->zoom_with_preserving_center_coord(zoom_direction, center_pos);
+		if (redraw_viewport) {
+			this->window->set_dirty_flag(true);
+		}
 		break;
 
 	case Qt::ControlModifier:
@@ -344,7 +347,10 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   viewport (coordinate of a place under cursor before
 		   zoom will be placed at the center of viewport after
 		   zoom). */
-		redraw_viewport = GisViewportZoom::move_coordinate_to_center(zoom_operation, this->gisview, this->window, event_pos);
+		redraw_viewport = this->gisview->zoom_move_coordinate_to_center(zoom_direction, event_pos);
+		if (redraw_viewport) {
+			this->window->set_dirty_flag(true);
+		}
 		break;
 
 	case Qt::ShiftModifier:
@@ -352,8 +358,8 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   Notice that there is no "zoom out to rectangle"
 		   operation. Get start position of zoom bounds. */
 
-		switch (zoom_operation) {
-		case ZoomOperation::In:
+		switch (zoom_direction) {
+		case ZoomDirection::In:
 			this->ztr_is_active = true;
 			this->ztr_start_x = event_pos.x();
 			this->ztr_start_y = event_pos.y();
@@ -371,7 +377,10 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
-		redraw_viewport = GisViewportZoom::keep_coordinate_under_cursor(zoom_operation, this->gisview, this->window, event_pos, center_pos);
+		redraw_viewport = this->gisview->zoom_keep_coordinate_under_cursor(zoom_direction, event_pos, center_pos);
+		if (redraw_viewport) {
+			this->window->set_dirty_flag(true);
+		}
 		break;
 
 	default:
@@ -476,7 +485,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 
 			/* From the extend of the bounds pick the best zoom level. */
 			const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
-			GisViewportZoom::zoom_to_show_bbox_common(this->gisview, this->gisview->get_coord_mode(), bbox, SG_GISVIEWPORT_ZOOM_MIN, false);
+			this->gisview->zoom_to_show_bbox_common(bbox, SG_GISVIEWPORT_ZOOM_MIN, false);
 			redraw_viewport = true;
 		}
 	} else {

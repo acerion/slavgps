@@ -190,19 +190,19 @@ void GisViewportZoomDialog::spin_changed_cb(double new_value)
 
 
 
-ZoomOperation SlavGPS::mouse_event_to_zoom_operation(const QMouseEvent * event)
+ZoomDirection SlavGPS::mouse_event_to_zoom_direction(const QMouseEvent * event)
 {
-	ZoomOperation result;
+	ZoomDirection result;
 
 	switch (event->button()) {
 	case Qt::LeftButton:
-		result = ZoomOperation::In;
+		result = ZoomDirection::In;
 		break;
 	case Qt::RightButton:
-		result = ZoomOperation::Out;
+		result = ZoomDirection::Out;
 		break;
 	default:
-		result = ZoomOperation::Noop;
+		result = ZoomDirection::Noop;
 		break;
 	};
 
@@ -212,18 +212,18 @@ ZoomOperation SlavGPS::mouse_event_to_zoom_operation(const QMouseEvent * event)
 
 
 
-ZoomOperation SlavGPS::wheel_event_to_zoom_operation(const QWheelEvent * event)
+ZoomDirection SlavGPS::wheel_event_to_zoom_direction(const QWheelEvent * event)
 {
-	ZoomOperation result;
+	ZoomDirection result;
 
 	const QPoint angle = event->angleDelta();
 
 	if (angle.y() > 0) {
-		result = ZoomOperation::In;
+		result = ZoomDirection::In;
 	} else if (angle.y() < 0) {
-		result = ZoomOperation::Out;
+		result = ZoomDirection::Out;
 	} else {
-		result = ZoomOperation::Noop;
+		result = ZoomDirection::Noop;
 	}
 
 	return result;
@@ -232,136 +232,117 @@ ZoomOperation SlavGPS::wheel_event_to_zoom_operation(const QWheelEvent * event)
 
 
 
-bool GisViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos)
+bool GisViewport::zoom_move_coordinate_to_center(ZoomDirection zoom_direction, const ScreenPos & event_pos)
 {
-	bool redraw_viewport = false;
+	const Coord orig_coord = this->get_center_coord();
 
-	const Coord orig_coord = gisview->get_center_coord();
+	switch (zoom_direction) {
+	case ZoomDirection::In:
+		if (sg_ret::ok != this->set_center_coord(event_pos)) {
+			return false;
+		}
+		if (!this->zoom_in_on_center_pixel()) {
+			this->set_center_coord(orig_coord);
+			return false;
+		}
+		return true;
 
-	switch (zoom_operation) {
-	case ZoomOperation::In:
-		if (sg_ret::ok != gisview->set_center_coord(event_pos)) {
+	case ZoomDirection::Out:
+		if (sg_ret::ok != this->set_center_coord(event_pos)) {
 			return false;
 		}
-		if (!gisview->zoom_in_on_center_pixel()) {
-			gisview->set_center_coord(orig_coord);
+		if (!this->zoom_out_on_center_pixel()) {
+			this->set_center_coord(orig_coord);
 			return false;
 		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
-	case ZoomOperation::Out:
-		if (sg_ret::ok != gisview->set_center_coord(event_pos)) {
-			return false;
-		}
-		if (!gisview->zoom_out_on_center_pixel()) {
-			gisview->set_center_coord(orig_coord);
-			return false;
-		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
+		return true;
+
 	default:
-		break; /* Ignore. */
-	};
-
-	return redraw_viewport;
+		return false; /* Ignore. */
+	}
 }
 
 
 
 
-bool GisViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & center_pos)
+bool GisViewport::zoom_with_preserving_center_coord(ZoomDirection zoom_direction, const ScreenPos & center_pos)
 {
-	bool redraw_viewport = false;
+	const Coord orig_center_coord = this->get_center_coord();
 
-	const Coord orig_coord = gisview->get_center_coord();
+	switch (zoom_direction) {
+	case ZoomDirection::In:
+		if (sg_ret::ok != this->set_center_coord(center_pos)) {
+			return false;
+		}
+		if (!this->zoom_in_on_center_pixel()) {
+			this->set_center_coord(orig_center_coord);
+			return false;
+		}
+		return true;
 
-	switch (zoom_operation) {
-	case ZoomOperation::In:
-		if (sg_ret::ok != gisview->set_center_coord(center_pos)) {
+	case ZoomDirection::Out:
+		if (sg_ret::ok != this->set_center_coord(center_pos)) {
 			return false;
 		}
-		if (!gisview->zoom_in_on_center_pixel()) {
-			gisview->set_center_coord(orig_coord);
+		if (!this->zoom_out_on_center_pixel()) {
+			this->set_center_coord(orig_center_coord);
 			return false;
 		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
-	case ZoomOperation::Out:
-		if (sg_ret::ok != gisview->set_center_coord(center_pos)) {
-			return false;
-		}
-		if (!gisview->zoom_out_on_center_pixel()) {
-			gisview->set_center_coord(orig_coord);
-			return false;
-		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
+		return true;
+
 	default:
-		break; /* Ignore. */
-	};
-
-	return redraw_viewport;
+		return false; /* Ignore. */
+	}
 }
 
 
 
 
-bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos)
+bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction, const ScreenPos & event_pos, const ScreenPos & center_pos)
 {
-	bool redraw_viewport = false;
-
-	switch (zoom_operation) {
-	case ZoomOperation::In: {
+	switch (zoom_direction) {
+	case ZoomDirection::In: {
 
 		/* Here we use event position before zooming in. */
-		const Coord coord_under_cursor = gisview->screen_pos_to_coord(event_pos);
+		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
 
-		if (!gisview->zoom_in_on_center_pixel()) {
+		if (!this->zoom_in_on_center_pixel()) {
 			return false;
 		}
 
 		/* Position of event calculated in modified (zoomed in) viewport. */
 		ScreenPos orig_pos;
-		gisview->coord_to_screen_pos(coord_under_cursor, orig_pos);
+		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		if (sg_ret::ok != gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
-			gisview->zoom_out_on_center_pixel();
+		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+			this->zoom_out_on_center_pixel();
 			return false;
 		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
+		return true;
 	}
-	case ZoomOperation::Out: {
+	case ZoomDirection::Out: {
 
 		/* Here we use event position before zooming out. */
-		const Coord coord_under_cursor = gisview->screen_pos_to_coord(event_pos);
+		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
 
-		if (!gisview->zoom_out_on_center_pixel()) {
+		if (!this->zoom_out_on_center_pixel()) {
 			return false;
 		}
 
 		/* Position of event calculated in modified (zoomed out) viewport. */
 		ScreenPos orig_pos;
-		gisview->coord_to_screen_pos(coord_under_cursor, orig_pos);
+		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		if (sg_ret::ok != gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
-			gisview->zoom_in_on_center_pixel();
+		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+			this->zoom_in_on_center_pixel();
 			return false;
 		}
-		window->set_dirty_flag(true);
-		redraw_viewport = true;
-		break;
+		return true;
 	}
 	default:
+		return false;
 		break;
 	}
-
-	return redraw_viewport;
 }
 
 
@@ -639,9 +620,9 @@ VikingScale & VikingScale::operator/=(double rhs)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-sg_ret GisViewportZoom::zoom_to_show_bbox(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox)
+sg_ret GisViewport::zoom_to_show_bbox(const LatLonBBox & bbox)
 {
-	return GisViewportZoom::zoom_to_show_bbox_common(gisview, mode, bbox, 1.0, true);
+	return this->zoom_to_show_bbox_common(bbox, 1.0, true);
 }
 
 
@@ -650,7 +631,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox(GisViewport * gisview, CoordMode mode,
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attribute__((unused)) CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
+sg_ret GisViewport::zoom_to_show_bbox_common(const LatLonBBox & bbox, double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
@@ -668,7 +649,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attrib
 		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
 		return sg_ret::err;
 	}
-	if (sg_ret::ok != gisview->set_center_coord(bbox.get_center_lat_lon(), save_position)) {
+	if (sg_ret::ok != this->set_center_coord(bbox.get_center_lat_lon(), save_position)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}
@@ -676,7 +657,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attrib
 	/* Never zoom in too far - generally not that useful, as too close! */
 	/* Always recalculate the 'best' zoom level. */
 
-	if (sg_ret::ok != gisview->set_viking_scale(zoom)) {
+	if (sg_ret::ok != this->set_viking_scale(zoom)) {
 		qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 		return sg_ret::err;
 	}
@@ -684,7 +665,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attrib
 
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
 	while (zoom <= SG_GISVIEWPORT_ZOOM_MAX) {
-		const LatLonBBox current_bbox = gisview->get_bbox();
+		const LatLonBBox current_bbox = this->get_bbox();
 		if (current_bbox.contains_bbox(bbox)) {
 			/* Found within zoom level. */
 			break;
@@ -692,7 +673,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, __attrib
 
 		/* Try next zoom level. */
 		zoom = zoom * 2;
-		if (sg_ret::ok != gisview->set_viking_scale(zoom)) {
+		if (sg_ret::ok != this->set_viking_scale(zoom)) {
 			qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 			return sg_ret::err;
 		}

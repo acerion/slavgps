@@ -120,7 +120,7 @@ namespace SlavGPS {
 
 
 
-	enum class ZoomOperation {
+	enum class ZoomDirection {
 		Noop,    /* Don't change zoom. */
 		In,      /* Zoom in. */
 		Out      /* Zoom out. */
@@ -129,35 +129,8 @@ namespace SlavGPS {
 
 
 
-	ZoomOperation mouse_event_to_zoom_operation(const QMouseEvent * event);
-	ZoomOperation wheel_event_to_zoom_operation(const QWheelEvent * event);
-
-
-
-
-	class GisViewportZoom {
-	public:
-		/* Clicked location will be put at the center of
-		   viewport (coordinate of a place under cursor before
-		   zoom will be placed at the center of viewport after
-		   zoom). */
-		static bool move_coordinate_to_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos);
-
-		/* Location at the center of viewport will be
-		   preserved (coordinate at the center before the zoom
-		   and coordinate at the center after the zoom will be
-		   the same). */
-		static bool keep_coordinate_in_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & center_pos);
-
-		/* Clicked coordinate will be put after zoom at the same
-		   position in viewport as before zoom.  Before zoom
-		   the coordinate was under cursor, and after zoom it
-		   will be still under cursor. */
-		static bool keep_coordinate_under_cursor(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos);
-
-		static sg_ret zoom_to_show_bbox(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox);
-		static sg_ret zoom_to_show_bbox_common(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
-	};
+	ZoomDirection mouse_event_to_zoom_direction(const QMouseEvent * event);
+	ZoomDirection wheel_event_to_zoom_direction(const QWheelEvent * event);
 
 
 

@@ -185,6 +185,33 @@ namespace SlavGPS {
 
 
 
+
+
+
+		/* Clicked location will be put at the center of
+		   viewport (coordinate of a place under cursor before
+		   zoom will be placed at the center of viewport after
+		   zoom). */
+		bool zoom_move_coordinate_to_center(ZoomDirection zoom_direction, const ScreenPos & event_pos);
+
+		/* Location at the center of viewport will be
+		   preserved (coordinate at the center before the zoom
+		   and coordinate at the center after the zoom will be
+		   the same). */
+		bool zoom_with_preserving_center_coord(ZoomDirection zoom_direction, const ScreenPos & center_pos);
+
+		/* Clicked coordinate will be put after zoom at the same
+		   position in viewport as before zoom.  Before zoom
+		   the coordinate was under cursor, and after zoom it
+		   will be still under cursor. */
+		bool zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction, const ScreenPos & event_pos, const ScreenPos & center_pos);
+
+		sg_ret zoom_to_show_bbox(const LatLonBBox & bbox);
+		sg_ret zoom_to_show_bbox_common(const LatLonBBox & bbox, double zoom, bool save_position);
+
+
+
+
 		sg_ret set_center_coord(const Coord & coord, bool save_position = true);
 		sg_ret set_center_coord(const UTM & utm, bool save_position = true);
 		sg_ret set_center_coord(const LatLon & lat_lon, bool save_position = true);

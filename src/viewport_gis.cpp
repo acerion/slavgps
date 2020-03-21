@@ -1814,9 +1814,11 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 
 		const ScreenPos center_pos = this->central_get_center_screen_pos();
 		const ScreenPos event_pos(ev->x(), ev->y());
-		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
+		const ZoomDirection zoom_direction = SlavGPS::wheel_event_to_zoom_direction(ev);
 
-		GisViewportZoom::keep_coordinate_under_cursor(zoom_operation, this, this->window, event_pos, center_pos);
+		if (this->zoom_keep_coordinate_under_cursor(zoom_direction, event_pos, center_pos)) {
+			this->window->set_dirty_flag(true);
+		}
 		op_success = true;
 		}
 		ev->accept();
@@ -2143,7 +2145,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const GisViewportDrawMode mode)
 */
 sg_ret GisViewport::set_bbox(const LatLonBBox & new_bbox)
 {
-	return GisViewportZoom::zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
+	return this->zoom_to_show_bbox(new_bbox);
 }
 
 
