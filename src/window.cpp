@@ -1865,24 +1865,15 @@ void Window::set_main_menu_visibility_cb(bool new_state)
 
 void Window::zoom_cb(void)
 {
-	QAction * qa = (QAction *) QObject::sender();
-	QKeySequence seq = qa->shortcut();
-	QString debug_msg;
+	const QAction * qa = (QAction *) QObject::sender();
+	const QKeySequence seq = qa->shortcut();
+	const ZoomDirection zoom_direction = SlavGPS::key_sequence_to_zoom_direction(seq);
 
-	bool zoomed = false;
-	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
-		qDebug() << SG_PREFIX_D << "Zoom In";
-		debug_msg = "zoom in";
-		zoomed = this->m_main_gisview->zoom_in_on_center_pixel();
-	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
-		qDebug() << SG_PREFIX_D << "Zoom Out";
-		debug_msg = "zoom out";
-		zoomed = this->m_main_gisview->zoom_out_on_center_pixel();
-	} else {
-		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
-		return;
-	}
+	const QString debug_msg = zoom_direction_to_string(zoom_direction);
+	qDebug() << SG_PREFIX_D << debug_msg;
 
+
+	const bool zoomed = this->m_main_gisview->zoom_with_preserving_center_coord(zoom_direction);
 	if (zoomed) {
 		this->m_main_gisview->request_redraw(debug_msg);
 	} else {

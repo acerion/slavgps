@@ -336,7 +336,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
-		redraw_viewport = this->gisview->zoom_with_preserving_center_coord(zoom_direction, center_pos);
+		redraw_viewport = this->gisview->zoom_with_preserving_center_coord(zoom_direction);
 		if (redraw_viewport) {
 			this->window->set_dirty_flag(true);
 		}
@@ -347,7 +347,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		   viewport (coordinate of a place under cursor before
 		   zoom will be placed at the center of viewport after
 		   zoom). */
-		redraw_viewport = this->gisview->zoom_move_coordinate_to_center(zoom_direction, event_pos);
+		redraw_viewport = this->gisview->zoom_with_setting_new_center(zoom_direction, event_pos);
 		if (redraw_viewport) {
 			this->window->set_dirty_flag(true);
 		}
@@ -495,14 +495,9 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 		if (modifiers == Qt::ShiftModifier) {
 			/* Zoom in/out by three if possible. */
 
-			bool zoomed = false;
-			if (event->button() == Qt::LeftButton) {
-				this->gisview->set_center_coord(event_pos);
-				zoomed = this->gisview->zoom_in_on_center_pixel(3);
-			} else { /* Qt::RightButton */
-				this->gisview->set_center_coord(event_pos);
-				zoomed = this->gisview->zoom_out_on_center_pixel(3);
-			}
+			this->gisview->set_center_coord(event_pos);
+			const bool zoomed = this->gisview->zoom_on_center_pixel(mouse_event_to_zoom_direction(event), 3);
+
 			if (!zoomed) {
 				/* For some reason the zoom operation failed. */
 				redraw_viewport = true;
@@ -590,9 +585,9 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)
 
 		bool zoomed = false;
 		if (event->modifiers() & Qt::ShiftModifier) {
-			zoomed = this->window->main_gisview()->zoom_out_on_center_pixel();
+			zoomed = this->window->main_gisview()->zoom_on_center_pixel(ZoomDirection::Out);
 		} else {
-			zoomed = this->window->main_gisview()->zoom_in_on_center_pixel();
+			zoomed = this->window->main_gisview()->zoom_on_center_pixel(ZoomDirection::In);
 		}
 
 		if (zoomed) {
@@ -605,7 +600,7 @@ LayerTool::Status LayerToolPan::handle_mouse_double_click(__attribute__((unused)
 
 	} else if (event->button() == Qt::RightButton) {
 		this->window->set_dirty_flag(true);
-		this->window->main_gisview()->zoom_out_on_center_pixel();
+		this->window->main_gisview()->zoom_on_center_pixel(ZoomDirection::Out);
 		this->window->draw_tree_items(this->gisview);
 
 		return LayerTool::Status::Handled;

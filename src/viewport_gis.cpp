@@ -546,63 +546,6 @@ sg_ret GisViewport::set_viking_scale(double new_value)
 
 
 /**
-   @reviewed-on tbd
-*/
-bool GisViewport::zoom_in_on_center_pixel(int n_times)
-{
-	if (!this->viking_scale.zoom_in(n_times * 2)) {
-		qDebug() << SG_PREFIX_N << "Not zooming in - can't zoom in on viking scale";
-		return false;
-	}
-
-#if 0
-	/*
-	  This check is not needed in "zoom in" operation. A bbox that
-	  was valid before the operation won't become invalid after
-	  zooming in - this is possible only when zooming out.
-	*/
-	LatLonBBox bbox = this->get_bbox();
-	bbox.validate();
-	if (!bbox.is_valid()) {
-		qDebug() << SG_PREFIX_N << "Not zooming in - new bbox would be invalid";
-		this->viking_scale.zoom_out(n_times * 2); /* Undo zoom-in. */
-		return false;
-	}
-#endif
-
-	this->recalculate_utm();
-	return true;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-bool GisViewport::zoom_out_on_center_pixel(int n_times)
-{
-	if (!this->viking_scale.zoom_out(n_times * 2)) {
-		qDebug() << SG_PREFIX_N << "Not zooming out - can't zoom out on viking scale";
-		return false;
-	}
-
-	LatLonBBox bbox = this->get_bbox();
-	bbox.validate();
-	if (!bbox.is_valid()) {
-		qDebug() << SG_PREFIX_N << "Not zooming out - new bbox would be invalid";
-		this->viking_scale.zoom_in(n_times * 2); /* Undo zoom-out. */
-		return false;
-	}
-
-	this->recalculate_utm();
-	return true;
-}
-
-
-
-
-/**
    @reviewed-on 2019-07-20
 */
 const VikingScale & GisViewport::get_viking_scale(void) const
@@ -1798,11 +1741,7 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		/* Zoom in/out, preserve screen position of geo point
 		   that is in the center position of center part of
 		   viewport. */
-		if (mouse_wheel_up) {
-			op_success = this->zoom_in_on_center_pixel();
-		} else {
-			op_success = this->zoom_out_on_center_pixel();
-		}
+		op_success = this->zoom_with_preserving_center_coord(wheel_event_to_zoom_direction(ev));
 		ev->accept();
 		break;
 

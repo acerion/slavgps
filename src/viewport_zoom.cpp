@@ -202,9 +202,9 @@ ZoomDirection SlavGPS::mouse_event_to_zoom_direction(const QMouseEvent * event)
 		result = ZoomDirection::Out;
 		break;
 	default:
-		result = ZoomDirection::Noop;
+		result = ZoomDirection::None;
 		break;
-	};
+	}
 
 	return result;
 }
@@ -223,7 +223,7 @@ ZoomDirection SlavGPS::wheel_event_to_zoom_direction(const QWheelEvent * event)
 	} else if (angle.y() < 0) {
 		result = ZoomDirection::Out;
 	} else {
-		result = ZoomDirection::Noop;
+		result = ZoomDirection::None;
 	}
 
 	return result;
@@ -232,67 +232,64 @@ ZoomDirection SlavGPS::wheel_event_to_zoom_direction(const QWheelEvent * event)
 
 
 
-bool GisViewport::zoom_move_coordinate_to_center(ZoomDirection zoom_direction, const ScreenPos & event_pos)
+ZoomDirection SlavGPS::key_sequence_to_zoom_direction(const QKeySequence & seq)
 {
-	const Coord orig_coord = this->get_center_coord();
+	ZoomDirection zoom_direction;
 
-	switch (zoom_direction) {
-	case ZoomDirection::In:
-		if (sg_ret::ok != this->set_center_coord(event_pos)) {
-			return false;
-		}
-		if (!this->zoom_in_on_center_pixel()) {
-			this->set_center_coord(orig_coord);
-			return false;
-		}
-		return true;
-
-	case ZoomDirection::Out:
-		if (sg_ret::ok != this->set_center_coord(event_pos)) {
-			return false;
-		}
-		if (!this->zoom_out_on_center_pixel()) {
-			this->set_center_coord(orig_coord);
-			return false;
-		}
-		return true;
-
-	default:
-		return false; /* Ignore. */
+	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
+		zoom_direction = ZoomDirection::In;
+	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
+		zoom_direction = ZoomDirection::Out;
+	} else {
+		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
+		zoom_direction = ZoomDirection::None;
 	}
+
+	return zoom_direction;
 }
 
 
 
 
-bool GisViewport::zoom_with_preserving_center_coord(ZoomDirection zoom_direction, const ScreenPos & center_pos)
+QString SlavGPS::zoom_direction_to_string(ZoomDirection zoom_direction)
 {
-	const Coord orig_center_coord = this->get_center_coord();
-
+	QString result;
 	switch (zoom_direction) {
 	case ZoomDirection::In:
-		if (sg_ret::ok != this->set_center_coord(center_pos)) {
-			return false;
-		}
-		if (!this->zoom_in_on_center_pixel()) {
-			this->set_center_coord(orig_center_coord);
-			return false;
-		}
-		return true;
-
+		result = "zoom in";
+		break;
 	case ZoomDirection::Out:
-		if (sg_ret::ok != this->set_center_coord(center_pos)) {
-			return false;
-		}
-		if (!this->zoom_out_on_center_pixel()) {
-			this->set_center_coord(orig_center_coord);
-			return false;
-		}
-		return true;
-
+		result = "zoom out";
+		break;
 	default:
-		return false; /* Ignore. */
+		result = "zoom direction none";
+		break;
 	}
+	return result;
+}
+
+
+
+
+bool GisViewport::zoom_with_setting_new_center(ZoomDirection zoom_direction, const ScreenPos & new_center_pos)
+{
+	const Coord orig_center_coord = this->get_center_coord();
+	if (sg_ret::ok != this->set_center_coord(new_center_pos)) {
+		return false;
+	}
+	if (!this->zoom_on_center_pixel(zoom_direction)) {
+		this->set_center_coord(orig_center_coord); /* Restore previous center on zoom failure. */
+		return false;
+	}
+	return true;
+}
+
+
+
+
+bool GisViewport::zoom_with_preserving_center_coord(ZoomDirection zoom_direction)
+{
+	return this->zoom_on_center_pixel(zoom_direction);
 }
 
 
@@ -306,7 +303,7 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		/* Here we use event position before zooming in. */
 		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
 
-		if (!this->zoom_in_on_center_pixel()) {
+		if (!this->zoom_on_center_pixel(ZoomDirection::In)) {
 			return false;
 		}
 
@@ -315,7 +312,7 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
 		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
-			this->zoom_out_on_center_pixel();
+			this->zoom_on_center_pixel(ZoomDirection::Out);
 			return false;
 		}
 		return true;
@@ -325,7 +322,7 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		/* Here we use event position before zooming out. */
 		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
 
-		if (!this->zoom_out_on_center_pixel()) {
+		if (!this->zoom_on_center_pixel(ZoomDirection::Out)) {
 			return false;
 		}
 
@@ -334,7 +331,7 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
 		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
-			this->zoom_in_on_center_pixel();
+			this->zoom_on_center_pixel(ZoomDirection::In);
 			return false;
 		}
 		return true;
@@ -342,6 +339,62 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 	default:
 		return false;
 		break;
+	}
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+bool GisViewport::zoom_on_center_pixel(ZoomDirection zoom_direction, int n_times)
+{
+	switch (zoom_direction) {
+	case ZoomDirection::Out:
+		{
+			if (!this->viking_scale.zoom_out(n_times * 2)) {
+				qDebug() << SG_PREFIX_N << "Not zooming out - can't zoom out on viking scale";
+				return false;
+			}
+
+			LatLonBBox bbox = this->get_bbox();
+			bbox.validate();
+			if (!bbox.is_valid()) {
+				qDebug() << SG_PREFIX_N << "Not zooming out - new bbox would be invalid";
+				this->viking_scale.zoom_in(n_times * 2); /* Undo zoom-out. */
+				return false;
+			}
+
+			this->recalculate_utm();
+		}
+		return true;
+	case ZoomDirection::In:
+		if (!this->viking_scale.zoom_in(n_times * 2)) {
+			qDebug() << SG_PREFIX_N << "Not zooming in - can't zoom in on viking scale";
+			return false;
+		}
+
+#if 0
+		/*
+		  This check is not needed in "zoom in" operation. A bbox that
+		  was valid before the operation won't become invalid after
+		  zooming in - this is possible only when zooming out.
+		*/
+		LatLonBBox bbox = this->get_bbox();
+		bbox.validate();
+		if (!bbox.is_valid()) {
+			qDebug() << SG_PREFIX_N << "Not zooming in - new bbox would be invalid";
+			this->viking_scale.zoom_out(n_times * 2); /* Undo zoom-in. */
+			return false;
+		}
+#endif
+
+		this->recalculate_utm();
+		return true;
+
+	default:
+		return false;
 	}
 }
 

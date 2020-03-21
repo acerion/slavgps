@@ -146,24 +146,6 @@ namespace SlavGPS {
 		sg_ret coord_to_screen_pos(const Coord & coord, ScreenPos & pos) const;
 
 
-		/* GisViewport's zoom. */
-
-		/* Functions doing zoom in/out in following way: a geo
-		   point with specific geo coordinates that was at
-		   center screen position of center area of viewport
-		   when zooming started, will be still at the center
-		   screen position of center area of viewport when the
-		   zooming ends.
-
-		   The geo point that was in a center of viewport will
-		   have the same screen position after zoom ended as
-		   it had before zoom started.
-
-		   @return true if zoom operation succeeded
-		   @return false if zoom operation failed
-		*/
-		bool zoom_in_on_center_pixel(int n_times = 1);
-		bool zoom_out_on_center_pixel(int n_times = 1);
 
 		sg_ret set_viking_scale(double new_value);
 		sg_ret set_viking_scale_x(double new_value);
@@ -186,25 +168,42 @@ namespace SlavGPS {
 
 
 
+		/* GisViewport's zoom. */
 
+		/* Given screen position will be put at the center of
+		   viewport, and zoom operation will be performed.
 
-		/* Clicked location will be put at the center of
-		   viewport (coordinate of a place under cursor before
-		   zoom will be placed at the center of viewport after
-		   zoom). */
-		bool zoom_move_coordinate_to_center(ZoomDirection zoom_direction, const ScreenPos & event_pos);
+		   Coordinate of a place under cursor before zoom will
+		   be placed at the center of viewport after zoom. */
+		bool zoom_with_setting_new_center(ZoomDirection zoom_direction, const ScreenPos & event_pos);
 
 		/* Location at the center of viewport will be
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
-		bool zoom_with_preserving_center_coord(ZoomDirection zoom_direction, const ScreenPos & center_pos);
+		bool zoom_with_preserving_center_coord(ZoomDirection zoom_direction);
 
 		/* Clicked coordinate will be put after zoom at the same
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
 		bool zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction, const ScreenPos & event_pos, const ScreenPos & center_pos);
+
+		/* Functions doing zoom in/out in following way: a geo
+		   point with specific geo coordinates that was at
+		   center screen position of center area of viewport
+		   when zooming started, will be still at the center
+		   screen position of center area of viewport when the
+		   zooming ends.
+
+		   The geo point that was in a center of viewport will
+		   have the same screen position after zoom ended as
+		   it had before zoom started.
+
+		   @return true if zoom operation succeeded
+		   @return false if zoom operation failed
+		*/
+		bool zoom_on_center_pixel(ZoomDirection zoom_direction, int n_times = 1);
 
 		sg_ret zoom_to_show_bbox(const LatLonBBox & bbox);
 		sg_ret zoom_to_show_bbox_common(const LatLonBBox & bbox, double zoom, bool save_position);

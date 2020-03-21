@@ -121,7 +121,7 @@ namespace SlavGPS {
 
 
 	enum class ZoomDirection {
-		Noop,    /* Don't change zoom. */
+		None,    /* Don't change zoom. */
 		In,      /* Zoom in. */
 		Out      /* Zoom out. */
 	};
@@ -131,6 +131,8 @@ namespace SlavGPS {
 
 	ZoomDirection mouse_event_to_zoom_direction(const QMouseEvent * event);
 	ZoomDirection wheel_event_to_zoom_direction(const QWheelEvent * event);
+	ZoomDirection key_sequence_to_zoom_direction(const QKeySequence & seq);
+	QString zoom_direction_to_string(ZoomDirection zoom_direction);
 
 
 
