@@ -326,7 +326,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 	/* Did the zoom operation affect viewport? */
 	bool redraw_viewport = false;
 
-	this->ztr_is_active = false;
+	this->ztr.abort(this->gisview); /* Reset, just int case. */
 
 	const ZoomDirection zoom_direction = mouse_event_to_zoom_direction(event);
 
@@ -360,9 +360,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 
 		switch (zoom_direction) {
 		case ZoomDirection::In:
-			this->ztr_is_active = true;
-			this->ztr_start = event_pos;
-			this->ztr_orig_viewport_pixmap = this->gisview->get_pixmap();
+			this->ztr.begin(gisview, event_pos);
 			break;
 		default:
 			break;
@@ -402,57 +400,30 @@ LayerTool::Status GenericToolZoom::handle_mouse_move(__attribute__((unused)) Lay
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
+	if (!this->ztr.is_active()) {
+		qDebug() << SG_PREFIX_I << "ZTR is NOT active";
+		return LayerTool::Status::Ignored;
+	}
+	qDebug() << SG_PREFIX_I << "ZTR is active";
+
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
+	if (modifiers != Qt::ShiftModifier) {
 
-	if (this->ztr_is_active && modifiers != Qt::ShiftModifier) {
-
-		/* When user pressed left mouse button, he also held
-		   down Shift key.  This initiated drawing a "zoom to
-		   rectangle" box/bound.
+		/* When user initially pressed left mouse button, he
+		   also held down Shift key.  This initiated drawing a
+		   "zoom to rectangle" box/bound (zoom-to-rectangle
+		   became active).
 
 		   Right now Shift key is released, so stop drawing
 		   the box and abort "zoom to rectangle" procedure. */
 
-		this->ztr_is_active = false;
+		qDebug() << SG_PREFIX_I << "ZTR is active without Shift key, resetting it";
+		this->ztr.abort(this->gisview); /* Stop drawing a rectangle. */
 		return LayerTool::Status::Handled;
 	}
 
-	/* Update shape and size of "zoom to rectangle" box. The box
-	   may grow, shrink, change proportions, but at least one of
-	   its corners is always fixed.
-
-	   Calculate new starting point & size of the box, in
-	   pixels. */
-
-	int xx, yy, width, height;
-	if (event->y() > this->ztr_start.y()) {
-		yy = this->ztr_start.y();
-		height = event->y() - this->ztr_start.y();
-	} else {
-		yy = event->y();
-		height = this->ztr_start.y() - event->y();
-	}
-	if (event->x() > this->ztr_start.x()) {
-		xx = this->ztr_start.x();
-		width = event->x() - this->ztr_start.x();
-	} else {
-		xx = event->x();
-		width = this->ztr_start.x() - event->x();
-	}
-
-
-	/* Draw the box on saved state of viewport and tell viewport to display it. */
-	QPixmap marked_pixmap = this->ztr_orig_viewport_pixmap;
-	QPainter painter(&marked_pixmap);
-	QPen new_pen(QColor("red"));
-	new_pen.setWidth(1);
-	painter.setPen(new_pen);
-	painter.drawRect(xx, yy, width, height);
-	this->gisview->set_pixmap(marked_pixmap);
-
-	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
-	this->gisview->update();
-
+	qDebug() << SG_PREFIX_I << "ZTR is active, drawing rectangle";
+	this->ztr.draw_rectangle(this->gisview, event->localPos());
 	return LayerTool::Status::Handled;
 }
 
@@ -468,53 +439,140 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 	}
 
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
-	const ScreenPos event_pos(event->x(), event->y());
+	const ScreenPos event_pos = event->localPos();
 
-	/* Did the zoom operation affect viewport? */
-	bool redraw_viewport = false;
+	/* Has the viewport changed and do we need to redraw items
+	   tree into this viewport? */
+	bool redraw_tree = false;
 
-	if (this->ztr_is_active) {
-		/* Ensure that we haven't just released mouse button
-		   on the exact same position i.e. probably haven't
-		   moved the mouse at all. */
-		if (modifiers == Qt::ShiftModifier && (std::fabs(event_pos.x() - this->ztr_start.x()) >= 5) && (std::fabs(event_pos.y() - this->ztr_start.y()) >= 5)) {
+	if (this->ztr.is_active()) {
+		if (modifiers == Qt::ShiftModifier) {
+			if (SlavGPS::are_closer_than(event_pos, this->ztr.m_start_pos, 5)) {
+				/* We have just released mouse button
+				   on the exact same position
+				   i.e. probably haven't moved the
+				   mouse at all. Don't do anything. */
+				;
+			} else {
+				const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr.m_start_pos);
+				const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);
 
-			const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr_start);
-			const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);
-
-			/* From the extend of the bounds pick the best zoom level. */
-			const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
-			this->gisview->zoom_to_show_bbox_common(bbox, SG_GISVIEWPORT_ZOOM_MIN, false);
-			redraw_viewport = true;
+				/* From the extend of the bounds pick the best zoom level. */
+				const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
+				if (sg_ret::ok == this->gisview->zoom_to_show_bbox_common(bbox, SG_GISVIEWPORT_ZOOM_MIN, false)) {
+					redraw_tree = true;
+				} else {
+					/* For some reason the zoom operation failed. */
+				}
+				this->ztr.end();
+			}
+		} else {
+			/* User first released Shift key and (without
+			   moving the mouse cursor) also left mouse
+			   key. Don't zoom. */
+			this->ztr.abort(this->gisview);
 		}
 	} else {
-		/* When pressing shift and clicking for zoom, then
-		   change zoom by three levels (zoom in * 3, or zoom
-		   out * 3). */
 		if (modifiers == Qt::ShiftModifier) {
-			/* Zoom in/out by three if possible. */
-
-			this->gisview->move_screen_pos_to_center(event_pos);
-			const bool zoomed = this->gisview->zoom_on_center_pixel(mouse_event_to_zoom_direction(event), 3);
-
-			if (!zoomed) {
+			const bool zoomed = this->gisview->zoom_with_setting_new_center(mouse_event_to_zoom_direction(event), event_pos);
+			if (zoomed) {
+				redraw_tree = true;
+			} else {
 				/* For some reason the zoom operation failed. */
-				redraw_viewport = true;
 			}
 		}
 	}
 
-	if (redraw_viewport) {
+	if (redraw_tree) {
 		this->window->draw_tree_items(this->gisview);
 	}
 
-	/* Reset "zoom to rectangle" tool.
-	   If there was any rectangle drawn in viewport, it has
-	   already been erased when zoomed-in or zoomed-out viewport
-	   has been redrawn from scratch. */
-	this->ztr_is_active = false;
-
 	return LayerTool::Status::Handled;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-22
+*/
+ZoomToRectangle::ZoomToRectangle()
+{
+	this->m_pen.setColor(QColor("red"));
+	this->m_pen.setWidth(1);
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-22
+*/
+sg_ret ZoomToRectangle::draw_rectangle(GisViewport * gisview, const ScreenPos & cursor_pos)
+{
+	QRectF zoom_rect(this->m_start_pos, cursor_pos);
+
+	/* Draw the rectangle on saved state of viewport. */
+	QPixmap marked_pixmap = this->m_orig_viewport_pixmap;
+	QPainter painter(&marked_pixmap);
+	painter.setPen(this->m_pen);
+	painter.drawRect(zoom_rect.normalized());
+	painter.end();
+
+	gisview->set_pixmap(marked_pixmap);
+	/* This will call GisViewport::paintEvent(), triggering final
+	   render of pixmap with rectangle to screen. */
+	gisview->update();
+
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-22
+*/
+sg_ret ZoomToRectangle::begin(GisViewport * gisview, const ScreenPos & cursor_pos)
+{
+	this->m_is_active = true;
+	this->m_start_pos = cursor_pos;
+	this->m_orig_viewport_pixmap = gisview->get_pixmap();
+
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-22
+*/
+sg_ret ZoomToRectangle::end(void)
+{
+	if (!this->m_orig_viewport_pixmap.isNull()) {
+		this->m_orig_viewport_pixmap = QPixmap(); /* Invalidate pixmap. */
+	}
+	this->m_is_active = false;
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on 2020-03-22
+*/
+sg_ret ZoomToRectangle::abort(GisViewport * gisview)
+{
+	if (!this->m_orig_viewport_pixmap.isNull()) {
+		/* Remove any artifacts - old zoom rectangle. */
+		gisview->set_pixmap(this->m_orig_viewport_pixmap);
+		gisview->update();
+		this->m_orig_viewport_pixmap = QPixmap(); /* Invalidate pixmap. */
+	}
+	this->m_is_active = false;
+	return sg_ret::ok;
 }
 
 

@@ -49,6 +49,60 @@ namespace SlavGPS {
 	};
 
 
+	class ZoomToRectangle {
+	public:
+		ZoomToRectangle();
+
+		/*
+		  Draw in viewport a rectangle that is starting at
+		  position registered when ZoomToRectangle::begin()
+		  was called, and that is ending in position @param
+		  cursor_pos.
+
+		  This method should be called each time the tool is
+		  active and a cursor has been moved.
+		*/
+		sg_ret draw_rectangle(GisViewport * gisview, const ScreenPos & cursor_pos);
+
+		/* To be called when zoom-to-rectangle operation is started. */
+		sg_ret begin(GisViewport * gisview, const ScreenPos & cursor_pos);
+
+		/*
+		  To be called when zoom-to-rectangle operation is
+		  completed (user released left mouse button while
+		  Shift key was still pressed).
+
+		  This method doesn't trigger update of viewport by
+		  itself. It relies on consecutive call to a function
+		  that will redraw the items tree in zoomed-in/out
+		  viewport.
+		*/
+		sg_ret end(void);
+
+		/*
+		  To be called when zoom-to-rectangle operation is
+		  interrupted (user released Shift key while left
+		  mouse was still pressed).
+
+		  This method may call GisViewport::update() to clean
+		  up any artifacts that remained after interrupted
+		  zoom.
+		*/
+		sg_ret abort(GisViewport * gisview);
+
+		bool is_active(void) const { return this->m_is_active; }
+
+		/* These event coordinates indicate pixel in Qt's
+		   coordinate system, where beginning is in top-left
+		   corner of screen. */
+		ScreenPos m_start_pos;
+
+	private:
+		QPen m_pen;
+		bool m_is_active = false;
+		QPixmap m_orig_viewport_pixmap; /* Pixmap with saved viewport's state without "zoom to rectangle" mark. */
+	};
+
 
 
 	class GenericToolZoom : public LayerTool {
@@ -65,15 +119,7 @@ namespace SlavGPS {
 		LayerTool::Status handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 
 	private:
-		/* "ztr" == "zoom to rectangle". */
-		bool ztr_is_active = false;
-
-		/* These event coordinates indicate pixel in Qt's
-		   coordinate system, where beginning is in top-left
-		   corner of screen. */
-		ScreenPos ztr_start;
-
-		QPixmap ztr_orig_viewport_pixmap; /* Pixmap with saved viewport's state without "zoom to rectangle" mark. */
+		ZoomToRectangle ztr;
 	};
 
 
