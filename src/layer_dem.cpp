@@ -990,10 +990,10 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 {
 	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 10); /* TODO_LATER: smarter calculation. */
 
-	Coord coord_ul = gisview.screen_pos_to_coord(ScreenPosition::UpperLeft);
-	Coord coord_ur = gisview.screen_pos_to_coord(ScreenPosition::UpperRight);
-	Coord coord_bl = gisview.screen_pos_to_coord(ScreenPosition::BottomLeft);
-	Coord coord_br = gisview.screen_pos_to_coord(ScreenPosition::BottomRight);
+	Coord coord_ul = gisview.screen_corner_to_coord(ScreenCorner::UpperLeft);
+	Coord coord_ur = gisview.screen_corner_to_coord(ScreenCorner::UpperRight);
+	Coord coord_bl = gisview.screen_corner_to_coord(ScreenCorner::BottomLeft);
+	Coord coord_br = gisview.screen_corner_to_coord(ScreenCorner::BottomRight);
 	coord_ul.recalculate_to_mode(CoordMode::UTM);
 	coord_ur.recalculate_to_mode(CoordMode::UTM);
 	coord_bl.recalculate_to_mode(CoordMode::UTM);
@@ -1641,7 +1641,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 /* Mouse button released when "Download Tool" for DEM layer is active. */
 bool LayerDEM::download_selected_tile(const QMouseEvent * ev, const LayerTool * tool)
 {
-	const Coord coord = tool->gisview->screen_pos_to_coord(ev->x(), ev->y());
+	const Coord coord = tool->gisview->screen_pos_to_coord(ev->localPos());
 	const LatLon lat_lon = coord.get_lat_lon();
 
 	qDebug() << SG_PREFIX_I << "received event, processing, lat/lon =" << lat_lon;

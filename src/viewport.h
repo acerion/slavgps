@@ -103,12 +103,13 @@ namespace SlavGPS {
 
 
 	/* Enum created to avoid using specific pixel values. */
-	enum class ScreenPosition {
+	enum class ScreenCorner {
 		UpperLeft,
 		UpperRight,
 		BottomLeft,
 		BottomRight
 	};
+
 
 
 
@@ -125,15 +126,13 @@ namespace SlavGPS {
 	class ScreenPos : public QPointF {
 	public:
 		ScreenPos() {};
+		ScreenPos(const QPointF & point) : QPointF(point.x(), point.y())  {};
 		ScreenPos(fpixel x, fpixel y) : QPointF(x, y) {};
 
-		void set(fpixel x, fpixel y);
-
-		bool operator==(const ScreenPos & pos) const;
-
-		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
-		static bool are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit);
+		//bool operator==(const ScreenPos & pos) const;
 	};
+	ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
+	bool are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit);
 	QDebug operator<<(QDebug debug, const ScreenPos & screen_pos);
 
 

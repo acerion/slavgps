@@ -112,8 +112,8 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
 	int MAXIMUM_WIDTH = central_width * RELATIVE_WIDTH;
 
-	const Coord left  = gisview.screen_pos_to_coord(leftmost_pixel,                                  y_center_pixel);
-	const Coord right = gisview.screen_pos_to_coord(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel);
+	const Coord left  = gisview.screen_pos_to_coord(ScreenPos(leftmost_pixel,                                  y_center_pixel));
+	const Coord right = gisview.screen_pos_to_coord(ScreenPos(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel));
 
 	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);

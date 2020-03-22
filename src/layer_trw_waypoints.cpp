@@ -261,7 +261,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 		}
 
 		ScreenPos wp_pos;
-		search.gisview->coord_to_screen_pos(wp->get_coord(), wp_pos);
+		search.m_gisview->coord_to_screen_pos(wp->get_coord(), wp_pos);
 
 		bool found = false;
 
@@ -271,16 +271,16 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 			int slackx = wp->drawn_image_rect.width() / 2;
 			int slacky = wp->drawn_image_rect.height() / 2;
 
-			if (wp_pos.x() <= search.x + slackx
-			    && wp_pos.x() >= search.x - slackx
-			    && wp_pos.y() <= search.y + slacky
-			    && wp_pos.y() >= search.y - slacky) {
+			if (wp_pos.x() <= search.m_event_pos.x() + slackx
+			    && wp_pos.x() >= search.m_event_pos.x() - slackx
+			    && wp_pos.y() <= search.m_event_pos.y() + slacky
+			    && wp_pos.y() >= search.m_event_pos.y() - slacky) {
 
 				found = true;
 			}
 		} else {
-			const int dist_x = std::fabs(wp_pos.x() - search.x);
-			const int dist_y = std::fabs(wp_pos.y() - search.y);
+			const int dist_x = std::fabs(wp_pos.x() - search.m_event_pos.x());
+			const int dist_y = std::fabs(wp_pos.y() - search.m_event_pos.y());
 
 			if (dist_x <= WAYPOINT_SIZE_APPROX && dist_y <= WAYPOINT_SIZE_APPROX
 			    && ((!search.closest_wp)
@@ -301,7 +301,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 
 
 
-QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisViewport * gisview)
+QString LayerTRWWaypoints::tool_show_picture_wp(const ScreenPos & event_pos, GisViewport * gisview)
 {
 	QString found;
 
@@ -327,8 +327,8 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisVie
 
 		int slackx = wp->drawn_image_rect.width() / 2;
 		int slacky = wp->drawn_image_rect.height() / 2;
-		if (wp_pos.x() <= event_x + slackx && wp_pos.x() >= event_x - slackx
-		    && wp_pos.y() <= event_y + slacky && wp_pos.y() >= event_y - slacky) {
+		if (wp_pos.x() <= event_pos.x() + slackx && wp_pos.x() >= event_pos.x() - slackx
+		    && wp_pos.y() <= event_pos.y() + slacky && wp_pos.y() >= event_pos.y() - slacky) {
 
 			found = wp->image_full_path;
 			/* We've found a match. However continue searching

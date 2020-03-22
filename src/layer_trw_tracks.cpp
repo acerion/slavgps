@@ -419,10 +419,10 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
 			ScreenPos tp_pos;
-			search.gisview->coord_to_screen_pos((*iter)->coord, tp_pos);
+			search.m_gisview->coord_to_screen_pos((*iter)->coord, tp_pos);
 
-			const int dist_x = std::fabs(tp_pos.x() - search.x);
-			const int dist_y = std::fabs(tp_pos.y() - search.y);
+			const int dist_x = std::fabs(tp_pos.x() - search.m_event_pos.x());
+			const int dist_y = std::fabs(tp_pos.y() - search.m_event_pos.y());
 
 			if (NULL != search.skip_tp && search.skip_tp == *iter) {
 				continue;
@@ -1011,12 +1011,11 @@ void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 
 
 
-TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, GisViewport * new_gisview)
+TrackpointSearch::TrackpointSearch(const ScreenPos & event_pos, GisViewport * gisview)
 {
-	this->x = ev_x;
-	this->y = ev_y;
-	this->gisview = new_gisview;
-	this->bbox = this->gisview->get_bbox();
+	this->m_event_pos = event_pos;
+	this->m_gisview = gisview;
+	this->bbox = this->m_gisview->get_bbox();
 }
 
 

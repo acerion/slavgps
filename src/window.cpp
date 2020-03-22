@@ -1324,7 +1324,7 @@ void Window::pan_click(QMouseEvent * ev)
 	this->pan_move_in_progress = false;
 
 	/* Set panning origin. */
-	this->pan_pos = ScreenPos(ev->x(), ev->y());
+	this->pan_pos = ev->localPos();
 }
 
 
@@ -1340,7 +1340,7 @@ void Window::pan_move(QMouseEvent * ev)
 		}
 
 		this->pan_move_in_progress = true;
-		this->pan_pos = ScreenPos(ev->x(), ev->y());
+		this->pan_pos = ev->localPos();
 		this->m_main_gisview->request_redraw("pan move");
 	}
 }
@@ -1362,7 +1362,8 @@ sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 	if (pan_delta_x != 0 || pan_delta_y != 0) {
 		/* "Move a screen pixel that is delta x/y from center
 		   of viewport, into a center of viewport. */
-		return this->m_main_gisview->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
+		const ScreenPos new_pos(center_x - pan_delta_x, center_y - pan_delta_y);
+		return this->m_main_gisview->move_screen_pos_to_center(new_pos);
 	} else {
 		/* There was no movement. */
 		return sg_ret::ok;
@@ -1394,7 +1395,7 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			if (sg_ret::ok != this->m_main_gisview->set_center_coord(this->pan_pos)) {
+			if (sg_ret::ok != this->m_main_gisview->move_screen_pos_to_center(this->pan_pos)) {
 				do_draw = false;
 			}
 		}
@@ -2809,28 +2810,29 @@ void Window::menu_view_pan_cb(void)
 		return;
 	}
 
-	GisViewport * v = this->m_main_gisview;
+	const GisViewport * v = this->m_main_gisview;
 	const fpixel x_center_pixel = v->central_get_x_center_pixel();
 	const fpixel y_center_pixel = v->central_get_y_center_pixel();
 
+	ScreenPos new_pos;
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_coord(x_center_pixel, v->central_get_topmost_pixel()); /* Move topmost pixel to center. */
+		new_pos = ScreenPos(x_center_pixel, v->central_get_topmost_pixel()); /* Move topmost pixel to center. */
 		break;
 	case PAN_EAST:
-		v->set_center_coord(v->central_get_rightmost_pixel(), y_center_pixel); /* Move rightmost pixel to center. */
+		new_pos = ScreenPos(v->central_get_rightmost_pixel(), y_center_pixel); /* Move rightmost pixel to center. */
 		break;
 	case PAN_SOUTH:
-		v->set_center_coord(x_center_pixel, v->central_get_bottommost_pixel()); /* Move bottommost pixel to center. */
+		new_pos = ScreenPos(x_center_pixel, v->central_get_bottommost_pixel()); /* Move bottommost pixel to center. */
 		break;
 	case PAN_WEST:
-		v->set_center_coord(v->central_get_leftmost_pixel(), y_center_pixel); /* Move leftmost pixel to center. */
+		new_pos = ScreenPos(v->central_get_leftmost_pixel(), y_center_pixel); /* Move leftmost pixel to center. */
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown pan direction" << direction;;
-		break;
+		return;
 	}
-
+	this->m_main_gisview->move_screen_pos_to_center(new_pos);
 	this->m_main_gisview->request_redraw("pan from menu");
 }
 

@@ -137,8 +137,7 @@ namespace SlavGPS {
 		   Pixel coordinates passed to the functions are in
 		   Qt's coordinate system, where beginning (0,0 point)
 		   is in top-left corner. */
-		Coord screen_pos_to_coord(ScreenPosition screen_pos) const;
-		Coord screen_pos_to_coord(fpixel x, fpixel y) const;
+		Coord screen_corner_to_coord(ScreenCorner screen_corner) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
 
 		/* Coordinate transformations. */
@@ -215,11 +214,14 @@ namespace SlavGPS {
 		sg_ret set_center_coord(const UTM & utm, bool save_position = true);
 		sg_ret set_center_coord(const LatLon & lat_lon, bool save_position = true);
 
-		/* These pixel coordinates should be in Qt's
-		   coordinate system, where beginning (point 0,0) is
-		   in upper-left corner. */
-		sg_ret set_center_coord(fpixel x, fpixel y);
-		sg_ret set_center_coord(const ScreenPos & pos);
+		/**
+		   Shift a viewport so that given point in the
+		   viewport is placed in the center position
+
+		   A point that can be anywhere is moved to center of
+		   viewport.
+		*/
+		sg_ret move_screen_pos_to_center(const ScreenPos & pos);
 
 
 		/* These methods belong to GisViewport because only
@@ -410,7 +412,7 @@ namespace SlavGPS {
 		/**
 		   @param direction decides in which direction the arrow head will be pointing. -1 or +1.
 		*/
-		void set_arrow_tip(int x, int y, int direction = 1);
+		void set_arrow_tip(const ScreenPos & pos, int direction = 1);
 
 		sg_ret paint(QPainter & painter, double dx, double dy);
 
@@ -418,9 +420,8 @@ namespace SlavGPS {
 		double cosine_factor = 0.0;
 		double sine_factor = 0.0;
 
-		int tip_x = 0;
-		int tip_y = 0;
-		int direction = 1;
+		ScreenPos m_tip;
+		int m_direction = 1;
 	};
 
 

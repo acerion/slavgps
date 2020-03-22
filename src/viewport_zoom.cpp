@@ -274,7 +274,7 @@ QString SlavGPS::zoom_direction_to_string(ZoomDirection zoom_direction)
 bool GisViewport::zoom_with_setting_new_center(ZoomDirection zoom_direction, const ScreenPos & new_center_pos)
 {
 	const Coord orig_center_coord = this->get_center_coord();
-	if (sg_ret::ok != this->set_center_coord(new_center_pos)) {
+	if (sg_ret::ok != this->move_screen_pos_to_center(new_center_pos)) {
 		return false;
 	}
 	if (!this->zoom_on_center_pixel(zoom_direction)) {
@@ -311,7 +311,9 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		ScreenPos orig_pos;
 		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+		const ScreenPos new_pos(center_pos.x() + (orig_pos.x() - event_pos.x()),
+					center_pos.y() + (orig_pos.y() - event_pos.y()));
+		if (sg_ret::ok != this->move_screen_pos_to_center(new_pos)) {
 			this->zoom_on_center_pixel(ZoomDirection::Out);
 			return false;
 		}
@@ -330,7 +332,9 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 		ScreenPos orig_pos;
 		this->coord_to_screen_pos(coord_under_cursor, orig_pos);
 
-		if (sg_ret::ok != this->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()))) {
+		const ScreenPos new_pos(center_pos.x() + (orig_pos.x() - event_pos.x()),
+					center_pos.y() + (orig_pos.y() - event_pos.y()));
+		if (sg_ret::ok != this->move_screen_pos_to_center(new_pos)) {
 			this->zoom_on_center_pixel(ZoomDirection::In);
 			return false;
 		}

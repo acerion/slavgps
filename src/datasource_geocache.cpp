@@ -169,8 +169,8 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		const int rightmost_pixel = this->gisview->central_get_rightmost_pixel();
 
 		/* Determine miles per pixel. */
-		const Coord coord1 = this->gisview->screen_pos_to_coord(leftmost_pixel, y_center_pixel);
-		const Coord coord2 = this->gisview->screen_pos_to_coord(rightmost_pixel, y_center_pixel);
+		const Coord coord1 = this->gisview->screen_pos_to_coord(ScreenPos(leftmost_pixel, y_center_pixel));
+		const Coord coord2 = this->gisview->screen_pos_to_coord(ScreenPos(rightmost_pixel, y_center_pixel));
 		const double pixels_per_meter = ((double) width) / Coord::distance(coord1, coord2);
 
 		/* This is approximate. */

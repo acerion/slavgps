@@ -54,8 +54,8 @@ namespace SlavGPS {
 		   coordinates of pixel in Qt's coordinate system,
 		   where beginning (point 0,0) is in upper-left
 		   corner. */
-		void set_begin(int begin_x, int begin_y);
-		void set_end(int end_x, int end_y);
+		void set_begin(const ScreenPos & pos);
+		void set_end(const ScreenPos & pos);
 
 		void set_total_distance(const Distance & new_total_distance) { this->total_distance = new_total_distance; }
 		void set_line_pen(const QPen & pen) { this->line_pen = pen; }
@@ -72,10 +72,8 @@ namespace SlavGPS {
 		/* These coordinates of beginning and end of ruler are
 		   in Qt's coordinate system, where beginning (pixel
 		   0,0) is in upper-left corner. */
-		fpixel begin_x = 0;
-		fpixel begin_y = 0;
-		fpixel end_x = 0;
-		fpixel end_y = 0;
+		ScreenPos m_begin_pos;
+		ScreenPos m_end_pos;
 
 		double dx = 0;
 		double dy = 0;

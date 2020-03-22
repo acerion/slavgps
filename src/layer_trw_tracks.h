@@ -91,22 +91,21 @@ namespace SlavGPS {
 
 	class TrackpointSearch {
 	public:
-		TrackpointSearch(int ev_x, int ev_y, GisViewport * gisview);
+		TrackpointSearch(const ScreenPos & event_pos, GisViewport * gisview);
 
 		/* Input. */
-		int x = 0;
-		int y = 0;
-		GisViewport * gisview = NULL;
+		ScreenPos m_event_pos;
+		GisViewport * m_gisview = nullptr;
 		LatLonBBox bbox;
 		/* A trackpoint that we want to ignore during
 		   search. Used by code searching for snap coordinates
 		   to avoid snapping to ourselves. */
-		Trackpoint * skip_tp = NULL;
+		Trackpoint * skip_tp = nullptr;
 
 		/* Output. */
 		ScreenPos closest_pos;
-		Track * closest_track = NULL;
-		Trackpoint * closest_tp = NULL;
+		Track * closest_track = nullptr;
+		Trackpoint * closest_tp = nullptr;
 
 		TrackPoints::iterator closest_tp_iter;
 	};

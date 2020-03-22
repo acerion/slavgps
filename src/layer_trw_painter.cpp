@@ -145,8 +145,8 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 		   "3 * x", just to be sure. */
 		const int outside_margin = 3 * std::max(this->trackpoint_size, this->wp_marker_size);
 
-		const Coord upperleft = this->gisview->screen_pos_to_coord(this->vp_central_rect.x() - outside_margin, this->vp_central_rect.y() - outside_margin);
-		const Coord bottomright = this->gisview->screen_pos_to_coord(this->vp_central_rect.width() + outside_margin, this->vp_central_rect.height() + outside_margin);
+		const Coord upperleft = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.x() - outside_margin, this->vp_central_rect.y() - outside_margin));
+		const Coord bottomright = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.width() + outside_margin, this->vp_central_rect.height() + outside_margin));
 
 		this->coord_leftmost = upperleft.lat_lon.lon;
 		this->coord_rightmost = bottomright.lat_lon.lon;
@@ -367,7 +367,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			ScreenPos end_pos;
 			this->gisview->coord_to_screen_pos(end_coord, end_pos);
 
-			const Coord av_coord = this->gisview->screen_pos_to_coord(ScreenPos::get_average(begin_pos, end_pos));
+			const Coord av_coord = this->gisview->screen_pos_to_coord(SlavGPS::get_average(begin_pos, end_pos));
 
 			QString name = QObject::tr("%1: start/end").arg(ename);
 			this->draw_track_label(name, fg_color, bg_color, av_coord);
@@ -439,7 +439,7 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 		QPainter & painter = this->gisview->get_painter();
 		painter.setPen(pen);
 
-		this->track_arrow.set_arrow_tip(midx, midy);
+		this->track_arrow.set_arrow_tip(ScreenPos(midx, midy));
 		this->track_arrow.paint(painter, dx, dy);
 	}
 }

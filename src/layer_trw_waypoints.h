@@ -110,23 +110,21 @@ namespace SlavGPS {
 
 	class WaypointSearch {
 	public:
-		WaypointSearch(int ev_x, int ev_y, GisViewport * new_gisview) :
-			x(ev_x),
-			y(ev_y),
-			gisview(new_gisview) {};
+		WaypointSearch(const ScreenPos & event_pos, GisViewport * gisview) :
+			m_event_pos(event_pos),
+			m_gisview(gisview) {};
 
 		/* Input. */
-		int x = 0;
-		int y = 0;
-		GisViewport * gisview = NULL;
+		const ScreenPos m_event_pos;
+		GisViewport * m_gisview = nullptr;
 		/* A waypoint that we want to ignore during
 		   search. Used by code searching for snap coordinates
 		   to avoid snapping to ourselves. */
-		Waypoint * skip_wp = NULL;
+		Waypoint * skip_wp = nullptr;
 
 		/* Output. */
 		ScreenPos closest_pos;
-		Waypoint * closest_wp = NULL;
+		Waypoint * closest_wp = nullptr;
 	};
 
 
@@ -167,7 +165,7 @@ namespace SlavGPS {
 		Waypoint * find_waypoint_with_duplicate_name(void) const;
 
 		void search_closest_wp(WaypointSearch & search);
-		QString tool_show_picture_wp(int event_x, int event_y, GisViewport * gisview);
+		QString tool_show_picture_wp(const ScreenPos & event_pos, GisViewport * gisview);
 		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);
 

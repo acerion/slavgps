@@ -1527,24 +1527,36 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
 		const int width = gisview->central_get_width(); /* TODO_LATER: shouldn't we get central x/y pixels here? */
 		const int height = gisview->central_get_height();
-		fpixel vx, vy;
+		fpixel pos_x = 0;
+		fpixel pos_y = 0;
 
-		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
+		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &pos_x, &pos_y)) {
 			viewport_shifted = true;
-			if (vx < (width/hdiv)) {
-				gisview->set_center_coord(vx - width/2 + width/hdiv + px, vy);
+			ScreenPos new_pos;
+			if (pos_x < (width/hdiv)) {
+				new_pos.setX(pos_x - width/2 + width/hdiv + px);
+				new_pos.setY(pos_y);
+				viewport_shifted = true;
 
-			} else if (vx > (width - width/hdiv)) {
-				gisview->set_center_coord(vx + width/2 - width/hdiv - px, vy);
+			} else if (pos_x > (width - width/hdiv)) {
+				new_pos.setX(pos_x + width/2 - width/hdiv - px);
+				new_pos.setY(pos_y);
+				viewport_shifted = true;
 
-			} else if (vy < (height/vdiv)) {
-				gisview->set_center_coord(vx, vy - height/2 + height/vdiv + px);
+			} else if (pos_y < (height/vdiv)) {
+				new_pos.setX(pos_x);
+				new_pos.setY(pos_y - height/2 + height/vdiv + px);
+				viewport_shifted = true;
 
-			} else if (vy > (height - height/vdiv)) {
-				gisview->set_center_coord(vx, vy + height/2 - height/vdiv - px);
-
+			} else if (pos_y > (height - height/vdiv)) {
+				new_pos.setX(pos_x);
+				new_pos.setY(pos_y + height/2 - height/vdiv - px);
+				viewport_shifted = true;
 			} else {
 				viewport_shifted = false;
+			}
+			if (viewport_shifted) {
+				gisview->move_screen_pos_to_center(new_pos);
 			}
 		}
 	} else {

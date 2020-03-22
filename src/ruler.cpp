@@ -68,29 +68,27 @@ Ruler::Ruler(GisViewport * new_gisview, DistanceType::Unit new_distance_unit)
 
 
 
-void Ruler::set_begin(int begin_x_, int begin_y_)
+void Ruler::set_begin(const ScreenPos & pos)
 {
-	this->begin_x = begin_x_;
-	this->begin_y = begin_y_;
-	this->begin_arrow.set_arrow_tip(this->begin_x, this->begin_y, 1);
+	this->m_begin_pos = pos;
+	this->begin_arrow.set_arrow_tip(this->m_begin_pos, 1);
 
-	this->begin_coord = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
+	this->begin_coord = this->gisview->screen_pos_to_coord(this->m_begin_pos);
 }
 
 
 
 
-void Ruler::set_end(int end_x_, int end_y_)
+void Ruler::set_end(const ScreenPos & pos)
 {
-	this->end_x = end_x_;
-	this->end_y = end_y_;
-	this->end_arrow.set_arrow_tip(this->end_x, this->end_y, -1);
+	this->m_end_pos = pos;
+	this->end_arrow.set_arrow_tip(this->m_end_pos, -1);
 
-	this->end_coord = this->gisview->screen_pos_to_coord(this->end_x, this->end_y);
+	this->end_coord = this->gisview->screen_pos_to_coord(this->m_end_pos);
 
-	const double len = sqrt((this->begin_x - this->end_x) * (this->begin_x - this->end_x) + (this->begin_y - this->end_y) * (this->begin_y - this->end_y));
-	this->dx = (this->end_x - this->begin_x) / len * 10;
-	this->dy = (this->end_y - this->begin_y) / len * 10;
+	const double len = sqrt((this->m_begin_pos.x() - this->m_end_pos.x()) * (this->m_begin_pos.x() - this->m_end_pos.x()) + (this->m_begin_pos.y() - this->m_end_pos.y()) * (this->m_begin_pos.y() - this->m_end_pos.y()));
+	this->dx = (this->m_end_pos.x() - this->m_begin_pos.x()) / len * 10;
+	this->dy = (this->m_end_pos.y() - this->m_begin_pos.y()) / len * 10;
 
 	/*
 	  angle: bearing in Radian
@@ -98,7 +96,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 	*/
 	this->angle.set_ll_value(atan2(this->dy, this->dx) + M_PI_2);
 	if (this->gisview->get_draw_mode() == GisViewportDrawMode::UTM) {
-		Coord test = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
+		Coord test = this->gisview->screen_pos_to_coord(this->m_begin_pos);
 		LatLon lat_lon = test.get_lat_lon();
 		/* TODO_LATER: get_height() or get_q_bottommost_pixel()? */
 		/* FIXME: magic number. */
@@ -108,7 +106,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 		ScreenPos test_pos;
 		this->gisview->coord_to_screen_pos(test, test_pos);
 
-		this->base_angle.set_ll_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
+		this->base_angle.set_ll_value(M_PI - atan2(test_pos.x() - this->m_begin_pos.x(), test_pos.y() - this->m_begin_pos.y()));
 		this->angle -= this->base_angle;
 	}
 	this->angle.normalize();
@@ -123,18 +121,24 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 {
 	painter.setPen(this->line_pen);
 
+	fpixel begin_x = this->m_begin_pos.x();
+	fpixel begin_y = this->m_begin_pos.y();
+	fpixel end_x = this->m_end_pos.x();
+	fpixel end_y = this->m_end_pos.y();
+
+
 	/* Draw line with arrow ends. */
 	if (1) {
-		GisViewport::clip_line(&this->begin_x, &this->begin_y, &this->end_x, &this->end_y);
+		GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
 		/* The main line. */
-		painter.drawLine(this->begin_x, this->begin_y, this->end_x, this->end_y);
+		painter.drawLine(begin_x, begin_y, end_x, end_y);
 
 		/* Bar anchored at the beginning of ruler. */
-		painter.drawLine(this->begin_x - this->dy, this->begin_y + this->dx, this->begin_x + this->dy, this->begin_y - this->dx);
+		painter.drawLine(begin_x - this->dy, begin_y + this->dx, begin_x + this->dy, begin_y - this->dx);
 
 		/* Bar anchored at the end of ruler. */
-		painter.drawLine(this->end_x - this->dy, this->end_y + this->dx, this->end_x + this->dy, this->end_y - this->dx);
+		painter.drawLine(end_x - this->dy, end_y + this->dx, end_x + this->dy, end_y - this->dx);
 
 		/* Arrow head at the beginning of ruler. */
 		this->begin_arrow.paint(painter, this->dx, this->dy);
@@ -154,9 +158,9 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 	if (1) {
 
 		/* Three full circles. */
-		painter.drawArc(this->begin_x - radius + radius_delta, this->begin_y - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
-		painter.drawArc(this->begin_x - radius,                this->begin_y - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
-		painter.drawArc(this->begin_x - radius - radius_delta, this->begin_y - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
+		painter.drawArc(begin_x - radius + radius_delta, begin_y - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
+		painter.drawArc(begin_x - radius,                begin_y - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
+		painter.drawArc(begin_x - radius - radius_delta, begin_y - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
 	}
 
 	/* Fill between middle and innermost circle. */
@@ -166,8 +170,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		painter.setPen(this->arc_pen);
 
-		painter.drawArc(this->begin_x - radius + radius_delta / 2,
-				this->begin_y - radius + radius_delta / 2,
+		painter.drawArc(begin_x - radius + radius_delta / 2,
+				begin_y - radius + radius_delta / 2,
 				2 * radius - radius_delta,
 				2 * radius - radius_delta,
 				start_angle, span_angle);
@@ -186,22 +190,22 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		for (int i = 0; i < 180; i += 5) {
 			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.ll_value());
 			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.ll_value());
-			painter.drawLine(this->begin_x + (radius-radius_delta) * cosine_factor,
-					 this->begin_y + (radius-radius_delta) * sine_factor, this->begin_x + (radius+ticksize) * cosine_factor,
-					 this->begin_y + (radius+ticksize) * sine_factor);
+			painter.drawLine(begin_x + (radius-radius_delta) * cosine_factor,
+					 begin_y + (radius-radius_delta) * sine_factor, begin_x + (radius+ticksize) * cosine_factor,
+					 begin_y + (radius+ticksize) * sine_factor);
 		}
 	}
 
 	if (1) {
 		/* Two axis inside a compass. */
-		painter.drawLine(this->begin_x - radius, this->begin_y,          this->begin_x + radius, this->begin_y);
-		painter.drawLine(this->begin_x,          this->begin_y - radius, this->begin_x,          this->begin_y + radius);
+		painter.drawLine(begin_x - radius, begin_y,          begin_x + radius, begin_y);
+		painter.drawLine(begin_x,          begin_y - radius, begin_x,          begin_y + radius);
 	}
 
 
 	/* Draw compass labels. */
 	if (1) {
-		painter.drawText(this->begin_x - 5, this->begin_y - radius - 3 * radius_delta - 8, "N");
+		painter.drawText(begin_x - 5, begin_y - radius - 3 * radius_delta - 8, "N");
 	}
 
 
@@ -231,16 +235,16 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		int label1_y;
 
 		if (this->dy > 0) {
-			label1_x = (this->begin_x + this->end_x) / 2 + this->dy;
-			label1_y = (this->begin_y + this->end_y) / 2 - label1_rect.height() / 2 - this->dx;
+			label1_x = (begin_x + end_x) / 2 + this->dy;
+			label1_y = (begin_y + end_y) / 2 - label1_rect.height() / 2 - this->dx;
 		} else {
-			label1_x = (this->begin_x + this->end_x) / 2 - this->dy;
-			label1_y = (this->begin_y + this->end_y) / 2 - label1_rect.height() / 2 + this->dx;
+			label1_x = (begin_x + end_x) / 2 - this->dy;
+			label1_y = (begin_y + end_y) / 2 - label1_rect.height() / 2 + this->dx;
 		}
 
 		if (label1_x < -5 || label1_y < -5 || label1_x > this->gisview->central_get_width() + 5 || label1_y > this->gisview->central_get_height() + 5) {
-			label1_x = this->end_x + 10;
-			label1_y = this->end_y - 5;
+			label1_x = end_x + 10;
+			label1_y = end_y - 5;
 		}
 
 		label1_rect.moveTo(label1_x, label1_y);
@@ -257,8 +261,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-		const int label2_x = this->begin_x - radius * cos(this->angle.ll_value() - M_PI_2) / 2;
-		const int label2_y = this->begin_y - radius * sin(this->angle.ll_value() - M_PI_2) / 2;
+		const int label2_x = begin_x - radius * cos(this->angle.ll_value() - M_PI_2) / 2;
+		const int label2_y = begin_y - radius * sin(this->angle.ll_value() - M_PI_2) / 2;
 
 		label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
 		label2_rect.adjust(-margin, -margin, margin, margin);

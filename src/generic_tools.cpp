@@ -170,14 +170,14 @@ LayerTool::Status GenericToolRuler::handle_mouse_click(__attribute__((unused)) L
 	} else {
 		qDebug() << SG_PREFIX_I << "first click, starting ruler";
 
-		const Coord cursor_coord = this->gisview->screen_pos_to_coord(event->x(), event->y());
+		const Coord cursor_coord = this->gisview->screen_pos_to_coord(event->localPos());
 		msg = cursor_coord.to_string();
 
 		/* Save clean viewport (clean == without ruler drawn on top of it). */
 		this->orig_viewport_pixmap = this->gisview->get_pixmap();
 
 		this->ruler = new Ruler(this->gisview, Preferences::get_unit_distance());
-		this->ruler->set_begin(event->x(), event->y());
+		this->ruler->set_begin(event->localPos());
 	}
 
 	this->window->statusbar()->set_message(StatusBarField::Info, msg);
@@ -206,7 +206,7 @@ LayerTool::Status GenericToolRuler::handle_mouse_move(__attribute__((unused)) La
 	   now. */
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	QPainter painter(&marked_pixmap);
-	this->ruler->set_end(event->x(), event->y());
+	this->ruler->set_end(event->localPos());
 	this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
 	this->gisview->set_pixmap(marked_pixmap);
 	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
@@ -361,8 +361,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_click(__attribute__((unused)) La
 		switch (zoom_direction) {
 		case ZoomDirection::In:
 			this->ztr_is_active = true;
-			this->ztr_start_x = event_pos.x();
-			this->ztr_start_y = event_pos.y();
+			this->ztr_start = event_pos;
 			this->ztr_orig_viewport_pixmap = this->gisview->get_pixmap();
 			break;
 		default:
@@ -426,19 +425,19 @@ LayerTool::Status GenericToolZoom::handle_mouse_move(__attribute__((unused)) Lay
 	   pixels. */
 
 	int xx, yy, width, height;
-	if (event->y() > this->ztr_start_y) {
-		yy = this->ztr_start_y;
-		height = event->y() - this->ztr_start_y;
+	if (event->y() > this->ztr_start.y()) {
+		yy = this->ztr_start.y();
+		height = event->y() - this->ztr_start.y();
 	} else {
 		yy = event->y();
-		height = this->ztr_start_y - event->y();
+		height = this->ztr_start.y() - event->y();
 	}
-	if (event->x() > this->ztr_start_x) {
-		xx = this->ztr_start_x;
-		width = event->x() - this->ztr_start_x;
+	if (event->x() > this->ztr_start.x()) {
+		xx = this->ztr_start.x();
+		width = event->x() - this->ztr_start.x();
 	} else {
 		xx = event->x();
-		width = this->ztr_start_x - event->x();
+		width = this->ztr_start.x() - event->x();
 	}
 
 
@@ -478,9 +477,9 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 		/* Ensure that we haven't just released mouse button
 		   on the exact same position i.e. probably haven't
 		   moved the mouse at all. */
-		if (modifiers == Qt::ShiftModifier && (std::fabs(event_pos.x() - this->ztr_start_x) >= 5) && (std::fabs(event_pos.y() - this->ztr_start_y) >= 5)) {
+		if (modifiers == Qt::ShiftModifier && (std::fabs(event_pos.x() - this->ztr_start.x()) >= 5) && (std::fabs(event_pos.y() - this->ztr_start.y()) >= 5)) {
 
-			const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
+			const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr_start);
 			const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);
 
 			/* From the extend of the bounds pick the best zoom level. */
@@ -495,7 +494,7 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 		if (modifiers == Qt::ShiftModifier) {
 			/* Zoom in/out by three if possible. */
 
-			this->gisview->set_center_coord(event_pos);
+			this->gisview->move_screen_pos_to_center(event_pos);
 			const bool zoomed = this->gisview->zoom_on_center_pixel(mouse_event_to_zoom_direction(event), 3);
 
 			if (!zoomed) {

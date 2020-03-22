@@ -409,10 +409,10 @@ void GisViewport::debug_gisviewport_draw(void)
 
 
 	if (1) { /* Geo coordinates of corners of central area. */
-		Coord coord_ul = this->screen_pos_to_coord(ScreenPosition::UpperLeft);
-		Coord coord_ur = this->screen_pos_to_coord(ScreenPosition::UpperRight);
-		Coord coord_bl = this->screen_pos_to_coord(ScreenPosition::BottomLeft);
-		Coord coord_br = this->screen_pos_to_coord(ScreenPosition::BottomRight);
+		Coord coord_ul = this->screen_corner_to_coord(ScreenCorner::UpperLeft);
+		Coord coord_ur = this->screen_corner_to_coord(ScreenCorner::UpperRight);
+		Coord coord_bl = this->screen_corner_to_coord(ScreenCorner::BottomLeft);
+		Coord coord_br = this->screen_corner_to_coord(ScreenCorner::BottomRight);
 
 		QString ul = "ul: ";
 		QString ur = "ur: ";
@@ -979,21 +979,10 @@ sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 /**
    @reviewed-on tbd
 */
-sg_ret GisViewport::set_center_coord(fpixel x1, fpixel y1)
+sg_ret GisViewport::move_screen_pos_to_center(const ScreenPos & pos)
 {
-	const Coord coord = this->screen_pos_to_coord(x1, y1);
+	const Coord coord = this->screen_pos_to_coord(pos);
 	return this->set_center_coord(coord, false);
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret GisViewport::set_center_coord(const ScreenPos & pos)
-{
-	return this->set_center_coord(pos.x(), pos.y());
 }
 
 
@@ -1071,11 +1060,11 @@ sg_ret GisViewport::utm_zones_range(UTMZone & leftmost_zone, UTMZone & rightmost
 	}
 
 	/* Upper/Lower argument shouldn't really matter, because we want to get "leftmost" zone. */
-	const Coord l_coord = this->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	const Coord l_coord = this->screen_corner_to_coord(ScreenCorner::UpperLeft);
 	leftmost_zone = l_coord.utm.zone();
 
 	/* Upper/Lower position shouldn't really matter, we just want to get "rightmost" zone. */
-	const Coord r_coord = this->screen_pos_to_coord(ScreenPosition::UpperRight);
+	const Coord r_coord = this->screen_corner_to_coord(ScreenCorner::UpperRight);
 	rightmost_zone = r_coord.utm.zone();
 
 	return sg_ret::ok;
@@ -1087,42 +1076,38 @@ sg_ret GisViewport::utm_zones_range(UTMZone & leftmost_zone, UTMZone & rightmost
 /**
    @reviewed-on tbd
 */
-Coord GisViewport::screen_pos_to_coord(ScreenPosition screen_pos) const
+Coord GisViewport::screen_corner_to_coord(ScreenCorner screen_corner) const
 {
 	Coord result;
-	int pos_x = 0;
-	int pos_y = 0;
+	ScreenPos pos;
 
-	switch (screen_pos) {
-	case ScreenPosition::UpperLeft:
-		pos_x = this->central_get_leftmost_pixel();
-		pos_y = this->central_get_topmost_pixel();;
-		result = this->screen_pos_to_coord(pos_x, pos_y);
+	switch (screen_corner) {
+	case ScreenCorner::UpperLeft:
+		pos.setX(this->central_get_leftmost_pixel());
+		pos.setY(this->central_get_topmost_pixel());
 		break;
 
-	case ScreenPosition::UpperRight:
-		pos_x = this->central_get_rightmost_pixel();
-		pos_y = this->central_get_topmost_pixel();
-		result = this->screen_pos_to_coord(pos_x, pos_y);
+	case ScreenCorner::UpperRight:
+		pos.setX(this->central_get_rightmost_pixel());
+		pos.setY(this->central_get_topmost_pixel());
 		break;
 
-	case ScreenPosition::BottomLeft:
-		pos_x = this->central_get_leftmost_pixel();
-		pos_y = this->central_get_bottommost_pixel();
-		result = this->screen_pos_to_coord(pos_x, pos_y);
+	case ScreenCorner::BottomLeft:
+		pos.setX(this->central_get_leftmost_pixel());
+		pos.setY(this->central_get_bottommost_pixel());
 		break;
 
-	case ScreenPosition::BottomRight:
-		pos_x = this->central_get_rightmost_pixel();
-		pos_y = this->central_get_bottommost_pixel();
-		result = this->screen_pos_to_coord(pos_x, pos_y);
+	case ScreenCorner::BottomRight:
+		pos.setX(this->central_get_rightmost_pixel());
+		pos.setY(this->central_get_bottommost_pixel());
 		break;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected screen position" << (int) screen_pos;
-		break;
+		qDebug() << SG_PREFIX_E << "Unexpected screen corner" << (int) screen_corner;
+		return result;
 	}
 
+	result = this->screen_pos_to_coord(pos);
 	return result;
 }
 
@@ -1132,8 +1117,11 @@ Coord GisViewport::screen_pos_to_coord(ScreenPosition screen_pos) const
 /**
    @reviewed-on tbd
 */
-Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
+Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 {
+	const fpixel pos_x = pos.x();
+	const fpixel pos_y = pos.y();
+
 	Coord coord;
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
@@ -1283,17 +1271,6 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 	}
 
 	return coord; /* Named Return Value Optimization. */
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
-{
-	return this->screen_pos_to_coord(pos.x(), pos.y());
 }
 
 
@@ -1549,10 +1526,10 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 	   bbox, and that get() methods used here return values in
 	   Qt's coordinate system where beginning of the coordinate
 	   system is in upper-left corner.  */
-	Coord coord_ul = this->screen_pos_to_coord(this->central_get_leftmost_pixel() + margin_left,   this->central_get_topmost_pixel() + margin_top);
-	Coord coord_ur = this->screen_pos_to_coord(this->central_get_rightmost_pixel() - margin_right, this->central_get_topmost_pixel() + margin_top);
-	Coord coord_bl = this->screen_pos_to_coord(this->central_get_leftmost_pixel() + margin_left,   this->central_get_bottommost_pixel() - margin_bottom);
-	Coord coord_br = this->screen_pos_to_coord(this->central_get_rightmost_pixel() - margin_right, this->central_get_bottommost_pixel() - margin_bottom);
+	Coord coord_ul = this->screen_pos_to_coord(ScreenPos(this->central_get_leftmost_pixel() + margin_left,   this->central_get_topmost_pixel() + margin_top));
+	Coord coord_ur = this->screen_pos_to_coord(ScreenPos(this->central_get_rightmost_pixel() - margin_right, this->central_get_topmost_pixel() + margin_top));
+	Coord coord_bl = this->screen_pos_to_coord(ScreenPos(this->central_get_leftmost_pixel() + margin_left,   this->central_get_bottommost_pixel() - margin_bottom));
+	Coord coord_br = this->screen_pos_to_coord(ScreenPos(this->central_get_rightmost_pixel() - margin_right, this->central_get_bottommost_pixel() - margin_bottom));
 
 	coord_ul.recalculate_to_mode(CoordMode::LatLon);
 	coord_ur.recalculate_to_mode(CoordMode::LatLon);
@@ -1690,6 +1667,8 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		 << ", angle =" << angle.y();
 	bool op_success = false;
 
+	ScreenPos new_pos;
+
 	switch (modifiers) {
 	case Qt::ControlModifier: /* Pan up & down. */
 		/* New 'x' pixel coordinate of a center does not
@@ -1698,17 +1677,16 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		if (mouse_wheel_up) { /* Move viewport's content up. */
 			/* Get pixel that was above old center by
 			   delta_y, and move it to center. */
-			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel(),
-								 this->central_get_y_center_pixel() - delta_y)) {
-				op_success = true;
-			}
+			new_pos.setX(this->central_get_x_center_pixel());
+			new_pos.setY(this->central_get_y_center_pixel() - delta_y);
 		} else { /* Move viewport's content down. */
 			/* Get pixel that was below old center by
 			   delta_y, and move it to center. */
-			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel(),
-								 this->central_get_y_center_pixel() + delta_y)) {
-				op_success = true;
-			}
+			new_pos.setX(this->central_get_x_center_pixel());
+			new_pos.setY(this->central_get_y_center_pixel() + delta_y);
+		}
+		if (sg_ret::ok == this->move_screen_pos_to_center(new_pos)) {
+			op_success = true;
 		}
 		ev->accept();
 		break;
@@ -1721,18 +1699,17 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 			/* Get pixel that was to the left of old
 			   center by delta_x, and move it to
 			   center. */
-			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel() - delta_x,
-								 this->central_get_y_center_pixel())) {
-				op_success = true;
-			}
+			new_pos.setX(this->central_get_x_center_pixel() - delta_x);
+			new_pos.setY(this->central_get_y_center_pixel());
 		} else { /* Move viewport's content left. */
 			/* Get pixel that was to the right of old
 			   center by delta_x, and move it to
 			   center. */
-			if (sg_ret::ok == this->set_center_coord(this->central_get_x_center_pixel() + delta_x,
-								 this->central_get_y_center_pixel())) {
-				op_success = true;
-			}
+			new_pos.setX(this->central_get_x_center_pixel() + delta_x);
+			new_pos.setY(this->central_get_y_center_pixel());
+		}
+		if (sg_ret::ok == this->move_screen_pos_to_center(new_pos)) {
+			op_success = true;
 		}
 		ev->accept();
 		break;
@@ -1797,13 +1774,8 @@ void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 #endif
 
 
-	const int pos_x = position.x();
-	const int pos_y = position.y();
-
-
-
 	/* Get coordinates in viewport's coordinates mode. */
-	const Coord coord = this->screen_pos_to_coord(pos_x, pos_y);
+	const Coord coord = this->screen_pos_to_coord(ScreenPos(position));
 	this->window->statusbar()->set_coord(coord);
 
 
@@ -1912,21 +1884,9 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 
 /**
-   @reviewed-on 2019-07-20
-*/
-void ScreenPos::set(fpixel new_x, fpixel new_y)
-{
-	this->rx() = new_x;
-	this->ry() = new_y;
-}
-
-
-
-
-/**
    @reviewed-on tbd
 */
-ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
+ScreenPos SlavGPS::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 {
 	return ScreenPos((pos1.x() + pos2.x()) / 2.0, (pos1.y() + pos2.y()) / 2.0);
 }
@@ -1937,20 +1897,9 @@ ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 /**
    @reviewed-on tbd
 */
-bool ScreenPos::are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit)
+bool SlavGPS::are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit)
 {
 	return (std::fabs(pos1.x() - pos2.x()) < limit) && (std::fabs(pos1.y() - pos2.y()) < limit);
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-bool ScreenPos::operator==(const ScreenPos & pos) const
-{
-	return (this->x() == pos.x()) && (this->y() == pos.y());
 }
 
 
@@ -2249,11 +2198,10 @@ ArrowSymbol::ArrowSymbol(double blades_width_degrees, int size_factor_)
 /**
    @reviewed-on tbd
 */
-void ArrowSymbol::set_arrow_tip(int x, int y, int direction_)
+void ArrowSymbol::set_arrow_tip(const ScreenPos & pos, int direction)
 {
-	this->tip_x = x;
-	this->tip_y = y;
-	this->direction = direction_;
+	this->m_tip = pos;
+	this->m_direction = direction;
 }
 
 
@@ -2264,15 +2212,15 @@ void ArrowSymbol::set_arrow_tip(int x, int y, int direction_)
 */
 sg_ret ArrowSymbol::paint(QPainter & painter, double dx, double dy)
 {
-	painter.drawLine(this->tip_x,
-			 this->tip_y,
-			 this->tip_x + this->direction * (dx * this->cosine_factor + dy * this->sine_factor),
-			 this->tip_y + this->direction * (dy * this->cosine_factor - dx * this->sine_factor));
+	painter.drawLine(this->m_tip.x(),
+			 this->m_tip.y(),
+			 this->m_tip.x() + this->m_direction * (dx * this->cosine_factor + dy * this->sine_factor),
+			 this->m_tip.y() + this->m_direction * (dy * this->cosine_factor - dx * this->sine_factor));
 
-	painter.drawLine(this->tip_x,
-			 this->tip_y,
-			 this->tip_x + this->direction * (dx * this->cosine_factor - dy * this->sine_factor),
-			 this->tip_y + this->direction * (dy * this->cosine_factor + dx * this->sine_factor));
+	painter.drawLine(this->m_tip.x(),
+			 this->m_tip.y(),
+			 this->m_tip.x() + this->m_direction * (dx * this->cosine_factor - dy * this->sine_factor),
+			 this->m_tip.y() + this->m_direction * (dy * this->cosine_factor + dx * this->sine_factor));
 
 	return sg_ret::ok;
 }
