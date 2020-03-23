@@ -496,6 +496,24 @@ namespace SlavGPS {
 		*/
 		virtual sg_ret update_properties(void);
 
+		/**
+		   Apply new values of preferences to this tree item
+		   and its children
+
+		   Some (most) of parameters of tree items will be
+		   read when necessary (on demand), but some tree
+		   items may need to be re-configured in advance using
+		   proper values of some of Preferences. This is why
+		   this function is necessary.
+
+		   This function should be called on top-level layer
+		   (which will call it recursively) after changes in
+		   Preferences window have been made.
+
+		   @return number of child items that applied new preferences (may be zero) on success
+		   @return zero on failure; the function does not return -1 on error
+		*/
+		virtual uint64_t apply_new_preferences(void);
 
 
 	//protected:

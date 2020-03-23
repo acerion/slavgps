@@ -3207,19 +3207,9 @@ void Window::menu_view_cache_info_cb(void)
 
 void Window::apply_new_preferences(void)
 {
-	/* Want to update all TRW layers. */
-	const std::list<Layer const *> layers = this->m_layers_panel->get_all_layers_of_kind(LayerKind::TRW, true);
-	if (layers.empty()) {
-		return;
+	if (this->m_layers_panel->top_layer()->apply_new_preferences() > 0) {
+		this->draw_tree_items(this->m_main_gisview);
 	}
-
-	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		/* Reset the individual waypoints themselves due to the preferences change. */
-		LayerTRW * trw = (LayerTRW *) *iter;
-		trw->reset_waypoints();
-	}
-
-	this->draw_tree_items(this->m_main_gisview);
 }
 
 

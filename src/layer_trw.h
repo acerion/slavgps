@@ -213,8 +213,6 @@ namespace SlavGPS {
 
 		void deselect_current_trackpoint(Track * trk);
 
-		void reset_waypoints();
-
 		QString new_unique_element_name(const SGObjectTypeID & type_id, const QString& old_name);
 
 

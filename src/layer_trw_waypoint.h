@@ -122,6 +122,8 @@ namespace SlavGPS {
 
 		sg_ret propagate_new_waypoint_name(void);
 
+		uint64_t apply_new_preferences(void) override;
+
 
 		bool show_properties_dialog(void);
 

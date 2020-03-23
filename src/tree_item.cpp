@@ -1026,3 +1026,23 @@ void TreeItem::properties_changed_cb(const QString & where)
 	qDebug() << SG_PREFIX_SLOT << where << "child has informed us about its properties being changed";
 	this->update_properties();
 }
+
+
+
+
+uint64_t TreeItem::apply_new_preferences(void)
+{
+	uint64_t applied = 0;
+	const int rows = this->child_rows_count();
+	for (int row = 0; row < rows; row++) {
+		TreeItem * tree_item = nullptr;
+		if (sg_ret::ok != this->child_from_row(row, &tree_item)) {
+			qDebug() << SG_PREFIX_E << "Failed to find valid tree item in row" << row << "/" << rows;
+			continue;
+		}
+
+		applied += tree_item->apply_new_preferences();
+	}
+
+	return applied;
+}

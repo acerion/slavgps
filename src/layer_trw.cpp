@@ -2109,31 +2109,6 @@ void LayerTRW::deselect_current_trackpoint(Track * trk)
 
 
 
-
-/**
- * Normally this is done to due the waypoint size preference having changed.
- */
-void LayerTRW::reset_waypoints()
-{
-#ifdef K_TODO_LATER
-	for (auto iter = this->m_waypoints.children.begin(); iter != this->m_waypoints.children.end(); iter++) {
-		Waypoint * wp = *iter;
-		if (wp->symbol_name.isEmpty()) {
-			continue;
-		}
-
-		/* This function is called to re-get waypoint's symbol
-		   from GarminSymbols, with current "waypoint's symbol
-		   size" setting.  The symbol is shown in viewport */
-		const QString tmp_symbol_name = wp->symbol_name;
-		wp->set_symbol_name(tmp_symbol_name);
-	}
-#endif
-}
-
-
-
-
 /**
    \brief Get a a unique new name for element of type \param item_type_id
 */

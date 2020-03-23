@@ -1128,3 +1128,22 @@ TreeItemViewFormat Waypoint::get_view_format_header(bool include_parent_layer)
 
 	return view_format;
 }
+
+
+
+
+uint64_t Waypoint::apply_new_preferences(void)
+{
+	if (this->symbol_name.isEmpty()) {
+		return 0;
+	}
+
+	/* This function is called to re-get waypoint's symbol from
+	   GarminSymbols, with current "waypoint's symbol size"
+	   setting from Preferences -> General.  The symbol is shown
+	   in viewport */
+	const QString tmp_symbol_name = this->symbol_name;
+	this->set_symbol_name(tmp_symbol_name);
+
+	return 1;
+}
