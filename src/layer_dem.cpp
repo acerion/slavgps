@@ -942,7 +942,8 @@ void LayerDEM::draw_dem_lat_lon(GisViewport * gisview, const DEM & dem)
 
 class UTMBounds {
 public:
-	UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer);
+	UTMBounds() {}
+	sg_ret init(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer);
 
 	unsigned int skip_factor = 0;
 
@@ -986,7 +987,7 @@ public:
 
 
 
-UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer)
+sg_ret UTMBounds::init(const GisViewport & gisview, const DEM & dem, const LayerDEM & layer)
 {
 	this->skip_factor = ceil(gisview.get_viking_scale().get_x() / 10); /* TODO_LATER: smarter calculation. */
 
@@ -998,6 +999,10 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 	coord_ur.recalculate_to_mode(CoordMode::UTM);
 	coord_bl.recalculate_to_mode(CoordMode::UTM);
 	coord_br.recalculate_to_mode(CoordMode::UTM);
+	if (!coord_ul.is_valid() || !coord_ur.is_valid() || !coord_bl.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+		return sg_ret::err;
+	}
 
 	const double max_nor = std::max(coord_ul.utm.get_northing(), coord_ur.utm.get_northing());
 	const double min_nor = std::min(coord_bl.utm.get_northing(), coord_br.utm.get_northing());
@@ -1034,6 +1039,8 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 
 	this->min_max.min_elevation = layer.min_elev.ll_value();
 	this->min_max.max_elevation = layer.max_elev.ll_value();
+
+	return sg_ret::ok;
 }
 
 
@@ -1041,7 +1048,11 @@ UTMBounds::UTMBounds(const GisViewport & gisview, const DEM & dem, const LayerDE
 
 void LayerDEM::draw_dem_utm(GisViewport * gisview, const DEM & dem)
 {
-	const UTMBounds bounds(*gisview, dem, *this);
+	UTMBounds bounds;
+	if (sg_ret::ok != bounds.init(*gisview, dem, *this)) {
+		qDebug() << SG_PREFIX_E << "Failed to set UTM bounds";
+		return;
+	}
 	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
 	UTMIter iter(dem);
 
@@ -1642,6 +1653,10 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 bool LayerDEM::download_selected_tile(const QMouseEvent * ev, const LayerTool * tool)
 {
 	const Coord coord = tool->gisview->screen_pos_to_coord(ev->localPos());
+	if (!coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return false;
+	}
 	const LatLon lat_lon = coord.get_lat_lon();
 
 	qDebug() << SG_PREFIX_I << "received event, processing, lat/lon =" << lat_lon;

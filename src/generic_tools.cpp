@@ -171,6 +171,10 @@ LayerTool::Status GenericToolRuler::handle_mouse_click(__attribute__((unused)) L
 		qDebug() << SG_PREFIX_I << "first click, starting ruler";
 
 		const Coord cursor_coord = this->gisview->screen_pos_to_coord(event->localPos());
+		if (!cursor_coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		msg = cursor_coord.to_string();
 
 		/* Save clean viewport (clean == without ruler drawn on top of it). */
@@ -456,7 +460,11 @@ LayerTool::Status GenericToolZoom::handle_mouse_release(__attribute__((unused)) 
 			} else {
 				const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr.m_start_pos);
 				const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);
-
+				if (!start_coord.is_valid() || !cursor_coord.is_valid()) {
+					qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+					this->ztr.end();
+					return LayerTool::Status::Error;
+				}
 				/* From the extend of the bounds pick the best zoom level. */
 				const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
 				if (sg_ret::ok == this->gisview->zoom_to_show_bbox_common(bbox, SG_GISVIEWPORT_ZOOM_MIN, false)) {

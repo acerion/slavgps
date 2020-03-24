@@ -115,6 +115,10 @@ LayerTool::Status helper_move_wp(LayerTRW * trw, LayerToolSelect * tool, QMouseE
 		}
 
 		Coord new_coord = gisview->screen_pos_to_coord(ev->localPos());
+		if (!new_coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		qDebug() << SG_PREFIX_I << "Will now set new position of waypoint:" << new_coord;
 		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->m_type_id);
 
@@ -148,6 +152,10 @@ LayerTool::Status helper_release_wp(LayerTRW * trw, LayerToolSelect * tool, QMou
 	switch (ev->button()) {
 	case Qt::LeftButton: {
 		Coord new_coord = gisview->screen_pos_to_coord(ev->localPos());
+		if (!new_coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, wp->m_type_id);
 
 		const bool recalculate_bbox = true; /* We have moved point to final position, so Waypoints' bbox can be recalculated. */
@@ -193,6 +201,10 @@ LayerTool::Status helper_move_tp(LayerTRW * trw, LayerToolSelect * tool, QMouseE
 
 		qDebug() << SG_PREFIX_I << "Will now set new position of trackpoint";
 		Coord new_coord = gisview->screen_pos_to_coord(ev->localPos());
+		if (!new_coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		trw->get_nearby_snap_coordinates(new_coord, ev, gisview, track->m_type_id);
 		track->selected_tp_set_coord(new_coord, false);
 		return LayerTool::Status::Handled;
@@ -223,6 +235,10 @@ LayerTool::Status helper_release_tp(LayerTRW * trw, LayerToolSelect * tool, QMou
 	}
 
 	Coord new_coord = gisview->screen_pos_to_coord(ev->localPos());
+	if (!new_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return LayerTool::Status::Error;
+	}
 	trw->get_nearby_snap_coordinates(new_coord, ev, gisview, track->m_type_id);
 	track->selected_tp_set_coord(new_coord, true);
 
@@ -1021,6 +1037,10 @@ LayerTool::Status LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseE
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		const Coord cursor_coord = this->gisview->screen_pos_to_coord(ev->localPos());
+		if (!cursor_coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DEMInterpolation::Best);
 		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new.is_valid()) {
@@ -1114,9 +1134,14 @@ LayerTool::Status create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEve
 		return LayerTool::Status::Error;
 	}
 
+	Coord coord = gisview->screen_pos_to_coord(ev->localPos());
+	if (!coord.is_valid())
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";{
+		return LayerTool::Status::Error;
+	}
 
 	Trackpoint * tp = new Trackpoint();
-	tp->coord = gisview->screen_pos_to_coord(ev->localPos());
+	tp->coord = coord;
 
 	/* Maybe snap to other point. */
 	trw->get_nearby_snap_coordinates(tp->coord, ev, gisview, track->m_type_id);
@@ -1332,9 +1357,14 @@ LayerTool::Status LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMo
 		return LayerTool::Status::Error;
 	}
 
-	bool visible_with_parents = false;
 	const Coord coord = this->gisview->screen_pos_to_coord(ev->localPos());
+	if (!coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return LayerTool::Status::Error;
+	}
 	qDebug() << SG_PREFIX_I << "Will create new waypoint with coordinates" << coord;
+
+	bool visible_with_parents = false;
 	if (trw->new_waypoint(coord, visible_with_parents, trw->get_window())) {
 		trw->waypoints_node().recalculate_bbox();
 		if (visible_with_parents) {
@@ -1567,7 +1597,12 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 
 	Track * track = trw->selected_track_get();
 
-	Coord tmp = this->gisview->screen_pos_to_coord(ev->localPos());
+	const Coord click_coord = this->gisview->screen_pos_to_coord(ev->localPos());
+	if (!click_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return LayerTool::Status::Error;
+	}
+
 	if (ev->button() == Qt::RightButton && track) {
 		this->undo(trw, track);
 		return LayerTool::Status::Handled;
@@ -1585,7 +1620,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 
 		Trackpoint * tp_start = track->get_tp_last();
 		const LatLon start = tp_start->coord.get_lat_lon();
-		const LatLon end = tmp.get_lat_lon();
+		const LatLon end = click_coord.get_lat_lon();
 
 		trw->route_finder_started = true;
 		trw->route_finder_append = true;  /* Merge tracks. Keep started true. */

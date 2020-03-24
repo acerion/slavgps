@@ -158,32 +158,41 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 	const Coord circle_center_coord(lat_lon, this->gisview->get_coord_mode());
 	ScreenPos circle_center;
-	sg_ret ret = this->gisview->coord_to_screen_pos(circle_center_coord, circle_center);
-	if (sg_ret::ok == ret && this->circle_is_onscreen(circle_center)) {
-
-		this->circle_pos = circle_center;
-
-		const int width = this->gisview->central_get_width();
-		const fpixel y_center_pixel  = this->gisview->central_get_y_center_pixel();
-		const int leftmost_pixel  = this->gisview->central_get_leftmost_pixel();
-		const int rightmost_pixel = this->gisview->central_get_rightmost_pixel();
-
-		/* Determine miles per pixel. */
-		const Coord coord1 = this->gisview->screen_pos_to_coord(ScreenPos(leftmost_pixel, y_center_pixel));
-		const Coord coord2 = this->gisview->screen_pos_to_coord(ScreenPos(rightmost_pixel, y_center_pixel));
-		const double pixels_per_meter = ((double) width) / Coord::distance(coord1, coord2);
-
-		/* This is approximate. */
-		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
-
-		this->gisview->draw_ellipse(this->circle_pen,
-					    this->circle_pos,
-					    this->circle_radius, this->circle_radius);
-
-		this->circle_onscreen = true;
-	} else {
+	if (sg_ret::ok != this->gisview->coord_to_screen_pos(circle_center_coord, circle_center)) {
 		this->circle_onscreen = false;
+		return;
 	}
+	if (!this->circle_is_onscreen(circle_center)) {
+		this->circle_onscreen = false;
+		return;
+	}
+
+	this->circle_pos = circle_center;
+
+	const int width = this->gisview->central_get_width();
+	const fpixel y_center_pixel  = this->gisview->central_get_y_center_pixel();
+	const int leftmost_pixel  = this->gisview->central_get_leftmost_pixel();
+	const int rightmost_pixel = this->gisview->central_get_rightmost_pixel();
+
+	/* Determine miles per pixel. */
+	const Coord coord1 = this->gisview->screen_pos_to_coord(ScreenPos(leftmost_pixel, y_center_pixel));
+	const Coord coord2 = this->gisview->screen_pos_to_coord(ScreenPos(rightmost_pixel, y_center_pixel));
+	if (!coord1.is_valid() || !coord2.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		this->circle_onscreen = false;
+		return;
+	}
+
+	const double pixels_per_meter = ((double) width) / Coord::distance(coord1, coord2);
+
+	/* This is approximate. */
+	this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
+
+	this->gisview->draw_ellipse(this->circle_pen,
+				    this->circle_pos,
+				    this->circle_radius, this->circle_radius);
+
+	this->circle_onscreen = true;
 }
 
 

@@ -46,6 +46,11 @@ using namespace SlavGPS;
 
 sg_ret Coord::recalculate_to_mode(CoordMode new_mode)
 {
+	if (!this->is_valid()) {
+		qDebug() << SG_PREFIX_E << "Trying to recalculate invalid coord";
+		return sg_ret::err;
+	}
+
 	if (this->mode != new_mode) {
 		switch (new_mode) {
 		case CoordMode::LatLon:
@@ -388,6 +393,25 @@ bool Coord::is_inside(const Coord & tl, const Coord & br) const
 		return false;
 	}
 	return true;
+}
+
+
+
+
+/**
+   @reviewed on 2020-03-23
+*/
+bool Coord::is_valid(void) const
+{
+	switch (this->mode) {
+	case CoordMode::LatLon:
+		return this->lat_lon.is_valid();
+	case CoordMode::UTM:
+		return this->utm.is_valid();
+	case CoordMode::Invalid:
+	default:
+		return false;
+	}
 }
 
 

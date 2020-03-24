@@ -413,6 +413,10 @@ void GisViewport::debug_gisviewport_draw(void)
 		Coord coord_ur = this->screen_corner_to_coord(ScreenCorner::UpperRight);
 		Coord coord_bl = this->screen_corner_to_coord(ScreenCorner::BottomLeft);
 		Coord coord_br = this->screen_corner_to_coord(ScreenCorner::BottomRight);
+		if (!coord_ul.is_valid() || !coord_ur.is_valid() || !coord_bl.is_valid() || !coord_br.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+			return;
+		}
 
 		QString ul = "ul: ";
 		QString ur = "ur: ";
@@ -982,7 +986,12 @@ sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 sg_ret GisViewport::move_screen_pos_to_center(const ScreenPos & pos)
 {
 	const Coord coord = this->screen_pos_to_coord(pos);
-	return this->set_center_coord(coord, false);
+	if (!coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return sg_ret::err;
+	} else {
+		return this->set_center_coord(coord, false);
+	}
 }
 
 
@@ -1061,10 +1070,18 @@ sg_ret GisViewport::utm_zones_range(UTMZone & leftmost_zone, UTMZone & rightmost
 
 	/* Upper/Lower argument shouldn't really matter, because we want to get "leftmost" zone. */
 	const Coord l_coord = this->screen_corner_to_coord(ScreenCorner::UpperLeft);
+	if (!l_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+		return sg_ret::err;
+	}
 	leftmost_zone = l_coord.utm.zone();
 
 	/* Upper/Lower position shouldn't really matter, we just want to get "rightmost" zone. */
 	const Coord r_coord = this->screen_corner_to_coord(ScreenCorner::UpperRight);
+	if (!r_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+		return sg_ret::err;
+	}
 	rightmost_zone = r_coord.utm.zone();
 
 	return sg_ret::ok;
@@ -1134,6 +1151,11 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
+		if (!this->center_coord.utm.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Center coord utm is invalid";
+			return coord;
+		}
+
 		coord.set_coord_mode(CoordMode::UTM);
 
 		/* Modified (reformatted) formula. */
@@ -1152,7 +1174,6 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 				/* We only need this initial
 				   assignment to avoid assertion fail
 				   in ::to_lat_lon(). */
-				assert (UTM::is_band_letter(this->center_coord.utm.band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 				coord.utm.set_band_letter(this->center_coord.utm.band_letter());
 
 				/* Calculated lat_lon will contain
@@ -1174,7 +1195,6 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 			test_coord.set_coord_mode(CoordMode::UTM);
 
 			test_coord.utm.set_zone(this->center_coord.utm.zone());
-			assert (UTM::is_band_letter(this->center_coord.utm.band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center_coord.utm.band_letter());
 			test_coord.utm.m_easting = (delta_x_pixels * xmpp) + this->center_coord.utm.m_easting;
 
@@ -1198,6 +1218,11 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 		break;
 
 	case CoordMode::LatLon:
+		if (!this->center_coord.lat_lon.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Center coord lat_lon is invalid";
+			return coord;
+		}
+
 		coord.set_coord_mode(CoordMode::LatLon);
 
 		switch (this->draw_mode) {
@@ -1522,6 +1547,8 @@ bool GisViewport::get_half_drawn(void) const
 */
 LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
+	LatLonBBox bbox;
+
 	/* Remember that positive values of margins should shrink the
 	   bbox, and that get() methods used here return values in
 	   Qt's coordinate system where beginning of the coordinate
@@ -1535,8 +1562,12 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 	coord_ur.recalculate_to_mode(CoordMode::LatLon);
 	coord_bl.recalculate_to_mode(CoordMode::LatLon);
 	coord_br.recalculate_to_mode(CoordMode::LatLon);
+	if (!coord_ul.is_valid() || !coord_ur.is_valid() || !coord_bl.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return bbox;
+	}
 
-	LatLonBBox bbox;
+
 	bbox.north = std::max(coord_ul.lat_lon.lat, coord_ur.lat_lon.lat);
 	bbox.south = std::min(coord_bl.lat_lon.lat, coord_br.lat_lon.lat);
 	bbox.east  = std::max(coord_ur.lat_lon.lon, coord_br.lat_lon.lon);
@@ -1776,6 +1807,10 @@ void GisViewport::draw_mouse_motion_cb(__attribute__((unused)) QMouseEvent * ev)
 
 	/* Get coordinates in viewport's coordinates mode. */
 	const Coord coord = this->screen_pos_to_coord(ScreenPos(position));
+	if (!coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return;
+	}
 	this->window->statusbar()->set_coord(coord);
 
 

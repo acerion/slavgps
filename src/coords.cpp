@@ -623,13 +623,16 @@ sg_ret UTM::shift_zone_by(int shift)
 
 
 
+/**
+   @reviewed-on 2020-03-23
+*/
 bool UTM::is_valid(void) const
 {
-	if (UTM::is_band_letter(this->band_letter())) {
+	if (!UTM::is_band_letter(this->band_letter())) {
 		return false;
 	}
 
-	if (this->m_zone.is_valid()) {
+	if (!this->m_zone.is_valid()) {
 		return false;
 	}
 
@@ -698,6 +701,9 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTMZone & zone)
 
 
 
+/**
+   @reviewed-on 2020-03-23
+*/
 bool UTMZone::is_valid(void) const
 {
 	return UTMZone::is_valid(this->m_bound_value);

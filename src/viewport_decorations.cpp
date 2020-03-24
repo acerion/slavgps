@@ -114,6 +114,10 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 
 	const Coord left  = gisview.screen_pos_to_coord(ScreenPos(leftmost_pixel,                                  y_center_pixel));
 	const Coord right = gisview.screen_pos_to_coord(ScreenPos(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel));
+	if (!left.is_valid() || !right.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return;
+	}
 
 	const DistanceType::Unit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);

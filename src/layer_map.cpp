@@ -1345,6 +1345,10 @@ void LayerMap::draw_tree_item(GisViewport * gisview, __attribute__((unused)) boo
 	} else {
 		const Coord coord_ul = gisview->screen_corner_to_coord(ScreenCorner::UpperLeft);
 		const Coord coord_br = gisview->screen_corner_to_coord(ScreenCorner::BottomRight);
+		if (!coord_ul.is_valid() || !coord_br.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+			return;
+		}
 
 		this->draw_section(gisview, coord_ul, coord_br);
 	}
@@ -1548,10 +1552,18 @@ LayerTool::Status LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QM
 		const int ul_x = std::max(rightmost_pixel, std::min(event->x(), layer->dl_tool_x));
 		const int ul_y = std::max(topmost_pixel, std::min(event->y(), layer->dl_tool_y));
 		const Coord coord_ul = this->gisview->screen_pos_to_coord(ScreenPos(ul_x, ul_y));
+		if (!coord_ul.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 
 		const int br_x = std::min(leftmost_pixel, std::max(event->x(), layer->dl_tool_x));
 		const int br_y = std::min(bottommost_pixel, std::max(event->y(), layer->dl_tool_y));
 		const Coord coord_br = this->gisview->screen_pos_to_coord(ScreenPos(br_x, br_y));
+		if (!coord_br.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 
 		layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 		layer->dl_tool_x = -1;
@@ -1562,10 +1574,18 @@ LayerTool::Status LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QM
 		const int ul_x = std::max(rightmost_pixel, std::min(event->x(), layer->dl_tool_x));
 		const int ul_y = std::max(topmost_pixel, std::min(event->y(), layer->dl_tool_y));
 		layer->redownload_ul = this->gisview->screen_pos_to_coord(ScreenPos(ul_x, ul_y));
+		if (!layer->redownload_ul.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 
 		const int br_x = std::min(leftmost_pixel, std::max(event->x(), layer->dl_tool_x));
 		const int br_y = std::min(bottommost_pixel, std::max(event->y(), layer->dl_tool_y));
 		layer->redownload_br = this->gisview->screen_pos_to_coord(ScreenPos(br_x, br_y));
+		if (!layer->redownload_br.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 
 		layer->redownload_gisview = this->gisview;
 
@@ -1667,6 +1687,10 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 
 	const Coord coord_ul = gisview->screen_corner_to_coord(ScreenCorner::UpperLeft);
 	const Coord coord_br = gisview->screen_corner_to_coord(ScreenCorner::BottomRight);
+	if (!coord_ul.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+		return;
+	}
 
 	const GisViewportDrawMode map_draw_mode = this->m_map_source->get_drawmode();
 	const GisViewportDrawMode vp_draw_mode = gisview->get_draw_mode();

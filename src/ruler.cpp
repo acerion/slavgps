@@ -68,23 +68,34 @@ Ruler::Ruler(GisViewport * new_gisview, DistanceType::Unit new_distance_unit)
 
 
 
-void Ruler::set_begin(const ScreenPos & pos)
+
+sg_ret Ruler::set_begin(const ScreenPos & pos)
 {
 	this->m_begin_pos = pos;
 	this->begin_arrow.set_arrow_tip(this->m_begin_pos, 1);
 
 	this->begin_coord = this->gisview->screen_pos_to_coord(this->m_begin_pos);
+	if (!this->begin_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return sg_ret::err;
+	} else {
+		return sg_ret::ok;
+	}
 }
 
 
 
 
-void Ruler::set_end(const ScreenPos & pos)
+sg_ret Ruler::set_end(const ScreenPos & pos)
 {
 	this->m_end_pos = pos;
 	this->end_arrow.set_arrow_tip(this->m_end_pos, -1);
 
 	this->end_coord = this->gisview->screen_pos_to_coord(this->m_end_pos);
+	if (!this->end_coord.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return sg_ret::err;
+	}
 
 	const double len = sqrt((this->m_begin_pos.x() - this->m_end_pos.x()) * (this->m_begin_pos.x() - this->m_end_pos.x()) + (this->m_begin_pos.y() - this->m_end_pos.y()) * (this->m_begin_pos.y() - this->m_end_pos.y()));
 	this->dx = (this->m_end_pos.x() - this->m_begin_pos.x()) / len * 10;
@@ -97,6 +108,10 @@ void Ruler::set_end(const ScreenPos & pos)
 	this->angle.set_ll_value(atan2(this->dy, this->dx) + M_PI_2);
 	if (this->gisview->get_draw_mode() == GisViewportDrawMode::UTM) {
 		Coord test = this->gisview->screen_pos_to_coord(this->m_begin_pos);
+		if (!test.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return sg_ret::err;
+		}
 		LatLon lat_lon = test.get_lat_lon();
 		/* TODO_LATER: get_height() or get_q_bottommost_pixel()? */
 		/* FIXME: magic number. */
@@ -112,6 +127,8 @@ void Ruler::set_end(const ScreenPos & pos)
 	this->angle.normalize();
 
 	this->line_distance = Coord::distance_2(this->end_coord, this->begin_coord);
+
+	return sg_ret::ok;
 }
 
 

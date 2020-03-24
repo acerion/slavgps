@@ -108,7 +108,7 @@ LayerTRWPainter::LayerTRWPainter(LayerTRW * new_trw)
 
 
 
-void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
+sg_ret LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 {
 	this->gisview = new_gisview;
 
@@ -136,6 +136,8 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 		this->coord_bottommost = this->vp_center_coord.utm.get_northing() - height;
 		this->coord_topmost = this->vp_center_coord.utm.get_northing() + height;
 
+		return sg_ret::ok;
+
 	} else if (this->vp_coord_mode == CoordMode::LatLon) {
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
@@ -145,15 +147,22 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 		   "3 * x", just to be sure. */
 		const int outside_margin = 3 * std::max(this->trackpoint_size, this->wp_marker_size);
 
-		const Coord upperleft = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.x() - outside_margin, this->vp_central_rect.y() - outside_margin));
-		const Coord bottomright = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.width() + outside_margin, this->vp_central_rect.height() + outside_margin));
+		const Coord coord_ul = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.x() - outside_margin, this->vp_central_rect.y() - outside_margin));
+		const Coord coord_br = this->gisview->screen_pos_to_coord(ScreenPos(this->vp_central_rect.width() + outside_margin, this->vp_central_rect.height() + outside_margin));
+		if (!coord_ul.is_valid() || coord_br.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return sg_ret::err;
+		}
 
-		this->coord_leftmost = upperleft.lat_lon.lon;
-		this->coord_rightmost = bottomright.lat_lon.lon;
-		this->coord_bottommost = bottomright.lat_lon.lat;
-		this->coord_topmost = upperleft.lat_lon.lat;
+		this->coord_leftmost   = coord_ul.lat_lon.lon;
+		this->coord_rightmost  = coord_br.lat_lon.lon;
+		this->coord_bottommost = coord_br.lat_lon.lat;
+		this->coord_topmost    = coord_ul.lat_lon.lat;
+
+		return sg_ret::ok;
 	} else {
-		;
+		qDebug() << SG_PREFIX_E << "Unsupported combination of mode and area";
+		return sg_ret::err;
 	}
 }
 
@@ -368,9 +377,12 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			this->gisview->coord_to_screen_pos(end_coord, end_pos);
 
 			const Coord av_coord = this->gisview->screen_pos_to_coord(SlavGPS::get_average(begin_pos, end_pos));
-
-			QString name = QObject::tr("%1: start/end").arg(ename);
-			this->draw_track_label(name, fg_color, bg_color, av_coord);
+			if (!av_coord.is_valid()) {
+				qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			} else {
+				QString name = QObject::tr("%1: start/end").arg(ename);
+				this->draw_track_label(name, fg_color, bg_color, av_coord);
+			}
 
 			done_start_end = true;
 		}

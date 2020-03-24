@@ -302,6 +302,10 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 
 		/* Here we use event position before zooming in. */
 		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
+		if (!coord_under_cursor.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return false;
+		}
 
 		if (!this->zoom_on_center_pixel(ZoomDirection::In)) {
 			return false;
@@ -323,6 +327,10 @@ bool GisViewport::zoom_keep_coordinate_under_cursor(ZoomDirection zoom_direction
 
 		/* Here we use event position before zooming out. */
 		const Coord coord_under_cursor = this->screen_pos_to_coord(event_pos);
+		if (!coord_under_cursor.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return false;
+		}
 
 		if (!this->zoom_on_center_pixel(ZoomDirection::Out)) {
 			return false;

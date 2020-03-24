@@ -1227,7 +1227,10 @@ void LayerTRW::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
 	   paint. */
-	this->painter->set_viewport(gisview);
+	if (sg_ret::ok != this->painter->set_viewport(gisview)) {
+		qDebug() << SG_PREFIX_E << "Failed to set viewport for TRW painter";
+		return;
+	}
 
 	if (this->m_tracks.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;

@@ -1079,6 +1079,10 @@ LayerTool::Status LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * too
 {
 	if (ev->button() == Qt::RightButton) {
 		const Coord coord = tool->gisview->screen_pos_to_coord(ScreenPos(std::max(0, ev->x()), std::max(0, ev->y())));
+		if (!coord.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+			return LayerTool::Status::Error;
+		}
 		this->clicked_lat_lon = coord.get_lat_lon();
 
 		this->clicked_viking_scale = tool->gisview->get_viking_scale();
@@ -1186,6 +1190,10 @@ sg_ret LayerMapnik::get_tiles_range(const GisViewport * gisview, TilesRange & ra
 {
 	const Coord coord_ul = gisview->screen_corner_to_coord(ScreenCorner::UpperLeft);
 	const Coord coord_br = gisview->screen_corner_to_coord(ScreenCorner::BottomRight);
+	if (!coord_ul.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid screen corner";
+		return sg_ret::err;
+	}
 	const LatLon lat_lon_ul = coord_ul.get_lat_lon();
 	const LatLon lat_lon_br = coord_br.get_lat_lon();
 

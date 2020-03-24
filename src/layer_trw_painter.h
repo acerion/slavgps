@@ -74,7 +74,7 @@ namespace SlavGPS {
 		LayerTRWPainter(LayerTRW * trw);
 
 		/* Call this every time the viewport changes (e.g. on zoom). */
-		void set_viewport(GisViewport * gisview);
+		sg_ret set_viewport(GisViewport * gisview);
 
 		void make_track_pens(void);
 		void make_wp_pens(void);
