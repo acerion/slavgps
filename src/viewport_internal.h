@@ -119,6 +119,16 @@ namespace SlavGPS {
 		/* Positive value of a margin mean that we want to shrink bbox from specified side. */
 		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
 
+		/**
+		   Get rectangle, inside which all x/y points can be
+		   converted into valid LatLon or UTM coordinates
+		   (depending on viewport's current coordinate mode)
+
+		   The rectangle contains points in central part of
+		   GIS viewport.
+		*/
+		sg_ret get_valid_central_rect(int & topmost, int & bottommost, int & leftmost, int & rightmost);
+
 		CoordMode get_coord_mode(void) const;
 		void set_coord_mode(CoordMode mode);
 

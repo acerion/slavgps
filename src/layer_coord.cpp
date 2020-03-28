@@ -292,9 +292,33 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 	ScreenPos screen_pos_begin;
 	ScreenPos screen_pos_end;
 
+	int leftmost = 0;
+	int rightmost = 0;
+	int topmost = 0;
+	int bottommost = 0;
+
+	qDebug() << SG_PREFIX_I << "Will get valid central rect";
+	if (sg_ret::ok != gisview->get_valid_central_rect(topmost, bottommost, leftmost, rightmost)) {
+		qDebug() << SG_PREFIX_E << "Can't get valid central rect";
+		return;
+	}
+	qDebug() << SG_PREFIX_I << "Valid central rect =" << topmost << bottommost << leftmost << rightmost;
 
 
-	const LatLonBBox bbox = gisview->get_bbox();
+	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPos(leftmost, topmost));
+	Coord coord_br = gisview->screen_pos_to_coord(ScreenPos(rightmost, bottommost));
+	qDebug() << SG_PREFIX_I << "Allowable coord ul" << coord_ul;
+	qDebug() << SG_PREFIX_I << "Allowable coord br" << coord_br;
+	if (!coord_ul.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Can't get valid central rect corners";
+		return;
+	}
+
+
+
+
+	//const LatLonBBox bbox = gisview->get_bbox();
+	const LatLonBBox bbox(coord_ul.lat_lon, coord_br.lat_lon);
 	const double minimum_lon = bbox.west.get_value();
 	const double maximum_lon = bbox.east.get_value();
 	const double minimum_lat = bbox.south.get_value();
@@ -316,10 +340,16 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 
 #if 1   /* Debug. */
-	qDebug() << "-----------------color" << "seconds:" << seconds_pen.color().name() << ", minutes:" << minutes_pen.color().name() << "degrees:" << degrees_pen.color().name();
-	qDebug() << "-----------------width" << width_seconds << "seconds," << width_minutes << "minutes," << width_degrees << "degrees, lat/lon:" << minimum_lon << maximum_lon;
-	qDebug() << "--------------- modulo" << modulo_seconds << modulo_minutes << modulo_degrees;
-	qDebug() << "------------------zoom" << zoom_level_allows_for_seconds << zoom_level_allows_for_minutes << zoom_level_allows_for_degrees;
+
+	qDebug() << "---------------------- bbox: " << bbox;
+	qDebug() << "--------------------- width: " << width_degrees << "deg," << width_minutes << "min," << width_seconds << "sec";
+	qDebug() << "----------- latitudes range: " << minimum_lat << "-" << maximum_lat;
+	qDebug() << "---------- longitudes range: " << minimum_lon << "-" << maximum_lon;
+	qDebug() << "-------------------- modulo: " << modulo_seconds << modulo_minutes << modulo_degrees;
+	qDebug() << "--- zoom allows for degrees: " << zoom_level_allows_for_degrees;
+	qDebug() << "--- zoom allows for minutes: " << zoom_level_allows_for_minutes;
+	qDebug() << "--- zoom allows for seconds: " << zoom_level_allows_for_seconds;
+	qDebug() << "--------------------- color: " << "deg:" << degrees_pen.color().name() << ", min:" << minutes_pen.color().name() << "sec:" << seconds_pen.color().name();
 #endif
 
 
@@ -330,6 +360,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 		const int minutes_start = (int) floor(minimum_lon * 60);
 		const int minutes_end = (int) ceil(maximum_lon * 60);
+
+		qDebug() << SG_PREFIX_I << "vertical minutes start/end" << minutes_start << minutes_end;
 
 		for (int minute = minutes_start; minute < minutes_end; minute++) {
 			if (zoom_level_allows_for_seconds && modulo_seconds) {
@@ -390,6 +422,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 		const int minutes_start = (int) floor(minimum_lat * 60);
 		const int minutes_end = (int) ceil(maximum_lat * 60);
+
+		qDebug() << SG_PREFIX_I << "horizontal minutes start/end" << minutes_start << minutes_end;
 
 		for (int minute = minutes_start; minute < minutes_end; minute++) {
 			if (zoom_level_allows_for_seconds && modulo_seconds) {

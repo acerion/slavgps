@@ -954,7 +954,7 @@ sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 	Coord orig_coord = this->center_coord;
 	this->center_coord = coord;
 
-	{
+	if (0) { /* TODO_LATER_: re-enable. */
 		LatLonBBox bbox = this->get_bbox();
 		/* If we moved the view too far to north or south, we
 		   would get beyond a North Pole or South Pole, which
@@ -1310,6 +1310,10 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 */
 sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, fpixel * pos_y) const
 {
+	if (!coord_in.is_valid()) {
+		return sg_ret::err;
+	}
+
 	Coord coord = coord_in;
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
@@ -1566,15 +1570,73 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
 		return bbox;
 	}
+	qDebug() << SG_PREFIX_I << "coord ul is" << coord_ul;
+	qDebug() << SG_PREFIX_I << "coord ur is" << coord_ur;
+	qDebug() << SG_PREFIX_I << "coord bl is" << coord_bl;
+	qDebug() << SG_PREFIX_I << "coord br is" << coord_br;
 
 
 	bbox.north = std::max(coord_ul.lat_lon.lat, coord_ur.lat_lon.lat);
 	bbox.south = std::min(coord_bl.lat_lon.lat, coord_br.lat_lon.lat);
 	bbox.east  = std::max(coord_ur.lat_lon.lon, coord_br.lat_lon.lon);
 	bbox.west  = std::min(coord_ul.lat_lon.lon, coord_bl.lat_lon.lon);
-	bbox.validate();
+	qDebug() << SG_PREFIX_I << "BBox is" << bbox;
+	//bbox.validate();
 
 	return bbox;
+}
+
+
+
+
+sg_ret GisViewport::get_valid_central_rect(int & topmost, int & bottommost, int & leftmost, int & rightmost)
+{
+	/*
+	  All longitudes/eastings are valid, so left and right border
+	  of the result rect will be the same as borders of central
+	  part of viewport.
+
+	  It's the latitudes/northings that are problematic.
+
+	  TODO_LATER: this function should be optimized for speed.
+	*/
+	leftmost = this->central_get_leftmost_pixel();
+	rightmost = this->central_get_rightmost_pixel();
+
+
+	const int limit_top = this->central_get_topmost_pixel();
+	const int limit_bottom = this->central_get_bottommost_pixel();
+
+	int top_y = -1;
+	for (int y = limit_top; y <= limit_bottom; y++) {
+		const Coord coord = this->screen_pos_to_coord(ScreenPos(0, y));
+		if (coord.is_valid()) {
+			top_y = y;
+			break;
+		}
+	}
+	if (-1 == top_y) {
+		qDebug() << SG_PREFIX_W << "Failed to find top Y";
+		return sg_ret::err;
+	}
+
+	int bottom_y = -1;
+	for (int y = limit_bottom; y >= limit_top; y--) {
+		const Coord coord = this->screen_pos_to_coord(ScreenPos(0, y));
+		if (coord.is_valid()) {
+			bottom_y = y;
+			break;
+		}
+	}
+	if (-1 == bottom_y) {
+		qDebug() << SG_PREFIX_W << "Failed to find bottom Y";
+		return sg_ret::err;
+	}
+
+	topmost = top_y;
+	bottommost = bottom_y;
+
+	return sg_ret::ok;
 }
 
 
