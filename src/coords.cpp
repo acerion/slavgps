@@ -436,6 +436,26 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 
 
 
+bool LatLon::is_valid(void) const
+{
+	if (std::isnan(this->lat)) {
+		return false;
+	}
+	if (std::isnan(this->lon)) {
+		return false;
+	}
+	if (this->lat > 90.0) {
+		return false;
+	}
+	if (this->lat < -90.0) {
+		return false;
+	}
+	return true;
+}
+
+
+
+
 static UTMLetter coords_utm_band_letter(double latitude)
 {
 	/*

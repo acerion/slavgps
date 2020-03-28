@@ -90,7 +90,7 @@ namespace SlavGPS {
 		double lat = NAN;
 		double lon = NAN;
 
-		bool is_valid(void) const { return !std::isnan(this->lat) && !std::isnan(this->lon); };
+		bool is_valid(void) const;
 		void invalidate(void) { this->lat = NAN; this->lon = NAN; };
 
 		/* Convert value to string with DegreeFormat::Raw format. */
