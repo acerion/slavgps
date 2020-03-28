@@ -115,7 +115,7 @@ sg_ret Ruler::set_end(const ScreenPos & pos)
 		LatLon lat_lon = test.get_lat_lon();
 		/* TODO_LATER: get_height() or get_q_bottommost_pixel()? */
 		/* FIXME: magic number. */
-		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->central_get_height() / 11000.0; // about 11km per degree latitude
+		lat_lon.lat.set_value(lat_lon.lat.value() + this->gisview->get_viking_scale().get_y() * this->gisview->central_get_height() / 11000.0); // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		ScreenPos test_pos;

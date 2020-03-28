@@ -641,8 +641,8 @@ void Waypoint::open_astro_cb(void)
 		const QString time_buf = this->timestamp.strftime_utc("%H:%M:%S");
 
 		const LatLon lat_lon = this->m_coord.get_lat_lon();
-		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
-		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
+		const QString lat_str = Astro::convert_to_dms(lat_lon.lat.value());
+		const QString lon_str = Astro::convert_to_dms(lat_lon.lon.bound_value());
 		const QString alt_str = QString("%1").arg((int) round(this->altitude.ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, main_window);
 	} else {

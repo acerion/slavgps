@@ -526,7 +526,7 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 	}
 
 	const LatLon lat_lon = coord.get_lat_lon();
-	const double pt[2] = { lat_lon.lat, lat_lon.lon };
+	const double pt[2] = { lat_lon.lat.value(), lat_lon.lon.bound_value() };
 
 	double nearest;
 	if (!ApplicationState::get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest)) {

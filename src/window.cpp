@@ -1538,8 +1538,8 @@ void Window::set_default_location_cb(void)
 	const LatLon current_center_lat_lon = this->m_main_gisview->get_center_coord().get_lat_lon();
 
 	/* Push center coordinate values to Preferences */
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat));
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_lat_lon.lon));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat.value()));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_lat_lon.lon.bound_value()));
 	if (sg_ret::ok != Preferences::save_to_file()) {
 		Preferences::show_save_error_dialog(this);
 	}

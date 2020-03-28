@@ -43,19 +43,19 @@ LatLonBBox::LatLonBBox(const LatLon & corner1, const LatLon & corner2)
 	/* TODO_HARD: what happens if corner1/corner2 crosses the boundary of +/- longitude? */
 
 	if (corner1.lat > corner2.lat) {
-		this->north.set_value(corner1.lat);
-		this->south.set_value(corner2.lat);
+		this->north = corner1.lat;
+		this->south = corner2.lat;
 	} else {
-		this->north.set_value(corner2.lat);
-		this->south.set_value(corner1.lat);
+		this->north = corner2.lat;
+		this->south = corner1.lat;
 	}
 
 	if (corner1.lon > corner2.lon) {
-		this->east.set_value(corner1.lon);
-		this->west.set_value(corner2.lon);
+		this->east = corner1.lon;
+		this->west = corner2.lon;
 	} else {
-		this->east.set_value(corner2.lon);
-		this->west.set_value(corner1.lon);
+		this->east = corner2.lon;
+		this->west = corner1.lon;
 	}
 
 	this->validate();
@@ -125,7 +125,7 @@ LatLonBBoxStrings LatLonBBox::values_to_c_strings(void) const
 
 QDebug SlavGPS::operator<<(QDebug debug, const LatLonBBox & bbox)
 {
-	debug.nospace() << "North: " << bbox.north.get_value() << ", South: " << bbox.south.get_value() << ", East: " << bbox.east.get_value() << ", West: " << bbox.west.get_value();
+	debug.nospace() << "North: " << bbox.north << ", South: " << bbox.south << ", East: " << bbox.east << ", West: " << bbox.west;
 	return debug;
 }
 
@@ -136,7 +136,7 @@ LatLon LatLonBBox::get_center_lat_lon(void) const
 {
 	LatLon result;
 	if (this->valid) {
-		result = LatLon((this->north.get_value() + this->south.get_value()) / 2, (this->east.get_value() + this->west.get_value()) / 2);
+		result = LatLon((this->north.value() + this->south.value()) / 2, (this->east.unbound_value() + this->west.unbound_value()) / 2); /* TODO_LATER: replace the calculation with some LatLon method. */
 	} else {
 		; /* Return invalid latlon. */
 	}
@@ -150,10 +150,10 @@ bool LatLonBBox::contains_point(const LatLon & point) const
 {
 	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
 
-	if (point.lat <= this->north.get_value()
-	    && point.lat >= this->south.get_value()
-	    && point.lon <= this->east.get_value()
-	    && point.lon >= this->west.get_value()) {
+	if (point.lat <= this->north
+	    && point.lat >= this->south
+	    && point.lon <= this->east
+	    && point.lon >= this->west) {
 
 		return true;
 	} else {
@@ -169,13 +169,13 @@ bool LatLonBBox::contains_bbox(const LatLonBBox & bbox) const
 	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
-	const double minimal_latitude = std::min(bbox.north.get_value(), bbox.south.get_value());
-	const double maximal_longitude = std::max(bbox.east.get_value(), bbox.west.get_value());
+	const double minimal_latitude = std::min(bbox.north.value(), bbox.south.value());
+	const double maximal_longitude = std::max(bbox.east.unbound_value(), bbox.west.unbound_value());
 
-	if (this->south.get_value() <= minimal_latitude
-	    && this->north.get_value() >= minimal_latitude
-	    && this->west.get_value() <= maximal_longitude
-	    && this->east.get_value() >= maximal_longitude) {
+	if (this->south.value() <= minimal_latitude
+	    && this->north.value() >= minimal_latitude
+	    && this->west.unbound_value() <= maximal_longitude
+	    && this->east.unbound_value() >= maximal_longitude) {
 
 		return true;
 	} else {
@@ -188,10 +188,10 @@ bool LatLonBBox::contains_bbox(const LatLonBBox & bbox) const
 
 bool LatLonBBox::intersects_with(const LatLonBBox & bbox) const
 {
-	return this->south.get_value() < bbox.north.get_value()
-		&& this->north.get_value() > bbox.south.get_value()
-		&& this->east.get_value() > bbox.west.get_value()
-		&& this->west.get_value() < bbox.east.get_value();
+	return this->south < bbox.north
+		&& this->north > bbox.south
+		&& this->east > bbox.west
+		&& this->west < bbox.east;
 }
 
 
@@ -204,17 +204,17 @@ sg_ret LatLonBBox::expand_with_lat_lon(const LatLon & lat_lon)
 		return sg_ret::err;
 	}
 
-	if (!this->north.is_valid() || (lat_lon.lat > this->north.get_value())) {
-		this->north.set_value(lat_lon.lat);
+	if (!this->north.is_valid() || (lat_lon.lat > this->north)) {
+		this->north = lat_lon.lat;
 	}
-	if (!this->south.is_valid() || (lat_lon.lat < this->south.get_value())) {
-		this->south.set_value(lat_lon.lat);
+	if (!this->south.is_valid() || (lat_lon.lat < this->south)) {
+		this->south = lat_lon.lat;
 	}
-	if (!this->east.is_valid() || (lat_lon.lon > this->east.get_value())) {
-		this->east.set_value(lat_lon.lon);
+	if (!this->east.is_valid() || (lat_lon.lon > this->east)) {
+		this->east = lat_lon.lon;
 	}
-	if (!this->west.is_valid() || (lat_lon.lon < this->west.get_value())) {
-		this->west.set_value(lat_lon.lon);
+	if (!this->west.is_valid() || (lat_lon.lon < this->west)) {
+		this->west = lat_lon.lon;
 	}
 
 	return sg_ret::ok;
@@ -230,16 +230,16 @@ sg_ret LatLonBBox::expand_with_bbox(const LatLonBBox & other)
 		return sg_ret::err;
 	}
 
-	if (!this->north.is_valid() || other.north.get_value() > this->north.get_value()) {
+	if (!this->north.is_valid() || other.north > this->north) {
 		this->north = other.north;
 	}
-	if (!this->south.is_valid() || other.south.get_value() < this->south.get_value()) {
+	if (!this->south.is_valid() || other.south < this->south) {
 		this->south = other.south;
 	}
-	if (!this->east.is_valid() || other.east.get_value() > this->east.get_value()) {
+	if (!this->east.is_valid() || other.east > this->east) {
 		this->east = other.east;
 	}
-	if (!this->west.is_valid() || other.west.get_value() < this->west.get_value()) {
+	if (!this->west.is_valid() || other.west < this->west) {
 		this->west = other.west;
 	}
 

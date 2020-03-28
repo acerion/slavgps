@@ -371,13 +371,13 @@ QString Latitude::to_string(void) const
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		convert_lat_dec_to_ddd(lat_string, this->value);
+		convert_lat_dec_to_ddd(lat_string, this->m_value);
 		break;
 	case DegreeFormat::DMM:
-		convert_lat_dec_to_dmm(lat_string, this->value);
+		convert_lat_dec_to_dmm(lat_string, this->m_value);
 		break;
 	case DegreeFormat::DMS:
-		convert_lat_dec_to_dms(lat_string, this->value);
+		convert_lat_dec_to_dms(lat_string, this->m_value);
 		break;
 	case DegreeFormat::Raw:
 		LatLon::lat_to_string_raw(lat_string, *this);
@@ -396,7 +396,7 @@ QString Latitude::to_string(void) const
 const QString Latitude::value_to_string_for_file(void) const
 {
 	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(this->value, 'f', SG_LATITUDE_PRECISION);
+	return c_locale.toString(this->m_value, 'f', SG_LATITUDE_PRECISION);
 }
 
 
@@ -405,24 +405,24 @@ const QString Latitude::value_to_string_for_file(void) const
 bool Latitude::set_value(double new_value)
 {
 	if (std::isnan(new_value)) {
-		this->value = NAN;
+		this->m_value = NAN;
 	} else if (new_value < SG_LATITUDE_MIN || new_value > SG_LATITUDE_MAX) {
-		this->value = NAN;
+		this->m_value = NAN;
 	} else {
-		this->value = new_value;
+		this->m_value = new_value;
 	}
 
-	this->valid = !std::isnan(this->value);
+	this->m_valid = !std::isnan(this->m_value);
 
-	return this->valid;
+	return this->m_valid;
 }
 
 
 
 
-double Latitude::get_value(void) const
+double Latitude::value(void) const
 {
-	return this->value;
+	return this->m_value;
 }
 
 
@@ -430,7 +430,7 @@ double Latitude::get_value(void) const
 
 bool Latitude::is_valid(void) const
 {
-	return this->valid;
+	return this->m_valid;
 }
 
 
@@ -438,8 +438,134 @@ bool Latitude::is_valid(void) const
 
 void Latitude::invalidate(void)
 {
-	this->value = NAN;
-	this->valid = false;
+	this->m_value = NAN;
+	this->m_valid = false;
+}
+
+
+
+
+bool Latitude::operator==(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_value == rhs.m_value;
+}
+
+
+
+
+bool Latitude::operator!=(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return true;
+	}
+	return this->m_value != rhs.m_value;
+}
+
+
+
+
+Latitude & Latitude::operator=(const Latitude & rhs)
+{
+	this->m_valid = rhs.m_valid;
+	this->m_value = rhs.m_value;
+
+	return *this;
+}
+
+
+
+
+bool Latitude::operator<(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_value < rhs.m_value;
+}
+
+
+
+
+bool Latitude::operator>(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_value > rhs.m_value;
+}
+
+
+
+
+
+bool Latitude::operator<=(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_value <= rhs.m_value;
+}
+
+
+
+
+
+bool Latitude::operator>=(const Latitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_value >= rhs.m_value;
+}
+
+
+
+
+Latitude & Latitude::operator+=(double rhs)
+{
+	if (!this->m_valid) {
+		qDebug() << SG_PREFIX_W << "Invalid 'this' operand";
+		return *this;
+	}
+	if (std::isnan(rhs)) {
+		qDebug() << SG_PREFIX_W << "Invalid 'rhs' operand";
+		return *this;
+	}
+
+	this->m_value += rhs;
+	this->m_valid = !std::isnan(this->m_value);
+	return *this;
+}
+
+
+
+
+Latitude & Latitude::operator-=(double rhs)
+{
+	if (!this->m_valid) {
+		qDebug() << SG_PREFIX_W << "Invalid 'this' operand";
+		return *this;
+	}
+	if (std::isnan(rhs)) {
+		qDebug() << SG_PREFIX_W << "Invalid 'rhs' operand";
+		return *this;
+	}
+
+	this->m_value -= rhs;
+	this->m_valid = !std::isnan(this->m_value);
+	return *this;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const Latitude & lat)
+{
+	debug << (lat.is_valid() ? "valid" : "invalid") << ", " << lat.value();
+	return debug;
 }
 
 
@@ -470,13 +596,13 @@ QString Longitude::to_string(void) const
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		convert_lon_dec_to_ddd(lon_string, this->value);
+		convert_lon_dec_to_ddd(lon_string, this->m_unbound_value);
 		break;
 	case DegreeFormat::DMM:
-		convert_lon_dec_to_dmm(lon_string, this->value);
+		convert_lon_dec_to_dmm(lon_string, this->m_unbound_value);
 		break;
 	case DegreeFormat::DMS:
-		convert_lon_dec_to_dms(lon_string, this->value);
+		convert_lon_dec_to_dms(lon_string, this->m_unbound_value);
 		break;
 	case DegreeFormat::Raw:
 		LatLon::lon_to_string_raw(lon_string, *this);
@@ -495,7 +621,7 @@ QString Longitude::to_string(void) const
 const QString Longitude::value_to_string_for_file(void) const
 {
 	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(this->value, 'f', SG_LONGITUDE_PRECISION);
+	return c_locale.toString(this->m_unbound_value, 'f', SG_LONGITUDE_PRECISION);
 }
 
 
@@ -504,24 +630,46 @@ const QString Longitude::value_to_string_for_file(void) const
 bool Longitude::set_value(double new_value)
 {
 	if (std::isnan(new_value)) {
-		this->value = NAN;
+		this->m_unbound_value = NAN;
 	} else if (new_value < SG_LONGITUDE_MIN || new_value > SG_LONGITUDE_MAX) {
-		this->value = NAN;
+		this->m_unbound_value = NAN;
 	} else {
-		this->value = new_value;
+		this->m_unbound_value = new_value;
 	}
 
-	this->valid = !std::isnan(this->value);
+	this->m_valid = !std::isnan(this->m_unbound_value);
 
-	return this->valid;
+	return this->m_valid;
 }
 
 
 
 
-double Longitude::get_value(void) const
+double Longitude::unbound_value(void) const
 {
-	return this->value;
+	return this->m_unbound_value;
+}
+
+
+
+
+double Longitude::bound_value(void) const
+{
+	/* TODO_LATER: verify this calculation. */
+
+	double tmp = this->m_unbound_value;
+
+
+	if (tmp > 0) {
+		while (tmp > 180.0) {
+			tmp -= 180.0;
+		}
+	} else {
+		while (tmp < -180.0) {
+			tmp += 180.0;
+		}
+	}
+	return tmp;
 }
 
 
@@ -529,7 +677,7 @@ double Longitude::get_value(void) const
 
 bool Longitude::is_valid(void) const
 {
-	return this->valid;
+	return this->m_valid;
 }
 
 
@@ -537,6 +685,132 @@ bool Longitude::is_valid(void) const
 
 void Longitude::invalidate(void)
 {
-	this->value = NAN;
-	this->valid = false;
+	this->m_unbound_value = NAN;
+	this->m_valid = false;
+}
+
+
+
+
+bool Longitude::operator==(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_unbound_value == rhs.m_unbound_value;
+}
+
+
+
+
+bool Longitude::operator!=(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return true;
+	}
+	return this->m_unbound_value != rhs.m_unbound_value;
+}
+
+
+
+
+Longitude & Longitude::operator=(const Longitude & rhs)
+{
+	this->m_valid = rhs.m_valid;
+	this->m_unbound_value = rhs.m_unbound_value;
+
+	return *this;
+}
+
+
+
+
+bool Longitude::operator<(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_unbound_value < rhs.m_unbound_value;
+}
+
+
+
+
+bool Longitude::operator>(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_unbound_value > rhs.m_unbound_value;
+}
+
+
+
+
+
+bool Longitude::operator<=(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_unbound_value <= rhs.m_unbound_value;
+}
+
+
+
+
+
+bool Longitude::operator>=(const Longitude & rhs) const
+{
+	if (!this->m_valid || !rhs.m_valid) {
+		return false;
+	}
+	return this->m_unbound_value >= rhs.m_unbound_value;
+}
+
+
+
+
+Longitude & Longitude::operator+=(double rhs)
+{
+	if (!this->m_valid) {
+		qDebug() << SG_PREFIX_W << "Invalid 'this' operand";
+		return *this;
+	}
+	if (std::isnan(rhs)) {
+		qDebug() << SG_PREFIX_W << "Invalid 'rhs' operand";
+		return *this;
+	}
+
+	this->m_unbound_value += rhs;
+	this->m_valid = !std::isnan(this->m_unbound_value);
+	return *this;
+}
+
+
+
+
+Longitude & Longitude::operator-=(double rhs)
+{
+	if (!this->m_valid) {
+		qDebug() << SG_PREFIX_W << "Invalid 'this' operand";
+		return *this;
+	}
+	if (std::isnan(rhs)) {
+		qDebug() << SG_PREFIX_W << "Invalid 'rhs' operand";
+		return *this;
+	}
+
+	this->m_unbound_value -= rhs;
+	this->m_valid = !std::isnan(this->m_unbound_value);
+	return *this;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const Longitude & lon)
+{
+	debug << (lon.is_valid() ? "valid" : "invalid") << ", " << lon.unbound_value() << "/" << lon.bound_value();
+	return debug;
 }

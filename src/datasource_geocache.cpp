@@ -296,8 +296,8 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(__attribute__(
 		.arg(this->miles_radius_spin->value(), 0, 'f', 1)
 		.arg(safe_user)
 		.arg(safe_pass)
-		.arg(SGUtils::double_to_c(lat_lon.lat))
-		.arg(SGUtils::double_to_c(lat_lon.lon));
+		.arg(SGUtils::double_to_c(lat_lon.lat.value()))
+		.arg(SGUtils::double_to_c(lat_lon.lon.bound_value()));
 	const QString command3 = QString("%1 -z ~/.geo/caches/*.html").arg(GC_PROGRAM2);
 
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);

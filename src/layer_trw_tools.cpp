@@ -1637,10 +1637,10 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
 			.arg(engine_name)
-			.arg(start.lat, 0, 'f', 3) /* ".3f" */
-			.arg(start.lon, 0, 'f', 3)
-			.arg(end.lat, 0, 'f', 3)
-			.arg(end.lon, 0, 'f', 3);
+			.arg(start.lat.value(), 0, 'f', 3) /* ".3f" */
+			.arg(start.lon.bound_value(), 0, 'f', 3)
+			.arg(end.lat.value(), 0, 'f', 3)
+			.arg(end.lon.unbound_value(), 0, 'f', 3);
 		statusbar->set_message(StatusBarField::Info, msg1);
 
 		trw->get_window()->set_busy_cursor();
@@ -1650,7 +1650,7 @@ LayerTool::Status LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * la
 		/* Update UI to say we're done. */
 
 		const QString msg2 = (find_status)
-			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine_name).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
+			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine_name).arg(start.lat.value(), 0, 'f', 3).arg(start.lon.unbound_value(), 0, 'f', 3).arg(end.lat.value(), 0, 'f', 3).arg(end.lon.unbound_value(), 0, 'f', 3) /* ".3f" */
 			: QObject::tr("Error getting route from %1.").arg(engine_name);
 
 		statusbar->set_message(StatusBarField::Info, msg2);

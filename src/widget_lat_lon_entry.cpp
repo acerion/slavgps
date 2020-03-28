@@ -88,8 +88,8 @@ sg_ret LatLonEntryWidget::set_value(const LatLon & lat_lon, bool block_signal)
 		this->lon_entry->blockSignals(true);
 	}
 
-	this->lat_entry->setValue(lat_lon.lat);
-	this->lon_entry->setValue(lat_lon.lon);
+	this->lat_entry->setValue(lat_lon.lat.value());
+	this->lon_entry->setValue(lat_lon.lon.unbound_value());
 
 	if (block_signal) {
 		this->lat_entry->blockSignals(false);
@@ -150,7 +150,7 @@ LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 	this->setMinimum(SG_LATITUDE_MIN);
 	this->setMaximum(SG_LATITUDE_MAX);
 	this->setSingleStep(0.05);
-	this->setValue(value.get_latitude().get_value());
+	this->setValue(value.get_latitude().value());
 	this->setToolTip(QObject::tr("Coordinate: latitude")); /* Default tooltip. */
 }
 
@@ -171,7 +171,7 @@ LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 	this->setMinimum(SG_LONGITUDE_MIN);
 	this->setMaximum(SG_LONGITUDE_MAX);
 	this->setSingleStep(0.05);
-	this->setValue(value.get_longitude().get_value());
+	this->setValue(value.get_longitude().bound_value());
 	this->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
 }
 

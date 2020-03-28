@@ -79,8 +79,8 @@ sg_ret MapUtils::lat_lon_to_iTMS(const LatLon & lat_lon, const VikingScale & vik
 	const double xmpp = viking_scale.get_x();
 	const double ympp = viking_scale.get_y();
 
-	dest.x = (lat_lon.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp;
-	dest.y = (180 - MERCLAT(lat_lon.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / ympp;
+	dest.x = (lat_lon.lon.bound_value() + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp;
+	dest.y = (180 - MERCLAT(lat_lon.lat.value())) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / ympp;
 	dest.z = 0;
 
 	return sg_ret::ok;

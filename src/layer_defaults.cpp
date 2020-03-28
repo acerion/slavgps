@@ -184,10 +184,10 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerKind laye
 		variant = QVariant((qlonglong) value.get_duration().ll_value());
 		break;
 	case SGVariantType::Latitude:
-		variant = QVariant(value.get_latitude().get_value());
+		variant = QVariant(value.get_latitude().value());
 		break;
 	case SGVariantType::Longitude:
-		variant = QVariant(value.get_longitude().get_value());
+		variant = QVariant(value.get_longitude().unbound_value());
 		break;
 	case SGVariantType::AltitudeType:
 		variant = QVariant(value.get_altitude().ll_value());

@@ -104,8 +104,8 @@ bool UTM::is_band_letter(UTMLetter letter)
 
 LatLon::LatLon(const Latitude & latitude, const Longitude & longitude)
 {
-	this->lat = latitude.get_value();
-	this->lon = longitude.get_value();
+	this->lat = latitude;
+	this->lon = longitude;
 }
 
 
@@ -114,7 +114,7 @@ LatLon::LatLon(const Latitude & latitude, const Longitude & longitude)
 void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	lat_string = c_locale.toString(lat_lon.lat, 'f', SG_LATITUDE_PRECISION);
+	lat_string = c_locale.toString(lat_lon.lat.value(), 'f', SG_LATITUDE_PRECISION);
 }
 
 
@@ -123,7 +123,7 @@ void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
 void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	lon_string = c_locale.toString(lat_lon.lon, 'f', SG_LONGITUDE_PRECISION);
+	lon_string = c_locale.toString(lat_lon.lon.unbound_value(), 'f', SG_LONGITUDE_PRECISION);
 }
 
 
@@ -132,7 +132,7 @@ void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 void LatLon::lat_to_string_raw(QString & lat_string, const Latitude & lat)
 {
 	static QLocale c_locale = QLocale::c();
-	lat_string = c_locale.toString(lat.get_value(), 'f', SG_LATITUDE_PRECISION);
+	lat_string = c_locale.toString(lat.value(), 'f', SG_LATITUDE_PRECISION);
 }
 
 
@@ -141,7 +141,7 @@ void LatLon::lat_to_string_raw(QString & lat_string, const Latitude & lat)
 void LatLon::lon_to_string_raw(QString & lon_string, const Longitude & lon)
 {
 	static QLocale c_locale = QLocale::c();
-	lon_string = c_locale.toString(lon.get_value(), 'f', SG_LONGITUDE_PRECISION);
+	lon_string = c_locale.toString(lon.unbound_value(), 'f', SG_LONGITUDE_PRECISION);
 }
 
 
@@ -151,9 +151,9 @@ QString LatLon::to_string_raw(const QString & separator) const
 {
 	static QLocale c_locale = QLocale::c();
 	return QString("%1%2%3")
-		.arg(c_locale.toString(this->lat, 'f', SG_LATITUDE_PRECISION))
+		.arg(c_locale.toString(this->lat.value(), 'f', SG_LATITUDE_PRECISION))
 		.arg(separator)
-		.arg(c_locale.toString(this->lon, 'f', SG_LONGITUDE_PRECISION));
+		.arg(c_locale.toString(this->lon.unbound_value(), 'f', SG_LONGITUDE_PRECISION));
 }
 
 
@@ -169,10 +169,18 @@ void LatLon::to_strings_raw(QString & lat_string, QString & lon_string) const
 {
 	static QLocale c_locale = QLocale::c();
 
-	lat_string = c_locale.toString(this->lat, 'f', SG_LATITUDE_PRECISION);
-	lon_string = c_locale.toString(this->lon, 'f', SG_LONGITUDE_PRECISION);
+	lat_string = c_locale.toString(this->lat.value(), 'f', SG_LATITUDE_PRECISION);
+	lon_string = c_locale.toString(this->lon.unbound_value(), 'f', SG_LONGITUDE_PRECISION);
 
 	return;
+}
+
+
+
+
+LatLon LatLon::get_average(const LatLon & max, const LatLon & min)
+{
+	return LatLon((max.lat.value() + min.lat.value()) / 2, (max.lon.unbound_value() + min.lon.unbound_value()) / 2);
 }
 
 
@@ -365,10 +373,10 @@ double UTM::get_distance(const UTM & utm1, const UTM & utm2)
 
 double LatLon::get_distance(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 {
-	const double lat1 = lat_lon_1.lat * PIOVER180;
-	const double lon1 = lat_lon_1.lon * PIOVER180;
-	const double lat2 = lat_lon_2.lat * PIOVER180;
-	const double lon2 = lat_lon_2.lon * PIOVER180;
+	const double lat1 = lat_lon_1.lat.value() * PIOVER180;
+	const double lon1 = lat_lon_1.lon.unbound_value() * PIOVER180;
+	const double lat2 = lat_lon_2.lat.value() * PIOVER180;
+	const double lon2 = lat_lon_2.lon.unbound_value() * PIOVER180;
 
 	const double tmp = EquatorialRadius * acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon1 - lon2));
 
@@ -381,8 +389,8 @@ double LatLon::get_distance(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 
 UTM LatLon::to_utm(const LatLon & lat_lon)
 {
-	double latitude = lat_lon.lat;
-	double longitude = lat_lon.lon;
+	double latitude = lat_lon.lat.value();
+	double longitude = lat_lon.lon.unbound_value();
 
 	/* We want the longitude within SG_LONGITUDE_MIN..SG_LONGITUDE_MAX. */
 	while (longitude < SG_LONGITUDE_MIN) {
@@ -438,16 +446,16 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 
 bool LatLon::is_valid(void) const
 {
-	if (std::isnan(this->lat)) {
+	if (std::isnan(this->lat.value())) {
 		return false;
 	}
-	if (std::isnan(this->lon)) {
+	if (std::isnan(this->lon.unbound_value())) {
 		return false;
 	}
-	if (this->lat > 90.0) {
+	if (this->lat.value() > 90.0) {
 		return false;
 	}
-	if (this->lat < -90.0) {
+	if (this->lat.value() < -90.0) {
 		return false;
 	}
 	return true;
@@ -532,18 +540,18 @@ QString LatLon::to_string(void) const
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		convert_lat_dec_to_ddd(lat_string, this->lat);
-		convert_lon_dec_to_ddd(lon_string, this->lon);
+		convert_lat_dec_to_ddd(lat_string, this->lat.value());
+		convert_lon_dec_to_ddd(lon_string, this->lon.unbound_value());
 		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::DMM:
-		convert_lat_dec_to_dmm(lat_string, this->lat);
-		convert_lon_dec_to_dmm(lon_string, this->lon);
+		convert_lat_dec_to_dmm(lat_string, this->lat.value());
+		convert_lon_dec_to_dmm(lon_string, this->lon.unbound_value());
 		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::DMS:
-		convert_lat_dec_to_dms(lat_string, this->lat);
-		convert_lon_dec_to_dms(lon_string, this->lon);
+		convert_lat_dec_to_dms(lat_string, this->lat.value());
+		convert_lon_dec_to_dms(lon_string, this->lon.unbound_value());
 		result = QString("%1 %2").arg(lat_string, lon_string);
 		break;
 	case DegreeFormat::Raw:
@@ -567,10 +575,10 @@ LatLon LatLon::get_interpolated(const LatLon & lat_lon_1, const LatLon & lat_lon
 {
 	LatLon result;
 
-	result.lat = lat_lon_1.lat + ((lat_lon_2.lat - lat_lon_1.lat) * scale);
+	result.lat.set_value(lat_lon_1.lat.value() + ((lat_lon_2.lat.value() - lat_lon_1.lat.value()) * scale));
 
 	/* FIXME: This won't cope with going over the 180 degrees longitude boundary. */
-	result.lon = lat_lon_1.lon + ((lat_lon_2.lon - lat_lon_1.lon) * scale);
+	result.lon.set_value(lat_lon_1.lon.unbound_value() + ((lat_lon_2.lon.unbound_value() - lat_lon_1.lon.unbound_value()) * scale));
 
 	return result;
 }
@@ -582,11 +590,11 @@ static bool lat_lon_close_enough(const LatLon & lat_lon1, const LatLon & lat_lon
 {
 	const double epsilon = 0.0000001;
 
-	if (std::fabs(lat_lon1.lat - lat_lon2.lat) > epsilon) {
+	if (std::fabs(lat_lon1.lat.value() - lat_lon2.lat.value()) > epsilon) {
 		return false;
 	}
 
-	if (std::fabs(lat_lon1.lon - lat_lon2.lon) > epsilon) {
+	if (std::fabs(lat_lon1.lon.unbound_value() - lat_lon2.lon.unbound_value()) > epsilon) {
 		return false;
 	}
 

@@ -319,10 +319,10 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	//const LatLonBBox bbox = gisview->get_bbox();
 	const LatLonBBox bbox(coord_ul.lat_lon, coord_br.lat_lon);
-	const double minimum_lon = bbox.west.get_value();
-	const double maximum_lon = bbox.east.get_value();
-	const double minimum_lat = bbox.south.get_value();
-	const double maximum_lat = bbox.north.get_value();
+	const double minimum_lon = bbox.west.unbound_value();
+	const double maximum_lon = bbox.east.unbound_value();
+	const double minimum_lat = bbox.south.value();
+	const double maximum_lat = bbox.north.value();
 
 
 	const double width_degrees = std::fabs(minimum_lon - maximum_lon);
@@ -506,10 +506,10 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 
 
 	const LatLonBBox bbox = gisview->get_bbox();
-	const double minimum_lon = bbox.west.get_value();
-	const double maximum_lon = bbox.east.get_value();
-	const double minimum_lat = bbox.south.get_value();
-	const double maximum_lat = bbox.north.get_value();
+	const double minimum_lon = bbox.west.unbound_value();
+	const double maximum_lon = bbox.east.unbound_value();
+	const double minimum_lat = bbox.south.value();
+	const double maximum_lat = bbox.north.value();
 
 
 	const double width_degrees = std::fabs(minimum_lon - maximum_lon);

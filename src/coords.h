@@ -87,11 +87,11 @@ namespace SlavGPS {
 		LatLon(double new_lat = NAN, double new_lon = NAN) : lat(new_lat), lon(new_lon) {};
 		LatLon(const Latitude & lat, const Longitude & lon);
 
-		double lat = NAN;
-		double lon = NAN;
+		Latitude lat;
+		Longitude lon;
 
 		bool is_valid(void) const;
-		void invalidate(void) { this->lat = NAN; this->lon = NAN; };
+		void invalidate(void) { this->lat.invalidate(); this->lon.invalidate(); };
 
 		/* Convert value to string with DegreeFormat::Raw format. */
 		static void lat_to_string_raw(QString & lat_string, const LatLon & lat_lon);
@@ -108,7 +108,7 @@ namespace SlavGPS {
 		/* Convert value to strings with DegreeFormat::Raw format. */
 		void to_strings_raw(QString & lat, QString & lon) const;
 
-		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
+		static LatLon get_average(const LatLon & max, const LatLon & min);
 		static LatLon get_interpolated(const LatLon & lat_lon_1, const LatLon & lat_lon_2, double scale);
 
 		static UTM to_utm(const LatLon & lat_lon);

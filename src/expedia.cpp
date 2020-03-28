@@ -201,8 +201,8 @@ static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScal
 	const int alti = viking_scale_to_expedia_alti(viking_scale.get_x());
 	if (alti != -1) {
 		tile_info.scale.set_scale_value(alti);
-		tile_info.x = (int) (((src_coord.lat_lon.lon + 180) * expedia_altis_freq(alti))+0.5);
-		tile_info.y = (int) (((src_coord.lat_lon.lat + 90) * expedia_altis_freq(alti))+0.5);
+		tile_info.x = (int) (((src_coord.lat_lon.lon.bound_value() + 180) * expedia_altis_freq(alti))+0.5);
+		tile_info.y = (int) (((src_coord.lat_lon.lat.value() + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
 
 		/* Just to space out tiles on the filesystem. */
@@ -244,15 +244,15 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 	const LatLon lat_lon = expedia_xy_to_latlon_middle(src.scale.get_scale_value(), src.x, src.y);
 
 	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src.scale.get_scale_value()) / (src.scale.get_scale_value());
-	int width = height * cos(lat_lon.lat * DEGREES_TO_RADS);
+	int width = height * cos(lat_lon.lat.value() * DEGREES_TO_RADS);
 
 	height += 2 * REAL_HEIGHT_BUFFER;
 	width  += 2 * REAL_WIDTH_BUFFER;
 
 	const QString uri = QString("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%1,%2&Lang=%3&Alti=%4&Size=%5,%6&Offs=0.000000,0.000000&BCheck&tpid=1")
-		.arg(lat_lon.lat)
-		.arg(lat_lon.lon)
-		.arg((lat_lon.lon > -30) ? "EUR0809" : "USA0409")
+		.arg(lat_lon.lat.value())
+		.arg(lat_lon.lon.bound_value())
+		.arg((lat_lon.lon.bound_value() > -30) ? "EUR0809" : "USA0409")
 		.arg(src.scale.get_scale_value()) /* This should be an integer value. TODO_LATER: verify whether we get correct member of scale object. */
 		.arg(width)
 		.arg(height);
@@ -288,17 +288,17 @@ static void expedia_handle_cleanup(__attribute__((unused)) void * handle)
 /* Thanks GPSDrive. */
 bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, fpixel mapSizeX2, fpixel mapSizeY2)
 {
-	double Ra = Radius[90 + (int) lat_lon_center.lat];
+	double Ra = Radius[90 + (int) lat_lon_center.lat.value()];
 
 	int px = (mapSizeX2 - x) * pixelfact_x;
 	int py = (-mapSizeY2 + y) * pixelfact_y;
 
-	double lat = lat_lon_center.lat - py / Ra;
-	double lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
+	double lat = lat_lon_center.lat.value() - py / Ra;
+	double lon = lat_lon_center.lon.unbound_value() - px / (Ra * cos (DEG2RAD(lat)));
 
-	double dif = lat * (1 - (cos (DEG2RAD(std::fabs (lon - lat_lon_center.lon)))));
+	double dif = lat * (1 - (cos (DEG2RAD(std::fabs (lon - lat_lon_center.lon.unbound_value())))));
 	lat = lat - dif / 1.5;
-	lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
+	lon = lat_lon_center.lon.unbound_value() - px / (Ra * cos (DEG2RAD(lat)));
 
 	lat_lon = LatLon(lat, lon);
 
@@ -314,13 +314,13 @@ bool Expedia::lat_lon_to_screen_pos(fpixel * pos_x, fpixel * pos_y, const LatLon
 	int mapSizeX = 2 * mapSizeX2;
 	int mapSizeY = 2 * mapSizeY2;
 
-	assert (lat_lon_center.lat >= SG_LATITUDE_MIN && lat_lon_center.lat <= SG_LATITUDE_MAX);
+	assert (lat_lon_center.lat.value() >= SG_LATITUDE_MIN && lat_lon_center.lat.value() <= SG_LATITUDE_MAX);
 	//    lat_lon_center.lon *= rad2deg; // FIXME, optimize equations
 	//    lat_lon_center.lat *= rad2deg;
-	double Ra = Radius[90 + (int) lat_lon_center.lat];
-	*pos_x = Ra * cos (DEG2RAD(lat_lon_center.lat)) * (lat_lon_center.lon - lat_lon.lon);
-	*pos_y = Ra * (lat_lon_center.lat - lat_lon.lat);
-	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lat_lon_center.lon - lat_lon.lon)))));
+	double Ra = Radius[90 + (int) lat_lon_center.lat.value()];
+	*pos_x = Ra * cos (DEG2RAD(lat_lon_center.lat.value())) * (lat_lon_center.lon.unbound_value() - lat_lon.lon.unbound_value());
+	*pos_y = Ra * (lat_lon_center.lat.value() - lat_lon.lat.value());
+	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lat_lon_center.lon.unbound_value() - lat_lon.lon.unbound_value())))));
 	*pos_y = *pos_y + dif / 1.85;
 	*pos_x = *pos_x / pixelfact_x;
 	*pos_y = *pos_y / pixelfact_y;

@@ -270,11 +270,13 @@ GisViewport::~GisViewport()
 	qDebug() << SG_PREFIX_I << "Deleting viewport" << QString(this->debug);
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		const LatLon lat_lon = this->center_coord.get_lat_lon();
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
+		if (lat_lon.is_valid()) {
+			ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat.value());
+			ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon.unbound_value());
 
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_scale.x);
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_scale.y);
+			ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_scale.x);
+			ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_scale.y);
+		}
 	}
 }
 
@@ -1229,8 +1231,8 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 		case GisViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.lat_lon.lat = this->center_coord.lat_lon.lat + (delta_y_pixels / REVERSE_MERCATOR_FACTOR(ympp));
+				coord.lat_lon.lon.set_value(this->center_coord.lat_lon.lon.unbound_value() + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp)));
+				coord.lat_lon.lat.set_value(this->center_coord.lat_lon.lat.value() + (delta_y_pixels / REVERSE_MERCATOR_FACTOR(ympp)));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1238,14 +1240,16 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_x_pixels);
-				test_coord.lat_lon.lat = this->center_coord.lat_lon.lat + (180.0 * ympp / 65536 / 256 * delta_y_pixels);
+				test_coord.lat_lon.lon.set_value(this->center_coord.lat_lon.lon.unbound_value() + (180.0 * xmpp / 65536 / 256 * delta_x_pixels));
+				test_coord.lat_lon.lat.set_value(this->center_coord.lat_lon.lat.value() + (180.0 * ympp / 65536 / 256 * delta_y_pixels));
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
-					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
+					// TODO_LATER: restore
+					// qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				}
 				if (coord.lat_lon.lon != test_coord.lat_lon.lon) {
-					qDebug() << SG_PREFIX_E << "LatLon: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
+					// TODO_LATER: restore
+					// qDebug() << SG_PREFIX_E << "LatLon: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				}
 			}
 			break;
@@ -1261,8 +1265,8 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (delta_y_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
+				coord.lat_lon.lon.set_value(this->center_coord.lat_lon.lon.unbound_value() + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp)));
+				coord.lat_lon.lat.set_value(DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat.value()) + (delta_y_pixels / (REVERSE_MERCATOR_FACTOR(ympp)))));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1270,16 +1274,18 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_x_pixels);
-				test_coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (180.0 * ympp / 65536 / 256 * delta_y_pixels));
+				test_coord.lat_lon.lon.set_value(this->center_coord.lat_lon.lon.unbound_value() + (180.0 * xmpp / 65536 / 256 * delta_x_pixels));
+				test_coord.lat_lon.lat.set_value(DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat.value()) + (180.0 * ympp / 65536 / 256 * delta_y_pixels)));
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
-					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
+					// TODO_LATER: restore
+					// qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				} else {
 					//qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				}
 				if (coord.lat_lon.lon != test_coord.lat_lon.lon) {
-					qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
+					// TODO_LATER: restore
+					// qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				} else {
 					//qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				}
@@ -1357,8 +1363,8 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 	case CoordMode::LatLon:
 		switch (this->draw_mode) {
 		case GisViewportDrawMode::LatLon:
-			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
-			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center_coord.lat_lon.lat - coord.lat_lon.lat));
+			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon.unbound_value() - this->center_coord.lat_lon.lon.unbound_value()));
+			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center_coord.lat_lon.lat.value() - coord.lat_lon.lat.value()));
 			break;
 		case GisViewportDrawMode::Expedia:
 			{
@@ -1370,8 +1376,8 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 			}
 			break;
 		case GisViewportDrawMode::Mercator:
-			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
-			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center_coord.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
+			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon.unbound_value() - this->center_coord.lat_lon.lon.unbound_value()));
+			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center_coord.lat_lon.lat.value()) - MERCLAT(coord.lat_lon.lat.value())));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << this->draw_mode;

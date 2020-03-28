@@ -536,7 +536,8 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 		}
 
 		const LatLonBBox bbox = this->gisview->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north.get_value(), bbox.east.get_value(), bbox.south.get_value(), bbox.west.get_value());
+		/* TODO_LATER: should we use here bound_value() or unbound_value() for longitudes? */
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north.value(), bbox.east.unbound_value(), bbox.south.value(), bbox.west.unbound_value());
 		if (0 != ans) {
 			qDebug() << SG_PREFIX_E << "Saving to kmz file failed with code" << ans;
 			success = false;

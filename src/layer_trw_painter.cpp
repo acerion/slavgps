@@ -154,10 +154,10 @@ sg_ret LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 			return sg_ret::err;
 		}
 
-		this->coord_leftmost   = coord_ul.lat_lon.lon;
-		this->coord_rightmost  = coord_br.lat_lon.lon;
-		this->coord_bottommost = coord_br.lat_lon.lat;
-		this->coord_topmost    = coord_ul.lat_lon.lat;
+		this->coord_leftmost   = coord_ul.lat_lon.lon.unbound_value();
+		this->coord_rightmost  = coord_br.lat_lon.lon.unbound_value();
+		this->coord_bottommost = coord_br.lat_lon.lat.value();
+		this->coord_topmost    = coord_ul.lat_lon.lat.value();
 
 		return sg_ret::ok;
 	} else {
@@ -291,8 +291,8 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			/* Positional interpolation.
 			   Using a simple ratio - may not be perfectly correct due to lat/lon projections
 			   but should be good enough over the small scale that I anticipate usage on. */
-			const LatLon ll_middle(ll_current.lat + (ll_next.lat - ll_current.lat) * ratio,
-					       ll_current.lon + (ll_next.lon - ll_current.lon) * ratio);
+			const LatLon ll_middle(ll_current.lat.value() + (ll_next.lat.value() - ll_current.lat.value()) * ratio,
+					       ll_current.lon.unbound_value() + (ll_next.lon.unbound_value() - ll_current.lon.unbound_value()) * ratio);
 			const Coord coord_middle(ll_middle, this->trw->coord_mode);
 
 			const QColor fg_color = this->get_fg_color(trk);

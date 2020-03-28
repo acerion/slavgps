@@ -756,7 +756,10 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 
 		const LatLon lat_lon = wp->get_coord().get_lat_lon();
 		char * tmp_name = slashdup(wp->get_name());
-		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
+		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"",
+			SGUtils::double_to_c(lat_lon.lat.value()).toUtf8().constData(),
+			SGUtils::double_to_c(lat_lon.lon.bound_value()).toUtf8().constData(),
+			tmp_name);
 		free(tmp_name);
 
 		if (wp->altitude.is_valid()) {
@@ -828,7 +831,10 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 {
 	const LatLon lat_lon = tp->coord.get_lat_lon();
 
-	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", is_route ? "route" : "track", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
+	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"",
+		is_route ? "route" : "track",
+		SGUtils::double_to_c(lat_lon.lat.value()).toUtf8().constData(),
+		SGUtils::double_to_c(lat_lon.lon.bound_value()).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
 		char * name = slashdup(tp->name);

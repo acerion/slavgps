@@ -654,8 +654,8 @@ bool LatLonRectCalculator::get_rectangle(const LatLon & counter, QRectF & rect) 
 	fpixel tl_x;
 	fpixel tl_y;
 	{
-		lat_lon.lat += (this->m_north_scale_deg * this->m_skip_factor)/2;
-		lat_lon.lon -= (this->m_east_scale_deg * this->m_skip_factor)/2;
+		lat_lon.lat.set_value(lat_lon.lat.value() + (this->m_north_scale_deg * this->m_skip_factor)/2);
+		lat_lon.lon.set_value(lat_lon.lon.unbound_value() - (this->m_east_scale_deg * this->m_skip_factor)/2);
 		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &tl_x, &tl_y)) {
 			return false;
 		}
@@ -673,8 +673,8 @@ bool LatLonRectCalculator::get_rectangle(const LatLon & counter, QRectF & rect) 
 	fpixel br_x;
 	fpixel br_y;
 	{
-		lat_lon.lat -= this->m_north_scale_deg * this->m_skip_factor;
-		lat_lon.lon += this->m_east_scale_deg * this->m_skip_factor;
+		lat_lon.lat.set_value(lat_lon.lat.value() - this->m_north_scale_deg * this->m_skip_factor);
+		lat_lon.lon.set_value(lat_lon.lon.unbound_value() + this->m_east_scale_deg * this->m_skip_factor);
 		if (sg_ret::ok != this->m_gisview->coord_to_screen_pos(Coord(lat_lon, this->m_coord_mode), &br_x, &br_y)) {
 			return false;
 		}
@@ -732,10 +732,10 @@ LatLonBounds::LatLonBounds(const GisViewport & gisview, const DEM & dem, const L
 	this->east_scale_deg = dem.scale.x / 3600.0;
 
 	const LatLonBBox viewport_bbox = gisview.get_bbox();
-	double start_lat_arcsec = std::max(viewport_bbox.south.get_value() * 3600.0, dem.min_north_seconds);
-	double end_lat_arcsec   = std::min(viewport_bbox.north.get_value() * 3600.0, dem.max_north_seconds);
-	double start_lon_arcsec = std::max(viewport_bbox.west.get_value() * 3600.0, dem.min_east_seconds);
-	double end_lon_arcsec   = std::min(viewport_bbox.east.get_value() * 3600.0, dem.max_east_seconds);
+	double start_lat_arcsec = std::max(viewport_bbox.south.value() * 3600.0, dem.min_north_seconds);
+	double end_lat_arcsec   = std::min(viewport_bbox.north.value() * 3600.0, dem.max_north_seconds);
+	double start_lon_arcsec = std::max(viewport_bbox.west.unbound_value() * 3600.0, dem.min_east_seconds);
+	double end_lon_arcsec   = std::min(viewport_bbox.east.unbound_value() * 3600.0, dem.max_east_seconds);
 
 	this->start_lat = floor(start_lat_arcsec / dem.scale.y) * north_scale_deg;
 	this->end_lat   = ceil(end_lat_arcsec / dem.scale.y) * north_scale_deg;
@@ -1277,8 +1277,8 @@ DEMDownloadJob::~DEMDownloadJob()
    background thread). */
 static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	const int intlat = (int) floor(dl_job->lat_lon.lat);
-	const int intlon = (int) floor(dl_job->lat_lon.lon);
+	const int intlat = (int) floor(dl_job->lat_lon.lat.value());
+	const int intlon = (int) floor(dl_job->lat_lon.lon.bound_value());
 
 	QString continent_dir;
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
@@ -1317,8 +1317,8 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 
 static const QString srtm_lat_lon_to_cache_file_name(const LatLon & lat_lon)
 {
-	const int intlat = (int) floor(lat_lon.lat);
-	const int intlon = (int) floor(lat_lon.lon);
+	const int intlat = (int) floor(lat_lon.lat.value());
+	const int intlon = (int) floor(lat_lon.lon.bound_value());
 	QString continent_dir;
 
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
@@ -1344,8 +1344,8 @@ static void srtm_draw_existence(GisViewport * gisview)
 
 	qDebug() << SG_PREFIX_D << "GisViewport bounding box:" << bbox;
 
-	for (int lat = floor(bbox.south.get_value()); lat <= floor(bbox.north.get_value()); lat++) {
-		for (int lon = floor(bbox.west.get_value()); lon <= floor(bbox.east.get_value()); lon++) {
+	for (int lat = floor(bbox.south.value()); lat <= floor(bbox.north.value()); lat++) {
+		for (int lon = floor(bbox.west.bound_value()); lon <= floor(bbox.east.bound_value()); lon++) {
 			QString continent_dir;
 			if (!srtm_get_continent_dir(continent_dir, lat, lon)) {
 				continue;
@@ -1608,8 +1608,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	const LatLon lat_lon(menu->property("lat").toDouble(), menu->property("lon").toDouble());
 	qDebug() << SG_PREFIX_I << "will display file info for coordinates" << lat_lon;
 
-	const int intlat = (int) floor(lat_lon.lat);
-	const int intlon = (int) floor(lat_lon.lon);
+	const int intlat = (int) floor(lat_lon.lat.value());
+	const int intlon = (int) floor(lat_lon.lon.bound_value());
 
 	QString remote_location; /* Remote address where this file has been downloaded from. */
 	QString continent_dir;
@@ -1706,9 +1706,9 @@ bool LayerDEM::download_selected_tile(const QMouseEvent * ev, const LayerTool * 
 
 		/* What a hack... */
 		QVariant variant;
-		variant = QVariant::fromValue((double) lat_lon.lat);
+		variant = QVariant::fromValue((double) lat_lon.lat.value());
 		this->right_click_menu->setProperty("lat", variant);
-		variant = QVariant::fromValue((double) lat_lon.lon);
+		variant = QVariant::fromValue((double) lat_lon.lon.unbound_value());
 		this->right_click_menu->setProperty("lon", variant);
 
 		this->right_click_menu->exec(QCursor::pos());

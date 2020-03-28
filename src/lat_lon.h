@@ -28,6 +28,12 @@
 
 
 
+
+#include "globals.h"
+
+
+
+
 #define SG_LATITUDE_MIN         -90.0
 #define SG_LATITUDE_MAX          90.0
 #define SG_LONGITUDE_MIN       -180.0
@@ -74,16 +80,32 @@ namespace SlavGPS {
 		   saving the value in gpx or vik file. */
 		const QString value_to_string_for_file(void) const;
 
+		/* Returns result of validating of new value after it
+		   has been assigned. */
 		bool set_value(double value);
-		double get_value(void) const;
+
+		double value(void) const;
 
 		bool is_valid(void) const;
 		void invalidate(void);
 
+		bool operator==(const Latitude & rhs) const;
+		bool operator!=(const Latitude & rhs) const;
+		Latitude & operator=(const Latitude & rhs);
+
+		bool operator<(const Latitude & rhs) const;
+		bool operator>(const Latitude & rhs) const;
+		bool operator<=(const Latitude & rhs) const;
+		bool operator>=(const Latitude & rhs) const;
+
+		Latitude & operator+=(double rhs);
+		Latitude & operator-=(double rhs);
+
 	private:
-		double value = NAN;
-		bool valid = false;
+		double m_value = NAN;
+		bool m_valid = false;
 	};
+	QDebug operator<<(QDebug debug, const Latitude & lat);
 
 
 
@@ -105,16 +127,41 @@ namespace SlavGPS {
 		   saving the value in gpx or vik file. */
 		const QString value_to_string_for_file(void) const;
 
+		/**
+		   Returns result of validating of new value after it
+		   has been assigned.
+		*/
 		bool set_value(double value);
-		double get_value(void) const;
+
+		/* Get value of longitude, bound to <-180.0;180.0>
+		   range. */
+		double bound_value(void) const;
+		/* Get value of longitude that is not bound to
+		   <-180.0;180.0> range. */
+		double unbound_value(void) const;
 
 		bool is_valid(void) const;
 		void invalidate(void);
 
+		bool operator==(const Longitude & rhs) const;
+		bool operator!=(const Longitude & rhs) const;
+		Longitude & operator=(const Longitude & rhs);
+
+		bool operator<(const Longitude & rhs) const;
+		bool operator>(const Longitude & rhs) const;
+		bool operator<=(const Longitude & rhs) const;
+		bool operator>=(const Longitude & rhs) const;
+
+		Longitude & operator+=(double rhs);
+		Longitude & operator-=(double rhs);
+
 	private:
-		double value = NAN;
-		bool valid = false;
+		/* Value of longitude that is not bound to
+		   <-180.0;180.0> range. */
+		double m_unbound_value = NAN;
+		bool m_valid = false;
 	};
+	QDebug operator<<(QDebug debug, const Longitude & lon);
 
 
 

@@ -678,7 +678,7 @@ void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 
 	DurationMeter dmeter;
 	dmeter.start();
-	QPixmap pixmap = this->mw.render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
+	QPixmap pixmap = this->mw.render_map(lat_lon_ul.lat.value(), lat_lon_ul.lon.bound_value(), lat_lon_br.lat.value(), lat_lon_br.lon.bound_value());
 	dmeter.stop();
 
 	MapCacheItemProperties properties;

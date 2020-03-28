@@ -324,15 +324,15 @@ static LatLon get_north_west_corner(const LatLon & center, const LatLon & distan
 {
 	LatLon ret;
 
-	ret.lat = center.lat + distance_from_center.lat;
-	ret.lon = center.lon - distance_from_center.lon;
-	if (ret.lon < SG_LONGITUDE_MIN) {
-		ret.lon += 360.0;
+	ret.lat.set_value(center.lat.value() + distance_from_center.lat.value());
+	ret.lon.set_value(center.lon.unbound_value() - distance_from_center.lon.unbound_value());
+	if (ret.lon.unbound_value() < SG_LONGITUDE_MIN) {
+		ret.lon.set_value(ret.lon.bound_value() + 360.0); /* TODO_LATER: verify what's going on here. */
 	}
 
-	if (ret.lat > SG_LATITUDE_MAX) {  /* Over north pole. */
-		ret.lat = 180 - ret.lat;
-		ret.lon = ret.lon - 180;
+	if (ret.lat.value() > SG_LATITUDE_MAX) {  /* Over north pole. */
+		ret.lat.set_value(180 - ret.lat.value()); /* TODO_LATER: verify what's going on here. */
+		ret.lon.set_value(ret.lon.bound_value() - 180);
 	}
 
 	return ret;
@@ -345,15 +345,15 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 {
 	LatLon ret;
 
-	ret.lat = center.lat - distance_from_center.lat;
-	ret.lon = center.lon + distance_from_center.lon;
-	if (ret.lon > SG_LONGITUDE_MAX) {
-		ret.lon -= 360.0;
+	ret.lat.set_value(center.lat.value() - distance_from_center.lat.value());
+	ret.lon.set_value(center.lon.unbound_value() + distance_from_center.lon.unbound_value());
+	if (ret.lon.unbound_value() > SG_LONGITUDE_MAX) {
+		ret.lon.set_value(ret.lon.unbound_value() - 360.0);/* TODO_LATER: verify what's going on here. */
 	}
 
-	if (ret.lat < SG_LATITUDE_MIN) {  /* Over south pole. */
-		ret.lat += 180;
-		ret.lon = ret.lon - 180;
+	if (ret.lat.value() < SG_LATITUDE_MIN) {  /* Over south pole. */
+		ret.lat.set_value(ret.lat.value() + 180); /* TODO_LATER: verify what's going on here. */
+		ret.lon.set_value(ret.lon.unbound_value() - 180); /* TODO_LATER: verify what's going on here. */
 	}
 
 	return ret;
@@ -365,7 +365,7 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 void Coord::get_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const
 {
 	const LatLon center = this->get_lat_lon();
-	const LatLon distance_from_center(single_rectangle_span.lat / 2, single_rectangle_span.lon / 2);
+	const LatLon distance_from_center(single_rectangle_span.lat.value() / 2, single_rectangle_span.lon.unbound_value() / 2);
 
 	rect.m_coord_tl.lat_lon = get_north_west_corner(center, distance_from_center);
 	rect.m_coord_tl.mode = CoordMode::LatLon;

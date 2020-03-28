@@ -159,14 +159,14 @@ bool MyHandler::startElement(__attribute__((unused)) const QString &namespaceURI
 		*/
 
 		if (this->stack == this->lat_path) {
-			if (std::isnan(this->ll.lat)) {
+			if (std::isnan(this->ll.lat.value())) {
 				this->ll.lat = SGUtils::c_to_double(atts.value("", this->lat_attr));
 			}
 			qDebug() << SG_PREFIX_I << "---- found latitude =" << this->ll.lat;
 
 		}
 		if (this->stack == this->lon_path) {
-			if (std::isnan(this->ll.lon)) {
+			if (std::isnan(this->ll.lon.bound_value())) {
 				this->ll.lon = SGUtils::c_to_double(atts.value("", this->lon_attr));
 			}
 			qDebug() << SG_PREFIX_I << "---- found longitude =" << this->ll.lon;
@@ -204,13 +204,13 @@ bool MyHandler::characters(const QString & ch)
 	*/
 
 	if (this->stack == this->lat_path) {
-		if (std::isnan(this->ll.lat)) {
+		if (std::isnan(this->ll.lat.value())) {
 			this->ll.lat = SGUtils::c_to_double(ch);
 		}
 		qDebug() << SG_PREFIX_I << "---- found latitude =" << this->ll.lat;
 
 	} else if (this->stack == this->lon_path) {
-		if (std::isnan(this->ll.lon)) {
+		if (std::isnan(this->ll.lon.unbound_value())) {
 			this->ll.lon = SGUtils::c_to_double(ch);
 		}
 		qDebug() << SG_PREFIX_I << "---- found longitude =" << this->ll.lat;
@@ -304,7 +304,7 @@ bool GotoToolXML::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 		return false;
 	}
 
-	if (std::isnan(this->xml_handler->ll.lat) || std::isnan(this->xml_handler->ll.lat)) {
+	if (std::isnan(this->xml_handler->ll.lat.value()) || std::isnan(this->xml_handler->ll.lat.value())) {
 		/* At least one coordinate not found */
 		return false;
 	}

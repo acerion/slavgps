@@ -347,7 +347,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_
 		   http://wiki.openstreetmap.org/wiki/Zoom_levels */
 
 		/* Convert from actual image MPP to Viking 'pixelfact'. */
-		double mid_lat = (lat_lon_bl.lat + lat_lon_tr.lat) / 2.0;
+		double mid_lat = (lat_lon_bl.lat.value() + lat_lon_tr.lat.value()) / 2.0;
 		/* Protect against div by zero (but shouldn't have 90 degrees for mid latitude...). */
 		if (std::fabs(mid_lat) < 89.9) {
 			factor = cos(DEG2RAD(mid_lat)) * 1.193;

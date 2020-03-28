@@ -172,18 +172,18 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds, double north_se
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
-	lat_lon[1].lon = lat_lon[0].lon;
-	lat_lon[1].lat = lat_lon[0].lat + this->scale.y / 3600.0;
+	lat_lon[1].lon = lat_lon[0].lon.bound_value();
+	lat_lon[1].lat = lat_lon[0].lat.value() + this->scale.y / 3600.0;
 	/* ne */
 	cols[2] = cols[0] + 1;
 	rows[2] = rows[0] + 1;
-	lat_lon[2].lon = lat_lon[0].lon + this->scale.x / 3600.0;
-	lat_lon[2].lat = lat_lon[0].lat + this->scale.y / 3600.0;
+	lat_lon[2].lon = lat_lon[0].lon.bound_value() + this->scale.x / 3600.0;
+	lat_lon[2].lat = lat_lon[0].lat.value() + this->scale.y / 3600.0;
 	/* se */
 	cols[3] = cols[0] + 1;
 	rows[3] = rows[0];
-	lat_lon[3].lon = lat_lon[0].lon + this->scale.x / 3600.0;
-	lat_lon[3].lat = lat_lon[0].lat;
+	lat_lon[3].lon = lat_lon[0].lon.bound_value() + this->scale.x / 3600.0;
+	lat_lon[3].lat = lat_lon[0].lat.value();
 
 	for (int i = 0; i < 4; i++) {
 		elevations[i] = this->get_elev_at_col_row(cols[i], rows[i]);
@@ -195,7 +195,7 @@ bool DEM::get_ref_points_elevation_distance(double east_seconds, double north_se
 
 #if 0   /* Debug. */
 	for (int i = 0; i < 4; i++) {
-		qDebug() << SG_PREFIX_D << i << ":" << lat_lon[i].lat << lat_lon[i].lon << distances[i] << elevs[i];
+		qDebug() << SG_PREFIX_D << i << ":" << lat_lon[i].lat.value() << lat_lon[i].lon << distances[i] << elevs[i];
 	}
 	qDebug() << SG_PREFIX_D << "north_scale =" this->north_scale;
 #endif
@@ -299,10 +299,10 @@ bool DEM::intersect(const LatLonBBox & other_bbox) const
 
 	/* Get min/max lat/lon of DEM data. */
 	if (this->horiz_units == DEMHorizontalUnit::LatLonArcSeconds) {
-		dem_northeast.lat = this->max_north_seconds / 3600.0;
-		dem_northeast.lon = this->max_east_seconds / 3600.0;
-		dem_southwest.lat = this->min_north_seconds / 3600.0;
-		dem_southwest.lon = this->min_east_seconds / 3600.0;
+		dem_northeast.lat.set_value(this->max_north_seconds / 3600.0);
+		dem_northeast.lon.set_value(this->max_east_seconds / 3600.0);
+		dem_southwest.lat.set_value(this->min_north_seconds / 3600.0);
+		dem_southwest.lon.set_value(this->min_east_seconds / 3600.0);
 
 	} else if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		/* TODO_LATER: add smarter error handling of invalid
@@ -321,10 +321,10 @@ bool DEM::intersect(const LatLonBBox & other_bbox) const
 	}
 
 	LatLonBBox bbox;
-	bbox.north = dem_northeast.lat;
-	bbox.south = dem_southwest.lat;
-	bbox.east = dem_northeast.lon;
-	bbox.west = dem_southwest.lon;
+	bbox.north = dem_northeast.lat.value();
+	bbox.south = dem_southwest.lat.value();
+	bbox.east = dem_northeast.lon.bound_value();
+	bbox.west = dem_southwest.lon.bound_value();
 	bbox.validate();
 
 	const bool result = bbox.intersects_with(other_bbox);
@@ -368,8 +368,8 @@ sg_ret DEM::get_elev_by_coord(const Coord & coord, DEMInterpolation method, int1
 
 	if (this->horiz_units == DEMHorizontalUnit::LatLonArcSeconds) {
 		const LatLon searched_lat_lon = coord.get_lat_lon();
-		lat = searched_lat_lon.lat * 3600;
-		lon = searched_lat_lon.lon * 3600;
+		lat = searched_lat_lon.lat.value() * 3600;
+		lon = searched_lat_lon.lon.bound_value() * 3600;
 	} else if (this->horiz_units == DEMHorizontalUnit::UTMMeters) {
 		const UTM searched_utm = coord.get_utm();
 		if (!UTM::is_the_same_zone(searched_utm, this->utm)) {
