@@ -431,7 +431,7 @@ int GoTo::where_am_i(GisViewport * gisview, LatLon & lat_lon, QString & name)
 
 	int result = 0;
 	if (lat_lon.is_valid()) {
-		if (lat_lon.lat > SG_LATITUDE_MIN && lat_lon.lat < SG_LATITUDE_MAX && lat_lon.lon > SG_LONGITUDE_MIN && lat_lon.lon < SG_LONGITUDE_MAX) {
+		if (lat_lon.lat > SG_LATITUDE_MIN && lat_lon.lat < SG_LATITUDE_MAX && lat_lon.lon > SG_LONGITUDE_BOUND_MIN && lat_lon.lon < SG_LONGITUDE_BOUND_MAX) {
 			// Found a 'sensible' & 'precise' location
 			result = 1;
 			name = QObject::tr("Locality"); //Albeit maybe not known by an actual name!

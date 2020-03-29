@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2006-2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2016-2020, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,10 +35,20 @@
 
 
 
-#define SG_LATITUDE_MIN         -90.0
-#define SG_LATITUDE_MAX          90.0
-#define SG_LONGITUDE_MIN       -180.0
-#define SG_LONGITUDE_MAX        180.0
+#define SG_LATITUDE_MIN             -90.0
+#define SG_LATITUDE_MAX              90.0
+
+/* Longitudes bound to basic range. */
+#define SG_LONGITUDE_BOUND_MIN     -180.0
+#define SG_LONGITUDE_BOUND_MAX      180.0
+
+/* In theory we could scroll viewport left and right to infinity and
+   have totally unbound longitudes, but for practical reasons I'm
+   limiting the range. Sooner or later (rather later than sooner) we
+   would hit the limit of double data type anyway :) */
+#define SG_LONGITUDE_UNBOUND_MIN    (10 * SG_LONGITUDE_BOUND_MIN)
+#define SG_LONGITUDE_UNBOUND_MAX    (10 * SG_LONGITUDE_BOUND_MAX)
+
 #define SG_LATITUDE_PRECISION     6
 #define SG_LONGITUDE_PRECISION    6
 
@@ -102,6 +113,12 @@ namespace SlavGPS {
 		Latitude & operator-=(double rhs);
 
 	private:
+		/**
+		   Check validity of current value of latitude. Set
+		   ::m_valid accordingly. Return value of ::m_valid.
+		*/
+		bool validate(void);
+
 		double m_value = NAN;
 		bool m_valid = false;
 	};
@@ -156,6 +173,12 @@ namespace SlavGPS {
 		Longitude & operator-=(double rhs);
 
 	private:
+		/**
+		   Check validity of current value of longitude. Set
+		   ::m_valid accordingly. Return value of ::m_valid.
+		*/
+		bool validate(void);
+
 		/* Value of longitude that is not bound to
 		   <-180.0;180.0> range. */
 		double m_unbound_value = NAN;

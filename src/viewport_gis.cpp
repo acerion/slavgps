@@ -1567,13 +1567,17 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 	Coord coord_ur = this->screen_pos_to_coord(ScreenPos(this->central_get_rightmost_pixel() - margin_right, this->central_get_topmost_pixel() + margin_top));
 	Coord coord_bl = this->screen_pos_to_coord(ScreenPos(this->central_get_leftmost_pixel() + margin_left,   this->central_get_bottommost_pixel() - margin_bottom));
 	Coord coord_br = this->screen_pos_to_coord(ScreenPos(this->central_get_rightmost_pixel() - margin_right, this->central_get_bottommost_pixel() - margin_bottom));
+	if (!coord_ul.is_valid() || !coord_ur.is_valid() || !coord_bl.is_valid() || !coord_br.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		return bbox;
+	}
 
 	coord_ul.recalculate_to_mode(CoordMode::LatLon);
 	coord_ur.recalculate_to_mode(CoordMode::LatLon);
 	coord_bl.recalculate_to_mode(CoordMode::LatLon);
 	coord_br.recalculate_to_mode(CoordMode::LatLon);
 	if (!coord_ul.is_valid() || !coord_ur.is_valid() || !coord_bl.is_valid() || !coord_br.is_valid()) {
-		qDebug() << SG_PREFIX_E << "Failed to get valid coordinate";
+		qDebug() << SG_PREFIX_E << "Failed to recalculate valid coordinate";
 		return bbox;
 	}
 	qDebug() << SG_PREFIX_I << "coord ul is" << coord_ul;
@@ -1587,7 +1591,7 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 	bbox.east  = std::max(coord_ur.lat_lon.lon, coord_br.lat_lon.lon);
 	bbox.west  = std::min(coord_ul.lat_lon.lon, coord_bl.lat_lon.lon);
 	qDebug() << SG_PREFIX_I << "BBox is" << bbox;
-	//bbox.validate();
+	bbox.validate();
 
 	return bbox;
 }

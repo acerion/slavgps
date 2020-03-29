@@ -1882,7 +1882,7 @@ std::list<CoordRectangle> Track::get_coordinate_rectangles(const LatLon & single
 		Coord * cur_coord = &(*iter)->coord;
 		if (new_map) {
 			CoordRectangle rect;
-			cur_coord->get_coord_rectangle(single_rectangle_span, rect);
+			cur_coord->get_unbound_coord_rectangle(single_rectangle_span, rect);
 			rectangles.push_front(rect);
 			new_map = false;
 			iter++;
@@ -2963,7 +2963,7 @@ std::list<CoordRectangle> Track::get_coord_rectangles(const VikingScale & viking
 	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
 		Coord * cur_coord = *iter;
 		CoordRectangle rect;
-		cur_coord->get_coord_rectangle(single_rectangle_span, rect);
+		cur_coord->get_unbound_coord_rectangle(single_rectangle_span, rect);
 		rectangles.push_front(rect);
 
 		delete *iter;

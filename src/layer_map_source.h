@@ -246,8 +246,8 @@ namespace SlavGPS {
 
 		double lat_min = SG_LATITUDE_MIN;  /* [degrees] Minimum latitude supported by the map provider. */
 		double lat_max = SG_LATITUDE_MAX;  /* [degrees] Maximum latitude supported by the map provider. */
-		double lon_min = SG_LONGITUDE_MIN; /* [degrees] Minimum longitude supported by the map provider. */
-		double lon_max = SG_LONGITUDE_MAX; /* [degrees] Maximum longitude supported by the map provider. */
+		double lon_min = SG_LONGITUDE_BOUND_MIN; /* [degrees] Minimum longitude supported by the map provider. */
+		double lon_max = SG_LONGITUDE_BOUND_MAX; /* [degrees] Maximum longitude supported by the map provider. */
 	};
 
 

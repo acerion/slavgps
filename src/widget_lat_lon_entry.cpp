@@ -168,8 +168,8 @@ void LatEntryWidget::clear_widget(void)
 LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
 {
 	this->setDecimals(SG_LONGITUDE_PRECISION);
-	this->setMinimum(SG_LONGITUDE_MIN);
-	this->setMaximum(SG_LONGITUDE_MAX);
+	this->setMinimum(SG_LONGITUDE_BOUND_MIN);
+	this->setMaximum(SG_LONGITUDE_BOUND_MAX);
 	this->setSingleStep(0.05);
 	this->setValue(value.get_longitude().bound_value());
 	this->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */

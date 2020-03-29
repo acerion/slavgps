@@ -404,16 +404,8 @@ const QString Latitude::value_to_string_for_file(void) const
 
 bool Latitude::set_value(double new_value)
 {
-	if (std::isnan(new_value)) {
-		this->m_value = NAN;
-	} else if (new_value < SG_LATITUDE_MIN || new_value > SG_LATITUDE_MAX) {
-		this->m_value = NAN;
-	} else {
-		this->m_value = new_value;
-	}
-
-	this->m_valid = !std::isnan(this->m_value);
-
+	this->m_value = new_value;
+	this->validate();
 	return this->m_valid;
 }
 
@@ -440,6 +432,23 @@ void Latitude::invalidate(void)
 {
 	this->m_value = NAN;
 	this->m_valid = false;
+}
+
+
+
+
+bool Latitude::validate(void)
+{
+	if (std::isnan(this->m_value)) {
+		this->m_valid = false;
+	} else if (this->m_value > SG_LATITUDE_MAX) {
+		this->m_valid = false;
+	} else if (this->m_value < SG_LATITUDE_MIN) {
+		this->m_valid = false;
+	} else {
+		this->m_valid = true;
+	}
+	return this->m_valid;
 }
 
 
@@ -536,7 +545,7 @@ Latitude & Latitude::operator+=(double rhs)
 	}
 
 	this->m_value += rhs;
-	this->m_valid = !std::isnan(this->m_value);
+	this->validate();
 	return *this;
 }
 
@@ -555,7 +564,7 @@ Latitude & Latitude::operator-=(double rhs)
 	}
 
 	this->m_value -= rhs;
-	this->m_valid = !std::isnan(this->m_value);
+	this->validate();
 	return *this;
 }
 
@@ -629,15 +638,8 @@ const QString Longitude::value_to_string_for_file(void) const
 
 bool Longitude::set_value(double new_value)
 {
-	if (std::isnan(new_value)) {
-		this->m_unbound_value = NAN;
-	} else if (new_value < SG_LONGITUDE_MIN || new_value > SG_LONGITUDE_MAX) {
-		this->m_unbound_value = NAN;
-	} else {
-		this->m_unbound_value = new_value;
-	}
-
-	this->m_valid = !std::isnan(this->m_unbound_value);
+	this->m_unbound_value = new_value;
+	this->validate();
 
 	return this->m_valid;
 }
@@ -658,15 +660,13 @@ double Longitude::bound_value(void) const
 	/* TODO_LATER: verify this calculation. */
 
 	double tmp = this->m_unbound_value;
-
-
 	if (tmp > 0) {
-		while (tmp > 180.0) {
-			tmp -= 180.0;
+		while (tmp > SG_LONGITUDE_BOUND_MAX) {
+			tmp -= 360.0;
 		}
 	} else {
-		while (tmp < -180.0) {
-			tmp += 180.0;
+		while (tmp < SG_LONGITUDE_BOUND_MIN) {
+			tmp += 360.0;
 		}
 	}
 	return tmp;
@@ -687,6 +687,23 @@ void Longitude::invalidate(void)
 {
 	this->m_unbound_value = NAN;
 	this->m_valid = false;
+}
+
+
+
+
+bool Longitude::validate(void)
+{
+	if (std::isnan(this->m_unbound_value)) {
+		this->m_valid = false;
+	} else if (this->m_unbound_value > SG_LONGITUDE_UNBOUND_MAX) {
+		this->m_valid = false;
+	} else if (this->m_unbound_value < SG_LONGITUDE_UNBOUND_MIN) {
+		this->m_valid = false;
+	} else {
+		this->m_valid = true;
+	}
+	return this->m_valid;
 }
 
 
@@ -783,7 +800,7 @@ Longitude & Longitude::operator+=(double rhs)
 	}
 
 	this->m_unbound_value += rhs;
-	this->m_valid = !std::isnan(this->m_unbound_value);
+	this->validate();
 	return *this;
 }
 
@@ -802,7 +819,7 @@ Longitude & Longitude::operator-=(double rhs)
 	}
 
 	this->m_unbound_value -= rhs;
-	this->m_valid = !std::isnan(this->m_unbound_value);
+	this->validate();
 	return *this;
 }
 

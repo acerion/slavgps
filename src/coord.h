@@ -73,8 +73,12 @@ namespace SlavGPS {
 		   specified by top-left and bottom-right coordinates
 		   of rectangle that has span (latitude/longitude
 		   range) specified by @param single_rectangle_span,
-		   and is centered at this coord's center. */
-		void get_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const;
+		   and is centered at this coord's center.
+
+		   Longitudes in resulting rectangle are not bound to
+		   <-180.0;180.0> range.
+		*/
+		void get_unbound_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const;
 
 		bool is_inside(const Coord & coord_tl, const Coord & coord_br) const;
 

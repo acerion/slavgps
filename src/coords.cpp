@@ -389,20 +389,12 @@ double LatLon::get_distance(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 
 UTM LatLon::to_utm(const LatLon & lat_lon)
 {
-	double latitude = lat_lon.lat.value();
-	double longitude = lat_lon.lon.unbound_value();
-
-	/* We want the longitude within SG_LONGITUDE_MIN..SG_LONGITUDE_MAX. */
-	while (longitude < SG_LONGITUDE_MIN) {
-		longitude += 360.0;
-	}
-	while (longitude > SG_LONGITUDE_MAX) {
-		longitude -= 360.0;
-	}
+	const double latitude = lat_lon.lat.value();
+	const double longitude = lat_lon.lon.bound_value(); /* We want the longitude within SG_LONGITUDE_MIN..SG_LONGITUDE_MAX. */
 
 	/* Now convert. */
 	const double lat_rad = DEG2RAD(latitude);
-	const double long_rad = DEG2RAD(longitude);
+	const double lon_rad = DEG2RAD(longitude);
 	int zone = (int) ((longitude + 180) / 6) + 1;
 	if (latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0) {
 		zone = 32;
@@ -417,13 +409,13 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 		else if (longitude >= 33.0 && longitude < 42.0) zone = 37;
 	}
 
-	const double long_origin = (zone - 1) * 6 - 180 + 3; /* +3 puts origin in middle of zone */
-	const double long_origin_rad = DEG2RAD(long_origin);
+	const double lon_origin = (zone - 1) * 6 - 180 + 3; /* +3 puts origin in middle of zone */
+	const double lon_origin_rad = DEG2RAD(lon_origin);
 	const double eccPrimeSquared = EccentricitySquared / (1.0 - EccentricitySquared);
 	const double N = EquatorialRadius / sqrt(1.0 - EccentricitySquared * sin(lat_rad) * sin(lat_rad));
 	const double T = tan(lat_rad ) * tan( lat_rad);
 	const double C = eccPrimeSquared * cos(lat_rad) * cos(lat_rad);
-	const double A = cos(lat_rad) * (long_rad - long_origin_rad);
+	const double A = cos(lat_rad) * (lon_rad - lon_origin_rad);
 	const double M = EquatorialRadius * ((1.0 - EccentricitySquared / 4 - 3 * EccentricitySquared * EccentricitySquared / 64 - 5 * EccentricitySquared * EccentricitySquared * EccentricitySquared / 256) * lat_rad - (3 * EccentricitySquared / 8 + 3 * EccentricitySquared * EccentricitySquared / 32 + 45 * EccentricitySquared * EccentricitySquared * EccentricitySquared / 1024) * sin(2 * lat_rad) + (15 * EccentricitySquared * EccentricitySquared / 256 + 45 * EccentricitySquared * EccentricitySquared * EccentricitySquared / 1024) * sin(4 * lat_rad) - (35 * EccentricitySquared * EccentricitySquared * EccentricitySquared / 3072) * sin(6 * lat_rad));
 	double easting = K0 * N * (A + (1 - T + C) * A * A * A / 6 + (5 - 18 * T + T * T + 72 * C - 58 * eccPrimeSquared) * A * A * A * A * A / 120) + 500000.0;
 	double northing = K0 * (M + N * tan(lat_rad) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A * A * A * A / 24 + (61 - 58 * T + T * T + 600 * C - 330 * eccPrimeSquared) * A * A * A * A * A * A / 720));
@@ -446,19 +438,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 
 bool LatLon::is_valid(void) const
 {
-	if (std::isnan(this->lat.value())) {
-		return false;
-	}
-	if (std::isnan(this->lon.unbound_value())) {
-		return false;
-	}
-	if (this->lat.value() > 90.0) {
-		return false;
-	}
-	if (this->lat.value() < -90.0) {
-		return false;
-	}
-	return true;
+	return this->lat.is_valid() && this->lon.is_valid();
 }
 
 
@@ -507,7 +487,7 @@ LatLon UTM::to_lat_lon(const UTM & utm)
 		y -= UTM_NORTHING_AT_EQUATOR; /* Remove offset. */
 	}
 
-	const double long_origin = (utm.m_zone.bound_value() - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
+	const double lon_origin = (utm.m_zone.bound_value() - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
 	const double eccPrimeSquared = EccentricitySquared / (1.0 - EccentricitySquared);
 	const double e1 = (1.0 - sqrt(1.0 - EccentricitySquared)) / (1.0 + sqrt(1.0 - EccentricitySquared));
 	const double M = y / K0;
@@ -522,7 +502,7 @@ LatLon UTM::to_lat_lon(const UTM & utm)
 	double latitude = phi1_rad - (N1 * tan(phi1_rad) / R1) * (D * D / 2 -(5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * eccPrimeSquared) * D * D * D * D / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * eccPrimeSquared - 3 * C1 * C1) * D * D * D * D * D * D / 720);
 	latitude = RAD2DEG(latitude);
 	double longitude = (D - (1 + 2 * T1 + C1) * D * D * D / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * eccPrimeSquared + 24 * T1 * T1) * D * D * D * D * D / 120) / cos(phi1_rad);
-	longitude = long_origin + RAD2DEG(longitude);
+	longitude = lon_origin + RAD2DEG(longitude);
 
 	return LatLon(latitude, longitude);
 }

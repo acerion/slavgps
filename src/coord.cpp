@@ -320,13 +320,13 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 
 
 
-static LatLon get_north_west_corner(const LatLon & center, const LatLon & distance_from_center)
+static LatLon get_unbound_north_west_corner(const LatLon & center, const LatLon & distance_from_center)
 {
 	LatLon ret;
 
 	ret.lat.set_value(center.lat.value() + distance_from_center.lat.value());
 	ret.lon.set_value(center.lon.unbound_value() - distance_from_center.lon.unbound_value());
-	if (ret.lon.unbound_value() < SG_LONGITUDE_MIN) {
+	if (ret.lon.unbound_value() < SG_LONGITUDE_UNBOUND_MIN) {
 		ret.lon.set_value(ret.lon.bound_value() + 360.0); /* TODO_LATER: verify what's going on here. */
 	}
 
@@ -341,13 +341,13 @@ static LatLon get_north_west_corner(const LatLon & center, const LatLon & distan
 
 
 
-static LatLon get_south_east_corner(const LatLon & center, const LatLon & distance_from_center)
+static LatLon get_unbound_south_east_corner(const LatLon & center, const LatLon & distance_from_center)
 {
 	LatLon ret;
 
 	ret.lat.set_value(center.lat.value() - distance_from_center.lat.value());
 	ret.lon.set_value(center.lon.unbound_value() + distance_from_center.lon.unbound_value());
-	if (ret.lon.unbound_value() > SG_LONGITUDE_MAX) {
+	if (ret.lon.unbound_value() > SG_LONGITUDE_UNBOUND_MAX) {
 		ret.lon.set_value(ret.lon.unbound_value() - 360.0);/* TODO_LATER: verify what's going on here. */
 	}
 
@@ -362,15 +362,15 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 
 
 
-void Coord::get_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const
+void Coord::get_unbound_coord_rectangle(const LatLon & single_rectangle_span, CoordRectangle & rect) const
 {
 	const LatLon center = this->get_lat_lon();
 	const LatLon distance_from_center(single_rectangle_span.lat.value() / 2, single_rectangle_span.lon.unbound_value() / 2);
 
-	rect.m_coord_tl.lat_lon = get_north_west_corner(center, distance_from_center);
+	rect.m_coord_tl.lat_lon = get_unbound_north_west_corner(center, distance_from_center);
 	rect.m_coord_tl.mode = CoordMode::LatLon;
 
-	rect.m_coord_br.lat_lon = get_south_east_corner(center, distance_from_center);
+	rect.m_coord_br.lat_lon = get_unbound_south_east_corner(center, distance_from_center);
 	rect.m_coord_br.mode = CoordMode::LatLon;
 
 	rect.m_coord_center = *this;
